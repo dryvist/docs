@@ -1,0 +1,76 @@
+---
+title: "AI Development"
+description: "Multi-model AI coding pipeline. Claude, Gemini, Copilot, and local MLX models each doing what they're best at."
+---
+
+> File an issue, grab coffee, come back to a PR. Not quite there yet — but close enough to be dangerous.
+
+The AI development surface is opinionated, not magical. Each model has a sweet spot. Each tool has a role. Universal configuration lives in one place so every IDE, every agent, every CLI reads the same rules.
+
+## The tools landscape
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+flowchart LR
+  subgraph Rules["Universal config"]
+    aai(["ai-assistant-instructions<br/>CLAUDE.md · AGENTS.md<br/>rules · permissions · workflows"])
+  end
+
+  subgraph Cloud["Cloud models"]
+    Claude(["Claude Code"])
+    Gemini(["Gemini CLI"])
+    Copilot(["GitHub Copilot"])
+  end
+
+  subgraph Local["Local inference"]
+    MLX(["MLX models<br/>Apple Silicon native"])
+  end
+
+  subgraph Plugins["Extensions"]
+    ccp(["claude-code-plugins<br/>commands · skills · hooks"])
+    ccr(["claude-code-routines<br/>scheduled remote agents"])
+    aw(["ai-workflows<br/>Copilot agentic workflows"])
+    rsi(["raycast-smart-issue<br/>issue drafting via MLX"])
+  end
+
+  Rules -.reads.-> Claude
+  Rules -.reads.-> Gemini
+  Rules -.reads.-> Copilot
+  Claude -.extended by.-> ccp
+  Claude -.scheduled by.-> ccr
+  Copilot -.extended by.-> aw
+  MLX -.powers.-> rsi
+
+  style aai fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style Claude fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style Gemini fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style Copilot fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style MLX fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style ccp fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style ccr fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style aw fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style rsi fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
+```
+
+## Model routing
+
+- **Claude** — multi-file refactors, deep reasoning, agentic loops. Default for non-trivial work.
+- **Gemini** — second opinions, code review, broad context.
+- **GitHub Copilot** — line-level completions inside the editor. Cheap for high-volume routine work.
+- **Local MLX** — typo fixes, quick edits, anything where burning cloud tokens makes no sense.
+
+Routing rules live in `~/CLAUDE.md` and `AGENTS.md`, sourced from [ai-assistant-instructions](https://github.com/JacobPEvans/ai-assistant-instructions).
+
+## Repos in this section
+
+| Repo | What it does |
+| --- | --- |
+| [ai-assistant-instructions](https://github.com/JacobPEvans/ai-assistant-instructions) | Universal AI configuration layer. Rules, permissions, workflows, agents. Loaded by every AI tool. |
+| [claude-code-plugins](https://github.com/JacobPEvans/claude-code-plugins) | Commands, skills, hooks, agents for Claude Code. Extends the base CLI with project-specific automation. |
+| [claude-code-routines](https://github.com/JacobPEvans/claude-code-routines) | Scheduled remote-agent routines on Claude.ai. Cron-driven Claude tasks for GitHub ops. |
+| [ai-workflows](https://github.com/JacobPEvans/ai-workflows) | Reusable GitHub Copilot agentic workflows. Repo-level Copilot agent recipes. |
+| [raycast-smart-issue](https://github.com/JacobPEvans/raycast-smart-issue) | Raycast extension. AI-drafted GitHub issues via a local MLX model. |
+
+See [AI development pipeline](/architecture/ai-pipeline) for how these fit into the issue → PR → ship flow.

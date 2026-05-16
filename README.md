@@ -1,55 +1,71 @@
-# Mintlify Starter Kit
+# docs.jacobpevans.com
 
-Use the starter kit to get your docs deployed and ready to customize.
+Source for the documentation site at
+[docs.jacobpevans.com](https://docs.jacobpevans.com).
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+Built with [Mintlify](https://mintlify.com). Content is MDX plus the
+`docs.json` config. All MDX, diagrams, and configuration live in this repo, so
+the site is fully portable to Docusaurus, Nextra, or any MDX-aware static site
+generator if Mintlify is ever unavailable.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+## Installation
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+Requires [Nix with flakes](https://nixos.org/) (recommended) or Node 20+
+installed manually.
 
 ```bash
-npx skills add https://mintlify.com/docs
+nix develop      # Dev shell: mermaid-cli + node 20 + jq
+npm i -g mint    # First time only: install the Mintlify CLI
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
+## Usage
 
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
-npm i -g mint
+```bash
+mint dev           # Preview at http://localhost:3000
+mint broken-links  # Validate internal links
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## Deploy
 
+Push to `main` triggers an auto-deploy via the Mintlify GitHub app. PRs land
+via the standard GitHub flow. Preview branches are a paid Mintlify feature, so
+verify locally with `mint dev` before merge.
+
+## DNS
+
+`docs.jacobpevans.com` is a CNAME to `cname.mintlify-dns.com`. Mintlify
+provisions HTTPS automatically within ~24h of DNS propagation.
+
+## Identity system
+
+Reef Green primary `#4FB3A9`, Coral accent `#E06B4A`, Ink dark bg `#0B1D2A`,
+Paper light bg `#F4EFE6`. Geist for display, JetBrains Mono for terminal-style
+accents.
+
+## Structure
+
+```text
+docs.json                      Mintlify config (theme, palette, fonts, nav)
+introduction.mdx               Landing page
+how-it-fits-together.mdx       Full portfolio architecture
+architecture/                  System overviews, data pipelines, AI dev pipeline
+infrastructure/                Terraform module map
+configuration/                 Ansible role map
+nix/                           Nix ecosystem
+ai-development/                Claude, Gemini, Copilot, MLX
+observability/                 Cribl, Splunk, VisiCore, OTEL
+tools/                         Dev utilities
+about/                         Bio, homelab tour, reef tank
+logo/                          SVG wordmark (light + dark)
+favicon.svg                    Favicon
+.github/workflows/ci.yml       JSON syntax check + broken-links check
+flake.nix                      Reproducible dev shell
 ```
-mint dev
-```
 
-View your local preview at `http://localhost:3000`.
+## Contributing
 
-## Publishing changes
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## License
 
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+MIT (see `LICENSE`).

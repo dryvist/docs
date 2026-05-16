@@ -1,33 +1,66 @@
 ---
-title: "Introduction to Jacob P. Evans' Developer Projects"
-description: "An overview of the developer projects and tools published by Jacob P. Evans, and a guide to navigating the documentation to find what you need."
+title: "Jacob P Evans"
+description: "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored."
 ---
 
-This documentation covers the open-source projects and developer tools published by Jacob P. Evans. Whether you are exploring a specific repository, looking for configuration references, or working through a setup guide, you will find clear, step-by-step material here to help you get productive quickly.
+> Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.
 
-## What's covered
+This is the central reference for the public repositories that together form a single ecosystem: AI development pipeline, observability stack, Nix ecosystem, homelab infrastructure. Per-repo READMEs cover install and usage. **This site covers how everything fits together.**
 
-The documentation is organized into three main areas: getting started guides that walk you through initial setup, practical workflow guides for common tasks, and a reference section with answers to frequently asked questions. Each section is designed to be self-contained, so you can jump to the part most relevant to what you are doing.
+## The five surfaces
 
-## Explore the docs
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'16px'}}}%%
+flowchart LR
+  Hub(("Public repos<br/>~40 total"))
+  Inf(["Infrastructure<br/>Terraform · Ansible"])
+  Nix(["Nix Ecosystem<br/>nix-darwin · nix-ai<br/>nix-home · nix-devenv"])
+  AI(["AI Development<br/>Claude · Gemini<br/>Copilot · MLX"])
+  Obs(["Observability<br/>Cribl · Splunk<br/>VisiCore · OTEL"])
+  Tools(["Dev Tools<br/>Raycast · MLX bench<br/>K8s · scripts"])
+
+  Hub --> Inf
+  Hub --> Nix
+  Hub --> AI
+  Hub --> Obs
+  Hub --> Tools
+
+  style Hub fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style Inf fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Nix fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style AI fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Obs fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Tools fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
+```
+
+## Where to start
 
 <CardGroup cols={2}>
-  <Card title="Quick start" icon="rocket" href="/quickstart">
-    Get a project cloned, configured, and running in minutes with a step-by-step setup guide.
+  <Card title="How it fits together" icon="diagram-project" href="/how-it-fits-together">
+    The full architecture diagram and narrative — how every public repo relates to the others.
   </Card>
-  <Card title="Guides overview" icon="map" href="/guides/overview">
-    Browse practical guides covering common workflows, integrations, and usage patterns.
+  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
+    Data pipelines, AI development pipeline, system overviews.
   </Card>
-  <Card title="Configuration" icon="sliders" href="/guides/configuration">
-    Learn how to customize and configure projects to fit your environment and requirements.
+  <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
+    Terraform modules and the homelab provisioning flow.
   </Card>
-  <Card title="FAQ" icon="circle-question" href="/reference/faq">
-    Find answers to frequently asked questions and tips for resolving common issues.
+  <Card title="AI Development" icon="robot" href="/ai-development/overview">
+    Claude, Gemini, Copilot, MLX — a multi-model AI pipeline.
+  </Card>
+  <Card title="Observability" icon="chart-line" href="/observability/overview">
+    Cribl packs, Splunk apps, OTEL telemetry for every AI tool.
+  </Card>
+  <Card title="About Jacob" icon="person" href="/about/jacob">
+    Splunk consulting by day, homelab and reef tank by night.
   </Card>
 </CardGroup>
 
-## How to navigate
+## What this site is — and isn't
 
-Use the sidebar on the left to move between sections. The **Get Started** group is the best place to begin if you are new. The **Guides** group covers specific workflows in depth, and the **Reference** group is useful when you need precise details about configuration options or want to review what changed between versions.
+- **Is**: architecture, philosophy, and cross-repo context.
+- **Isn't**: install walkthroughs or API references — those live in each repo's `README.md`.
 
-If you are looking for something specific, use the search bar at the top of the page to find it by keyword.
+Every page that mentions a repo links to the source. Treat this site as a map, not a manual.

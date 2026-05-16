@@ -1,21 +1,45 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "luma",
-  "name": "JacobPEvans",
+  "theme": "mint",
+  "name": "Jacob P Evans",
+  "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
   "colors": {
-    "primary": "#848c8e",
-    "light": "#11161e",
-    "dark": "#cfd0d2"
+    "primary": "#4FB3A9",
+    "light": "#2F7E78",
+    "dark": "#4FB3A9"
   },
-  "favicon": "https://media.brand.dev/2b01fe20-c04b-4a1d-a2f9-1d2789c50a7a.jpg",
+  "background": {
+    "decoration": "grid",
+    "color": {
+      "light": "#F4EFE6",
+      "dark": "#0B1D2A"
+    }
+  },
+  "fonts": {
+    "heading": {
+      "family": "Geist",
+      "weight": 600
+    },
+    "body": {
+      "family": "Geist",
+      "weight": 400
+    }
+  },
   "logo": {
-    "light": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg",
-    "dark": "https://media.brand.dev/5ffd6ce4-2434-4b4b-920a-f8cacac8b48b.svg"
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
+  "favicon": "/favicon.svg",
   "navbar": {
+    "links": [
+      {
+        "label": "Profile",
+        "href": "https://github.com/JacobPEvans"
+      }
+    ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/JacobPEvans"
+      "href": "https://github.com/JacobPEvans/docs"
     }
   },
   "navigation": {
@@ -24,25 +48,62 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Start here",
             "pages": [
               "introduction",
-              "quickstart"
+              "how-it-fits-together"
             ]
           },
           {
-            "group": "Guides",
+            "group": "Architecture",
             "pages": [
-              "guides/overview",
-              "guides/configuration",
-              "guides/usage"
+              "architecture/overview",
+              "architecture/data-pipelines",
+              "architecture/ai-pipeline"
             ]
           },
           {
-            "group": "Reference",
+            "group": "Infrastructure",
             "pages": [
-              "reference/faq",
-              "reference/changelog"
+              "infrastructure/overview"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/overview"
+            ]
+          },
+          {
+            "group": "Nix Ecosystem",
+            "pages": [
+              "nix/overview"
+            ]
+          },
+          {
+            "group": "AI Development",
+            "pages": [
+              "ai-development/overview"
+            ]
+          },
+          {
+            "group": "Observability",
+            "pages": [
+              "observability/overview"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/overview"
+            ]
+          },
+          {
+            "group": "About",
+            "pages": [
+              "about/jacob",
+              "about/homelab",
+              "about/reef"
             ]
           }
         ]
@@ -51,8 +112,26 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/JacobPEvans"
-    }
+      "github": "https://github.com/JacobPEvans",
+      "linkedin": "https://www.linkedin.com/in/JacobPaulEvans/"
+    },
+    "links": [
+      {
+        "header": "Connect",
+        "items": [
+          {"label": "Website", "href": "https://jacobpevans.com"},
+          {"label": "GitHub", "href": "https://github.com/JacobPEvans"},
+          {"label": "LinkedIn", "href": "https://www.linkedin.com/in/JacobPaulEvans/"}
+        ]
+      },
+      {
+        "header": "Docs",
+        "items": [
+          {"label": "Source repo", "href": "https://github.com/JacobPEvans/docs"},
+          {"label": "Built with Mintlify", "href": "https://mintlify.com"}
+        ]
+      }
+    ]
   },
   "seo": {
     "indexing": "all"

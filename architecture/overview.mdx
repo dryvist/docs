@@ -1,0 +1,28 @@
+---
+title: "Architecture"
+description: "System-level diagrams and philosophy for the data pipelines, AI development pipeline, and cross-repo dependencies."
+---
+
+Architecture pages cover the parts of the stack that don't belong to a single repo. They sit above the per-category sections and explain *how* things move — data, code, and decisions.
+
+## In this section
+
+<CardGroup cols={2}>
+  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
+    The log and NetFlow ingest paths from the homelab edge to Splunk indexers. UniFi → HAProxy → Cribl Edge → Splunk.
+  </Card>
+  <Card title="AI development pipeline" icon="robot" href="/architecture/ai-pipeline">
+    The human → issue → AI agent → CI → review → ship flow. How Claude, Gemini, and Copilot fit together.
+  </Card>
+</CardGroup>
+
+## Principles
+
+- **One diagram per concern.** Combining a deploy pipeline with a data pipeline shows nothing. Each diagram is allowed to be small.
+- **Diagrams over prose where structure matters.** If a relationship is clearer as a graph, draw it.
+- **READMEs own install and usage.** The docs site owns architecture, philosophy, and cross-repo context.
+- **Public-only.** No real IPs or internal hostnames on this site. Real values live in private notes.
+
+## Coming next
+
+Phase B will fill in per-repo deep dives under [Infrastructure](/infrastructure/overview), [Configuration](/configuration/overview), and the other category pages. Each repo gets its own page with a focused diagram, links back to the source, and a runbook where it makes sense.

@@ -1,0 +1,60 @@
+---
+title: "Infrastructure"
+description: "Terraform modules for Proxmox, AWS disaster recovery, Bedrock agents, static sites, and self-hosted GitHub Actions runners."
+---
+
+> Provision once with Terraform, configure with Ansible, run forever.
+
+The infrastructure layer is Terraform-managed. Every module is opinionated about deployment shape: LXC for production homelab workloads, Docker on a dedicated VM only when vendor-locked, AWS for disaster recovery and managed services.
+
+## Module map
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+flowchart LR
+  subgraph Onprem["Homelab · Proxmox"]
+    tp(["terraform-proxmox<br/>VMs + LXCs"])
+  end
+
+  subgraph AWS["AWS"]
+    ta(["terraform-aws<br/>Splunk DR"])
+    tab(["terraform-aws-bedrock<br/>Bedrock agents"])
+    tasw(["terraform-aws-static-website<br/>jacobpevans.com"])
+    tro(["terraform-runs-on<br/>spot runners"])
+    tsa(["tf-splunk-aws<br/>Splunk on AWS"])
+  end
+
+  Onprem ==>|targets| Ansible(["Ansible playbooks"])
+  AWS ==>|targets| Ansible
+
+  style tp fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style ta fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tab fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tasw fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tro fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tsa fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Ansible fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
+```
+
+## Repos in this section
+
+| Repo | What it does |
+| --- | --- |
+| [terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) | Provisions VMs and LXC containers on the Proxmox cluster. The base layer everything sits on. |
+| [terraform-aws](https://github.com/JacobPEvans/terraform-aws) | AWS disaster-recovery footprint for Splunk failover. Cold infrastructure ready to go warm. |
+| [terraform-aws-bedrock](https://github.com/JacobPEvans/terraform-aws-bedrock) | AWS Bedrock agents and supporting resources. Backend for the AI assistant API. |
+| [terraform-aws-static-website](https://github.com/JacobPEvans/terraform-aws-static-website) | CloudFront / S3 / Route 53 stack. Hosts `jacobpevans.com`. |
+| [terraform-runs-on](https://github.com/JacobPEvans/terraform-runs-on) | Self-hosted GitHub Actions runners on EC2 spot instances. |
+| [tf-splunk-aws](https://github.com/JacobPEvans/tf-splunk-aws) | Cost-optimized Splunk deployment on AWS — smaller indexer tier for the DR scenario. |
+
+## Deployment philosophy
+
+LXC is the default for production homelab services. Native packages where possible. Docker only when a vendor ships Docker-only images and there's no native path — and only on a dedicated `docker-host` VM so high-volume network traffic never crosses Docker's virtualized network stack.
+
+For provisioning details, see [terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox). For configuration, see [Configuration](/configuration/overview).
+
+## What's next
+
+Phase B will expand each module into its own page with inputs, outputs, and a runbook. For now, each repo's `README.md` covers deployment specifics.

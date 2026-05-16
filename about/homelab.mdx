@@ -1,0 +1,90 @@
+---
+title: "Homelab"
+description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl — all managed with Terraform, Ansible, and Nix."
+---
+
+> The goal: fault-tolerant infrastructure I can rebuild from a single `nix build`.
+
+The homelab is a real production environment, just for one person. Proxmox cluster on bare metal, UniFi networking, Splunk indexers, Cribl Edge collectors, Home Assistant, a docker-host VM for the necessary evil of vendor-locked containers.
+
+## Topology
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+flowchart TB
+  subgraph WAN["External"]
+    Internet(["Internet"])
+    Cloud(["AWS DR · Bedrock · S3"])
+  end
+
+  subgraph Net["Networking"]
+    UniFi(["UniFi gateway + switches + APs"])
+  end
+
+  subgraph PVE["Proxmox cluster"]
+    direction LR
+    HA(["HAProxy LXC"])
+    CribE(["Cribl Edge LXCs"])
+    Splunk[("Splunk indexer + SH")]
+    HAss(["Home Assistant LXC"])
+    Docker(["docker-host VM<br/>vendor-only images"])
+  end
+
+  subgraph Edge["Personal devices"]
+    Mac(["Mac · nix-darwin"])
+    Phone(["Phone · HA app"])
+  end
+
+  Internet -- WireGuard --> UniFi
+  UniFi --> PVE
+  UniFi --> Mac
+  UniFi --> Phone
+  PVE -. metrics + logs .-> Splunk
+  Splunk -. DR replication .-> Cloud
+  HA <--> CribE
+  CribE --> Splunk
+  Docker --> Splunk
+
+  style UniFi fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style HA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style CribE fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  style HAss fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Docker fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Mac fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Phone fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Internet fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Cloud fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
+```
+
+## Container philosophy
+
+LXC by default. Native packages where possible. Docker is the exception — high-volume network traffic must never cross Docker's virtualized networking. The decision tree:
+
+1. Vendor ships Docker-only image with no native path → Docker on the dedicated `docker-host` VM. Documented exception at the top of the repo's `CLAUDE.md`.
+2. Single binary or native package → LXC + Ansible role.
+3. CI/automation → Docker on the docker-host VM, isolated `ci_runners` network.
+4. Dev / test → Docker on the docker-host VM, Swarm overlay.
+
+## What runs where
+
+| Workload | Where | Why |
+| --- | --- | --- |
+| Proxmox host | Bare metal | Hypervisor |
+| HAProxy | LXC | Lightweight, native systemd unit |
+| Cribl Edge | LXC | Native package, network-heavy |
+| Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
+| Home Assistant | LXC | Native install via supervised path |
+| docker-host | VM | Isolated landing pad for vendor Docker images |
+| GitHub Actions runners | Docker on docker-host | Ephemeral container-per-job, isolated `ci_runners` network |
+| Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
+
+## Provisioning + configuration
+
+[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top.
+
+## DR plan
+
+[terraform-aws](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change; the dashboards in [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) keep working because they target the same indexes.

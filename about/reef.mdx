@@ -1,0 +1,30 @@
+---
+title: "Reef"
+description: "Saltwater reef tank in the living room. The fish have better SLOs than most production systems."
+---
+
+> Same reproducibility goals as the homelab. Just with corals.
+
+A 75-gallon saltwater reef anchors the living room, with a couple of freshwater tanks for variety. Clownfish, corals, a pistol shrimp, soft corals colonizing the rockwork. Custom LED lighting on a schedule, automated wave-makers, dosing pumps, an auto top-off — the same "build it once, watch it forever" instinct that runs the homelab.
+
+## Stack (figurative)
+
+- **Display**: 75-gallon mixed reef. Live rock aquascape with planned coral growth zones.
+- **Sump**: protein skimmer, refugium chamber with chaeto, return pump.
+- **Lighting**: programmable LEDs on a sunrise/sunset schedule.
+- **Flow**: paired powerheads with offset gyre patterns.
+- **Automation**: dosing pumps for two-part calcium and alkalinity; auto top-off compensating for evaporation; temperature alarm hard-wired to Home Assistant.
+
+## Monitoring
+
+Temperature, pH, and salinity flow through the same observability stack as everything else. Out-of-range readings trip Home Assistant automations and ping the phone. The pistol shrimp does not have alerting yet.
+
+The freshwater tanks are simpler — planted, low-tech, no dosing — but on the same monitoring schedule. Skimping on automation for "easy" tanks is how you discover an iron leak at 3 AM.
+
+## Travel SLO
+
+The reef can go ~10 days unattended thanks to dosing + ATO automation, but the SLO is "minimize manual interventions" not "fully hands-off." Friends with feeding instructions cover the food layer; the rest holds itself.
+
+## Why a section on this site
+
+The brand voice is technical *and* personal. Homelab and reef are both monitored. Both follow the same "infrastructure as code" instincts even when the code is a feeding schedule. If you found this site through AI tooling content and stayed for the corals: good.
