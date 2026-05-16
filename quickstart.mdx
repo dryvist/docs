@@ -1,0 +1,75 @@
+---
+title: "Quick Setup: Clone and Run a JacobPEvans Project Fast"
+description: "Clone, install dependencies, configure your environment, and run a JacobPEvans project for the first time with this step-by-step setup guide."
+---
+
+This guide walks you through everything you need to go from zero to a working local environment. You will clone the repository, install dependencies, apply any required configuration, and run the project. The steps below apply to most projects in this portfolio — check the repository's own `README.md` for any project-specific differences.
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed on your machine:
+
+- **Git** — to clone the repository. [Download Git](https://git-scm.com/downloads)
+- **Node.js** (v18 or later) or the runtime required by the specific project
+- A terminal and a code editor of your choice
+
+<Tip>
+  If you are unsure which runtime a project requires, check the repository root for a `.nvmrc`, `pyproject.toml`, or similar version-lock file.
+</Tip>
+
+## Set up the project
+
+<Steps>
+  <Step title="Clone the repository">
+    Navigate to the directory where you want to store the project, then clone it from GitHub.
+
+    ```bash
+    git clone https://github.com/JacobPEvans/<repository-name>.git
+    cd <repository-name>
+    ```
+
+    Replace `<repository-name>` with the name of the specific project you want to set up.
+  </Step>
+
+  <Step title="Install dependencies">
+    Install the project's dependencies using the package manager specified in the repository. For most Node.js projects, run:
+
+    ```bash
+    npm install
+    ```
+
+    If the project uses a different package manager, the repository `README.md` will specify the correct command (for example, `pip install -r requirements.txt` for Python projects).
+  </Step>
+
+  <Step title="Configure your environment">
+    Copy the example environment file and fill in any required values.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Open `.env` in your editor and update any placeholders. Required variables are typically documented in the repository's `README.md` or the [Configuration guide](/guides/configuration).
+
+    <Note>
+      Never commit your `.env` file to version control. The `.gitignore` in each project should already exclude it, but double-check before pushing.
+    </Note>
+  </Step>
+
+  <Step title="Run the project">
+    Start the project with the development command for the repository. For most projects, this is:
+
+    ```bash
+    npm run dev
+    ```
+
+    Once the process starts, the terminal will show the local URL or output location where you can interact with the project.
+  </Step>
+</Steps>
+
+## Next steps
+
+Now that your environment is running, explore the rest of the documentation to go deeper:
+
+- [Guides overview](/guides/overview) — practical walkthroughs for common tasks and workflows
+- [Configuration](/guides/configuration) — learn how to customize the project for your environment
+- [FAQ](/reference/faq) — solutions to common setup and usage questions

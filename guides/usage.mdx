@@ -1,0 +1,104 @@
+---
+title: 'Usage Guide: Run Commands and Work with Projects Daily'
+description: 'Learn common workflows for JacobPEvans: running commands, interpreting output, getting the most from the project, and finding help when you need it.'
+---
+
+Once your environment is configured, you interact with the project through a small set of commands that cover the most common workflows. This guide explains those commands, shows you what to expect from the output, and shares tips for staying productive.
+
+## Core workflows
+
+<Steps>
+  <Step title="Start the development server">
+    Run the following command from the project root to start the local development server:
+
+    ```bash
+    npm run dev
+    ```
+
+    The server starts on the port defined in your config file (default `3000`). You should see output similar to:
+
+    ```
+    [info] Environment: development
+    [info] Server listening on http://localhost:3000
+    [info] Watching for file changes...
+    ```
+
+    The server automatically reloads when you save changes to source files.
+  </Step>
+
+  <Step title="Run the build">
+    To produce a production-ready build, run:
+
+    ```bash
+    npm run build
+    ```
+
+    Output files are written to the directory specified by `paths.output_dir` in your config (default `./dist`). The build command exits with status `0` on success and prints a summary of generated files and their sizes.
+  </Step>
+
+  <Step title="Run tests">
+    Execute the full test suite with:
+
+    ```bash
+    npm test
+    ```
+
+    To run only a specific test file or pattern, pass a filter argument:
+
+    ```bash
+    npm test -- --grep "authentication"
+    ```
+
+    Test results are printed to stdout. A failing test exits the process with a non-zero status code, which is useful for CI integration.
+  </Step>
+
+  <Step title="Check project health">
+    Run the health check command to verify that all dependencies are reachable and configuration is valid:
+
+    ```bash
+    npm run health
+    ```
+
+    Each check is listed with a `pass` or `fail` result. If any check fails, the command prints a description of the problem and a suggested fix.
+  </Step>
+</Steps>
+
+## Interpreting command output
+
+Most commands emit structured log lines with a level prefix (`[debug]`, `[info]`, `[warn]`, `[error]`). In development, output is formatted for readability. In production, logs are emitted as JSON for consumption by log aggregators.
+
+If you see `[warn]` messages, the project is still running but something may need attention. If you see `[error]` messages, check the details printed on the line — they include an error code and a short description of what went wrong.
+
+## Useful flags
+
+| Flag | Description |
+|---|---|
+| `--verbose` | Increase log output to `debug` level for the current run |
+| `--dry-run` | Preview what a command would do without executing any writes |
+| `--config <path>` | Load a config file from a custom path instead of the default |
+| `--no-color` | Disable colored terminal output |
+
+Example using multiple flags:
+
+```bash
+npm run build -- --verbose --dry-run
+```
+
+<Tip>
+  Use `--dry-run` before running any command that writes files or makes network calls. It lets you confirm exactly what the command will do without side effects, which is especially valuable when deploying to production or running batch operations.
+</Tip>
+
+## Getting help
+
+View the built-in help for any command by passing `--help`:
+
+```bash
+npm run dev -- --help
+npm run build -- --help
+```
+
+If you encounter an unexpected error:
+
+1. Check the project's [configuration guide](/guides/configuration) to rule out misconfiguration.
+2. Search existing issues on the [GitHub repository](https://github.com/JacobPEvans) for similar reports.
+3. Open a new issue if yours has not been reported. Include the command you ran, the full terminal output, your Node.js version (`node --version`), and your operating system.

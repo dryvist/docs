@@ -1,0 +1,51 @@
+---
+title: Changelog — JacobPEvans Projects Release History
+description: A running history of releases, breaking changes, new features, and bug fixes across JacobPEvans projects, newest entries listed first.
+---
+
+This changelog records notable changes to the project over time. Each entry is grouped by version number and includes a release date, a summary of what changed, and any action you need to take when upgrading. Entries are listed in reverse chronological order so the latest changes are always at the top.
+
+---
+
+## v1.0.0
+
+**Released:** 2026-04-18
+
+This is the initial public release. It establishes the core foundation of the project and includes everything you need to get started.
+
+### Added
+
+- Initial project scaffold with recommended directory structure and configuration defaults.
+- Core feature set covering the primary use case documented in the README.
+- Environment-based configuration supporting `development`, `staging`, and `production` modes.
+- Runtime override support via environment variables using the `APP_` prefix.
+- Built-in configuration validation command (`npm run config:validate`).
+- Built-in health check command (`npm run health`) to verify dependencies and configuration.
+- MIT license.
+
+### Notes for new users
+
+Because this is the first release, there are no migration steps. Follow the [Getting Started](/reference/faq#how-do-i-get-started-with-a-project) instructions in the FAQ to set up your environment and run the project for the first time.
+
+---
+
+## How to read this changelog
+
+Each version entry uses the following sections where applicable:
+
+| Section | What it covers |
+|---|---|
+| **Added** | New features or capabilities that did not exist before. |
+| **Changed** | Modifications to existing behavior that are backward-compatible. |
+| **Deprecated** | Features that still work but are scheduled for removal in a future release. |
+| **Removed** | Features that have been deleted and are no longer available. |
+| **Fixed** | Bug fixes and corrections to unintended behavior. |
+| **Security** | Patches for vulnerabilities — update promptly when you see these. |
+
+This format follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) convention and uses [Semantic Versioning](https://semver.org/).
+
+---
+
+<Note>
+  **Stay notified of new releases.** On GitHub, click **Watch → Custom → Releases** on the repository page. You will receive an email each time a new version is published without being notified of every issue comment and pull request activity.
+</Note>

@@ -1,0 +1,47 @@
+{
+  "projectType": "general",
+  "projectName": "JacobPEvans",
+  "projectDescription": "Developer documentation and project guides for Jacob P. Evans.",
+  "theme": "luma",
+  "primaryColor": "#848c8e",
+  "lightColor": "#11161e",
+  "darkColor": "#cfd0d2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/overview",
+              "guides/configuration",
+              "guides/usage"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/faq",
+              "reference/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Developer projects and open source contributions",
+    "Step-by-step setup and usage guides",
+    "Configuration reference",
+    "Frequently asked questions"
+  ],
+  "publicApiSurface": []
+}

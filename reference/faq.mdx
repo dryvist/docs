@@ -1,0 +1,70 @@
+---
+title: Frequently Asked Questions — JacobPEvans Projects
+description: Answers to common questions about getting started, finding docs, reporting bugs, and staying up to date with JacobPEvans projects.
+---
+
+Whether you are exploring a project for the first time or running into an unexpected issue, this page covers the most common questions developers ask. If your question is not answered here, feel free to open a discussion or issue on the relevant GitHub repository.
+
+<AccordionGroup>
+  <Accordion title="How do I get started with a project?">
+    Each project in this portfolio includes a `README.md` at the root of its repository. Start there — it outlines prerequisites, installation steps, and a quick-start example to get you up and running in minutes.
+
+    As a general pattern, most projects follow these steps:
+
+    1. Clone the repository: `git clone https://github.com/JacobPEvans/<repo-name>.git`
+    2. Install dependencies (e.g., `npm install`, `pip install -r requirements.txt`, or the equivalent for the project's stack).
+    3. Copy any example environment files (e.g., `.env.example` → `.env`) and fill in required values.
+    4. Run the development server or entry point as described in the README.
+
+    If the README is missing a step that tripped you up, please open an issue so it can be improved for everyone.
+  </Accordion>
+
+  <Accordion title="Where can I find documentation for a specific feature?">
+    Documentation for individual features lives in a few places depending on the project:
+
+    - **This docs site** — browse the sidebar for guides, API references, and concept pages.
+    - **Inline code comments** — complex logic is annotated directly in the source code.
+    - **Repository wiki** — some repositories use GitHub's built-in wiki for longer-form guides.
+
+    Use the search bar at the top of this site to quickly locate a topic by keyword. If you cannot find what you need, open a documentation issue on GitHub and describe what you were looking for.
+  </Accordion>
+
+  <Accordion title="How do I report a bug or request a feature?">
+    You can report bugs and submit feature requests through GitHub Issues on the relevant repository.
+
+    **To report a bug:**
+    1. Search existing issues first to avoid duplicates.
+    2. Open a new issue and select the **Bug Report** template.
+    3. Include a clear description, steps to reproduce, expected behavior, actual behavior, and your environment details (OS, runtime version, etc.).
+
+    **To request a feature:**
+    1. Open a new issue and select the **Feature Request** template.
+    2. Describe the problem you are trying to solve and why the current behavior does not address it.
+    3. Optionally, suggest an implementation approach.
+
+    Clear, detailed reports get resolved faster. The more context you provide, the better.
+  </Accordion>
+
+  <Accordion title="What should I do if something isn't working?">
+    If you run into an unexpected error or broken behavior, work through these steps before opening an issue:
+
+    1. **Check the README and docs** — confirm you followed the setup instructions exactly.
+    2. **Pull the latest changes** — the issue may already be fixed on `main`.
+    3. **Clear caches and reinstall dependencies** — stale build artifacts or lockfile mismatches cause many hard-to-diagnose problems.
+    4. **Search open and closed issues** — someone else may have encountered the same problem.
+    5. **Check your environment** — verify your runtime version matches the project's requirements.
+
+    If none of these resolve the problem, open a bug report with as much detail as possible, including any error messages, logs, and a minimal reproduction case.
+  </Accordion>
+
+  <Accordion title="How do I stay updated on new releases?">
+    You have a few options for keeping up with new releases and project changes:
+
+    - **Watch the repository on GitHub** — click **Watch → Custom → Releases** to receive email notifications for new releases only, without being notified of every issue and pull request.
+    - **Star the repository** — this adds it to your starred list for easy reference and signals interest to the maintainer.
+    - **Follow on GitHub** — following the [JacobPEvans](https://github.com/JacobPEvans) profile surfaces public activity in your GitHub feed.
+    - **Check this changelog** — the [Changelog](/reference/changelog) page in this docs site is updated alongside each release.
+
+    Subscribing to releases is the lowest-noise option if you only want to know when a new version ships.
+  </Accordion>
+</AccordionGroup>
