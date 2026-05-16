@@ -1,0 +1,95 @@
+---
+title: "Observability"
+description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by the VisiCore apps."
+---
+
+> If an AI agent touched code, there's a trace.
+
+Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. The VisiCore apps make it readable.
+
+## AI telemetry pipeline
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  subgraph Tools["AI coding tools"]
+    Claude[Claude Code]
+    Copilot[GitHub Copilot]
+    Gemini[Gemini CLI]
+    VSCode[VS Code]
+  end
+
+  subgraph Collect["Cribl Edge collectors"]
+    cco[cc-edge-claude-code-otel]
+    ccp[cc-edge-copilot-otel]
+    ccv[cc-edge-vscode-io]
+    cag[cc-edge-gemini-antigravity-io]
+  end
+
+  subgraph Route["Cribl Stream"]
+    Stream[Routes · transforms · reduces]
+  end
+
+  subgraph Store["Splunk Enterprise"]
+    HEC[HEC :8088]
+    Index[(Indexer)]
+  end
+
+  subgraph View["VisiCore apps"]
+    App[Dashboard Studio v2]
+    TA[Knowledge objects + CIM]
+  end
+
+  Claude --> cco --> Stream
+  Copilot --> ccp --> Stream
+  VSCode --> ccv --> Stream
+  Gemini --> cag --> Stream
+  Stream --> HEC --> Index --> App
+  Index --> TA
+
+  style Claude fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style Copilot fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style Gemini fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style VSCode fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style cco fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style ccp fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style ccv fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style cag fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style Stream fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style HEC fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
+  style Index fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
+  style App fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style TA fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+```
+
+## Splunk apps
+
+| Repo | What it does |
+| --- | --- |
+| [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Dashboard Studio v2 dashboards. Cost, usage, performance per model, per project, per developer. |
+| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Technology add-on. Field aliases, CIM mappings, lookups, search-time transforms. |
+
+## Cribl Edge packs (collectors)
+
+| Repo | Collects from |
+| --- | --- |
+| [cc-edge-claude-code-otel](https://github.com/JacobPEvans/cc-edge-claude-code-otel) | Claude Code (OTEL hooks) |
+| [cc-edge-copilot-otel](https://github.com/JacobPEvans/cc-edge-copilot-otel) | GitHub Copilot Chat (OTLP gRPC) |
+| [cc-edge-vscode-io](https://github.com/JacobPEvans/cc-edge-vscode-io) | VS Code (logs + telemetry) |
+| [cc-edge-gemini-antigravity-io](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini Antigravity |
+| [cc-edge-the-mac-pack-io](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io) | macOS system health (auxiliary signal) |
+| [cc-edge-macos-system](https://github.com/JacobPEvans/cc-edge-macos-system) | macOS-native system events |
+
+## Cribl Stream collectors
+
+| Repo | What it does |
+| --- | --- |
+| [cc-stream-github-copilot-rest-io](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics via REST API. Per-org / per-seat usage data. |
+
+## Why per-tool packs
+
+Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) is where the normalization happens.
+
+## What's next
+
+Phase B will expand each pack into its own page with the field map, sample event, and dashboard screenshots. For now, each repo's `README.md` documents the collection details.

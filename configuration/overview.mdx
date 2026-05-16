@@ -1,0 +1,39 @@
+---
+title: "Configuration"
+description: "Ansible playbooks for Proxmox host setup, application stack on VMs and LXCs, and Splunk Enterprise."
+---
+
+> Terraform builds the box. Ansible makes it useful.
+
+Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host itself, the application stack on top, and Splunk Enterprise as a separate concern because of its scale and uptime requirements.
+
+## Role map
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  TF["terraform-proxmox<br/>VMs + LXCs"] --> AP["ansible-proxmox<br/>host config<br/>ZFS · networking · users"]
+  TF --> APA["ansible-proxmox-apps<br/>HAProxy · Cribl Edge<br/>Cribl Stream"]
+  TF --> AS["ansible-splunk<br/>Splunk Enterprise<br/>indexers + search heads"]
+
+  style TF fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
+  style AP fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style APA fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style AS fill:#102937,stroke:#E06B4A,color:#F4EFE6
+```
+
+## Repos in this section
+
+| Repo | What it does |
+| --- | --- |
+| [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) | Configures the Proxmox host: ZFS, swap, networking, users, hardening. Run once per host. |
+| [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | Configures the application stack on VMs and LXCs: HAProxy, Cribl Edge, Cribl Stream, supporting services. |
+| [ansible-splunk](https://github.com/JacobPEvans/ansible-splunk) | Deploys and configures Splunk Enterprise on its own dedicated nodes. Indexers, search heads, license. |
+
+## Secrets
+
+Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` resolves project-specific secrets at run time; nothing sensitive lands in git.
+
+## What's next
+
+Phase B will expand each playbook into its own page with the role list, variables, and a "first run" runbook. For now, each repo's `README.md` covers inventory and execution.

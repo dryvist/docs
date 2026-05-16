@@ -1,0 +1,62 @@
+---
+title: "Nix Ecosystem"
+description: "Four flakes, one goal: rebuild every part of the dev environment from a single command."
+---
+
+> Reproducible everything. `nix build` and walk away.
+
+The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and orchestrates the macOS system. `nix-home` defines the user environment via home-manager. `nix-ai` packages every AI coding tool — Claude, Gemini, Copilot, MLX, MCP servers. `nix-devenv` provides reusable project-level dev shells.
+
+## Ecosystem
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart TB
+  subgraph System["macOS system layer"]
+    ND[nix-darwin<br/>environment.systemPackages<br/>system-level config]
+  end
+
+  subgraph User["User environment"]
+    NH[nix-home<br/>home.packages<br/>programs.* config]
+    NA[nix-ai<br/>AI tooling<br/>MCP servers]
+  end
+
+  subgraph Per_Project["Per-project dev shells"]
+    NDV[nix-devenv<br/>reusable shells<br/>terraform · ansible · k8s]
+  end
+
+  ND -.imports.-> NH
+  ND -.imports.-> NA
+  NH -.uses.-> NA
+  NDV -.entered via direnv.-> Each["each repo's flake.nix"]
+
+  style ND fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
+  style NH fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style NA fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style NDV fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Each fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
+```
+
+## Package placement
+
+The boundary between system, user, and project is intentional:
+
+- `environment.systemPackages` (nix-darwin) — core bootstrap, macOS-only tools, GUI apps
+- `home.packages` (nix-home) — user dev tools, linters, CLIs that follow `$HOME`
+- AI packages (nix-ai) — Claude, Gemini, Copilot, MLX, MCP servers
+- Project dev shells (nix-devenv) — language- or stack-specific tooling that should not pollute the global PATH
+
+`programs.*` declarations follow the same boundary; home-manager merges both layers cleanly.
+
+## Repos in this section
+
+| Repo | What it does |
+| --- | --- |
+| [nix-darwin](https://github.com/JacobPEvans/nix-darwin) | macOS system config. Imports nix-ai and nix-home. The top-level entry point. |
+| [nix-ai](https://github.com/JacobPEvans/nix-ai) | Every AI coding tool, packaged. Claude Code, Gemini CLI, Copilot, MLX modules, MCP server configs. |
+| [nix-home](https://github.com/JacobPEvans/nix-home) | User dev environment via home-manager. Shell, editor, git, dev tools. |
+| [nix-devenv](https://github.com/JacobPEvans/nix-devenv) | Reusable per-project dev shells. `nix flake init -t github:JacobPEvans/nix-devenv#mkshell` bootstraps. |
+
+## Why four repos, not one
+
+Each layer is independently useful. `nix-devenv` is consumed by every other repo in the portfolio via `nix flake init`. `nix-ai` is consumed by personal config and by team setups. Splitting them keeps the dependency graph clean and lets each layer iterate at its own pace.

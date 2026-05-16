@@ -1,0 +1,67 @@
+---
+title: "Data pipelines"
+description: "Log and NetFlow ingest paths: UniFi gear and network devices to Splunk indexers, via HAProxy and Cribl Edge."
+---
+
+Two pipelines move data from the homelab edge to Splunk. The architecture is intentional: HAProxy load-balances toward Cribl Edge, which routes, transforms, and reduces volume before forwarding to Splunk over HEC.
+
+The goal: 30–50% ingest reduction without losing security signal.
+
+## Log pipeline
+
+UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  UniFi(("UniFi gear<br/>syslog:1514")) --> HAProxy["HAProxy<br/>tcp/1514"]
+  HAProxy --> Edge1["Cribl Edge A<br/>tcp/1514"]
+  HAProxy --> Edge2["Cribl Edge B<br/>tcp/1514"]
+  Edge1 --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
+  Edge2 --> Splunk
+
+  style UniFi fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
+  style HAProxy fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style Edge1 fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Edge2 fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Splunk fill:#2F7E78,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+```
+
+The Cribl pipeline at the Edge tier does the heavy lifting — drop verbose metric fields, route by event_type, enrich, mask. The Splunk indexers receive a smaller, cleaner stream.
+
+## NetFlow pipeline
+
+NetFlow v9 / IPFIX from network devices follows the same shape, on a different port.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Net(("Network devices<br/>NetFlow udp/2055")) --> HA["HAProxy<br/>udp/2055"]
+  HA --> EA["Cribl Edge A<br/>udp/2055"]
+  HA --> EB["Cribl Edge B<br/>udp/2055"]
+  EA --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
+  EB --> Splunk
+
+  style Net fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
+  style HA fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style EA fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style EB fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Splunk fill:#2F7E78,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+```
+
+UDP NetFlow is loss-tolerant by design, so the HAProxy layer is more about distribution than failover. The Cribl pipelines de-duplicate, parse the flow records, and aggregate by tuple before forwarding.
+
+## What lives where
+
+| Layer | Provisioned by | Configured by | Source repo |
+| --- | --- | --- | --- |
+| Proxmox host / VMs / LXCs | [terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) | [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) | both |
+| HAProxy | (Ansible role) | [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | apps repo |
+| Cribl Edge | (Ansible role) | [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | apps repo |
+| Splunk Enterprise | (manual / Ansible) | [ansible-splunk](https://github.com/JacobPEvans/ansible-splunk) | splunk repo |
+| Cribl pipelines | (manual / Cribl pack) | [cc-edge-* packs](https://github.com/JacobPEvans?tab=repositories&q=cc-edge) | pack repos |
+| Splunk knowledge objects | n/a | [VisiCore TA](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | TA repo |
+
+## DR posture
+
+Splunk Cloud failover is provisioned via [terraform-aws](https://github.com/JacobPEvans/terraform-aws) — AWS resources (EC2, S3, Route 53) that come up cold and accept the same HEC traffic if the home cluster is offline. Cribl Edge routes can be flipped to point at the AWS endpoint with a single config change.

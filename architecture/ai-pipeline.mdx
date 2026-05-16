@@ -1,0 +1,70 @@
+---
+title: "AI development pipeline"
+description: "Humans set direction. AI agents handle the rest. Automation runs the boring parts. A human gives the final sign-off."
+---
+
+The goal: file a GitHub Issue, grab coffee, come back to a PR that's been implemented, tested, and reviewed by multiple AI models — just waiting for a thumbs up. Not fully there yet, but close enough to be dangerous.
+
+Humans decide *what* to build. AI agents handle the *how*. Automation runs the boring parts. A human gives the final sign-off. Claude, Gemini, Copilot, and local MLX models each do what they're best at — the right model for the right job instead of throwing everything at one.
+
+## The pipeline
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  subgraph Human["Human"]
+    direction TB
+    H1["Roadmap"]
+    H2["GitHub Issues"]
+    H3["PR review"]
+  end
+  subgraph AI["AI Agents"]
+    direction TB
+    A1["Claude / Gemini / Copilot"]
+    A2["Code"]
+    A3["AI code review"]
+  end
+  subgraph Auto["Automation"]
+    direction TB
+    T1["CI / testing"]
+    T2["Lint & validate"]
+    T3["Ship it"]
+  end
+  H1 --> H2 --> A1 --> A2 --> T1 --> T2 --> A3 --> H3 --> T3
+
+  style H1 fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style H2 fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style H3 fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
+  style A1 fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style A2 fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style A3 fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style T1 fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style T2 fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style T3 fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+```
+
+## The model-routing philosophy
+
+Every model has a sweet spot:
+
+- **Claude** — best at multi-file refactors, deep reasoning, agentic loops. The default for non-trivial implementation work.
+- **Gemini** — great for second opinions, code review, broad context understanding.
+- **GitHub Copilot** — fastest for line-level completions inside the editor. Cheap for high-volume routine work.
+- **Local MLX** — Apple Silicon native inference for typo fixes, quick edits, and "I don't want to burn cloud tokens on this" tasks.
+
+The routing is opinionated, not magic: clear rules in `~/CLAUDE.md` and `AGENTS.md` say *which* model to use *when*.
+
+## Repos that power this pipeline
+
+- [ai-assistant-instructions](https://github.com/JacobPEvans/ai-assistant-instructions) — universal AI configuration layer (rules, permissions, workflows, agents)
+- [claude-code-plugins](https://github.com/JacobPEvans/claude-code-plugins) — commands, skills, hooks, agents for Claude Code
+- [claude-code-routines](https://github.com/JacobPEvans/claude-code-routines) — scheduled remote-agent routines on Claude.ai
+- [ai-workflows](https://github.com/JacobPEvans/ai-workflows) — reusable GitHub Copilot agentic workflows
+- [nix-ai](https://github.com/JacobPEvans/nix-ai) — Nix package and config layer for every AI coding tool
+- [raycast-smart-issue](https://github.com/JacobPEvans/raycast-smart-issue) — Raycast extension for AI-drafted GitHub issues via local MLX
+
+See [AI Development · Overview](/ai-development/overview) for what each one does in detail.
+
+## Observability layer
+
+Every interaction in this pipeline emits OpenTelemetry. The data flows through Cribl Edge, Cribl Stream, and Splunk; the [VisiCore apps](/observability/overview) visualize it. If an AI agent touched code, there's a trace.

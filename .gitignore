@@ -1,0 +1,8 @@
+.direnv/
+.mintlify/
+node_modules/
+.DS_Store
+*.swp
+*.swo
+result
+result-*
