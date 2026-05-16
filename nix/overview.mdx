@@ -10,31 +10,33 @@ The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and o
 ## Ecosystem
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart TB
   subgraph System["macOS system layer"]
-    ND[nix-darwin<br/>environment.systemPackages<br/>system-level config]
+    ND(["nix-darwin<br/>environment.systemPackages<br/>system-level config"])
   end
 
   subgraph User["User environment"]
-    NH[nix-home<br/>home.packages<br/>programs.* config]
-    NA[nix-ai<br/>AI tooling<br/>MCP servers]
+    NH(["nix-home<br/>home.packages<br/>programs.* config"])
+    NA(["nix-ai<br/>AI tooling<br/>MCP servers"])
   end
 
   subgraph Per_Project["Per-project dev shells"]
-    NDV[nix-devenv<br/>reusable shells<br/>terraform · ansible · k8s]
+    NDV(["nix-devenv<br/>reusable shells<br/>terraform · ansible · k8s"])
   end
 
   ND -.imports.-> NH
   ND -.imports.-> NA
   NH -.uses.-> NA
-  NDV -.entered via direnv.-> Each["each repo's flake.nix"]
+  NDV -.entered via direnv.-> Each(["each repo's flake.nix"])
 
-  style ND fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
-  style NH fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style NA fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style NDV fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Each fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
+  style ND fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style NH fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style NA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style NDV fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Each fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Package placement

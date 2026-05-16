@@ -10,30 +10,32 @@ The infrastructure layer is Terraform-managed. Every module is opinionated about
 ## Module map
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Onprem["Homelab · Proxmox"]
-    tp[terraform-proxmox<br/>VMs + LXCs]
+    tp(["terraform-proxmox<br/>VMs + LXCs"])
   end
 
   subgraph AWS["AWS"]
-    ta[terraform-aws<br/>Splunk DR]
-    tab[terraform-aws-bedrock<br/>Bedrock agents]
-    tasw[terraform-aws-static-website<br/>jacobpevans.com]
-    tro[terraform-runs-on<br/>spot runners]
-    tsa[tf-splunk-aws<br/>Splunk on AWS]
+    ta(["terraform-aws<br/>Splunk DR"])
+    tab(["terraform-aws-bedrock<br/>Bedrock agents"])
+    tasw(["terraform-aws-static-website<br/>jacobpevans.com"])
+    tro(["terraform-runs-on<br/>spot runners"])
+    tsa(["tf-splunk-aws<br/>Splunk on AWS"])
   end
 
   Onprem ==>|targets| Ansible(["Ansible playbooks"])
   AWS ==>|targets| Ansible
 
-  style tp fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style ta fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style tab fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style tasw fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style tro fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style tsa fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Ansible fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
+  style tp fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style ta fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tab fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tasw fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tro fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style tsa fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Ansible fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Repos in this section

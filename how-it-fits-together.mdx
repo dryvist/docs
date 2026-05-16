@@ -8,56 +8,56 @@ description: "How dozens of public repositories form a single ecosystem: infrast
 ## The full picture
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart TB
   subgraph Inf["Infrastructure · Terraform"]
     direction LR
-    tp[terraform-proxmox]
-    ta[terraform-aws]
-    tab[terraform-aws-bedrock]
-    tasw[terraform-aws-static-website]
-    tro[terraform-runs-on]
-    tsa[tf-splunk-aws]
+    tp(["terraform-proxmox"])
+    ta(["terraform-aws"])
+    tab(["terraform-aws-bedrock"])
+    tasw(["terraform-aws-static-website"])
+    tro(["terraform-runs-on"])
+    tsa(["tf-splunk-aws"])
   end
 
   subgraph Cfg["Configuration · Ansible"]
     direction LR
-    ap[ansible-proxmox]
-    apa[ansible-proxmox-apps]
-    as[ansible-splunk]
+    ap(["ansible-proxmox"])
+    apa(["ansible-proxmox-apps"])
+    as(["ansible-splunk"])
   end
 
   subgraph Nix["Nix Ecosystem"]
     direction LR
-    nd[nix-darwin]
-    na[nix-ai]
-    nh[nix-home]
-    ndv[nix-devenv]
+    nd(["nix-darwin"])
+    na(["nix-ai"])
+    nh(["nix-home"])
+    ndv(["nix-devenv"])
   end
 
   subgraph AI["AI Development"]
     direction LR
-    aai[ai-assistant-instructions]
-    ccp[claude-code-plugins]
-    ccr[claude-code-routines]
-    aw[ai-workflows]
-    rsi[raycast-smart-issue]
+    aai(["ai-assistant-instructions"])
+    ccp(["claude-code-plugins"])
+    ccr(["claude-code-routines"])
+    aw(["ai-workflows"])
+    rsi(["raycast-smart-issue"])
   end
 
   subgraph Obs["Observability"]
     direction LR
-    vca[VisiCore App]
-    vct[VisiCore TA]
-    cco["cc-edge-* packs"]
-    csg["cc-stream-* collectors"]
+    vca(["VisiCore App"])
+    vct(["VisiCore TA"])
+    cco(["cc-edge-* packs"])
+    csg(["cc-stream-* collectors"])
   end
 
   subgraph Tools["Tools & meta"]
     direction LR
-    mlx[mlx-benchmarks]
-    ok[orbstack-kubernetes]
-    ss[secrets-sync]
-    pt[python-template]
+    mlx(["mlx-benchmarks"])
+    ok(["orbstack-kubernetes"])
+    ss(["secrets-sync"])
+    pt(["python-template"])
   end
 
   Inf -->|provision| Cfg
@@ -65,8 +65,10 @@ flowchart TB
   Nix -->|tooling for| AI
   AI -->|telemetry from| Obs
 
-  classDef cat fill:#102937,stroke:#4FB3A9,stroke-width:1px,color:#F4EFE6;
+  classDef cat fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   class tp,ta,tab,tasw,tro,tsa,ap,apa,as,nd,na,nh,ndv,aai,ccp,ccr,aw,rsi,vca,vct,cco,csg,mlx,ok,ss,pt cat;
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## How each surface depends on the others

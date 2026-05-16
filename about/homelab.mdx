@@ -10,29 +10,29 @@ The homelab is a real production environment, just for one person. Proxmox clust
 ## Topology
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart TB
   subgraph WAN["External"]
-    Internet[Internet]
-    Cloud[AWS DR · Bedrock · S3]
+    Internet(["Internet"])
+    Cloud(["AWS DR · Bedrock · S3"])
   end
 
   subgraph Net["Networking"]
-    UniFi[UniFi gateway + switches + APs]
+    UniFi(["UniFi gateway + switches + APs"])
   end
 
   subgraph PVE["Proxmox cluster"]
     direction LR
-    HA[HAProxy LXC]
-    CribE[Cribl Edge LXCs]
-    Splunk[Splunk indexer + SH]
-    HAss[Home Assistant LXC]
-    Docker[docker-host VM<br/>vendor-only images]
+    HA(["HAProxy LXC"])
+    CribE(["Cribl Edge LXCs"])
+    Splunk[("Splunk indexer + SH")]
+    HAss(["Home Assistant LXC"])
+    Docker(["docker-host VM<br/>vendor-only images"])
   end
 
   subgraph Edge["Personal devices"]
-    Mac[Mac · nix-darwin]
-    Phone[Phone · HA app]
+    Mac(["Mac · nix-darwin"])
+    Phone(["Phone · HA app"])
   end
 
   Internet -- WireGuard --> UniFi
@@ -45,16 +45,18 @@ flowchart TB
   CribE --> Splunk
   Docker --> Splunk
 
-  style UniFi fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
-  style HA fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style CribE fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style Splunk fill:#2F7E78,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style HAss fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Docker fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Mac fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Phone fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Internet fill:#0B1D2A,stroke:#4FB3A9,color:#F4EFE6
-  style Cloud fill:#0B1D2A,stroke:#4FB3A9,color:#F4EFE6
+  style UniFi fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style HA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style CribE fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  style HAss fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Docker fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Mac fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Phone fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Internet fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Cloud fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Container philosophy

@@ -10,14 +10,14 @@ This is the central reference for the public repositories that together form a s
 ## The five surfaces
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'16px'}}}%%
 flowchart LR
   Hub(("Public repos<br/>~40 total"))
-  Inf["Infrastructure<br/>Terraform · Ansible"]
-  Nix["Nix Ecosystem<br/>nix-darwin · nix-ai<br/>nix-home · nix-devenv"]
-  AI["AI Development<br/>Claude · Gemini<br/>Copilot · MLX"]
-  Obs["Observability<br/>Cribl · Splunk<br/>VisiCore · OTEL"]
-  Tools["Dev Tools<br/>Raycast · MLX bench<br/>K8s · scripts"]
+  Inf(["Infrastructure<br/>Terraform · Ansible"])
+  Nix(["Nix Ecosystem<br/>nix-darwin · nix-ai<br/>nix-home · nix-devenv"])
+  AI(["AI Development<br/>Claude · Gemini<br/>Copilot · MLX"])
+  Obs(["Observability<br/>Cribl · Splunk<br/>VisiCore · OTEL"])
+  Tools(["Dev Tools<br/>Raycast · MLX bench<br/>K8s · scripts"])
 
   Hub --> Inf
   Hub --> Nix
@@ -25,12 +25,14 @@ flowchart LR
   Hub --> Obs
   Hub --> Tools
 
-  style Hub fill:#4FB3A9,stroke:#2F7E78,stroke-width:3px,color:#F4EFE6
-  style Inf fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Nix fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style AI fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Obs fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style Tools fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Hub fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style Inf fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Nix fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style AI fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Obs fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Tools fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Where to start

@@ -10,16 +10,18 @@ Three Ansible repos cover everything that runs on the provisioned infrastructure
 ## Role map
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
-  TF["terraform-proxmox<br/>VMs + LXCs"] --> AP["ansible-proxmox<br/>host config<br/>ZFS · networking · users"]
-  TF --> APA["ansible-proxmox-apps<br/>HAProxy · Cribl Edge<br/>Cribl Stream"]
-  TF --> AS["ansible-splunk<br/>Splunk Enterprise<br/>indexers + search heads"]
+  TF(["terraform-proxmox<br/>VMs + LXCs"]) --> AP(["ansible-proxmox<br/>host config<br/>ZFS · networking · users"])
+  TF --> APA(["ansible-proxmox-apps<br/>HAProxy · Cribl Edge<br/>Cribl Stream"])
+  TF --> AS(["ansible-splunk<br/>Splunk Enterprise<br/>indexers + search heads"])
 
-  style TF fill:#4FB3A9,stroke:#2F7E78,stroke-width:2px,color:#F4EFE6
-  style AP fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style APA fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style AS fill:#102937,stroke:#E06B4A,color:#F4EFE6
+  style TF fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
+  style AP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style APA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style AS fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Repos in this section

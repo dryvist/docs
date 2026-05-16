@@ -10,34 +10,34 @@ Every AI coding interaction emits OpenTelemetry — IDE events, model calls, tok
 ## AI telemetry pipeline
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Tools["AI coding tools"]
-    Claude[Claude Code]
-    Copilot[GitHub Copilot]
-    Gemini[Gemini CLI]
-    VSCode[VS Code]
+    Claude(["Claude Code"])
+    Copilot(["GitHub Copilot"])
+    Gemini(["Gemini CLI"])
+    VSCode(["VS Code"])
   end
 
   subgraph Collect["Cribl Edge collectors"]
-    cco[cc-edge-claude-code-otel]
-    ccp[cc-edge-copilot-otel]
-    ccv[cc-edge-vscode-io]
-    cag[cc-edge-gemini-antigravity-io]
+    cco(["cc-edge-claude-code-otel"])
+    ccp(["cc-edge-copilot-otel"])
+    ccv(["cc-edge-vscode-io"])
+    cag(["cc-edge-gemini-antigravity-io"])
   end
 
   subgraph Route["Cribl Stream"]
-    Stream[Routes · transforms · reduces]
+    Stream(["Routes · transforms · reduces"])
   end
 
   subgraph Store["Splunk Enterprise"]
-    HEC[HEC :8088]
-    Index[(Indexer)]
+    HEC(["HEC :8088"])
+    Index[("Indexer")]
   end
 
   subgraph View["VisiCore apps"]
-    App[Dashboard Studio v2]
-    TA[Knowledge objects + CIM]
+    App(["Dashboard Studio v2"])
+    TA(["Knowledge objects + CIM"])
   end
 
   Claude --> cco --> Stream
@@ -47,19 +47,21 @@ flowchart LR
   Stream --> HEC --> Index --> App
   Index --> TA
 
-  style Claude fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
-  style Copilot fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
-  style Gemini fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
-  style VSCode fill:#4FB3A9,stroke:#2F7E78,color:#F4EFE6
-  style cco fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style ccp fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style ccv fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style cag fill:#102937,stroke:#E06B4A,color:#F4EFE6
-  style Stream fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style HEC fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
-  style Index fill:#2F7E78,stroke:#4FB3A9,color:#F4EFE6
-  style App fill:#102937,stroke:#4FB3A9,color:#F4EFE6
-  style TA fill:#102937,stroke:#4FB3A9,color:#F4EFE6
+  style Claude fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Copilot fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Gemini fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style VSCode fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style cco fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style ccp fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style ccv fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style cag fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
+  style Stream fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style HEC fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style Index fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  style App fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style TA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
 
 ## Splunk apps
