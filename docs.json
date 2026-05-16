@@ -5,8 +5,8 @@
   "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
   "colors": {
     "primary": "#4FB3A9",
-    "light": "#4FB3A9",
-    "dark": "#2F7E78"
+    "light": "#2F7E78",
+    "dark": "#4FB3A9"
   },
   "background": {
     "decoration": "grid",
