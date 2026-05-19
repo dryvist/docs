@@ -56,16 +56,41 @@ For each repo, the expected path is `<group-prefix><repo-name>.mdx`. If the file
 
 For each queued repo, copy `template-repo-page.mdx` and replace the marked placeholders:
 
-| Placeholder | Source |
+Every token in `template-repo-page.mdx` must be replaced. The table below lists them all, grouped by source.
+
+**Auto-filled from `gh repo list` output:**
+
+| Placeholder | How filled |
 | --- | --- |
-| `REPO_NAME` | repo `name` |
-| `REPO_DESCRIPTION` | repo `description`; if empty, ask before scaffolding |
+| `REPO_NAME` | `name` field |
+| `REPO_DESCRIPTION` | `description` field; if empty, ask before scaffolding |
 | `REPO_LANGUAGE` | `primaryLanguage.name` |
-| `REPO_STATUS` | `"active"` (default), `"archived"`, or `"experimental"` based on topics |
-| `REPO_LAST_ACTIVE` | relative time from `pushedAt` (e.g., `"this week"`) |
-| `REPO_URL` | repo `url` |
-| `REPO_TAGLINE` | one-line summary derived from description (cap 12 words) |
-| `RELATED_REPOS` | up to 3 sibling repos in the same sidebar group, plus the group overview page |
+| `REPO_STATUS` | `"active"` (default), `"archived"` (`isArchived: true`), or `"experimental"` if topics include `experimental` / `wip` |
+| `REPO_LAST_ACTIVE` | relative time from `pushedAt` (e.g., `"this week"`, `"3 days ago"`) |
+| `REPO_URL` | `url` field |
+
+**Derived from Step 2 categorization:**
+
+| Placeholder | How filled |
+| --- | --- |
+| `SIDEBAR_GROUP_NAME` | the matched group name from Step 2 (e.g., `Infrastructure`, `Nix Ecosystem`, `AI Development`, `Observability`, `Tools`) |
+
+**Author-filled (skill emits empty markers; author writes the prose):**
+
+| Placeholder | How filled |
+| --- | --- |
+| `REPO_TAGLINE` | one-line tagline derived from description (cap 12 words). Goes in the leading blockquote. |
+| `ONE_SENTENCE_INTRO` | 1-2 sentences placing the repo in the sidebar group's broader story. |
+| `BULLET_1` … `BULLET_4` | "What it does" bullets — concrete capabilities or features (3-5 total; remove unused bullet rows from the template). |
+| `NEIGHBOR_REPO_1`, `NEIGHBOR_REPO_2` | up to 2 sibling repos shown alongside in the "How it fits" Mermaid. |
+| `RELATION_1`, `RELATION_2` | Mermaid edge labels between this repo and neighbors (e.g., `"feeds"`, `"configures"`, `"deploys"`, `"imports"`). |
+| `HOW_IT_FITS_SENTENCE` | one-line scope-boundary statement inside `<RepoFit>` — what this repo owns vs. what neighbors own. |
+| `STEP_1_TITLE` … `STEP_3_TITLE` | step titles in imperative form (e.g., `"Clone and enter the dev shell"`, `"Apply"`). 3-5 steps; remove unused step blocks. |
+| `STEP_1_BODY` … `STEP_3_BODY` | step bodies — short commands, instructions, or pointers to the repo README. |
+| `RELATED_TITLE_1` … `_3` | Card title for each related repo (3 max in addition to the always-present "Source on GitHub" Card). |
+| `RELATED_ICON_1` … `_3` | Lucide icon name (e.g., `screwdriver-wrench`, `aws`, `snowflake`, `bot`, `chart-line`). |
+| `RELATED_HREF_1` … `_3` | path to in-site docs page (preferred — e.g., `/infrastructure/ansible-proxmox`) or external GitHub URL when no docs page exists yet. |
+| `RELATED_DESC_1` … `_3` | one-line description for the Card body — what the related repo does in this context. |
 
 Replacements happen via `Edit` tool with `replace_all: true`. Never use `sed` — this is exact-string replacement.
 
