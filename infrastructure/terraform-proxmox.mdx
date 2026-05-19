@@ -1,0 +1,78 @@
+---
+title: "terraform-proxmox"
+description: "Terraform/Terragrunt provisioning for Proxmox VMs and LXC containers. The first tier of the homelab stack."
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> Provision VMs and LXCs from a single `terragrunt apply`. The first thing that runs.
+
+<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-proxmox" />
+
+`terraform-proxmox` defines every VM and LXC in the homelab as Terraform resources. Terragrunt provides DRY config across environments. The Proxmox provider talks to the cluster API; nothing here touches a host directly.
+
+## What it does
+
+- Defines compute, network, and storage for every homelab guest
+- Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
+- Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
+- Outputs a list of provisioned hosts that Ansible inventories consume directly
+
+## How it fits
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+flowchart LR
+  Op(("Operator")) -->|terragrunt apply| TP(["terraform-proxmox"])
+  TP -->|Proxmox API| Cluster[("Proxmox cluster")]
+  Cluster -->|VMs + LXCs| Hosts(["Provisioned hosts"])
+  Hosts -->|inventory| AP(["ansible-proxmox"])
+  Hosts -->|inventory| APA(["ansible-proxmox-apps"])
+
+  style Op fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  style TP fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
+  style Cluster fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  style Hosts fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style AP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  style APA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+
+  linkStyle default stroke:#E06B4A,stroke-width:3px
+```
+
+<RepoFit>
+Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmox` or `ansible-proxmox-apps`.
+</RepoFit>
+
+## Getting started
+
+<Steps>
+  <Step title="Clone and enter the dev shell">
+    `git clone https://github.com/JacobPEvans/terraform-proxmox && cd terraform-proxmox && nix develop`
+  </Step>
+  <Step title="Provide Proxmox API credentials">
+    Doppler resolves `PROXMOX_VE_USERNAME`, `PROXMOX_VE_PASSWORD`, and `PROXMOX_VE_ENDPOINT` at run time. The `README.md` covers the exact var names.
+  </Step>
+  <Step title="Apply">
+    `terragrunt run-all apply` from the env folder. Review the plan; nothing destructive runs without confirmation.
+  </Step>
+  <Step title="Hand off to Ansible">
+    Outputs are written to the file Ansible reads as its inventory. Run `ansible-proxmox` next.
+  </Step>
+</Steps>
+
+## Related repos
+
+<CardGroup cols={2}>
+  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/ansible-proxmox">
+    Configures the host once Terraform has provisioned it.
+  </Card>
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+    Deploys HAProxy, Cribl Edge, Cribl Stream on top.
+  </Card>
+  <Card title="tf-splunk-aws" icon="chart-line" href="/observability/tf-splunk-aws">
+    The AWS-side equivalent for Splunk's DR footprint.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/terraform-proxmox">
+    Modules, examples, full README.
+  </Card>
+</CardGroup>
