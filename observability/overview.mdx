@@ -1,6 +1,7 @@
 ---
 title: "Observability"
 description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by the VisiCore apps."
+tier: 1
 ---
 
 > If an AI agent touched code, there's a trace.
@@ -92,6 +93,24 @@ flowchart LR
 
 Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) is where the normalization happens.
 
-## What's next
+## Where Splunk runs
 
-Phase B will expand each pack into its own page with the field map, sample event, and dashboard screenshots. For now, each repo's `README.md` documents the collection details.
+<CardGroup cols={2}>
+  <Card title="tf-splunk-aws" icon="aws" href="/observability/tf-splunk-aws">
+    Terraform for the AWS-side Splunk footprint. VPC, KMS, EC2, IAM — DR-ready.
+  </Card>
+  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/ansible-splunk">
+    The configuration tier. Splunk install, indexes, HEC tokens, storage tiering.
+  </Card>
+</CardGroup>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
+    Log and NetFlow ingest — the non-AI side of the pipeline.
+  </Card>
+  <Card title="Configuration" icon="screwdriver-wrench" href="/configuration/overview">
+    Ansible playbooks that deploy the Cribl tier this pipeline runs on.
+  </Card>
+</CardGroup>

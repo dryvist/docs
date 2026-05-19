@@ -1,6 +1,7 @@
 ---
 title: "Nix Ecosystem"
 description: "Four flakes, one goal: rebuild every part of the dev environment from a single command."
+tier: 1
 ---
 
 > Reproducible everything. `nix build` and walk away.
@@ -52,12 +53,20 @@ The boundary between system, user, and project is intentional:
 
 ## Repos in this section
 
-| Repo | What it does |
-| --- | --- |
-| [nix-darwin](https://github.com/JacobPEvans/nix-darwin) | macOS system config. Imports nix-ai and nix-home. The top-level entry point. |
-| [nix-ai](https://github.com/JacobPEvans/nix-ai) | Every AI coding tool, packaged. Claude Code, Gemini CLI, Copilot, MLX modules, MCP server configs. |
-| [nix-home](https://github.com/JacobPEvans/nix-home) | User dev environment via home-manager. Shell, editor, git, dev tools. |
-| [nix-devenv](https://github.com/JacobPEvans/nix-devenv) | Reusable per-project dev shells. `nix flake init -t github:JacobPEvans/nix-devenv#mkshell` bootstraps. |
+<CardGroup cols={2}>
+  <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
+    macOS system config. Imports `nix-ai` and `nix-home`. The top-level entry point.
+  </Card>
+  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
+    Every AI coding tool, packaged. Claude Code, Gemini CLI, Copilot, MLX, MCP servers.
+  </Card>
+  <Card title="nix-home" icon="house" href="/nix/nix-home">
+    User dev environment via home-manager. Shell, editor, git, dev tools.
+  </Card>
+  <Card title="nix-devenv" icon="cube" href="/nix/nix-devenv">
+    Reusable per-project dev shells. `nix flake init -t github:JacobPEvans/nix-devenv#mkshell`.
+  </Card>
+</CardGroup>
 
 ## Why four repos, not one
 

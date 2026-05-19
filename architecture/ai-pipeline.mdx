@@ -1,6 +1,7 @@
 ---
 title: "AI development pipeline"
 description: "Humans set direction. AI agents handle the rest. Automation runs the boring parts. A human gives the final sign-off."
+tier: 2
 ---
 
 The goal: file a GitHub Issue, grab coffee, come back to a PR that's been implemented, tested, and reviewed by multiple AI models — just waiting for a thumbs up. Not fully there yet, but close enough to be dangerous.
@@ -58,12 +59,26 @@ The routing is opinionated, not magic: clear rules in `~/CLAUDE.md` and `AGENTS.
 
 ## Repos that power this pipeline
 
-- [ai-assistant-instructions](https://github.com/JacobPEvans/ai-assistant-instructions) — universal AI configuration layer (rules, permissions, workflows, agents)
-- [claude-code-plugins](https://github.com/JacobPEvans/claude-code-plugins) — commands, skills, hooks, agents for Claude Code
-- [claude-code-routines](https://github.com/JacobPEvans/claude-code-routines) — scheduled remote-agent routines on Claude.ai
-- [ai-workflows](https://github.com/JacobPEvans/ai-workflows) — reusable GitHub Copilot agentic workflows
-- [nix-ai](https://github.com/JacobPEvans/nix-ai) — Nix package and config layer for every AI coding tool
-- [raycast-smart-issue](https://github.com/JacobPEvans/raycast-smart-issue) — Raycast extension for AI-drafted GitHub issues via local MLX
+<CardGroup cols={2}>
+  <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
+    Universal AI configuration layer — rules, permissions, workflows, agents.
+  </Card>
+  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
+    Commands, skills, hooks, agents for Claude Code.
+  </Card>
+  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
+    Nix package and config layer for every AI coding tool.
+  </Card>
+  <Card title="claude-code-routines" icon="clock" href="https://github.com/JacobPEvans/claude-code-routines">
+    Scheduled remote-agent routines on Claude.ai.
+  </Card>
+  <Card title="ai-workflows" icon="github" href="https://github.com/JacobPEvans/ai-workflows">
+    Reusable GitHub Copilot agentic workflows.
+  </Card>
+  <Card title="raycast-smart-issue" icon="bolt" href="https://github.com/JacobPEvans/raycast-smart-issue">
+    Raycast extension for AI-drafted GitHub issues via local MLX.
+  </Card>
+</CardGroup>
 
 See [AI Development · Overview](/ai-development/overview) for what each one does in detail.
 

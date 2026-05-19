@@ -65,7 +65,10 @@
           {
             "group": "Infrastructure",
             "pages": [
-              "infrastructure/overview"
+              "infrastructure/overview",
+              "infrastructure/ansible-proxmox",
+              "infrastructure/ansible-proxmox-apps",
+              "infrastructure/terraform-proxmox"
             ]
           },
           {
@@ -77,25 +80,34 @@
           {
             "group": "Nix Ecosystem",
             "pages": [
-              "nix/overview"
+              "nix/overview",
+              "nix/nix-ai",
+              "nix/nix-darwin",
+              "nix/nix-devenv",
+              "nix/nix-home"
             ]
           },
           {
             "group": "AI Development",
             "pages": [
-              "ai-development/overview"
+              "ai-development/overview",
+              "ai-development/ai-assistant-instructions",
+              "ai-development/claude-code-plugins"
             ]
           },
           {
             "group": "Observability",
             "pages": [
-              "observability/overview"
+              "observability/overview",
+              "observability/ansible-splunk",
+              "observability/tf-splunk-aws"
             ]
           },
           {
             "group": "Tools",
             "pages": [
-              "tools/overview"
+              "tools/overview",
+              "tools/automation"
             ]
           },
           {

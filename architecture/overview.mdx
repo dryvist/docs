@@ -1,6 +1,7 @@
 ---
 title: "Architecture"
 description: "System-level diagrams and philosophy for the data pipelines, AI development pipeline, and cross-repo dependencies."
+tier: 1
 ---
 
 Architecture pages cover the parts of the stack that don't belong to a single repo. They sit above the per-category sections and explain *how* things move — data, code, and decisions.
@@ -18,11 +19,29 @@ Architecture pages cover the parts of the stack that don't belong to a single re
 
 ## Principles
 
+<Tip>
 - **One diagram per concern.** Combining a deploy pipeline with a data pipeline shows nothing. Each diagram is allowed to be small.
 - **Diagrams over prose where structure matters.** If a relationship is clearer as a graph, draw it.
 - **READMEs own install and usage.** The docs site owns architecture, philosophy, and cross-repo context.
-- **Public-only.** No real IPs or internal hostnames on this site. Real values live in private notes.
+</Tip>
 
-## Coming next
+<Warning>
+**Public-only.** No real IPs or internal hostnames on this site. Real values live in private notes.
+</Warning>
 
-Phase B will fill in per-repo deep dives under [Infrastructure](/infrastructure/overview), [Configuration](/configuration/overview), and the other category pages. Each repo gets its own page with a focused diagram, links back to the source, and a runbook where it makes sense.
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
+    Terraform modules and the Proxmox stack.
+  </Card>
+  <Card title="Configuration" icon="screwdriver-wrench" href="/configuration/overview">
+    Ansible playbooks for host and app config.
+  </Card>
+  <Card title="Nix Ecosystem" icon="snowflake" href="/nix/overview">
+    Reproducible dev environments.
+  </Card>
+  <Card title="Observability" icon="chart-line" href="/observability/overview">
+    OTEL → Cribl → Splunk.
+  </Card>
+</CardGroup>
