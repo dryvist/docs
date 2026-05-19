@@ -1,0 +1,22 @@
+export const RepoMeta = ({ language, status, lastActive, repoUrl }) => (
+  <Info>
+    Language: <b>{language}</b> &nbsp;·&nbsp; Status: <b>{status}</b> &nbsp;·&nbsp; Last active: <b>{lastActive}</b> &nbsp;·&nbsp; <a href={repoUrl}>Source on GitHub</a>
+  </Info>
+);
+
+export const RepoFit = ({ children }) => (
+  <Tip>{children}</Tip>
+);
+
+export const RepoLinks = ({ github, related = [] }) => (
+  <CardGroup cols={2}>
+    <Card title="Source on GitHub" icon="github" href={github}>
+      Issues, releases, and the canonical README.
+    </Card>
+    {related.map((r) => (
+      <Card key={r.href} title={r.title} icon={r.icon || "diagram-project"} href={r.href}>
+        {r.description}
+      </Card>
+    ))}
+  </CardGroup>
+);

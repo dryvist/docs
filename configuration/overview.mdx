@@ -5,7 +5,7 @@ description: "Ansible playbooks for Proxmox host setup, application stack on VMs
 
 > Terraform builds the box. Ansible makes it useful.
 
-Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host itself, the application stack on top, and Splunk Enterprise as a separate concern because of its scale and uptime requirements.
+Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host, the application stack on top, and Splunk Enterprise as a separate concern because of its scale and uptime requirements.
 
 ## Role map
 
@@ -26,16 +26,31 @@ flowchart LR
 
 ## Repos in this section
 
-| Repo | What it does |
-| --- | --- |
-| [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) | Configures the Proxmox host: ZFS, swap, networking, users, hardening. Run once per host. |
-| [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | Configures the application stack on VMs and LXCs: HAProxy, Cribl Edge, Cribl Stream, supporting services. |
-| [ansible-splunk](https://github.com/JacobPEvans/ansible-splunk) | Deploys and configures Splunk Enterprise on its own dedicated nodes. Indexers, search heads, license. |
+<CardGroup cols={3}>
+  <Card title="ansible-proxmox" icon="server" href="/infrastructure/ansible-proxmox">
+    Proxmox host config — ZFS, networking, users, hardening.
+  </Card>
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+    HAProxy, Cribl Edge, Cribl Stream on VMs and LXCs.
+  </Card>
+  <Card title="ansible-splunk" icon="chart-line" href="/observability/ansible-splunk">
+    Splunk Enterprise — indexers, search heads, license.
+  </Card>
+</CardGroup>
 
 ## Secrets
 
+<Info>
 Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` resolves project-specific secrets at run time; nothing sensitive lands in git.
+</Info>
 
-## What's next
+## Where to go next
 
-Phase B will expand each playbook into its own page with the role list, variables, and a "first run" runbook. For now, each repo's `README.md` covers inventory and execution.
+<CardGroup cols={2}>
+  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
+    The Terraform side that provisions everything Ansible configures.
+  </Card>
+  <Card title="terraform-proxmox" icon="vault" href="/infrastructure/terraform-proxmox">
+    How VMs and LXCs are provisioned before Ansible touches them.
+  </Card>
+</CardGroup>
