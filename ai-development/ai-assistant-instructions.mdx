@@ -22,24 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  AAI(["ai-assistant-instructions<br/>(this repo)"]) -.read by.-> Claude(["Claude Code"])
-  AAI -.read by.-> Gemini(["Gemini CLI"])
-  AAI -.read by.-> Copilot(["GitHub Copilot"])
-  AAI -.read by.-> Codex(["Codex"])
-  AAI -.consumed by.-> CCP(["claude-code-plugins"])
-
-  style AAI fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Claude fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Gemini fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Copilot fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Codex fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style CCP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Read by | Consumed by |
+| --- | --- |
+| Claude Code, Gemini CLI, GitHub Copilot, Codex | [Claude Code plugins](/ai-development/claude-code-plugins) |
 
 <RepoFit>
 The "rules of engagement." Every AI workflow elsewhere in the portfolio assumes this repo's content is in scope.

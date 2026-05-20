@@ -153,7 +153,6 @@
       {
         "header": "Connect",
         "items": [
-          {"label": "Website", "href": "https://jacobpevans.com"},
           {"label": "GitHub", "href": "https://github.com/JacobPEvans"},
           {"label": "LinkedIn", "href": "https://www.linkedin.com/in/JacobPaulEvans/"}
         ]

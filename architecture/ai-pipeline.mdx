@@ -10,41 +10,29 @@ Humans decide *what* to build. AI agents handle the *how*. Automation runs the b
 
 ## The pipeline
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph Human["Human"]
-    direction TB
-    H1(["Roadmap"])
-    H2(["GitHub Issues"])
-    H3(["PR review"])
-  end
-  subgraph AI["AI Agents"]
-    direction TB
-    A1(["Claude / Gemini / Copilot"])
-    A2(["Code"])
-    A3(["AI code review"])
-  end
-  subgraph Auto["Automation"]
-    direction TB
-    T1(["CI / testing"])
-    T2(["Lint & validate"])
-    T3(["Ship it"])
-  end
-  H1 --> H2 --> A1 --> A2 --> T1 --> T2 --> A3 --> H3 --> T3
-
-  style H1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style H2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style H3 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style A1 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style A2 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style A3 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style T1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style T2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style T3 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+<Steps>
+  <Step title="Roadmap (human)">
+    Direction, priorities, what to build next. Stays human.
+  </Step>
+  <Step title="GitHub Issues (human)">
+    A clear, well-shaped issue lands in the right repo.
+  </Step>
+  <Step title="Implementation (AI agents)">
+    Claude, Gemini, or Copilot picks up the issue and writes code.
+  </Step>
+  <Step title="CI / lint / validate (automation)">
+    Tests run, linters check style, CodeQL scans for security.
+  </Step>
+  <Step title="AI code review (AI agents)">
+    A second model reviews the diff and posts feedback inline.
+  </Step>
+  <Step title="PR review (human)">
+    Final thumbs-up. The only step where a human reads diffs end-to-end.
+  </Step>
+  <Step title="Ship it (automation)">
+    Squash-merge to main; deploy on green.
+  </Step>
+</Steps>
 
 ## The model-routing philosophy
 

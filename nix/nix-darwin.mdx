@@ -22,20 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart TB
-  ND(["nix-darwin<br/>(this repo)"]) -->|imports| NH(["nix-home"])
-  ND -->|imports| NA(["nix-ai"])
-  ND -->|applies| Mac[("macOS system")]
-
-  style ND fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style NH fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style NA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Mac fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Imports | Applies to |
+| --- | --- |
+| [User environment](/nix/nix-home), [AI tooling](/nix/nix-ai) | macOS system (via `darwin-rebuild switch`) |
 
 <RepoFit>
 The orchestrator. If a tool needs to be on every shell session by default, it belongs here.

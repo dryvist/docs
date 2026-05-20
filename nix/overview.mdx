@@ -10,35 +10,12 @@ The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and o
 
 ## Ecosystem
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart TB
-  subgraph System["macOS system layer"]
-    ND(["nix-darwin<br/>environment.systemPackages<br/>system-level config"])
-  end
-
-  subgraph User["User environment"]
-    NH(["nix-home<br/>home.packages<br/>programs.* config"])
-    NA(["nix-ai<br/>AI tooling<br/>MCP servers"])
-  end
-
-  subgraph Per_Project["Per-project dev shells"]
-    NDV(["nix-devenv<br/>reusable shells<br/>terraform · ansible · k8s"])
-  end
-
-  ND -.imports.-> NH
-  ND -.imports.-> NA
-  NH -.uses.-> NA
-  NDV -.entered via direnv.-> Each(["each repo's flake.nix"])
-
-  style ND fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style NH fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style NA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style NDV fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Each fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Layer | Repo | What it owns |
+| --- | --- | --- |
+| **macOS system** | [macOS host](/nix/nix-darwin) | `environment.systemPackages`, sudoers, security, Touch ID, system-level config |
+| **User environment** | [User environment](/nix/nix-home) | `home.packages`, `programs.*` for zsh, git, tmux, direnv, ssh, gh |
+| **AI tooling** | [AI tooling](/nix/nix-ai) | Claude Code, Gemini, Copilot, MLX, MCP servers — declarative, version-pinned |
+| **Per-project shells** | [Dev shells](/nix/nix-devenv) | Reusable `flake.nix` templates entered via `direnv` on `cd` |
 
 ## Package placement
 

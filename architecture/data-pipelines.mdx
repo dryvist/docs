@@ -11,23 +11,20 @@ The goal: 30–50% ingest reduction without losing security signal.
 
 UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  UniFi(("UniFi gear<br/>syslog:1514")) --> HAProxy(["HAProxy<br/>tcp/1514"])
-  HAProxy --> Edge1(["Cribl Edge A<br/>tcp/1514"])
-  HAProxy --> Edge2(["Cribl Edge B<br/>tcp/1514"])
-  Edge1 --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
-  Edge2 --> Splunk
-
-  style UniFi fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style HAProxy fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style Edge1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Edge2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+<Steps>
+  <Step title="UniFi gear emits syslog">
+    Network devices ship syslog on `tcp/1514`.
+  </Step>
+  <Step title="HAProxy front-doors the stream">
+    Listens on `tcp/1514` and load-balances across the Cribl Edge cluster.
+  </Step>
+  <Step title="Cribl Edge transforms and reduces">
+    Two Edge nodes (A, B) drop verbose metric fields, route by event type, enrich and mask.
+  </Step>
+  <Step title="HEC into Splunk Enterprise">
+    Edge forwards the cleaned stream over HEC on `:8088`. The indexer takes a smaller, cleaner payload.
+  </Step>
+</Steps>
 
 The Cribl pipeline at the Edge tier does the heavy lifting — drop verbose metric fields, route by event_type, enrich, mask. The Splunk indexers receive a smaller, cleaner stream.
 
@@ -35,23 +32,7 @@ The Cribl pipeline at the Edge tier does the heavy lifting — drop verbose metr
 
 NetFlow v9 / IPFIX from network devices follows the same shape, on a different port.
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Net(("Network devices<br/>NetFlow udp/2055")) --> HA(["HAProxy<br/>udp/2055"])
-  HA --> EA(["Cribl Edge A<br/>udp/2055"])
-  HA --> EB(["Cribl Edge B<br/>udp/2055"])
-  EA --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
-  EB --> Splunk
-
-  style Net fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style HA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style EA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style EB fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+The NetFlow pipeline mirrors the log pipeline on `udp/2055` instead of `tcp/1514`. UDP is loss-tolerant by design, so HAProxy distributes rather than fails over; Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before forwarding to Splunk on HEC.
 
 UDP NetFlow is loss-tolerant by design, so the HAProxy layer is more about distribution than failover. The Cribl pipelines de-duplicate, parse the flow records, and aggregate by tuple before forwarding.
 

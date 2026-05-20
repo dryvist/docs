@@ -22,23 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  TFS(["tf-splunk-aws<br/>or ansible-proxmox"]) -->|hosts ready| AS(["ansible-splunk<br/>(this repo)"])
-  AS -->|deploys| SP[("Splunk Enterprise")]
-  AS -.applies.-> Bundles(["Splunk TA<br/>+ apps"])
-  Bundles --> SP
-  Stream(["Cribl Stream"]) -.HEC.-> SP
-
-  style TFS fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AS fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style SP fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Bundles fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Stream fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Upstream | Deploys | Feeds |
+| --- | --- | --- |
+| [Proxmox config](/infrastructure/ansible-proxmox) or [Splunk on AWS](/observability/tf-splunk-aws) hands over ready hosts | Splunk Enterprise, the AI-observability TA + apps | Cribl Stream forwards events over HEC into this Splunk |
 
 <RepoFit>
 The configuration tier for Splunk. Provisioning lives elsewhere; this owns everything inside the Splunk install.

@@ -10,28 +10,23 @@ tier: 2
 
 ## How the skill works
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Skill(["/mintlify-docs-update"]) -->|gh repo list| Repos[("GitHub<br/>JacobPEvans + dryvist")]
-  Repos --> Filter(["filter: non-archived,<br/>non-fork, public"])
-  Filter --> Diff(["diff against<br/>existing pages"])
-  Diff --> Tmpl(["scaffold from<br/>template-repo-page.mdx"])
-  Tmpl --> Pages(["new .mdx files"])
-  Tmpl --> Nav(["docs.json sidebar<br/>update"])
-  Pages --> Guard(["page-length guard<br/>+ mint broken-links"])
-
-  style Skill fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Repos fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Filter fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Diff fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Tmpl fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Pages fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Nav fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Guard fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+<Steps>
+  <Step title="Enumerate repos">
+    `gh repo list` against `JacobPEvans` and `dryvist`.
+  </Step>
+  <Step title="Filter">
+    Keep public, non-archived, non-fork.
+  </Step>
+  <Step title="Diff">
+    Compare the filtered list against pages already on this site.
+  </Step>
+  <Step title="Scaffold">
+    For each missing repo, copy `template-repo-page.mdx` and update `docs.json` sidebar.
+  </Step>
+  <Step title="Validate">
+    Run the page-length guard and `mint broken-links` before reporting back.
+  </Step>
+</Steps>
 
 The skill is **conservative**: it only scaffolds *missing* pages. Existing pages are never overwritten. The author edits in detail, then commits.
 

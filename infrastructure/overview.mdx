@@ -12,38 +12,27 @@ The infrastructure layer is Terraform-managed. Every module is opinionated about
 
 Three repos build out the homelab in order: Terraform provisions, then Ansible configures the host, then Ansible deploys the apps on top.
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  TP(["terraform-proxmox<br/>provision VMs + LXCs"]) ==>|then| AP(["ansible-proxmox<br/>configure the host"])
-  AP ==>|then| APA(["ansible-proxmox-apps<br/>deploy HAProxy · Cribl Edge<br/>Cribl Stream"])
-
-  style TP fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style AP fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style APA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+<Steps>
+  <Step title="Provision (Terraform)">
+    [Proxmox provisioning](/infrastructure/terraform-proxmox) creates VMs and LXCs on the cluster.
+  </Step>
+  <Step title="Configure the host (Ansible)">
+    [Proxmox config](/infrastructure/ansible-proxmox) sets ZFS, networking, users, monitoring agents.
+  </Step>
+  <Step title="Deploy the apps (Ansible)">
+    [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) installs HAProxy, Cribl Edge, Cribl Stream.
+  </Step>
+</Steps>
 
 ## AWS module map
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph AWS["AWS"]
-    ta(["terraform-aws<br/>Splunk DR"])
-    tab(["terraform-aws-bedrock<br/>Bedrock agents"])
-    tasw(["terraform-aws-static-website<br/>jacobpevans.com"])
-    tro(["terraform-runs-on<br/>spot runners"])
-    tsa(["tf-splunk-aws<br/>Splunk on AWS"])
-  end
-
-  style ta fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style tab fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style tasw fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style tro fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style tsa fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-```
+| Repo | Purpose |
+| --- | --- |
+| [`terraform-aws`](https://github.com/JacobPEvans/terraform-aws) | Splunk DR footprint — cold capacity for failover |
+| [`terraform-aws-bedrock`](https://github.com/JacobPEvans/terraform-aws-bedrock) | Bedrock agents (public API endpoint, no auth) |
+| [`terraform-aws-static-website`](https://github.com/JacobPEvans/terraform-aws-static-website) | Reusable static-site module (S3 + CloudFront + ACM + Route53) |
+| [`terraform-runs-on`](https://github.com/JacobPEvans/terraform-runs-on) | Self-hosted GitHub Actions runners on AWS spot instances |
+| [`tf-splunk-aws`](https://github.com/JacobPEvans/tf-splunk-aws) | Cost-optimised Splunk deployment on AWS |
 
 ## Repos in this section
 

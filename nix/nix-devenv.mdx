@@ -21,24 +21,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  NDV(["nix-devenv<br/>(this repo)"]) -->|template| ProjectA(["terraform-proxmox<br/>flake.nix"])
-  NDV -->|template| ProjectB(["ansible-splunk<br/>flake.nix"])
-  NDV -->|template| ProjectC(["docs<br/>flake.nix"])
-  Direnv((".envrc<br/>use flake")) -.activates.-> ProjectA
-  Direnv -.activates.-> ProjectB
-  Direnv -.activates.-> ProjectC
-
-  style NDV fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style ProjectA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style ProjectB fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style ProjectC fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Direnv fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Provides | Activated by |
+| --- | --- |
+| Per-project `flake.nix` templates (Terraform, Ansible, K8s, Python, ML, docs, etc.) | `direnv` (`.envrc` runs `use flake`) on `cd` into the project |
 
 <RepoFit>
 Anything project-scoped belongs here. Anything machine-scoped belongs in [nix-darwin](/nix/nix-darwin) or [nix-home](/nix/nix-home).

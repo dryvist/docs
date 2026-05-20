@@ -21,24 +21,10 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Op(("Operator")) -->|terragrunt apply| TP(["terraform-proxmox"])
-  TP -->|Proxmox API| Cluster[("Proxmox cluster")]
-  Cluster -->|VMs + LXCs| Hosts(["Provisioned hosts"])
-  Hosts -->|inventory| AP(["ansible-proxmox"])
-  Hosts -->|inventory| APA(["ansible-proxmox-apps"])
-
-  style Op fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style TP fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Cluster fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Hosts fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style APA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| | Upstream | Downstream |
+| --- | --- | --- |
+| Trigger | `terragrunt apply` from the operator | Outputs an Ansible-ready inventory |
+| Talks to | Proxmox cluster API (read/write) | [`ansible-proxmox`](/infrastructure/ansible-proxmox), [`ansible-proxmox-apps`](/infrastructure/ansible-proxmox-apps) |
 
 <RepoFit>
 Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmox` or `ansible-proxmox-apps`.

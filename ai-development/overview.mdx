@@ -10,50 +10,12 @@ The AI development surface is opinionated, not magical. Each model has a sweet s
 
 ## The tools landscape
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph Rules["Universal config"]
-    aai(["ai-assistant-instructions<br/>CLAUDE.md · AGENTS.md<br/>rules · permissions · workflows"])
-  end
-
-  subgraph Cloud["Cloud models"]
-    Claude(["Claude Code"])
-    Gemini(["Gemini CLI"])
-    Copilot(["GitHub Copilot"])
-  end
-
-  subgraph Local["Local inference"]
-    MLX(["MLX models<br/>Apple Silicon native"])
-  end
-
-  subgraph Plugins["Extensions"]
-    ccp(["claude-code-plugins<br/>commands · skills · hooks"])
-    ccr(["claude-code-routines<br/>scheduled remote agents"])
-    aw(["ai-workflows<br/>Copilot agentic workflows"])
-    rsi(["raycast-smart-issue<br/>issue drafting via MLX"])
-  end
-
-  Rules -.reads.-> Claude
-  Rules -.reads.-> Gemini
-  Rules -.reads.-> Copilot
-  Claude -.extended by.-> ccp
-  Claude -.scheduled by.-> ccr
-  Copilot -.extended by.-> aw
-  MLX -.powers.-> rsi
-
-  style aai fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style Claude fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style Gemini fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style Copilot fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style MLX fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style ccp fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style ccr fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style aw fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style rsi fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Layer | Repo / tool | What it owns |
+| --- | --- | --- |
+| **Universal config** | [Assistant rules](/ai-development/ai-assistant-instructions) | `CLAUDE.md`, `AGENTS.md`, rules, permissions, workflows — read by every AI tool |
+| **Cloud models** | Claude Code, Gemini CLI, GitHub Copilot | The IDEs and CLIs that do the work |
+| **Local inference** | MLX | Apple Silicon-native model inference for typo fixes, quick edits, no cloud tokens |
+| **Extensions** | [Claude Code plugins](/ai-development/claude-code-plugins), `claude-code-routines`, `ai-workflows`, `raycast-smart-issue` | Commands, scheduled agents, Copilot workflows, Raycast UI on top of MLX |
 
 ## Model routing
 
