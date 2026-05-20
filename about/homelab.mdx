@@ -7,6 +7,19 @@ description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl �
 
 The homelab is a real production environment, just for one person. Proxmox cluster on bare metal, UniFi networking, Splunk indexers, Cribl Edge collectors, Home Assistant, a docker-host VM for the necessary evil of vendor-locked containers.
 
+## Hardware footprint
+
+| Layer | What's there | Notes |
+| --- | --- | --- |
+| Compute | Custom Proxmox host + two Dell PowerEdge servers (R410, R710) joining the cluster | Heterogeneous mix — single-engineer homelab, parts opportunistically combined |
+| Local LLM | Dedicated bare-metal NixOS box (Ryzen 9 + ROCm-capable GPU, ~12 TB RAIDZ1 model library) | Outside the Proxmox cluster — GPU-bound workload kept off hypervisor to avoid passthrough overhead |
+| Storage | ZFS on Proxmox hosts; SAS backplane on R710 for cluster bulk storage; NVMe for hot tiers | |
+| Networking | UniFi end-to-end: gateway, switches (with 10G SFP+ uplinks), APs | Single-pane management; 10G fiber backbone where it matters |
+| Power | Rack UPS (Eaton 5P750R) for servers; separate UPS for the Home Assistant Pi | Active NUT monitoring planned once the LLM box is built |
+| Rack mgmt | Raspberry Pi running Home Assistant; iDRAC vKVM jump VM in cluster for Java-Web-Start console access | Old BMC firmware needs a Java-Web-Start client; the jump VM keeps Java off the laptop |
+
+Addresses in any examples below use `192.168.0.x` as a placeholder range. The real homelab subnetting and FQDNs are kept out of this site.
+
 ## Topology
 
 ```mermaid
@@ -78,8 +91,9 @@ LXC by default. Native packages where possible. Docker is the exception — high
 | Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
 | Home Assistant | LXC | Native install via supervised path |
 | docker-host | VM | Isolated landing pad for vendor Docker images |
-| GitHub Actions runners | Docker on docker-host | Ephemeral container-per-job, isolated `ci_runners` network |
+| GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infra |
 | Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
+| Local LLM inference | Bare-metal NixOS | GPU-bound; kept off Proxmox to avoid passthrough overhead and to run whatever OS gives the fastest ROCm path |
 
 ## Provisioning + configuration
 
