@@ -20,20 +20,22 @@ It is **not** a vault. It is checked-in, encrypted-at-rest configuration — per
 
 ## The encrypt / commit / decrypt cycle
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Author["author edits<br/>plaintext source"] -->|"sops -e --in-place"| Enc[".sops.json<br/>(encrypted values)"]
-  Enc -->|"git commit"| Repo["repo on GitHub"]
-  Repo -->|"clone"| Local["local checkout"]
-  Local -->|"sops -d"| Plain["plaintext at runtime<br/>(in subprocess only)"]
-  Plain -->|"terraform / ansible"| Apply["apply"]
-  Esc["age key<br/>escrowed in Bitwarden"] -.->|"backup"| Local
+<Steps>
+  <Step title="Edit plaintext">
+    The author edits the plaintext source.
+  </Step>
+  <Step title="Encrypt with sops">
+    `sops -e --in-place` re-encrypts every value declared in `.sops.yaml`.
+  </Step>
+  <Step title="Commit the encrypted file">
+    The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable; values stay encrypted in git history forever.
+  </Step>
+  <Step title="Decrypt at runtime">
+    `sops -d` (often via Terraform/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
+  </Step>
+</Steps>
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-The plaintext exists only in memory during the apply step. The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable so reviewers can see what changed at the structural level without seeing values.
+The age private key lives at `~/.config/sops/age/keys.txt` for convenience; the canonical backup is escrowed in Bitwarden.
 
 ## `.sops.yaml` configuration
 

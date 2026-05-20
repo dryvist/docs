@@ -66,9 +66,9 @@
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
+              "infrastructure/terraform-proxmox",
               "infrastructure/ansible-proxmox",
-              "infrastructure/ansible-proxmox-apps",
-              "infrastructure/terraform-proxmox"
+              "infrastructure/ansible-proxmox-apps"
             ]
           },
           {
@@ -103,10 +103,10 @@
             "group": "Nix Ecosystem",
             "pages": [
               "nix/overview",
-              "nix/nix-ai",
               "nix/nix-darwin",
-              "nix/nix-devenv",
-              "nix/nix-home"
+              "nix/nix-home",
+              "nix/nix-ai",
+              "nix/nix-devenv"
             ]
           },
           {

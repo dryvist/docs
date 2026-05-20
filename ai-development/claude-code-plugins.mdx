@@ -1,5 +1,5 @@
 ---
-title: "claude-code-plugins"
+title: "Claude Code plugins"
 description: "Custom Claude Code plugins: commands, skills, hooks, agents. Extends the base CLI with project-specific automation."
 tier: 2
 ---
@@ -23,7 +23,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## How it fits
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   CC(["Claude Code CLI"]) -.installs.-> CCP(["claude-code-plugins<br/>(this repo)"])
   CCP -->|commands| Cmds(["/ship · /finalize-pr<br/>/wrap-up · /retrospecting"])

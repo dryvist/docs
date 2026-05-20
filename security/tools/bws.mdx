@@ -24,19 +24,22 @@ If both Doppler and BWS would work for a given secret, prefer Doppler. BWS is th
 
 ## The bridge pattern
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Cfg["~/.config/bws/.env<br/>(secret IDs + keychain refs only)"] --> Helper["bws_helper.py"]
-  Kc["automation.keychain-db<br/>BWS_ACCESS_TOKEN"] --> Helper
-  Helper -->|"bws secret get"| BWS["BWS project<br/>(cloud)"]
-  BWS -->|"value"| Sub["subprocess only<br/>(claude, etc.)"]
-  Helper -.->|"never persists"| Disk["disk / parent shell"]
+<Steps>
+  <Step title="Read references from disk">
+    `bws_helper.py` loads `~/.config/bws/.env` — BWS secret IDs and keychain references only. No values here.
+  </Step>
+  <Step title="Fetch the BWS access token from the keychain">
+    `security find-generic-password` retrieves `BWS_ACCESS_TOKEN` from `automation.keychain-db`. The token never reaches disk.
+  </Step>
+  <Step title="Call BWS">
+    `bws secret get <id>` returns the value into helper memory.
+  </Step>
+  <Step title="Pipe straight into the child process">
+    The value goes directly into the requesting subprocess's env. It never touches the parent shell, shell history, or disk.
+  </Step>
+</Steps>
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-The two non-secret pieces (config file + secret IDs) live on disk. The one secret piece (the BWS access token) lives in the keychain. The retrieved value never reaches the parent shell or any file — it goes straight into the subprocess that requested it.
+Two non-secret pieces (config file + secret IDs) live on disk; one secret piece (the BWS access token) lives in the keychain; the retrieved value lives only inside the subprocess that asked for it.
 
 ## Config shape
 

@@ -1,5 +1,5 @@
 ---
-title: "ansible-proxmox"
+title: "Proxmox config"
 description: "Ansible roles that configure the Proxmox host itself: ZFS pools, networking, users, performance tuning, monitoring agents."
 tier: 2
 ---
@@ -23,7 +23,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## How it fits
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   TP(["terraform-proxmox<br/>provisions"]) -->|inventory| AP(["ansible-proxmox<br/>configures host"])
   AP -->|ZFS + tuning| Host[("Proxmox host")]

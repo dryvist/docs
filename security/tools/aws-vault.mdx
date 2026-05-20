@@ -12,17 +12,20 @@ tier: 2
 
 ## Profile model
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  You["you"] -->|"aws-vault exec <profile>"| AV["aws-vault<br/>session"]
-  AV -->|"MFA prompt<br/>(if not cached)"| MFA["TOTP from<br/>authenticator"]
-  MFA --> Cache["session cached<br/>for TTL"]
-  Cache -->|"AWS_ACCESS_KEY_ID<br/>AWS_SECRET_ACCESS_KEY<br/>AWS_SESSION_TOKEN"| Sub["subprocess only"]
-  Sub -->|"AWS API"| Resources["AWS resources"]
-
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
+<Steps>
+  <Step title="aws-vault exec <profile>">
+    The keychain backend hands you long-lived access keys for that profile only — never to the parent shell.
+  </Step>
+  <Step title="MFA prompt (if not cached)">
+    TOTP from your authenticator mints a short-lived session token.
+  </Step>
+  <Step title="Subprocess receives env vars">
+    `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` are injected into the child process only.
+  </Step>
+  <Step title="Child process exits — session dies">
+    Cached session lives in the keychain for the configured `session_ttl`; nothing persists in your shell.
+  </Step>
+</Steps>
 
 One profile per Terraform root keeps blast radius small. A `tf-proxmox` session has no rights to `tf-runs-on` infrastructure even if you accidentally `exec` the wrong terragrunt root.
 

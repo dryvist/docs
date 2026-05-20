@@ -19,42 +19,13 @@ That works at small scale. It scales poorly. OpenBao — the MPL-licensed fork o
 
 ## Planned architecture
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph Bao["OpenBao LXC (privileged)"]
-    direction TB
-    Raft["Raft storage<br/>(encrypted at rest)"]
-    Auth["auth methods<br/>(AppRole / cert)"]
-    KV["KV v2 secrets engine"]
-  end
-  subgraph LXC1["Consumer LXC #1"]
-    direction TB
-    Agent1["openbao agent"]
-    Svc1["service binary"]
-    Env1["/run/openbao/svc1.env<br/>(tmpfs)"]
-  end
-  subgraph LXC2["Consumer LXC #2"]
-    direction TB
-    Agent2["openbao agent"]
-    Svc2["service binary"]
-    Env2["/run/openbao/svc2.env<br/>(tmpfs)"]
-  end
-  Bao -->|"renew leases"| Agent1
-  Bao -->|"renew leases"| Agent2
-  Agent1 -->|"render template"| Env1
-  Env1 --> Svc1
-  Agent2 -->|"render template"| Env2
-  Env2 --> Svc2
+A single OpenBao LXC holds the truth; one lightweight agent per consumer LXC renews leases and renders the secrets it needs into a tmpfs file.
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-Three deliberate choices in this sketch:
-
-1. **Privileged LXC for OpenBao itself.** OpenBao's mlock / memlock requirements need a privileged container; the security surface gain is acceptable in exchange for predictable behavior.
-2. **One agent per consumer LXC.** Each consumer holds its own AppRole credentials and renews leases locally. The OpenBao server never sends secrets to a host that hasn't authenticated.
-3. **tmpfs rendering.** Secrets are written to `/run/openbao/*.env`, which is a memory-backed filesystem destroyed on reboot. No persistence to disk.
+| Layer | What lives here | Why |
+| --- | --- | --- |
+| OpenBao LXC (privileged) | Raft storage encrypted at rest, AppRole/cert auth methods, KV v2 engine | Privileged is acceptable for the vault host; mlock and memlock need it |
+| Consumer LXC: agent | Holds the consumer's own AppRole role-id + secret-id | Each consumer authenticates as itself; the server never pushes |
+| Consumer LXC: `/run/openbao/*.env` (tmpfs) | Rendered secrets used by the service binary | tmpfs is memory-only — destroyed on reboot, never persists to disk |
 
 ## Auth model (planned)
 

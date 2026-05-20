@@ -22,31 +22,15 @@ tier: 2
 
 ## The "AI never touches" boundary
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph BW["Bitwarden vault (cloud)"]
-    direction TB
-    SSH["SSH private keys"]
-    Age["age private keys"]
-    Recov["recovery codes"]
-    Pwd["account passwords"]
-    TOTP["TOTP seeds"]
-  end
-  subgraph Human["Human-mediated exports only"]
-    direction TB
-    Agent["ssh-agent<br/>(after biometric unlock)"]
-    Sops["~/.config/sops/age/keys.txt<br/>(manual escrow restore)"]
-    Login["browser login<br/>(autofill)"]
-  end
-  Human2["You at keyboard<br/>(master password + MFA)"] --> BW
-  BW -.->|"manual<br/>export"| Human
-  AI["AI tool"] -.->|"unreachable"| BW
+There is no CLI integration, no MCP server, no programmatic bridge in this stack that reads the Bitwarden vault. Reaching it always requires the master password plus a second factor at the keyboard — gates an AI subprocess cannot satisfy.
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-There is no CLI integration, no MCP server, no programmatic bridge. Reaching the vault requires the master password plus a second factor at the keyboard. AI tools cannot satisfy either gate.
+| Stored in the vault | Reaches the host only via |
+| --- | --- |
+| SSH private keys | manual copy into `~/.ssh/`, then ssh-agent |
+| Age private keys | manual paste into `~/.config/sops/age/keys.txt` |
+| Recovery codes | one-shot read at the recovery prompt |
+| Account passwords | browser autofill (human interaction) |
+| TOTP seeds | per-login challenge in the Bitwarden app |
 
 ## Workflow patterns
 

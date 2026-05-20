@@ -1,5 +1,5 @@
 ---
-title: "ansible-splunk"
+title: "Splunk install"
 description: "Ansible role for Splunk Enterprise deployment: HEC, indexes, storage, license. The configuration side of the Splunk stack."
 tier: 2
 ---
@@ -23,7 +23,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## How it fits
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   TFS(["tf-splunk-aws<br/>or ansible-proxmox"]) -->|hosts ready| AS(["ansible-splunk<br/>(this repo)"])
   AS -->|deploys| SP[("Splunk Enterprise")]

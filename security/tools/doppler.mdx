@@ -22,39 +22,13 @@ tier: 2
 
 ## Project / config layout
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph Doppler["Doppler workspace"]
-    direction TB
-    P1["secrets-sync project"]
-    P2["iac-conf-mgmt / prd"]
-    P3["ai-ci-automation / prd"]
-  end
-  subgraph Push["Tier 1 — push to GitHub"]
-    direction TB
-    GH["secrets-sync repo<br/>Actions secrets"]
-  end
-  subgraph Fetch["Tier 2 — fetch at runtime"]
-    direction TB
-    Action["dopplerhq/secrets-fetch-action<br/>(in CI job)"]
-  end
-  subgraph Local["Local dev"]
-    direction TB
-    DR["doppler run -- <cmd>"]
-  end
-  P1 -->|"auto-sync"| GH
-  P2 -->|"service token"| Action
-  P3 -->|"DOPPLER_TOKEN"| DR
+Three Doppler projects, three delivery modes — each lands in a different consumer.
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-Three projects, three delivery modes:
-
-- `secrets-sync` project — Tier 1. Auto-sync pushes values to the `secrets-sync` repo's Actions secrets, where [`secrets-sync`](/security/secrets-sync) fans them out.
-- `iac-conf-mgmt/prd` — Tier 2 infra. Read at workflow runtime via `dopplerhq/secrets-fetch-action`. Never lives in any GitHub secrets store.
-- `ai-ci-automation/prd` — Local dev + AI tools. Reached via the [`doppler-mcp`](/security/local-ai-isolation) wrapper that scopes secrets to a single subprocess.
+| Doppler project | Delivery mode | Consumer |
+| --- | --- | --- |
+| `secrets-sync` | Auto-sync → GitHub Actions secrets on the `secrets-sync` repo | [`secrets-sync`](/security/secrets-sync) workflow fans out (Tier 1) |
+| `iac-conf-mgmt/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2 — values never sit in GitHub) |
+| `ai-ci-automation/prd` | `doppler run --` wrapper at subprocess launch | Local dev + the [`doppler-mcp`](/security/local-ai-isolation) bridge |
 
 ## Runtime fetch via GitHub Actions
 

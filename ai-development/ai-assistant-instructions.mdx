@@ -1,5 +1,5 @@
 ---
-title: "ai-assistant-instructions"
+title: "Assistant rules"
 description: "Vendor-agnostic framework for AI coding workflows. One set of rules, every AI tool reads them: Claude, Gemini, Copilot, Codex."
 tier: 2
 ---
@@ -23,7 +23,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## How it fits
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   AAI(["ai-assistant-instructions<br/>(this repo)"]) -.read by.-> Claude(["Claude Code"])
   AAI -.read by.-> Gemini(["Gemini CLI"])

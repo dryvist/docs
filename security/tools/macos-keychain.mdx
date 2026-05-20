@@ -8,29 +8,12 @@ tier: 2
 
 ## Two databases, one rule
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  subgraph Auto["automation.keychain-db (unlocked at login)"]
-    direction TB
-    Restricted["GH_PAT_RESTRICTED<br/>(public repos)"]
-    HF["HF_TOKEN<br/>BWS_ACCESS_TOKEN"]
-    Cred["Claude Code-credentials"]
-  end
-  subgraph Elev["elevate-access.keychain-db (locked, GUI unlock)"]
-    direction TB
-    Private["GH_PAT_PRIVATE<br/>(+ private repos)"]
-    Admin["GH_PAT_ADMIN<br/>(JPE repo admin)"]
-    OrgAdmin["GH_PAT_ORG_ADMIN<br/>(dryvist org admin)"]
-  end
-  AI_Read["AI tool<br/>(via launcher)"] --> Auto
-  AI_Read -.->|"GUI prompt blocks"| Elev
-  Human["You at keyboard<br/>(biometric)"] --> Elev
+The split is the entire access-control model: anything an AI can read non-interactively lives in `automation`; anything that requires a human at the keyboard lives in `elevate-access`.
 
-  linkStyle default stroke:#E06B4A,stroke-width:2px
-```
-
-The split is the entire access-control model: anything an AI can read non-interactively must live in `automation`. Anything that must require a human at the keyboard goes in `elevate-access`.
+| Database | Unlock posture | Holds | AI can read? |
+| --- | --- | --- | --- |
+| `automation.keychain-db` | Unlocked at login | `GH_PAT_RESTRICTED`, `HF_TOKEN`, `BWS_ACCESS_TOKEN`, Claude Code credentials | Yes — via the launcher subshell |
+| `elevate-access.keychain-db` | Locked, GUI unlock prompt | `GH_PAT_PRIVATE`, `GH_PAT_ADMIN`, `GH_PAT_ORG_ADMIN` | No — the prompt blocks any non-interactive read |
 
 ## GitHub PAT tiers
 
