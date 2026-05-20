@@ -10,29 +10,36 @@ Humans decide *what* to build. AI agents handle the *how*. Automation runs the b
 
 ## The pipeline
 
-<Steps>
-  <Step title="Roadmap (human)">
-    Direction, priorities, what to build next. Stays human.
-  </Step>
-  <Step title="GitHub Issues (human)">
-    A clear, well-shaped issue lands in the right repo.
-  </Step>
-  <Step title="Implementation (AI agents)">
-    Claude, Gemini, or Copilot picks up the issue and writes code.
-  </Step>
-  <Step title="CI / lint / validate (automation)">
-    Tests run, linters check style, CodeQL scans for security.
-  </Step>
-  <Step title="AI code review (AI agents)">
-    A second model reviews the diff and posts feedback inline.
-  </Step>
-  <Step title="PR review (human)">
-    Final thumbs-up. The only step where a human reads diffs end-to-end.
-  </Step>
-  <Step title="Ship it (automation)">
-    Squash-merge to main; deploy on green.
-  </Step>
-</Steps>
+{/* Shape: linear chain. Boundary crossings: 0. Ranks: 9×1. */}
+{/* Aspect: ~3:1 (LR). Role encoded via classDef, not subgraphs. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  H1([Roadmap])
+  H2([Issue])
+  A1([Claude / Gemini])
+  A2([Code])
+  T1([CI])
+  T2([Lint])
+  A3([AI review])
+  H3([PR review])
+  T3([Ship])
+
+  H1 --> H2 --> A1 --> A2 --> T1 --> T2 --> A3 --> H3 --> T3
+
+  classDef human fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef ai    fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef auto  fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+
+  class H1,H2,H3 human
+  class A1,A2,A3 ai
+  class T1,T2,T3 auto
+
+  linkStyle default stroke:#2F7E78,stroke-width:1.5px;
+```
+
+Green nodes are human, coral are AI, ink are automation. The role is the node colour; the chain is the timeline — no zigzag because the diagram never asks the arrows to leave a column.
 
 ## The model-routing philosophy
 
