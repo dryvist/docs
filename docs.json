@@ -140,7 +140,8 @@
         "header": "Docs",
         "items": [
           {"label": "Source repo", "href": "https://github.com/JacobPEvans/docs"},
-          {"label": "Built with Mintlify", "href": "https://mintlify.com"}
+          {"label": "Built with Mintlify", "href": "https://mintlify.com"},
+          {"label": "Dryvist", "href": "https://docs.dryvist.com"}
         ]
       }
     ]
