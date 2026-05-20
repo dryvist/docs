@@ -20,6 +20,7 @@ flowchart LR
     Obs(["Observability<br/>Cribl · Splunk<br/>OTEL · MCP"])
     Sec(["Security<br/>Doppler · SOPS<br/>Keychain · BWS"])
     Tools(["Dev Tools<br/>Raycast · MLX bench<br/>K8s · scripts"])
+    Inf ~~~ Nix ~~~ AI ~~~ Obs ~~~ Sec ~~~ Tools
   end
 
   style Inf fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6

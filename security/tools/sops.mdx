@@ -7,7 +7,7 @@ description: "Encrypted-at-rest configuration committed directly to git — age 
 
 ## What SOPS is for
 
-SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving the keys readable. The result is a `.sops.json` or `.sops.yaml` file that lives in git, decrypted at runtime by the age private key.
+SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving the keys readable. The encrypted output is a regular file with structured contents — e.g. `terraform.sops.json`, `secrets.enc.yaml` — that lives in git and is decrypted at runtime by the age private key. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells SOPS which paths to encrypt and with which keys (see [.sops.yaml configuration](#sops-yaml-configuration) below).
 
 It is **not** a vault. It is checked-in, encrypted-at-rest configuration — perfect for: Terraform variables that name internal networks, initial-bootstrap passwords for Proxmox/iDRAC, ansible variables that vary per host but aren't truly secret-secret.
 

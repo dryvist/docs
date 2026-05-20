@@ -1,6 +1,6 @@
 # mintlify-docs-update
 
-Project-level Claude Code skill that keeps `docs.jacobpevans.com` in sync with the public repos under `JacobPEvans` and `Drivist`.
+Project-level Claude Code skill that keeps `docs.jacobpevans.com` in sync with the public repos under `JacobPEvans` and `dryvist`.
 
 ## What you get
 
@@ -31,7 +31,7 @@ cd ~/git/docs/main
 Requirements:
 
 - Claude Code 4.x or newer (skill API support).
-- `gh` CLI authenticated against an account that can read `JacobPEvans` and `Drivist`.
+- `gh` CLI authenticated against an account that can read `JacobPEvans` and `dryvist`.
 - `nix` and `direnv` for the `mint dev` / `mint broken-links` validation step (enter the dev shell with `nix develop`).
 
 No global install. No package to publish. The skill is the directory.
@@ -54,7 +54,7 @@ The skill activates on those triggers. You'll be asked to confirm before pages a
 
 ### How it works in plain English
 
-1. Run `gh repo list JacobPEvans --no-archived` and the same for `Drivist`.
+1. Run `gh repo list JacobPEvans --no-archived` and the same for `dryvist`.
 2. For each repo, compute the expected path: `<sidebar-group-prefix><repo-name>.mdx`.
 3. If the file exists, skip. Otherwise, copy `template-repo-page.mdx` and replace tokens.
 4. Add the path to `docs.json` under the right group.
@@ -72,7 +72,7 @@ The skill activates on those triggers. You'll be asked to confirm before pages a
 
 - The skill doesn't read repo READMEs — placeholders need to be filled by hand.
 - Categorization is name-based; if a repo's name doesn't match any pattern, the skill asks.
-- The Drivist org currently has zero public repos. The skill still queries it on every run; this is intentional so new Drivist repos are picked up automatically.
+- The dryvist org currently has zero public repos. The skill still queries it on every run; this is intentional so new dryvist repos are picked up automatically.
 
 ## Roadmap
 

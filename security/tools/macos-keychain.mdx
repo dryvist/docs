@@ -44,19 +44,22 @@ The switching helpers (`gh-restricted` / `gh-private` / `gh-admin`) export `GITH
 
 ## Reading a keychain entry the right way
 
+The last positional argument is the keychain path. Omit it and `security` searches the login keychain only — which does not contain these entries. Always pass the path explicitly so the lookup hits the right database:
+
 ```bash
 # Fetch once into a variable; never inline the read into every command.
 GITHUB_TOKEN=$(security find-generic-password \
   -a ai-cli-coder \
   -s GH_PAT_ORG_ADMIN \
-  -w)
+  -w \
+  ~/Library/Keychains/elevate-access.keychain-db)
 
 # Use the variable.
 GITHUB_TOKEN=$GITHUB_TOKEN tofu plan
 GITHUB_TOKEN=$GITHUB_TOKEN tofu apply
 ```
 
-Each `security find-generic-password` call against `elevate-access` triggers an unlock prompt. Inlining the read on every command would prompt every time. Fetch once, inject the variable across the session — and unset it when done.
+For `automation` keychain entries, swap the path to `~/Library/Keychains/automation.keychain-db`. Each `security find-generic-password` call against `elevate-access` triggers an unlock prompt; inlining the read on every command would prompt every time. Fetch once, inject the variable across the session — and unset it when done.
 
 ## Adding a new keychain entry
 

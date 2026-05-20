@@ -14,7 +14,7 @@ exist as scaffolding; no LXC is running OpenBao today.
 
 Doppler handles AI keys and broadly-shared CI secrets. SOPS handles encrypted-in-repo config. The Bitwarden vault holds the human-only material. Between these three, the homelab is covered for the *static* secrets it needs — but service-to-service auth inside the cluster (one LXC reading from another's API) is currently handled by per-host env files and shared-secret config baked at apply time.
 
-That works at small scale. It scales poorly. OpenBao (the open-source fork of HashiCorp Vault from before the BSL relicense) is the planned answer: a single source of truth for cluster-local secrets, with leases, audit, and per-service auth methods.
+That works at small scale. It scales poorly. OpenBao — the MPL-licensed fork of HashiCorp Vault 1.14.x, the last release before HashiCorp's BSL transition in 1.15 — is the planned answer: a single source of truth for cluster-local secrets, with leases, audit, and per-service auth methods.
 
 ## Planned architecture
 

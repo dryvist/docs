@@ -6,14 +6,14 @@ tier: 2
 
 > The docs build themselves. Almost.
 
-`mintlify-docs-update` is a Claude Code skill that scans `JacobPEvans` (and `Drivist`), diffs the result against this site, and proposes the missing pages. It lives in `.claude/skills/mintlify-docs-update/` and is invoked manually via `/mintlify-docs-update` or on a cadence by the global `auto-maintain` orchestrator.
+`mintlify-docs-update` is a Claude Code skill that scans `JacobPEvans` (and `dryvist`), diffs the result against this site, and proposes the missing pages. It lives in `.claude/skills/mintlify-docs-update/` and is invoked manually via `/mintlify-docs-update` or on a cadence by the global `auto-maintain` orchestrator.
 
 ## How the skill works
 
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
-  Skill(["/mintlify-docs-update"]) -->|gh repo list| Repos[("GitHub<br/>JacobPEvans + Drivist")]
+  Skill(["/mintlify-docs-update"]) -->|gh repo list| Repos[("GitHub<br/>JacobPEvans + dryvist")]
   Repos --> Filter(["filter: non-archived,<br/>non-fork, public"])
   Filter --> Diff(["diff against<br/>existing pages"])
   Diff --> Tmpl(["scaffold from<br/>template-repo-page.mdx"])
