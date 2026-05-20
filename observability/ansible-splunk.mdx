@@ -17,7 +17,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Installs Splunk Enterprise and applies a license
 - Configures **indexes**, **HEC tokens**, and **storage tiering** (hot/warm/cold)
 - Sets up indexer clustering and search head distribution where applicable
-- Wires in conf bundles from the [`VisiCore_*`](https://github.com/JacobPEvans?tab=repositories&q=VisiCore) repos
+- Wires in conf bundles from the AI-observability Splunk apps and TAs
 - Runs idempotently — safe to re-run as a drift-correction tool
 
 ## How it fits
@@ -27,7 +27,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 flowchart LR
   TFS(["tf-splunk-aws<br/>or ansible-proxmox"]) -->|hosts ready| AS(["ansible-splunk<br/>(this repo)"])
   AS -->|deploys| SP[("Splunk Enterprise")]
-  AS -.applies.-> Bundles(["VisiCore TA<br/>+ apps"])
+  AS -.applies.-> Bundles(["Splunk TA<br/>+ apps"])
   Bundles --> SP
   Stream(["Cribl Stream"]) -.HEC.-> SP
 

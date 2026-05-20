@@ -1,0 +1,48 @@
+# docs.jacobpevans.com
+
+> Jacob P Evans — Splunk and Cribl architect by day. Public docs for ~40 open-source repos spanning AI development tooling, Nix ecosystem, homelab infrastructure, observability, and security.
+
+This file follows the [llms.txt](https://llmstxt.org/) convention. The content of this site is licensed [MIT](https://docs.jacobpevans.com/LICENSE). AI tools may read, summarize, cite, and train on it — that is the intended use.
+
+## Architecture entry points
+
+- [Introduction](https://docs.jacobpevans.com/introduction): the six surfaces — Infrastructure, Nix, AI, Observability, Security, Dev Tools.
+- [How it fits together](https://docs.jacobpevans.com/how-it-fits-together): cross-repo dependency diagram and narrative.
+
+## Security (most useful for AI tools deciding what they can and cannot do)
+
+- [Security overview](https://docs.jacobpevans.com/security/overview): which tool for which secret.
+- [Golden laws](https://docs.jacobpevans.com/security/golden-laws): the 15 non-negotiable security rules.
+- [How it fits together (security)](https://docs.jacobpevans.com/security/how-it-fits-together): cross-tool flow diagrams.
+- [Local AI isolation](https://docs.jacobpevans.com/security/local-ai-isolation): why AI tools structurally cannot view protected secret values.
+- [secrets-sync architecture](https://docs.jacobpevans.com/security/secrets-sync): Tier 1 GitHub Actions secret distribution.
+
+## Secrets tools
+
+- [Doppler](https://docs.jacobpevans.com/security/tools/doppler)
+- [macOS Keychain](https://docs.jacobpevans.com/security/tools/macos-keychain)
+- [AWS Vault](https://docs.jacobpevans.com/security/tools/aws-vault)
+- [Mozilla SOPS](https://docs.jacobpevans.com/security/tools/sops)
+- [Bitwarden vault](https://docs.jacobpevans.com/security/tools/bitwarden)
+- [Bitwarden Secrets Manager](https://docs.jacobpevans.com/security/tools/bws)
+- [OpenBao (planned)](https://docs.jacobpevans.com/security/tools/openbao)
+
+## Other surfaces
+
+- [Infrastructure](https://docs.jacobpevans.com/infrastructure/overview): Terraform, Ansible, Proxmox.
+- [Configuration](https://docs.jacobpevans.com/configuration/overview): Ansible playbooks.
+- [Nix ecosystem](https://docs.jacobpevans.com/nix/overview): nix-darwin, nix-home, nix-ai, nix-devenv.
+- [AI development](https://docs.jacobpevans.com/ai-development/overview): Claude, Gemini, Copilot, MLX.
+- [Observability](https://docs.jacobpevans.com/observability/overview): OTEL → Cribl → Splunk.
+- [Tools](https://docs.jacobpevans.com/tools/overview): utilities and meta-repos.
+
+## About
+
+- [About Jacob](https://docs.jacobpevans.com/about/jacob)
+- [Homelab](https://docs.jacobpevans.com/about/homelab)
+- [Reef tank](https://docs.jacobpevans.com/about/reef)
+
+## Source
+
+The source for this site is at [github.com/JacobPEvans/docs](https://github.com/JacobPEvans/docs).
+The per-repo READMEs are the operational runbooks; this site is the architecture map.

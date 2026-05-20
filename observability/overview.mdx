@@ -1,12 +1,12 @@
 ---
 title: "Observability"
-description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by the VisiCore apps."
+description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by purpose-built dashboards."
 tier: 1
 ---
 
 > If an AI agent touched code, there's a trace.
 
-Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. The VisiCore apps make it readable.
+Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. Purpose-built Splunk apps make it readable.
 
 ## AI telemetry pipeline
 
@@ -36,7 +36,7 @@ flowchart LR
     Index[("Indexer")]
   end
 
-  subgraph View["VisiCore apps"]
+  subgraph View["Splunk apps"]
     App(["Dashboard Studio v2"])
     TA(["Knowledge objects + CIM"])
   end
@@ -67,10 +67,13 @@ flowchart LR
 
 ## Splunk apps
 
-| Repo | What it does |
+The AI-observability apps and TAs live under a separate organization at
+[github.com/visicore](https://github.com/visicore). Two pieces matter on this site:
+
+| Component | What it does |
 | --- | --- |
-| [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Dashboard Studio v2 dashboards. Cost, usage, performance per model, per project, per developer. |
-| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Technology add-on. Field aliases, CIM mappings, lookups, search-time transforms. |
+| Dashboards (app) | Dashboard Studio v2. Cost, usage, performance per model, per project, per developer. |
+| Technology add-on (TA) | Field aliases, CIM mappings, lookups, search-time transforms. The normalization layer. |
 
 ## Cribl Edge packs (collectors)
 
@@ -91,7 +94,7 @@ flowchart LR
 
 ## Why per-tool packs
 
-Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) is where the normalization happens.
+Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in the TA is where the normalization happens.
 
 ## Where Splunk runs
 

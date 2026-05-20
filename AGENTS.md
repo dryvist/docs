@@ -54,7 +54,7 @@ One diagram per concern — do not combine. Each diagram starts with a Mermaid
 theme directive so colors match the Reef Green palette:
 
 ```text
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'#102937','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 ```
 
 Shape vocabulary across the site:
@@ -63,6 +63,28 @@ Shape vocabulary across the site:
 - Cylinders for data stores
 - Diamonds for decisions
 - Subgraphs for logical groupings (Human / AI / Automation / Infrastructure)
+
+## Diagram aspect ratio
+
+Every diagram must render wider than tall in normal desktop viewports.
+The Mermaid `flowchart LR` directive is necessary but not sufficient — a
+hub-and-spoke layout with `LR` direction still stacks the spokes vertically,
+producing a taller-than-wide output. The standard resolution scale is the
+monitor: more wide than tall, like the screen the reader is on.
+
+If a diagram is taller than wide when rendered:
+
+- Reduce nodes per rank. Spread horizontally with subgraphs left-to-right.
+- Replace radial hub-and-spoke layouts with a linear horizontal subgraph
+  (the subgraph border replaces the hub node — see `introduction.mdx`
+  "six surfaces" diagram for the canonical example).
+- Use `flowchart LR` at the parent and `direction TB` inside each subgraph
+  so subgraphs sit side-by-side and stack their contents internally.
+- Split into multiple smaller diagrams. We already enforce "one diagram per
+  concern" — an over-tall diagram is usually trying to cover two concerns.
+
+Validate at 1440px (desktop) and 768px (tablet) before merging. Mobile
+narrow viewports will always stack, and that is acceptable.
 
 ## Phases
 

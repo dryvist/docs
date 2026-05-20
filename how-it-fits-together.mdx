@@ -1,17 +1,17 @@
 ---
 title: "How it fits together"
-description: "How dozens of public repositories form a single ecosystem: infrastructure, configuration, Nix, AI development, and observability."
+description: "How dozens of public repositories form a single ecosystem: infrastructure, configuration, Nix, AI development, observability, and security."
 ---
 
-> Forty repositories sound like a lot. They're really five surfaces working as one stack.
+> Forty repositories sound like a lot. They're really six surfaces working as one stack.
 
 ## The full picture
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart TB
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+flowchart LR
   subgraph Inf["Infrastructure · Terraform"]
-    direction LR
+    direction TB
     tp(["terraform-proxmox"])
     ta(["terraform-aws"])
     tab(["terraform-aws-bedrock"])
@@ -21,22 +21,23 @@ flowchart TB
   end
 
   subgraph Cfg["Configuration · Ansible"]
-    direction LR
+    direction TB
     ap(["ansible-proxmox"])
     apa(["ansible-proxmox-apps"])
     as(["ansible-splunk"])
   end
 
   subgraph Nix["Nix Ecosystem"]
-    direction LR
+    direction TB
     nd(["nix-darwin"])
     na(["nix-ai"])
     nh(["nix-home"])
     ndv(["nix-devenv"])
+    ncc(["nix-claude-code"])
   end
 
   subgraph AI["AI Development"]
-    direction LR
+    direction TB
     aai(["ai-assistant-instructions"])
     ccp(["claude-code-plugins"])
     ccr(["claude-code-routines"])
@@ -45,18 +46,22 @@ flowchart TB
   end
 
   subgraph Obs["Observability"]
-    direction LR
-    vca(["VisiCore App"])
-    vct(["VisiCore TA"])
+    direction TB
     cco(["cc-edge-* packs"])
     csg(["cc-stream-* collectors"])
+    splapps(["Splunk apps"])
+  end
+
+  subgraph Sec["Security"]
+    direction TB
+    ss(["secrets-sync"])
+    gt([".github-tofu"])
   end
 
   subgraph Tools["Tools & meta"]
-    direction LR
+    direction TB
     mlx(["mlx-benchmarks"])
     ok(["orbstack-kubernetes"])
-    ss(["secrets-sync"])
     pt(["python-template"])
   end
 
@@ -64,9 +69,11 @@ flowchart TB
   Cfg -->|deploy| Obs
   Nix -->|tooling for| AI
   AI -->|telemetry from| Obs
+  Sec -.->|gates| AI
+  Sec -.->|gates| Cfg
 
   classDef cat fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  class tp,ta,tab,tasw,tro,tsa,ap,apa,as,nd,na,nh,ndv,aai,ccp,ccr,aw,rsi,vca,vct,cco,csg,mlx,ok,ss,pt cat;
+  class tp,ta,tab,tasw,tro,tsa,ap,apa,as,nd,na,nh,ndv,ncc,aai,ccp,ccr,aw,rsi,cco,csg,splapps,ss,gt,mlx,ok,pt cat;
 
   linkStyle default stroke:#E06B4A,stroke-width:3px
 ```
@@ -75,11 +82,13 @@ flowchart TB
 
 **Infrastructure → Configuration.** `terraform-proxmox` provisions VMs and LXC containers on the Proxmox cluster. `ansible-proxmox-apps` then configures Cribl, HAProxy, and the application layer on top.
 
-**Configuration → Observability.** `ansible-splunk` deploys Splunk Enterprise. `ansible-proxmox-apps` deploys Cribl Edge and Stream. The Cribl packs (`cc-edge-*`, `cc-stream-*`) and Splunk apps (`VisiCore_*`) live on this infrastructure.
+**Configuration → Observability.** `ansible-splunk` deploys Splunk Enterprise. `ansible-proxmox-apps` deploys Cribl Edge and Stream. The Cribl packs (`cc-edge-*`, `cc-stream-*`) and the Splunk apps for AI observability live on this infrastructure.
 
-**Nix → AI Development.** `nix-ai` packages every AI coding tool — Claude, Gemini, Copilot, MLX, MCP servers. `nix-darwin` orchestrates the macOS system. `nix-home` handles the user environment. `nix-devenv` provides reusable per-project dev shells. Together they mean "rebuild my entire dev environment from a single `nix build`."
+**Nix → AI Development.** `nix-ai` packages every AI coding tool — Claude, Gemini, Copilot, MLX, MCP servers. `nix-darwin` orchestrates the macOS system. `nix-home` handles the user environment. `nix-devenv` provides reusable per-project dev shells. `nix-claude-code` declares the Claude Code permission model. Together they mean "rebuild my entire dev environment from a single `nix build`."
 
-**AI Development → Observability.** Every AI coding interaction emits OTEL telemetry. The `cc-edge-*` Cribl packs collect it. Cribl Stream routes it. Splunk stores it. The `VisiCore_*` apps visualize it. End-to-end traceability for AI-assisted development — usage, cost, performance, all of it.
+**AI Development → Observability.** Every AI coding interaction emits OTEL telemetry. The `cc-edge-*` Cribl packs collect it. Cribl Stream routes it. Splunk stores it. Splunk apps visualize it. End-to-end traceability for AI-assisted development — usage, cost, performance, all of it.
+
+**Security → everything.** `secrets-sync` distributes GitHub Actions secrets to ~20 repos from one config file. `.github-tofu` codifies branch protection and rulesets across both organizations. The Nix layer (`nix-darwin`, `nix-claude-code`) enforces the local-AI isolation guarantees. See [Security · How it fits together](/security/how-it-fits-together) for the diagrams.
 
 ## Data flows worth knowing
 
@@ -95,5 +104,6 @@ Each category has its own section in this site. Per-category pages link out to G
   <Card title="Nix Ecosystem" href="/nix/overview">Reproducible everything</Card>
   <Card title="AI Development" href="/ai-development/overview">Multi-model AI pipeline</Card>
   <Card title="Observability" href="/observability/overview">OTEL → Cribl → Splunk</Card>
+  <Card title="Security" href="/security/overview">Secrets, isolation, golden laws</Card>
   <Card title="Tools" href="/tools/overview">Utilities and meta</Card>
 </CardGroup>

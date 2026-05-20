@@ -78,6 +78,28 @@
             ]
           },
           {
+            "group": "Security",
+            "pages": [
+              "security/overview",
+              "security/golden-laws",
+              "security/how-it-fits-together",
+              "security/secrets-sync",
+              "security/local-ai-isolation",
+              {
+                "group": "Secrets tools",
+                "pages": [
+                  "security/tools/doppler",
+                  "security/tools/macos-keychain",
+                  "security/tools/aws-vault",
+                  "security/tools/sops",
+                  "security/tools/bitwarden",
+                  "security/tools/bws",
+                  "security/tools/openbao"
+                ]
+              }
+            ]
+          },
+          {
             "group": "Nix Ecosystem",
             "pages": [
               "nix/overview",

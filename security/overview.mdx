@@ -1,0 +1,67 @@
+---
+title: "Security"
+description: "How secrets move through the JacobPEvans ecosystem — one tool per job, clear boundaries between AI-readable and human-only."
+---
+
+> Seven secrets tools, one job each. The boundary between AI-readable and human-only is structural, not policy.
+
+This site is the single public source of truth for the secrets-management story. Each repo's `README.md` keeps only the literal commands its workflow needs; the narrative lives here.
+
+## The boundary that matters
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+flowchart LR
+  subgraph AI_OK["AI-readable (CI + dev)"]
+    direction LR
+    Dop["Doppler"]
+    KcA["Keychain<br/>automation"]
+    Av["AWS Vault<br/>(per session)"]
+    Sops["SOPS<br/>(in-repo)"]
+    Bws["BWS<br/>(via bridge)"]
+  end
+  subgraph Human["Human-only"]
+    direction LR
+    Bw["Bitwarden vault"]
+    KcE["Keychain<br/>elevate-access"]
+  end
+  subgraph Planned["Planned"]
+    direction LR
+    Ob["OpenBao"]
+  end
+  AI_OK --- Human
+  Human --- Planned
+
+  linkStyle default stroke:#E06B4A,stroke-width:2px
+```
+
+## Which tool for which secret
+
+| Tool | Use it for | Deep dive |
+| --- | --- | --- |
+| **Doppler** | AI provider keys (Claude, Gemini, OpenRouter, HuggingFace); GitHub Actions secrets distributed via `secrets-sync`; dryvist org-level Doppler integration | [doppler](/security/tools/doppler) |
+| **macOS Keychain** | Tiered GitHub PATs (`RESTRICTED`, `PRIVATE`, `ADMIN`); BWS access token; Claude Code OAuth credential | [macos-keychain](/security/tools/macos-keychain) |
+| **AWS Vault** | AWS credentials per Terraform root (one profile per root) | [aws-vault](/security/tools/aws-vault) |
+| **Mozilla SOPS** | Encrypted Terraform / Ansible vars committed to git; initial-bootstrap passwords; internal topology | [sops](/security/tools/sops) |
+| **Bitwarden vault** | SSH keys, recovery codes, age-key escrow, account passwords — AI tools never reach this | [bitwarden](/security/tools/bitwarden) |
+| **BWS** | Programmatic AI tokens (e.g. `CLAUDE_OAUTH_TOKEN`) fetched via the Python bridge | [bws](/security/tools/bws) |
+| **OpenBao** *(planned)* | Self-hosted homelab service-to-service auth | [openbao](/security/tools/openbao) |
+
+## What this section covers
+
+<CardGroup cols={2}>
+  <Card title="Golden laws" icon="scale-balanced" href="/security/golden-laws">
+    The fifteen non-negotiables. Every other page is just an implementation of one of these.
+  </Card>
+  <Card title="How it fits together" icon="diagram-project" href="/security/how-it-fits-together">
+    Multi-diagram tour of every secret flow — CI, local dev, AI sessions.
+  </Card>
+  <Card title="secrets-sync architecture" icon="rotate" href="/security/secrets-sync">
+    How Tier 1 secrets reach 20+ GitHub repos through one workflow.
+  </Card>
+  <Card title="Local AI isolation" icon="shield-halved" href="/security/local-ai-isolation">
+    Why AI tools structurally cannot view protected token values.
+  </Card>
+</CardGroup>
+
+For dryvist-internal specifics (workspace names, account IDs, internal topology), see [`docs.dryvist.com`](https://docs.dryvist.com).

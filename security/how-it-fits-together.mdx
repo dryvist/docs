@@ -1,0 +1,126 @@
+---
+title: "How it fits together"
+description: "Every secret flow — CI, local dev, AI sessions — drawn out as a single tour."
+---
+
+> Seven tools, four flows. Each flow earns its own diagram.
+
+The tools page lists what each one does. This page shows how they connect. Read it once; then jump to the per-tool deep dives for the operational details.
+
+## Tool topology
+
+Every tool maps to one storage backend. Sources of truth on the left, consumers on the right.
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+flowchart LR
+  subgraph Cloud["Cloud sources of truth"]
+    direction LR
+    Dop["Doppler workspace"]
+    Bw["Bitwarden vault"]
+    Bws["BWS project"]
+    AWS["AWS IAM"]
+  end
+  subgraph Local["Local at-rest"]
+    direction LR
+    KcA["Keychain<br/>automation"]
+    KcE["Keychain<br/>elevate-access"]
+    Sops[".sops.json<br/>in repo"]
+    AwsCfg["aws-vault<br/>backend"]
+  end
+  subgraph Consumers["Consumers"]
+    direction LR
+    CI["GitHub<br/>Actions"]
+    Dev["Local dev<br/>shell"]
+    AI["AI tool<br/>(subshell)"]
+  end
+
+  Dop --> KcA
+  Dop --> CI
+  Bw -.->|"manual export"| KcA
+  Bws --> KcA
+  AWS --> AwsCfg
+  Sops --> CI
+  Sops --> Dev
+  KcA --> AI
+  KcA --> Dev
+  KcE -.->|"unlock prompt"| Dev
+  AwsCfg --> Dev
+
+  linkStyle default stroke:#E06B4A,stroke-width:2px
+```
+
+Bitwarden's dotted line is intentional — it's never read programmatically. Anything that needs CI or AI access lives elsewhere.
+
+## CI flow — Doppler to GitHub Actions secrets
+
+`secrets-sync` is the distribution layer. Doppler holds the truth; `secrets-sync` fans it out to every target repo's GitHub Actions secrets.
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+flowchart LR
+  Dop["Doppler<br/>(auto-sync)"] --> SS["secrets-sync<br/>repo secrets"]
+  Cfg["secrets-config.yml"] --> WF["sync-secrets.yml<br/>workflow"]
+  SS --> WF
+  WF --> Matrix["matrix job:<br/>one row per secret"]
+  Matrix --> R1["target repo<br/>Actions secret"]
+  Matrix --> R2["target repo<br/>Actions secret"]
+  Matrix --> Rn["… 20+ repos"]
+
+  linkStyle default stroke:#E06B4A,stroke-width:2px
+```
+
+Tier-2 infra secrets (database passwords, RunsOn license) skip `secrets-sync` and fetch from Doppler at workflow runtime via `dopplerhq/secrets-fetch-action`.
+
+## Local-dev flow — aws-vault into Doppler into Terragrunt
+
+The canonical chain for every Terraform root: AWS Vault opens an MFA session, Doppler injects the runtime config, Terragrunt runs.
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+flowchart LR
+  You["you"] -->|"aws-vault exec tf-proxmox --"| AV["aws-vault<br/>session"]
+  AV -->|"doppler run --"| DR["doppler run<br/>injects env"]
+  DR -->|"terragrunt plan"| TG["Terragrunt"]
+  TG -->|"AWS API"| Cloud["AWS resources"]
+
+  linkStyle default stroke:#E06B4A,stroke-width:2px
+```
+
+One profile per Terraform root. Profile names match root names (`tf-proxmox`, `tf-runs-on`). MFA caches for the configured session TTL.
+
+## AI-session flow — launchers and the disappearing env
+
+The launcher wraps `claude` in a subshell. Inside the subshell, the token is exported; the moment `claude` exits, the subshell exits and the env reverts. The parent shell never sees the token.
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+flowchart LR
+  P0["parent shell<br/>no token"] -->|"gh-claude-restricted"| Sub["launcher subshell"]
+  Sub -->|"security find-generic-password"| Kc["Keychain<br/>(automation)"]
+  Kc -->|"GITHUB_TOKEN exported<br/>in subshell only"| Cl["claude process"]
+  Cl -->|"exit"| Done["subshell exits"]
+  Done -->|"env reverts"| P1["parent shell<br/>still no token"]
+
+  linkStyle default stroke:#E06B4A,stroke-width:2px
+```
+
+The `elevate-access` keychain (PRIVATE, ADMIN) requires a user unlock prompt, so the AI cannot use it non-interactively. See [Local AI isolation](/security/local-ai-isolation) for the full proof.
+
+## One-line flow summary
+
+| Flow | Path |
+| --- | --- |
+| CI Tier 1 secret | Doppler → `secrets-sync` repo → matrix job → target repo Actions secret |
+| CI Tier 2 secret (infra) | Doppler → `dopplerhq/secrets-fetch-action` at workflow runtime → env vars |
+| Local Terraform | `aws-vault exec` → `doppler run` → `terragrunt plan` |
+| Local AI session | `gh-claude-<tier>` launcher → subshell → keychain read → `exec claude` → exit erases env |
+| At-rest encrypted config | `sops -e` → committed `.sops.json` → `sops -d` at CI/local boot |
+
+## Where each flow is documented
+
+- CI Tier 1: [secrets-sync](/security/secrets-sync)
+- CI Tier 2: [doppler](/security/tools/doppler#runtime-fetch-via-github-actions)
+- Local Terraform: [aws-vault](/security/tools/aws-vault) + [doppler](/security/tools/doppler)
+- Local AI session: [local-ai-isolation](/security/local-ai-isolation) + [macos-keychain](/security/tools/macos-keychain)
+- Encrypted config: [sops](/security/tools/sops)
