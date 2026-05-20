@@ -1,6 +1,7 @@
 ---
 title: "Security"
 description: "How secrets move through the JacobPEvans ecosystem — one tool per job, clear boundaries between AI-readable and human-only."
+tier: 1
 ---
 
 > Seven secrets tools, one job each. The boundary between AI-readable and human-only is structural, not policy.
@@ -13,7 +14,7 @@ This site is the single public source of truth for the secrets-management story.
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph AI_OK["AI-readable (CI + dev)"]
-    direction LR
+    direction TB
     Dop["Doppler"]
     KcA["Keychain<br/>automation"]
     Av["AWS Vault<br/>(per session)"]
@@ -21,12 +22,12 @@ flowchart LR
     Bws["BWS<br/>(via bridge)"]
   end
   subgraph Human["Human-only"]
-    direction LR
+    direction TB
     Bw["Bitwarden vault"]
     KcE["Keychain<br/>elevate-access"]
   end
   subgraph Planned["Planned"]
-    direction LR
+    direction TB
     Ob["OpenBao"]
   end
   AI_OK --- Human

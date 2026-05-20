@@ -1,6 +1,7 @@
 ---
 title: "How it fits together"
 description: "Every secret flow — CI, local dev, AI sessions — drawn out as a single tour."
+tier: 2
 ---
 
 > Seven tools, four flows. Each flow earns its own diagram.
@@ -12,24 +13,24 @@ The tools page lists what each one does. This page shows how they connect. Read 
 Every tool maps to one storage backend. Sources of truth on the left, consumers on the right.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Cloud["Cloud sources of truth"]
-    direction LR
+    direction TB
     Dop["Doppler workspace"]
     Bw["Bitwarden vault"]
     Bws["BWS project"]
     AWS["AWS IAM"]
   end
   subgraph Local["Local at-rest"]
-    direction LR
+    direction TB
     KcA["Keychain<br/>automation"]
     KcE["Keychain<br/>elevate-access"]
     Sops[".sops.json<br/>in repo"]
     AwsCfg["aws-vault<br/>backend"]
   end
   subgraph Consumers["Consumers"]
-    direction LR
+    direction TB
     CI["GitHub<br/>Actions"]
     Dev["Local dev<br/>shell"]
     AI["AI tool<br/>(subshell)"]
@@ -57,7 +58,7 @@ Bitwarden's dotted line is intentional — it's never read programmatically. Any
 `secrets-sync` is the distribution layer. Doppler holds the truth; `secrets-sync` fans it out to every target repo's GitHub Actions secrets.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   Dop["Doppler<br/>(auto-sync)"] --> SS["secrets-sync<br/>repo secrets"]
   Cfg["secrets-config.yml"] --> WF["sync-secrets.yml<br/>workflow"]
@@ -77,7 +78,7 @@ Tier-2 infra secrets (database passwords, RunsOn license) skip `secrets-sync` an
 The canonical chain for every Terraform root: AWS Vault opens an MFA session, Doppler injects the runtime config, Terragrunt runs.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   You["you"] -->|"aws-vault exec tf-proxmox --"| AV["aws-vault<br/>session"]
   AV -->|"doppler run --"| DR["doppler run<br/>injects env"]
@@ -94,7 +95,7 @@ One profile per Terraform root. Profile names match root names (`tf-proxmox`, `t
 The launcher wraps `claude` in a subshell. Inside the subshell, the token is exported; the moment `claude` exits, the subshell exits and the env reverts. The parent shell never sees the token.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   P0["parent shell<br/>no token"] -->|"gh-claude-restricted"| Sub["launcher subshell"]
   Sub -->|"security find-generic-password"| Kc["Keychain<br/>(automation)"]

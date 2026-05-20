@@ -1,6 +1,7 @@
 ---
 title: "macOS Keychain"
 description: "Two keychain databases with different access controls — tiered GitHub PATs, BWS access tokens, and the AI-readable / human-only boundary."
+tier: 2
 ---
 
 > Two databases, three GitHub-token tiers. Unlock posture decides who can read what.
@@ -8,16 +9,16 @@ description: "Two keychain databases with different access controls — tiered G
 ## Two databases, one rule
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Auto["automation.keychain-db (unlocked at login)"]
-    direction LR
+    direction TB
     Restricted["GH_PAT_RESTRICTED<br/>(public repos)"]
     HF["HF_TOKEN<br/>BWS_ACCESS_TOKEN"]
     Cred["Claude Code-credentials"]
   end
   subgraph Elev["elevate-access.keychain-db (locked, GUI unlock)"]
-    direction LR
+    direction TB
     Private["GH_PAT_PRIVATE<br/>(+ private repos)"]
     Admin["GH_PAT_ADMIN<br/>(JPE repo admin)"]
     OrgAdmin["GH_PAT_ORG_ADMIN<br/>(dryvist org admin)"]

@@ -1,6 +1,7 @@
 ---
 title: "Bitwarden Secrets Manager (BWS)"
 description: "Programmatic bridge for AI service tokens — BWS project values fetched via a Python helper that keeps the access token in the macOS Keychain."
+tier: 2
 ---
 
 > BWS is a separate Bitwarden product from the vault. It exists for the values that need to flow into a tool — without ever sitting on disk in plaintext.
@@ -24,7 +25,7 @@ If both Doppler and BWS would work for a given secret, prefer Doppler. BWS is th
 ## The bridge pattern
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   Cfg["~/.config/bws/.env<br/>(secret IDs + keychain refs only)"] --> Helper["bws_helper.py"]
   Kc["automation.keychain-db<br/>BWS_ACCESS_TOKEN"] --> Helper

@@ -113,7 +113,7 @@ Fix any broken-link violations before committing. If `mint dev` errors on frontm
 
 **Aspect-ratio check (manual).** Open `mint dev` in a 1440px-wide browser
 window; every diagram on a changed page must render wider than tall. If
-not, restructure per [`AGENTS.md` § Diagram aspect ratio](../../AGENTS.md).
+not, restructure per [`AGENTS.md` § Diagram aspect ratio](../../../AGENTS.md).
 Hub-and-spoke layouts with `flowchart LR` will still stack their spokes
 vertically — replace the hub node with a horizontal subgraph border, or
 split into smaller diagrams.

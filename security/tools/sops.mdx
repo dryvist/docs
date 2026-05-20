@@ -1,6 +1,7 @@
 ---
 title: "Mozilla SOPS"
 description: "Encrypted-at-rest configuration committed directly to git — age keys, .sops.json files, and the editor / decrypt workflow."
+tier: 2
 ---
 
 > If it can be encrypted and committed, SOPS holds it. If it must rotate, Doppler does.
@@ -20,7 +21,7 @@ It is **not** a vault. It is checked-in, encrypted-at-rest configuration — per
 ## The encrypt / commit / decrypt cycle
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   Author["author edits<br/>plaintext source"] -->|"sops -e --in-place"| Enc[".sops.json<br/>(encrypted values)"]
   Enc -->|"git commit"| Repo["repo on GitHub"]

@@ -1,6 +1,7 @@
 ---
 title: "Doppler"
 description: "Source of truth for AI provider keys and GitHub Actions secrets — distributed via secrets-sync or fetched at workflow runtime."
+tier: 2
 ---
 
 > Doppler holds the values. Everything else is delivery.
@@ -22,24 +23,24 @@ description: "Source of truth for AI provider keys and GitHub Actions secrets �
 ## Project / config layout
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Doppler["Doppler workspace"]
-    direction LR
+    direction TB
     P1["secrets-sync project"]
     P2["iac-conf-mgmt / prd"]
     P3["ai-ci-automation / prd"]
   end
   subgraph Push["Tier 1 — push to GitHub"]
-    direction LR
+    direction TB
     GH["secrets-sync repo<br/>Actions secrets"]
   end
   subgraph Fetch["Tier 2 — fetch at runtime"]
-    direction LR
+    direction TB
     Action["dopplerhq/secrets-fetch-action<br/>(in CI job)"]
   end
   subgraph Local["Local dev"]
-    direction LR
+    direction TB
     DR["doppler run -- <cmd>"]
   end
   P1 -->|"auto-sync"| GH

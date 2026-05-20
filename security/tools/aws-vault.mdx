@@ -1,6 +1,7 @@
 ---
 title: "AWS Vault"
 description: "MFA-protected AWS credential sessions — one profile per Terraform root, paired with Doppler for runtime secret injection."
+tier: 2
 ---
 
 > One profile per Terraform root. MFA on every session. Cached for a bounded TTL.
@@ -12,7 +13,7 @@ description: "MFA-protected AWS credential sessions — one profile per Terrafor
 ## Profile model
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   You["you"] -->|"aws-vault exec <profile>"| AV["aws-vault<br/>session"]
   AV -->|"MFA prompt<br/>(if not cached)"| MFA["TOTP from<br/>authenticator"]

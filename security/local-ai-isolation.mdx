@@ -1,6 +1,7 @@
 ---
 title: "Local AI isolation"
 description: "Why AI tools (Claude Code, Gemini CLI, Codex) structurally cannot view protected secret values — process scoping, keychain tiers, and explicit deny lists."
+tier: 2
 ---
 
 > Three layers of isolation. Each layer is sufficient on its own. Together, they make leakage structurally impossible.
@@ -12,7 +13,7 @@ This page is the proof, not just the claim. AI tools running on this workstation
 Every AI launcher runs `claude` inside a subshell. The subshell exports `GITHUB_TOKEN`; when `claude` exits, the subshell exits, and the env reverts. The parent shell never sees the token.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   P0["parent shell<br/>GITHUB_TOKEN unset"] -->|"gh-claude-restricted"| Sub["launcher subshell<br/>(parens)"]
   Sub -->|"gh-restricted"| Kc["keychain read"]
@@ -49,15 +50,15 @@ No secret material is ever printed. The banner names the *kind* of context, neve
 Secrets live in two separate macOS keychain databases. Only the unlocked one (`automation.keychain-db`) is reachable by an automated `security find-generic-password` call. The other (`elevate-access.keychain-db`) is password-locked and prompts the GUI to unlock — which an AI cannot do.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Auto["automation.keychain-db (unlocked)"]
-    direction LR
+    direction TB
     R["GH_PAT_RESTRICTED<br/>(public repos)"]
     HF["HF_TOKEN<br/>BWS_ACCESS_TOKEN"]
   end
   subgraph Elev["elevate-access.keychain-db (locked)"]
-    direction LR
+    direction TB
     Prv["GH_PAT_PRIVATE<br/>(+ private repos)"]
     Adm["GH_PAT_ADMIN<br/>GH_PAT_ORG_ADMIN<br/>(full access)"]
   end
@@ -75,16 +76,16 @@ flowchart LR
 The Claude Code permission system bakes a deny list into the build. Even if the previous two layers were bypassed, the harness refuses the file paths that would yield secret material.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Allow["Allowed — read-only inspection"]
-    direction LR
+    direction TB
     A1["security find-generic-password<br/>(by service name, value flagged)"]
     A2["security list-keychains"]
     A3["security show-keychain-info"]
   end
   subgraph Deny["Denied — globs blocked from Read / Edit / Write"]
-    direction LR
+    direction TB
     D1["**/.env*"]
     D2["**/secrets/**"]
     D3["~/.gnupg/**"]

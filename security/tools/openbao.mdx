@@ -1,6 +1,7 @@
 ---
 title: "OpenBao"
 description: "Planned self-hosted secrets layer for homelab service-to-service auth — privileged LXC + per-LXC agents rendering ephemeral env files."
+tier: 2
 ---
 
 <Note>
@@ -19,22 +20,22 @@ That works at small scale. It scales poorly. OpenBao — the MPL-licensed fork o
 ## Planned architecture
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'14px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
 flowchart LR
   subgraph Bao["OpenBao LXC (privileged)"]
-    direction LR
+    direction TB
     Raft["Raft storage<br/>(encrypted at rest)"]
     Auth["auth methods<br/>(AppRole / cert)"]
     KV["KV v2 secrets engine"]
   end
   subgraph LXC1["Consumer LXC #1"]
-    direction LR
+    direction TB
     Agent1["openbao agent"]
     Svc1["service binary"]
     Env1["/run/openbao/svc1.env<br/>(tmpfs)"]
   end
   subgraph LXC2["Consumer LXC #2"]
-    direction LR
+    direction TB
     Agent2["openbao agent"]
     Svc2["service binary"]
     Env2["/run/openbao/svc2.env<br/>(tmpfs)"]
