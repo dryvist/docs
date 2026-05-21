@@ -20,33 +20,85 @@ The tools page lists what each one does. This page shows how they connect. Read 
 
 ## CI Tier 1 — Doppler distributes via secrets-sync
 
-<Steps>
-  <Step title="Doppler auto-sync writes into secrets-sync">
-    The `secrets-sync` Doppler project pushes values into the repo's GitHub Actions secrets store.
-  </Step>
-  <Step title="A change to secrets-config.yml fires the workflow">
-    Validate the PAT against every target repo (fail-fast).
-  </Step>
-  <Step title="Matrix sync fans out">
-    One matrix shard per secret; each writes to every listed target repo.
-  </Step>
-</Steps>
+{/* Shape: linear chain. 4 nodes. Aspect: ~3:1 LR. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Dop([Doppler])
+  SS([secrets-sync repo])
+  WF([sync-secrets workflow])
+  Repos[(target repos)]
+
+  Dop --> SS --> WF --> Repos
+
+  classDef src fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef hop fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef dst fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+
+  class Dop src
+  class SS,WF hop
+  class Repos dst
+
+  linkStyle 0,1,2 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
 
 ## CI Tier 2 — infra fetches at runtime
 
-The Doppler `iac-conf-mgmt/prd` config holds the high-sensitivity values (database passwords, RunsOn license, Qdrant keys). They never sit in GitHub Actions secrets. The CI job fetches them at runtime via `dopplerhq/secrets-fetch-action` using the read-only service token distributed by Tier 1.
+{/* Shape: linear chain. 3 nodes. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Dop([Doppler<br/>iac-conf-mgmt/prd])
+  Act([dopplerhq/<br/>secrets-fetch-action])
+  Job([CI job env])
+
+  Dop --> Act --> Job
+
+  classDef src fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef hop fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+
+  class Dop src
+  class Act,Job hop
+
+  linkStyle 0,1 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
+
+The high-sensitivity Doppler config (database passwords, RunsOn license, Qdrant keys) never sits in GitHub Actions secrets. The job fetches at runtime via the read-only service token distributed by Tier 1.
 
 ## Local-dev — aws-vault → doppler → terragrunt
+
+{/* Shape: linear chain. 4 nodes. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  You([you])
+  AV([aws-vault exec])
+  DR([doppler run])
+  TG([terragrunt plan])
+
+  You --> AV --> DR --> TG
+
+  classDef host fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef proc fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+
+  class You host
+  class AV,DR,TG proc
+
+  linkStyle 0,1,2 stroke:#2F7E78,stroke-width:2px;
+```
 
 ```bash
 aws-vault exec tf-proxmox -- doppler run -- terragrunt plan
 ```
 
-Three nested subprocesses. Each layer injects only into the next. When `terragrunt` exits, the AWS session, the Doppler env, and the parent shell are all untouched.
+Three nested subprocesses. Each layer injects only into the next; when `terragrunt` exits, the AWS session, the Doppler env, and the parent shell are all untouched.
 
 ## Local AI session — launcher subshell
 
-The launcher wraps `claude` in a subshell, reads the token from `automation.keychain-db`, exports `GITHUB_TOKEN`, then `exec claude`. When `claude` exits, the subshell exits — and the parent shell's `GITHUB_TOKEN` is still unset. The full proof is in [Local AI isolation](/security/local-ai-isolation).
+See [Local AI isolation](/security/local-ai-isolation) for the diagram and the full four-layer proof. Short version: the launcher wraps `claude` in a subshell, reads the token from `automation.keychain-db`, exports `GITHUB_TOKEN`, then `exec claude`. When `claude` exits, the subshell exits — and the parent shell's `GITHUB_TOKEN` is still unset.
 
 ## Where each flow is documented
 

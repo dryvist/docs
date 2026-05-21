@@ -30,15 +30,40 @@ description: "Six surfaces, one stack — and how each one depends on the others
 
 ## How they depend on each other
 
-**Security gates everything.** Credentials reach CI through `secrets-sync`. Branch protection and rulesets are enforced declaratively by `.github-tofu` across both orgs. Every other layer assumes this layer is in place.
+{/* Shape: parallel convergence. Two chains land on Observability. */}
+{/* Security is the gate (dotted control edges). 6 nodes. Boundary crossings: 0. */}
 
-**Infrastructure provisions Configuration.** `terraform-proxmox` builds the VMs and LXCs on the Proxmox cluster. Ansible roles then install Cribl, HAProxy, and the application layer on top.
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Inf([Infrastructure])
+  Cfg([Configuration])
+  Obs([Observability])
+  Nix([Nix Ecosystem])
+  AI([AI Development])
+  Sec([Security])
 
-**Configuration deploys Observability.** Splunk Enterprise via `ansible-splunk`. Cribl Edge and Stream via `ansible-proxmox-apps`. The Cribl packs and Splunk apps live on this infrastructure.
+  Inf --> Cfg
+  Cfg --> Obs
+  Nix --> AI
+  AI --> Obs
+  Sec -.-> Inf
+  Sec -.-> Cfg
+  Sec -.-> AI
 
-**Nix tools AI Development.** Every AI coding tool — Claude Code, Gemini CLI, Copilot, MLX, MCP servers — is packaged in `nix-ai`. The rest of the Nix layer (`nix-darwin`, `nix-home`, `nix-devenv`) makes the entire dev environment rebuildable from a single `nix build`.
+  classDef stack    fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef sink     fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2.5px,color:#0B1D2A;
+  classDef gate     fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
 
-**AI Development emits to Observability.** Every AI session ships OTEL telemetry. Cribl collects, Splunk indexes, the AI-observability apps make it readable. End-to-end traceability for every model call.
+  class Inf,Cfg,Nix,AI stack
+  class Obs sink
+  class Sec gate
+
+  linkStyle 0,1,2,3 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 4,5,6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+Two chains converge on Observability: the homelab chain (Infrastructure → Configuration) and the dev chain (Nix → AI Development). Security (coral) gates the upstream end of each — credentials, branch protection, isolation. Dotted amber edges are control, not data.
 
 ## Going deeper
 

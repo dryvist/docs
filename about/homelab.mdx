@@ -18,16 +18,68 @@ The homelab is a real production environment, just for one person. Proxmox clust
 | Power | Rack UPS (Eaton 5P750R) for servers; separate UPS for the Home Assistant Pi | Active NUT monitoring planned once the LLM box is built |
 | Rack management | Raspberry Pi running Home Assistant; iDRAC vKVM jump VM in cluster for Java Web Start console access | Old BMC firmware needs a Java Web Start client; the jump VM keeps Java off the laptop |
 
-## Topology
+## Network topology
 
-| Zone | What's there |
-| --- | --- |
-| **External** | Internet ingress over WireGuard; AWS holds the DR footprint (Splunk failover, Bedrock, S3) |
-| **Networking** | UniFi gateway + switches + APs, 10G fibre backbone where it matters |
-| **Proxmox cluster** | HAProxy LXC, Cribl Edge LXCs, Splunk indexer + search heads, Home Assistant LXC, dedicated docker-host VM for vendor-only images |
-| **Personal devices** | Mac (`nix-darwin`), phone (Home Assistant app) |
+{/* Shape: hub-and-spokes. UniFi is the hub. 5 nodes. Boundary crossings: 0. */}
 
-Data flow: UniFi feeds Proxmox; HAProxy fronts Cribl Edge; Cribl forwards over HEC to Splunk; Splunk replicates a DR slice to AWS.
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Net([Internet])
+  UF([UniFi gateway])
+  PVE([Proxmox cluster])
+  Mac([Mac / phone])
+  LLM([Local LLM box])
+
+  Net --> UF
+  UF --> PVE
+  UF --> Mac
+  UF --> LLM
+
+  classDef external fill:#F4EFE6,stroke:#E6B35A,stroke-width:2px,color:#0B1D2A;
+  classDef gateway  fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
+  classDef cluster  fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+
+  class Net external
+  class UF gateway
+  class PVE,Mac,LLM cluster
+
+  linkStyle 0,1,2,3 stroke:#2F7E78,stroke-width:2px;
+```
+
+Solid green edges are physical / network. WireGuard tunnels traverse the Internet → UniFi edge. The UniFi gateway is the centre of the LAN; Proxmox, personal devices, and the bare-metal LLM box all hang off it.
+
+## Data flow
+
+{/* Shape: linear chain (UniFi gear → HAProxy → Cribl → Splunk → AWS DR). */}
+{/* 5 nodes. Boundary crossings: 0. Telemetry edges dashed coral. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Src([UniFi + devices])
+  HA([HAProxy])
+  Edge([Cribl Edge])
+  SP[(Splunk Enterprise)]
+  AWS([AWS DR])
+
+  Src --> HA --> Edge --> SP --> AWS
+
+  classDef src   fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef proxy fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef store fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+  classDef dr    fill:#F4EFE6,stroke:#E6B35A,stroke-width:2px,color:#0B1D2A;
+
+  class Src,Edge src
+  class HA proxy
+  class SP store
+  class AWS dr
+
+  linkStyle 0,1,2 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+Coral dashed edges are telemetry; the amber dotted edge to AWS is the disaster-recovery replication path. Same nodes as the network diagram, different concern — split per Rule 1.
 
 ## Container philosophy
 

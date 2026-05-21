@@ -10,19 +10,27 @@ The infrastructure layer is Terraform-managed. Every module is opinionated about
 
 ## The Proxmox stack
 
-Three repos build out the homelab in order: Terraform provisions, then Ansible configures the host, then Ansible deploys the apps on top.
+{/* Shape: linear chain. 3 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass. */}
 
-<Steps>
-  <Step title="Provision (Terraform)">
-    [Proxmox provisioning](/infrastructure/terraform-proxmox) creates VMs and LXCs on the cluster.
-  </Step>
-  <Step title="Configure the host (Ansible)">
-    [Proxmox config](/infrastructure/ansible-proxmox) sets ZFS, networking, users, monitoring agents.
-  </Step>
-  <Step title="Deploy the apps (Ansible)">
-    [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) installs HAProxy, Cribl Edge, Cribl Stream.
-  </Step>
-</Steps>
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  TP([Proxmox provisioning<br/>Terraform])
+  AP([Proxmox config<br/>Ansible])
+  APA([Apps on Proxmox<br/>Ansible])
+
+  TP --> AP --> APA
+
+  classDef provision fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef config    fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+
+  class TP provision
+  class AP,APA config
+
+  linkStyle 0,1 stroke:#0B1D2A,stroke-width:1.5px;
+```
+
+Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configures hosts (green), then deploys the app stack on top.
 
 ## AWS module map
 

@@ -11,30 +11,68 @@ The goal: 30–50% ingest reduction without losing security signal.
 
 UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
 
-<Steps>
-  <Step title="UniFi gear emits syslog">
-    Network devices ship syslog on `tcp/1514`.
-  </Step>
-  <Step title="HAProxy front-doors the stream">
-    Listens on `tcp/1514` and load-balances across the Cribl Edge cluster.
-  </Step>
-  <Step title="Cribl Edge transforms and reduces">
-    Two Edge nodes (A, B) drop verbose metric fields, route by event type, enrich and mask.
-  </Step>
-  <Step title="HEC into Splunk Enterprise">
-    Edge forwards the cleaned stream over HEC on `:8088`. The indexer takes a smaller, cleaner payload.
-  </Step>
-</Steps>
+{/* Shape: parallel convergence (HAProxy fans to A+B, both converge on Splunk). */}
+{/* Boundary crossings: 0. Ranks: 4. Aspect: ~3:1 LR. Pass. */}
 
-The Cribl pipeline at the Edge tier does the heavy lifting — drop verbose metric fields, route by event_type, enrich, mask. The Splunk indexers receive a smaller, cleaner stream.
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Net([UniFi gear<br/>syslog tcp/1514])
+  HA([HAProxy<br/>tcp/1514])
+  EA([Cribl Edge A])
+  EB([Cribl Edge B])
+  SP[(Splunk Enterprise<br/>HEC :8088)]
+
+  Net --> HA
+  HA --> EA --> SP
+  HA --> EB --> SP
+
+  classDef edge fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef proxy fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef store fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+
+  class Net,EA,EB edge
+  class HA proxy
+  class SP store
+
+  linkStyle 0 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
+
+Coral dashed edges carry the data; the solid green edge is the physical syslog hop. Cribl Edge drops verbose fields, routes by `event_type`, enriches and masks — the indexer takes a smaller, cleaner payload.
 
 ## NetFlow pipeline
 
-NetFlow v9 / IPFIX from network devices follows the same shape, on a different port.
+NetFlow v9 / IPFIX from network devices follows the same shape on a different port. UDP is loss-tolerant by design, so HAProxy distributes rather than fails over.
 
-The NetFlow pipeline mirrors the log pipeline on `udp/2055` instead of `tcp/1514`. UDP is loss-tolerant by design, so HAProxy distributes rather than fails over; Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before forwarding to Splunk on HEC.
+{/* Shape: parallel convergence. Identical topology to log pipeline, udp/2055. */}
 
-UDP NetFlow is loss-tolerant by design, so the HAProxy layer is more about distribution than failover. The Cribl pipelines de-duplicate, parse the flow records, and aggregate by tuple before forwarding.
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Net([Network devices<br/>NetFlow udp/2055])
+  HA([HAProxy<br/>udp/2055])
+  EA([Cribl Edge A])
+  EB([Cribl Edge B])
+  SP[(Splunk Enterprise<br/>HEC :8088)]
+
+  Net --> HA
+  HA --> EA --> SP
+  HA --> EB --> SP
+
+  classDef edge fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef proxy fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef store fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+
+  class Net,EA,EB edge
+  class HA proxy
+  class SP store
+
+  linkStyle 0 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
+
+Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before forwarding.
 
 ## What lives where
 

@@ -10,23 +10,45 @@ Every AI coding interaction emits OpenTelemetry — IDE events, model calls, tok
 
 ## AI telemetry pipeline
 
-<Steps>
-  <Step title="Tools emit OTEL">
-    Claude Code, GitHub Copilot, Gemini CLI, and VS Code each ship OpenTelemetry — IDE events, model calls, token counts, latency, cost.
-  </Step>
-  <Step title="Cribl Edge collects per tool">
-    One pack per source: `cc-edge-claude-code-otel`, `cc-edge-copilot-otel`, `cc-edge-vscode-io`, `cc-edge-gemini-antigravity-io`. Per-tool isolation means a Copilot schema change doesn't break the Claude pipeline.
-  </Step>
-  <Step title="Cribl Stream routes, transforms, reduces">
-    Drop verbose fields, route by event_type, enrich, mask. Splunk receives a smaller, cleaner stream.
-  </Step>
-  <Step title="Splunk indexes (HEC :8088)">
-    The indexer accepts the cleaned stream and writes to the AI-observability indexes.
-  </Step>
-  <Step title="Splunk apps make it readable">
-    Dashboard Studio v2 dashboards + the TA's CIM normalization layer.
-  </Step>
-</Steps>
+{/* Shape: parallel convergence (4 tools → 4 packs → Stream → Splunk → apps). */}
+{/* Boundary crossings: 0. Total nodes: 11 (≤12). Aspect: ~3:1 LR. Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'13px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart LR
+  Claude([Claude Code])
+  Copilot([Copilot])
+  Gemini([Gemini CLI])
+  VSC([VS Code])
+
+  CCO([cc-edge-claude-code-otel])
+  CCP([cc-edge-copilot-otel])
+  CAG([cc-edge-gemini-antigravity-io])
+  CCV([cc-edge-vscode-io])
+
+  Stream([Cribl Stream])
+  SP[(Splunk indexer)]
+  App([Splunk apps])
+
+  Claude --> CCO --> Stream
+  Copilot --> CCP --> Stream
+  Gemini --> CAG --> Stream
+  VSC --> CCV --> Stream
+  Stream --> SP --> App
+
+  classDef tool  fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef pack  fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef route fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+
+  class Claude,Copilot,Gemini,VSC tool
+  class CCO,CCP,CAG,CCV pack
+  class Stream,SP,App route
+
+  linkStyle 0,1,2,3,4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 8,9 stroke:#2F7E78,stroke-width:2px;
+```
+
+Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated — a Copilot schema change doesn't break the Claude pipeline.
 
 ## Splunk apps
 

@@ -10,13 +10,37 @@ Three Ansible repos cover everything that runs on the provisioned infrastructure
 
 ## Role map
 
+{/* Shape: hierarchy. TF parent → 3 Ansible role children. */}
+{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart TB
+  TF([Proxmox provisioning])
+  AP([Proxmox config])
+  APA([Apps on Proxmox])
+  AS([Splunk install])
+
+  TF --> AP
+  TF --> APA
+  TF --> AS
+
+  classDef provision fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
+  classDef config    fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+
+  class TF provision
+  class AP,APA,AS config
+
+  linkStyle 0,1,2 stroke:#0B1D2A,stroke-width:1.5px;
+```
+
+Terraform outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
+
 | Role | Repo | What it does |
 | --- | --- | --- |
 | Host config | [Proxmox config](/infrastructure/ansible-proxmox) | ZFS, networking, users, performance tuning, monitoring agents |
 | Apps on hosts | [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) | HAProxy, Cribl Edge, Cribl Stream |
 | Splunk install | [Splunk install](/observability/ansible-splunk) | Splunk Enterprise — indexers, search heads, license, storage tiering |
-
-All three consume the inventory from [Proxmox provisioning](/infrastructure/terraform-proxmox).
 
 ## Repos in this section
 

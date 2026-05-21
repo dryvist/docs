@@ -10,6 +10,35 @@ The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and o
 
 ## Ecosystem
 
+{/* Shape: hierarchy. nix-darwin parent imports nix-home + nix-ai; nix-devenv parallel. */}
+{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+flowchart TB
+  ND([macOS host])
+  NH([User environment])
+  NA([AI tooling])
+  NDV([Dev shells])
+
+  ND --> NH
+  ND --> NA
+  NH -.uses.-> NA
+
+  classDef sys  fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
+  classDef usr  fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef proj fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+
+  class ND sys
+  class NH,NA usr
+  class NDV proj
+
+  linkStyle 0,1 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 2 stroke:#E06B4A,stroke-width:1.5px,stroke-dasharray:4 3;
+```
+
+`nix-darwin` (coral) is the system root. It imports `nix-home` and `nix-ai` (green). `nix-devenv` (ink) is a parallel concern — each project pulls it directly via `nix flake init`.
+
 | Layer | Repo | What it owns |
 | --- | --- | --- |
 | **macOS system** | [macOS host](/nix/nix-darwin) | `environment.systemPackages`, sudoers, security, Touch ID, system-level config |
