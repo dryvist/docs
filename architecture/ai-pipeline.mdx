@@ -14,7 +14,7 @@ Humans decide *what* to build. AI agents handle the *how*. Automation runs the b
 {/* Aspect: ~3:1 (LR). Role encoded via classDef, not subgraphs. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   H1([Roadmap])
   H2([Issue])
@@ -28,15 +28,15 @@ flowchart LR
 
   H1 --> H2 --> A1 --> A2 --> T1 --> T2 --> A3 --> H3 --> T3
 
-  classDef human fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-  classDef ai    fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-  classDef auto  fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+  classDef human fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef ai    fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef auto  fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 
   class H1,H2,H3 human
   class A1,A2,A3 ai
   class T1,T2,T3 auto
 
-  linkStyle default stroke:#2F7E78,stroke-width:1.5px;
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
 Green nodes are human, coral are AI, ink are automation. The role is the node colour; the chain is the timeline — no zigzag because the diagram never asks the arrows to leave a column.

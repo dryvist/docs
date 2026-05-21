@@ -23,7 +23,7 @@ The tools page lists what each one does. This page shows how they connect. Read 
 {/* Shape: linear chain. 4 nodes. Aspect: ~3:1 LR. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   Dop([Doppler])
   SS([secrets-sync repo])
@@ -32,9 +32,9 @@ flowchart LR
 
   Dop --> SS --> WF --> Repos
 
-  classDef src fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-  classDef hop fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-  classDef dst fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+  classDef src fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef dst fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Dop src
   class SS,WF hop
@@ -48,7 +48,7 @@ flowchart LR
 {/* Shape: linear chain. 3 nodes. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   Dop([Doppler<br/>iac-conf-mgmt/prd])
   Act([dopplerhq/<br/>secrets-fetch-action])
@@ -56,8 +56,8 @@ flowchart LR
 
   Dop --> Act --> Job
 
-  classDef src fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-  classDef hop fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef src fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
 
   class Dop src
   class Act,Job hop
@@ -72,7 +72,7 @@ The high-sensitivity Doppler config (database passwords, RunsOn license, Qdrant 
 {/* Shape: linear chain. 4 nodes. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   You([you])
   AV([aws-vault exec])
@@ -81,13 +81,13 @@ flowchart LR
 
   You --> AV --> DR --> TG
 
-  classDef host fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-  classDef proc fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef proc fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
 
   class You host
   class AV,DR,TG proc
 
-  linkStyle 0,1,2 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 0,1,2 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 ```bash

@@ -15,7 +15,7 @@ Every AI launcher runs `claude` inside a subshell. The subshell exports `GITHUB_
 {/* Shape: linear chain. 6 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   P0([parent shell<br/>GITHUB_TOKEN unset])
   Sub([launcher subshell])
@@ -27,15 +27,15 @@ flowchart LR
   P0 --> Sub --> Kc
   Kc --> Cl --> Done --> P1
 
-  classDef host fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-  classDef ai   fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-  classDef kc   fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef kc   fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class P0,P1 host
   class Sub,Cl,Done ai
   class Kc kc
 
-  linkStyle 0,1,2,3,4 stroke:#2F7E78,stroke-width:2px;
+  linkStyle 0,1,2,3,4 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 Green nodes are the parent shell (host), coral are the ephemeral subshell + `claude` process, ink is the keychain. The chain runs left-to-right and ends where it began — the parent shell on the right still has `GITHUB_TOKEN` unset.

@@ -14,7 +14,7 @@ Three Ansible repos cover everything that runs on the provisioned infrastructure
 {/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart TB
   TF([Proxmox provisioning])
   AP([Proxmox config])
@@ -25,13 +25,13 @@ flowchart TB
   TF --> APA
   TF --> AS
 
-  classDef provision fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
-  classDef config    fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+  classDef provision fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef config    fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
 
   class TF provision
   class AP,APA,AS config
 
-  linkStyle 0,1,2 stroke:#0B1D2A,stroke-width:1.5px;
+  linkStyle 0,1,2 stroke:#F4EFE6,stroke-width:1.5px;
 ```
 
 Terraform outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).

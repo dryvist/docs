@@ -60,7 +60,7 @@ that matches the site's voice. Any deviation (different fontSize, missing
 `look`, different palette) is a bug.
 
 ```text
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 ```
 
 To check the site is consistent:
@@ -87,34 +87,38 @@ represents; don't invent new classes per page. This keeps the same colour
 meaning the same idea everywhere.
 
 ```text
-classDef src      fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-classDef hop      fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-classDef sink     fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
-classDef gate     fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
-classDef external fill:#F4EFE6,stroke:#E6B35A,stroke-width:2px,color:#0B1D2A;
-classDef host     fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
-classDef ai       fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
-classDef auto     fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+classDef host     fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 ```
 
-| Class | Meaning |
-| --- | --- |
-| `src` / `ai` / `gate` | Coral. Origin of a flow, AI-touched, or a decision gate. |
-| `hop` / `host` | Paper-card + green. Intermediate hops, the parent shell, hosts. |
-| `sink` / `auto` | Paper + ink. Sinks (Splunk indexer), automation steps. |
-| `external` | Paper + amber. External actors (Internet, AWS DR). |
+All classes share the same dark fill (`#102937`) so the diagram blends
+with the page; the **border colour** is what carries the semantic
+meaning. Text is always paper (`#F4EFE6`) — readable against the dark fill.
+
+| Class | Border | Meaning |
+| --- | --- | --- |
+| `src` / `ai` / `gate` | Coral `#E06B4A` | Origin, AI-touched, or a decision gate. |
+| `hop` / `host` | Bright green `#4FB3A9` | Intermediate hops, the parent shell, hosts. |
+| `sink` / `auto` | Paper `#F4EFE6` | Sinks (Splunk indexer), automation steps. |
+| `external` | Amber `#E6B35A` | External actors (Internet, AWS DR). |
 
 ### Canonical edge palette (indexed `linkStyle`)
 
 ```text
-%% physical / network — solid green
-linkStyle 0,1,2 stroke:#2F7E78,stroke-width:2px;
+%% physical / network — solid bright green
+linkStyle 0,1,2 stroke:#4FB3A9,stroke-width:2px;
 
 %% data / telemetry — dashed coral
 linkStyle 3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 
-%% control / provisioning — solid ink, lower weight
-linkStyle 5 stroke:#0B1D2A,stroke-width:1.5px;
+%% control / provisioning — solid paper, lower weight
+linkStyle 5 stroke:#F4EFE6,stroke-width:1.5px;
 
 %% external / DR — dotted amber
 linkStyle 6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
