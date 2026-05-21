@@ -50,20 +50,93 @@ If a repo's GitHub visibility is `PRIVATE`, it does not appear here. Verify with
 ## Diagram style
 
 Inline ` ```mermaid ` fenced blocks render natively in Mintlify with ELK layout.
-One diagram per concern — do not combine. Each diagram starts with a Mermaid
-theme directive so colors match the Reef Green palette:
+One diagram per concern — do not combine.
+
+### The canonical theme directive (use **exactly this**, byte-for-byte)
+
+Every Mermaid block on the site MUST begin with this directive. The
+`look:'handDrawn'` is non-negotiable — it gives the diagrams personality
+that matches the site's voice. Any deviation (different fontSize, missing
+`look`, different palette) is a bug.
 
 ```text
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
 ```
 
-Shape vocabulary across the site:
+To check the site is consistent:
 
-- Rounded boxes for services and processes
-- Cylinders for data stores
-- Diamonds for decisions
+```bash
+grep -h '%%{init:' --include='*.mdx' -r . | sort -u | wc -l
+# Must return 1.
+```
+
+### Shape vocabulary
+
+- Stadium `([Label])` for services and processes
+- Cylinder `[(Label)]` for data stores
+- Diamond `{Label}` for decisions / gates
+- Circle `((Label))` for endpoints / external actors
+- Hexagon `{{Label}}` for special-purpose nodes (use sparingly)
 - Subgraphs for things that physically or logically co-locate
   (a cluster, a host, a network, a repo group) — **never** for roles or phases
+
+### Canonical classDef palette
+
+Use the semantic class names below. Pick ONE per node based on what it
+represents; don't invent new classes per page. This keeps the same colour
+meaning the same idea everywhere.
+
+```text
+classDef src      fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+classDef hop      fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+classDef sink     fill:#F4EFE6,stroke:#0B1D2A,stroke-width:2px,color:#0B1D2A;
+classDef gate     fill:#FFE7DC,stroke:#E06B4A,stroke-width:2.5px,color:#0B1D2A;
+classDef external fill:#F4EFE6,stroke:#E6B35A,stroke-width:2px,color:#0B1D2A;
+classDef host     fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px,color:#0B1D2A;
+classDef ai       fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px,color:#0B1D2A;
+classDef auto     fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px,color:#0B1D2A;
+```
+
+| Class | Meaning |
+| --- | --- |
+| `src` / `ai` / `gate` | Coral. Origin of a flow, AI-touched, or a decision gate. |
+| `hop` / `host` | Paper-card + green. Intermediate hops, the parent shell, hosts. |
+| `sink` / `auto` | Paper + ink. Sinks (Splunk indexer), automation steps. |
+| `external` | Paper + amber. External actors (Internet, AWS DR). |
+
+### Canonical edge palette (indexed `linkStyle`)
+
+```text
+%% physical / network — solid green
+linkStyle 0,1,2 stroke:#2F7E78,stroke-width:2px;
+
+%% data / telemetry — dashed coral
+linkStyle 3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+
+%% control / provisioning — solid ink, lower weight
+linkStyle 5 stroke:#0B1D2A,stroke-width:1.5px;
+
+%% external / DR — dotted amber
+linkStyle 6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+
+%% abort / failure — dashed dark coral
+linkStyle 7 stroke:#C25638,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+### Fun touches (consistent across the site)
+
+Within the canonical palette, these are **encouraged** for personality:
+
+- **Mix node shapes** purposefully — stadiums for processes, cylinders
+  for stores, diamonds for decisions, circles for external actors.
+  Variety helps readers parse at a glance.
+- **Short labels.** `claude process`, not `the Claude Code subprocess`.
+  Two lines max (use `<br/>` sparingly).
+- **Edge labels are fine** when they add information (`"renew leases"`,
+  `"hands off"`, `"applies"`). Skip them when the chain is obvious.
+- **FontAwesome icons** in node labels where they reinforce the shape:
+  `[fa:fa-shield Security]`, `[fa:fa-server Host]`. Stick to filled
+  variants for visual weight.
 
 ## Mermaid — layout rules
 

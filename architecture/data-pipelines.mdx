@@ -15,7 +15,7 @@ UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy f
 {/* Boundary crossings: 0. Ranks: 4. Aspect: ~3:1 LR. Pass. */}
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
 flowchart LR
   Net([UniFi gear<br/>syslog tcp/1514])
   HA([HAProxy<br/>tcp/1514])
@@ -48,7 +48,7 @@ NetFlow v9 / IPFIX from network devices follows the same shape on a different po
 {/* Shape: parallel convergence. Identical topology to log pipeline, udp/2055. */}
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#FBF7EE','primaryTextColor':'#0B1D2A','primaryBorderColor':'#2F7E78','lineColor':'#2F7E78','secondaryColor':'#F4EFE6','tertiaryColor':'#FFE7DC','clusterBkg':'rgba(47,126,120,0.06)','clusterBorder':'#2F7E78'}}}%%
 flowchart LR
   Net([Network devices<br/>NetFlow udp/2055])
   HA([HAProxy<br/>udp/2055])
