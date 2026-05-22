@@ -7,7 +7,7 @@ Project-level Claude Code skill that authors a single, fully-written Mintlify do
 - Fetches the target repo's `README.md` and metadata via `gh`.
 - Resolves the sidebar group and target path automatically from the repo name.
 - Generates a complete MDX page: frontmatter, tagline, `<RepoMeta>`, prose intro, "What it does" bullets, Reef Green Mermaid diagram, `<Steps>` getting-started block, and `<CardGroup>` related repos.
-- Enforces the tier word-count cap (Tier 1 ≤450w, Tier 2 ≤900w/1200w).
+- Enforces the tier word-count cap (Tier 1 ≤450w, Tier 2 ≤900w hard cap with a split-suggestion on overflow — per issue #2 acceptance criteria).
 - Never overwrites an existing page — emits a diff and waits for confirmation.
 - Reminds you to run `mintlify-nav-sync` to add the new path to `docs.json`.
 

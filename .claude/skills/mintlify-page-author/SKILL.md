@@ -32,51 +32,66 @@ Author a single, fully-written Mintlify page from a GitHub repo URL or a free-te
 ### Step 1 — Resolve inputs
 
 1. If a GitHub repo URL was given, extract `owner/repo`.
-2. Fetch repo metadata:
+2. Fetch repo metadata (include `pushedAt` for `lastActive` rendering and `isArchived` for `status`):
 
    ```bash
-   gh repo view <owner>/<repo> --json name,description,primaryLanguage,repositoryTopics,url
+   gh repo view <owner>/<repo> \
+     --json name,description,primaryLanguage,repositoryTopics,url,pushedAt,isArchived
    ```
 
-3. Fetch `README.md`:
+   - `status="active"` when `isArchived=false`; `status="archived"` when true. `status="experimental"` is an author judgement — leave the placeholder for the author to set from README signals.
+   - `lastActive` is a relative-time render of `pushedAt`.
+
+3. Fetch the repo README via the dedicated endpoint — handles case variants (`README.md`, `Readme.rst`), default-branch resolution, and skips base64 round-tripping (`base64 -d` is GNU; macOS uses `-D`, so the raw endpoint avoids the portability split):
 
    ```bash
-   gh api repos/<owner>/<repo>/contents/README.md --jq '.content' | base64 -d
+   gh api -H "Accept: application/vnd.github.raw" repos/<owner>/<repo>/readme 2>/dev/null || true
    ```
 
-4. If no README exists, note the gap and continue — the author will fill placeholders.
+4. If the previous command emits nothing (no README in repo), note the gap and continue — the author will fill placeholders.
 
 ### Step 2 — Resolve tier and target path
 
 Determine tier from the target path when given:
 
-- Path ends with `/overview.mdx` or equals `introduction.mdx` → **tier 1** (word cap: 450).
-- All other paths → **tier 2** (word cap: 900 warn / 1200 hard).
+- Path ends with `/overview.mdx` or equals `introduction.mdx` → **tier 1** (hard cap: 450 words).
+- All other paths → **tier 2** (hard cap: 900 words; over budget triggers split-suggestion per issue #2 acceptance criteria — no warn band).
 - `--tier` flag overrides path inference.
 
-If no target path was given, derive it from the sidebar mapping used by `mintlify-docs-update`:
+If no target path was given, derive it from the canonical sidebar mapping used by `mintlify-docs-update` (mirrored here byte-for-byte so the two skills stay in sync):
 
-| Repo name pattern | Sidebar group | Path prefix |
+| Match | Sidebar group | Path prefix |
 | --- | --- | --- |
-| `terraform-*`, `ansible-*` (excl. `ansible-splunk`) | Infrastructure | `infrastructure/` |
+| `terraform-*`, `ansible-*` excluding `ansible-splunk` | Infrastructure | `infrastructure/` |
 | `nix-*` | Nix Ecosystem | `nix/` |
 | `ai-*`, `claude-code-*`, `ai-workflows`, `raycast-*` | AI Development | `ai-development/` |
-| `cc-edge-*`, `cc-stream-*`, `VisiCore_*`, `*splunk*` | Observability | `observability/` |
-| Everything else | Tools | `tools/` |
+| `cc-edge-*`, `cc-stream-*`, `VisiCore_*`, `splunk-*`, `tf-splunk-*`, `ansible-splunk` | Observability | `observability/` |
+| `*-template`, `secrets-*`, `mlx-*`, `orbstack-*`, `unifi-*` | Tools | `tools/` |
+| Everything else | Tools (default) | `tools/` |
+
+Ties → prefer the more specific match. When uncertain, ask before scaffolding.
 
 ### Step 3 — Check for existing page
+
+Check the local working tree first — this catches in-progress, unpushed pages that the remote API would miss:
+
+```bash
+test -f "<target-path>"
+```
+
+If the local check is negative, fall back to the remote (covers branches you haven't fetched yet):
 
 ```bash
 gh api repos/JacobPEvans/docs/contents/<target-path> 2>/dev/null | jq -r '.name // empty'
 ```
 
-If a file exists at the target path: **stop and emit a diff for review instead of overwriting**.
+If a file exists at either location: **stop and emit a diff for review instead of overwriting**.
 
 ### Step 4 — Generate page content
 
-Produce a complete MDX file following the house structure. Fill every section with prose derived from the README and repo metadata:
+Produce a complete MDX file following the house structure. Fill every section with prose derived from the README and repo metadata. (The outer code fence below uses **four** backticks so the inner ` ```mermaid ` block — three backticks — does not close it prematurely.):
 
-```mdx
+````mdx
 ---
 title: "<repo-name>"
 description: "<one-sentence description from repo description field>"
@@ -119,7 +134,7 @@ flowchart LR
   style Neighbor2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
 
   linkStyle default stroke:#E06B4A,stroke-width:3px
-\`\`\`
+```
 
 <RepoFit>
 <one-line boundary statement: what this repo owns vs. what its neighbors own>
@@ -152,7 +167,7 @@ flowchart LR
     Issues, releases, full README.
   </Card>
 </CardGroup>
-\`\`\`
+````
 
 #### Prose rules
 
@@ -164,14 +179,16 @@ flowchart LR
 
 ### Step 5 — Word-count guard
 
-Count words in the generated output (excluding frontmatter YAML and code fences):
+Count words in the generated output, excluding frontmatter YAML and fenced code blocks. `sed 's/...//'` is line-oriented and cannot span a multi-line ` ```...``` ` fence, so use awk to toggle in/out of fences:
 
 ```bash
-echo "<page-content>" | sed '/^---/,/^---/d' | sed 's/```.*```//g' | wc -w
+awk 'BEGIN{in_code=0} /^```/{in_code=1-in_code; next} !in_code' page.mdx \
+  | sed '/^---/,/^---/d' \
+  | wc -w
 ```
 
 - Tier 1 ≤ 450 words → pass.
-- Tier 2 ≤ 900 words → pass; 901-1200 → warn and suggest split; >1200 → fail, propose sub-pages.
+- Tier 2 ≤ 900 words → pass; > 900 → fail and propose sub-pages. (Hard cap per issue #2 acceptance criteria — no warn band; over budget triggers a split-suggestion immediately.)
 
 When over budget, emit a split suggestion: list candidate sub-page titles and paths rather than truncating prose.
 
