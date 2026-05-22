@@ -68,7 +68,14 @@
               "infrastructure/overview",
               "infrastructure/terraform-proxmox",
               "infrastructure/ansible-proxmox",
-              "infrastructure/ansible-proxmox-apps"
+              "infrastructure/ansible-proxmox-apps",
+              "infrastructure/terraform-aws-bedrock",
+              "infrastructure/terraform-aws-static-website",
+              "infrastructure/terraform-runs-on",
+              "infrastructure/orbstack-kubernetes",
+              "infrastructure/kubernetes-overview",
+              "infrastructure/lxc-vs-docker",
+              "infrastructure/secrets-sops"
             ]
           },
           {
@@ -123,7 +130,11 @@
             "pages": [
               "observability/overview",
               "observability/ansible-splunk",
-              "observability/tf-splunk-aws"
+              "observability/tf-splunk-aws",
+              "observability/visicore-app",
+              "observability/visicore-ta",
+              "observability/cc-edge-the-mac-pack",
+              "observability/monitoring-agents"
             ]
           },
           {
