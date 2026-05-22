@@ -1,6 +1,6 @@
 ---
 name: mintlify-mermaid-theme
-description: Generate Reef Green-themed Mermaid diagrams with pinned theme variables and house shape conventions. Wraps intent descriptions into complete fenced Mermaid blocks ready for Mintlify MDX pages. Triggers on "/mintlify-mermaid-theme", "add a diagram", "create a mermaid diagram", "visualize", "draw", "diagram this".
+description: Generate Reef Green-themed Mermaid diagrams with pinned theme variables and house shape conventions. Wraps intent descriptions into complete fenced Mermaid blocks ready for Mintlify MDX pages. Triggers on "/mintlify-mermaid-theme", "add a diagram", "create a mermaid diagram", "add a mermaid block", "diagram this architecture", "diagram this pipeline", "visualize the data flow", "visualize the relationship between".
 ---
 
 # mintlify-mermaid-theme
@@ -57,13 +57,15 @@ style neighborA  stroke:#2F7E78,stroke-width:2px
 
 ## Validation
 
-After generating the block, pipe it through `mmdc` (available in the dev shell):
+After generating the block, pipe it through `mmdc` (available in the dev shell). Use a quoted heredoc — `echo` mangles single quotes and backticks that appear in real Mermaid blocks (e.g. `'primaryColor':'#4FB3A9'` and node labels):
 
 ```bash
-echo '<mermaid block>' | nix develop --command mmdc --input - --output /dev/null
+nix develop --command mmdc --input - --output /dev/null <<'MERMAID'
+<mermaid block>
+MERMAID
 ```
 
-If `mmdc` exits non-zero, fix the syntax error before returning output. Never return an unvalidated block.
+If `mmdc` exits non-zero, fix the syntax error before returning output. If `mmdc`/`nix develop` is unavailable in the current environment, append `<!-- unvalidated -->` immediately after the fence — `mintlify-build-guard` will catch any errors at CI time. Never silently return a block that bypassed both layers of validation.
 
 ## Composing with other skills
 
@@ -81,14 +83,16 @@ If `mmdc` exits non-zero, fix the syntax error before returning output. Never re
 
 ## Output format
 
-Always return:
+Always return a fenced Mermaid block in this shape (the four-backtick outer fence below is just so the SKILL renders correctly — the actual output uses the standard three-backtick `mermaid` fence):
 
-    ```mermaid
-    %%{init: ...}%%
-    flowchart LR
-      ...
-      style <focal> stroke:#E06B4A,stroke-width:4px
-      style <neighbor> stroke:#2F7E78,stroke-width:2px
-    ```
+````
+```mermaid
+%%{init: ...}%%
+flowchart LR
+  ...
+  style <focal> stroke:#E06B4A,stroke-width:4px
+  style <neighbor> stroke:#2F7E78,stroke-width:2px
+```
+````
 
 Use `LR` (left-to-right) for pipeline flows; `TD` (top-down) for hierarchical structures. Ask the author if orientation is ambiguous.
