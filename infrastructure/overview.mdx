@@ -57,11 +57,34 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
   <Card title="terraform-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
     AWS DR footprint for Splunk failover. Cold infra, ready to go warm.
   </Card>
-  <Card title="terraform-aws-bedrock" icon="brain-circuit" href="https://github.com/JacobPEvans/terraform-aws-bedrock">
-    Bedrock agents and supporting resources for the AI assistant API.
+  <Card title="terraform-aws-bedrock" icon="brain-circuit" href="/infrastructure/terraform-aws-bedrock">
+    Public Bedrock agent + Lambda URL — the smallest useful AWS AI deployment.
+  </Card>
+  <Card title="terraform-aws-static-website" icon="globe" href="/infrastructure/terraform-aws-static-website">
+    Reusable static-site module — CloudFront + S3 + ACM + Route53.
+  </Card>
+  <Card title="terraform-runs-on" icon="play" href="/infrastructure/terraform-runs-on">
+    Self-hosted GitHub Actions runners on AWS spot.
+  </Card>
+  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/orbstack-kubernetes">
+    Local Kubernetes cluster on macOS — monitoring stack + AI gateway.
   </Card>
   <Card title="tf-splunk-aws" icon="chart-line" href="/observability/tf-splunk-aws">
     Cost-optimized Splunk deployment on AWS.
+  </Card>
+</CardGroup>
+
+## Cross-cutting topics
+
+<CardGroup cols={2}>
+  <Card title="Kubernetes overview" icon="cube" href="/infrastructure/kubernetes-overview">
+    OrbStack as the local control plane; what runs on K8s vs LXC vs Docker.
+  </Card>
+  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
+    The four-question decision tree for every new workload.
+  </Card>
+  <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
+    Encrypted-at-rest secrets across Terraform and Ansible repos.
   </Card>
 </CardGroup>
 

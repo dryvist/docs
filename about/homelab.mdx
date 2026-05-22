@@ -106,8 +106,8 @@ LXC by default. Native packages where possible. Docker is the exception — high
 
 ## Provisioning + configuration
 
-[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top.
+[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top. For the rationale on LXC defaults vs the Docker exception, see [LXC vs Docker](/infrastructure/lxc-vs-docker); for the macOS counterpart that runs the monitoring stack as Kubernetes, see [Kubernetes overview](/infrastructure/kubernetes-overview) and [`orbstack-kubernetes`](/infrastructure/orbstack-kubernetes).
 
 ## DR plan
 
-[terraform-aws](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change; the AI-observability dashboards keep working because they target the same indexes.
+[terraform-aws](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change; the AI-observability dashboards keep working because they target the same indexes. The full cross-stack map of every collector and where it runs lives at [Monitoring agents](/observability/monitoring-agents).
