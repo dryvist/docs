@@ -1,5 +1,7 @@
 # docs.jacobpevans.com
 
+[![CI](https://github.com/JacobPEvans/docs/actions/workflows/ci.yml/badge.svg)](https://github.com/JacobPEvans/docs/actions/workflows/ci.yml)
+
 Source for the documentation site at
 [docs.jacobpevans.com](https://docs.jacobpevans.com).
 
