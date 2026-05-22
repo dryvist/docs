@@ -1,0 +1,65 @@
+---
+title: "AWS Bedrock agent"
+description: "Terraform/Terragrunt for a single-call AWS Bedrock agent fronted by a public Lambda URL. No auth, deliberately small blast radius."
+tier: 2
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> A Bedrock agent on a public URL. Send text, get an AI response. The smallest useful AWS AI deployment.
+
+<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-aws-bedrock" />
+
+`terraform-aws-bedrock` provisions an Amazon Bedrock agent (Nova Micro by default) with a Lambda URL invoker — no AWS credentials needed to call the endpoint, just `curl`. The agent itself runs through a least-privilege IAM role with confused-deputy protection; concurrency and input length are capped at the function level so a public endpoint doesn't turn into a wallet drain.
+
+## What it does
+
+- Provisions one Bedrock agent (`text-summarizer` by default) pointed at a configurable foundation model
+- Wraps it in a Lambda Function URL — public, unauthenticated, rate-limited to 5 concurrent invocations
+- Enforces a 20,000-character input cap so a malicious payload can't pump model tokens
+- Stores Terraform state in S3 with DynamoDB locking
+- Wraps the [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest) with Terragrunt for per-env DRY-ing
+
+## How it fits
+
+| Provisions | Public surface |
+| --- | --- |
+| Bedrock agent + alias, Lambda URL function, IAM execution role (least privilege), S3 + DynamoDB state backend | A single HTTPS endpoint that accepts `{"text": "..."}` and returns a streamed model response |
+
+<RepoFit>
+Single-purpose AI surface. If you need auth, multi-tenant routing, or model fan-out, run the [Bifrost AI gateway](/infrastructure/orbstack-kubernetes) on OrbStack instead.
+</RepoFit>
+
+## Getting started
+
+<Steps>
+  <Step title="Clone and enter the dev shell">
+    `git clone https://github.com/JacobPEvans/terraform-aws-bedrock && cd terraform-aws-bedrock && nix develop`
+  </Step>
+  <Step title="Configure aws-vault">
+    The profile is `terraform-bedrock`. Use `--no-session` for IAM operations — the README and `CLAUDE.md` cover the exact wrapper.
+  </Step>
+  <Step title="Apply">
+    `aws-vault exec terraform-bedrock --no-session -- terragrunt apply`. The plan output is the agreement before any AWS bill kicks in.
+  </Step>
+  <Step title="Invoke">
+    `curl -X POST https://<function-id>.lambda-url.<region>.on.aws/ -H 'Content-Type: application/json' -d '{"text":"..."}'`. No auth required — that's the point.
+  </Step>
+</Steps>
+
+## Related repos
+
+<CardGroup cols={2}>
+  <Card title="terraform-runs-on" icon="play" href="/infrastructure/terraform-runs-on">
+    Self-hosted GitHub Actions runners on AWS spot — same Terragrunt + aws-vault shape.
+  </Card>
+  <Card title="terraform-aws-static-website" icon="globe" href="/infrastructure/terraform-aws-static-website">
+    The static-site equivalent on AWS — CloudFront + S3 + ACM + Route53.
+  </Card>
+  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/orbstack-kubernetes">
+    Bifrost AI gateway when you outgrow a single public endpoint.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/terraform-aws-bedrock">
+    Full module, examples, IAM policy details.
+  </Card>
+</CardGroup>
