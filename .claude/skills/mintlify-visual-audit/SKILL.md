@@ -26,10 +26,14 @@ Idempotent — safe to run on every PR.
 
 ### Step 1 — Enumerate pages
 
-Walk the filesystem for every `.mdx` file under the docs root, excluding `snippets/`:
+Walk the filesystem for every site-page `.mdx` file. Exclude `snippets/`, `.claude/` (skill templates such as `mintlify-docs-update/template-repo-page.mdx` are not site pages), and any vendored directories:
 
 ```bash
-find . -name "*.mdx" -not -path "./snippets/*" | sort
+find . -type f -name "*.mdx" \
+  -not -path "./snippets/*" \
+  -not -path "./.claude/*" \
+  -not -path "*/node_modules/*" \
+  | sort
 ```
 
 ### Step 2 — Per-page checks
@@ -43,11 +47,13 @@ For each `.mdx` file, run all checks below. Assign severity per check:
 
 Read the `tier:` frontmatter field. Count words in the page body (excluding frontmatter, code blocks, and HTML attributes).
 
-| Tier | Warn | Fail |
+| Tier | Warn (amber) | Fail (red) |
 | --- | --- | --- |
-| 1 | >400w | >450w |
+| 1 | >450w | >600w |
 | 2 | >900w | >1200w |
 | (default) | >900w | >1200w |
+
+Tier 1 amber matches the existing guidance in `.claude/skills/mintlify-docs-update/SKILL.md` (warn >450w); the red threshold extends that to a hard fail at 1.33× cap.
 
 Default tier: `tier: 2` unless the path matches `*/overview.mdx` or is `introduction.mdx` (then `tier: 1`).
 
@@ -57,7 +63,7 @@ For Tier 1 pages over budget, suggest 2-3 candidate sub-pages to split into, bas
 
 #### 2b — Mermaid presence
 
-Flag pages that describe a system, pipeline, or relationship between components without a fenced ` ```mermaid ` block. Heuristic: page body contains the words "flow", "pipeline", "feeds", "deploys", "provisions", "calls", or uses a heading containing "How it fits" or "Architecture" — and has no Mermaid block.
+Flag pages that describe a system, pipeline, or relationship between components without a fenced ` ```mermaid ` block. Heuristic: page body contains the words "flow", "pipeline", "feeds", "deploys", or "provisions", or uses a heading containing "How it fits" or "Architecture" — and has no Mermaid block. (Avoid generic verbs like "calls" that appear in routine prose.)
 
 Severity: **amber**.
 
@@ -69,7 +75,7 @@ Severity: **amber**.
 
 #### 2d — Icon usage
 
-Any `<Card` element missing an `icon=` attribute gets flagged. Extract each `<Card` tag and check for `icon=`.
+Any `<Card>` element missing an `icon=` attribute gets flagged. Use a tag-name-aware match such as `<Card\b` (word boundary) so `<CardGroup>` — which carries no `icon=` and is expected — is not falsely flagged. Extract each `<Card\b` tag and check for `icon=`.
 
 Severity: **amber**.
 
@@ -81,13 +87,13 @@ Severity: **amber**.
 
 #### 2f — Mermaid theme compliance
 
-For each fenced ` ```mermaid ` block, check whether the first non-blank line is an `%%{init:` directive containing `primaryColor: #4FB3A9`. If a Mermaid block is present but missing the Reef Green init directive, flag it.
+For each fenced ` ```mermaid ` block, check whether the first non-blank line is an `%%{init:` directive that sets `primaryColor` to `#4FB3A9`. Match the value flexibly — existing diagrams in this repo use the quoted JSON-like form `'primaryColor':'#4FB3A9'` inside a `themeVariables` block, so a substring search for `#4FB3A9` near a `primaryColor` key is sufficient. The canonical theme directive (single source of truth) lives in `AGENTS.md`; if `AGENTS.md` updates the canonical primary color, update this check to match. Flag Mermaid blocks that are present but missing this directive or use a different primary color.
 
 Severity: **amber**.
 
 #### 2g — Dead-link risk
 
-Scan all internal `href="..."` attributes and markdown links `[...](...)` that start with `/`. Check each path against the filesystem (strip leading `/`, append `.mdx` if no extension). Flag links where no matching `.mdx` file exists.
+Scan all internal `href="..."` attributes and markdown links `[...](...)` that start with `/`. Strip the leading `/` and check the filesystem **as-is first** — this correctly handles static assets such as `/images/foo.png` or `/files/spec.pdf`. Only if the file is missing **and** the path has no extension, retry with `.mdx` appended (for routing links like `/security/overview` → `security/overview.mdx`). Flag links where no matching file exists in either form.
 
 Severity: **red** (broken internal link).
 
