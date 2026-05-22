@@ -46,7 +46,7 @@ accents.
 
 ## Structure
 
-\`\`\`text
+```text
 docs.json                      Mintlify config (theme, palette, fonts, nav)
 introduction.mdx               Landing page
 how-it-fits-together.mdx       Full portfolio architecture
@@ -63,7 +63,7 @@ logo/                          SVG wordmark (light + dark)
 favicon.svg                    Favicon
 .github/workflows/ci.yml       JSON syntax check + broken-links check
 flake.nix                      Reproducible dev shell
-\`\`\`
+```
 
 ## Contributing
 

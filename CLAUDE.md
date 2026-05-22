@@ -2,7 +2,8 @@
 
 ## Project overview
 
-Source for [docs.jacobpevans.com](https://docs.jacobpevans.com) — a Mintlify-powered documentation site covering the full homelab stack (Nix, Terraform, Ansible, Cribl/Splunk observability, AI development).
+Source for [docs.jacobpevans.com](https://docs.jacobpevans.com) — a Mintlify-powered documentation site
+covering the full homelab stack (Nix, Terraform, Ansible, Cribl/Splunk observability, AI development).
 
 ## Dev environment
 
@@ -22,7 +23,7 @@ mint broken-links  # Validate internal links
 
 - `docs.json` — Mintlify config: theme, nav, palette, fonts
 - `*.mdx` — Content pages (MDX + optional Mintlify components)
-- `architecture/`, `infrastructure/`, `nix/`, `ai-development/`, `observability/`, `tools/`, `about/` — content sections
+- `architecture/`, `infrastructure/`, `configuration/`, `nix/`, `ai-development/`, `observability/`, `tools/`, `about/` — content sections
 - `.github/workflows/ci.yml` — JSON syntax check + broken-links CI
 
 ## Editing guidelines
