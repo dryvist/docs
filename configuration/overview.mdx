@@ -10,20 +10,37 @@ Three Ansible repos cover everything that runs on the provisioned infrastructure
 
 ## Role map
 
+{/* Shape: hierarchy. TF parent → 3 Ansible role children. */}
+{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
+
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  TF(["terraform-proxmox<br/>VMs + LXCs"]) --> AP(["ansible-proxmox<br/>host config<br/>ZFS · networking · users"])
-  TF --> APA(["ansible-proxmox-apps<br/>HAProxy · Cribl Edge<br/>Cribl Stream"])
-  TF --> AS(["ansible-splunk<br/>Splunk Enterprise<br/>indexers + search heads"])
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart TB
+  TF([Proxmox provisioning])
+  AP([Proxmox config])
+  APA([Apps on Proxmox])
+  AS([Splunk install])
 
-  style TF fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style AP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style APA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AS fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  TF --> AP
+  TF --> APA
+  TF --> AS
 
-  linkStyle default stroke:#E06B4A,stroke-width:3px
+  classDef provision fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef config    fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+
+  class TF provision
+  class AP,APA,AS config
+
+  linkStyle 0,1,2 stroke:#F4EFE6,stroke-width:1.5px;
 ```
+
+Terraform outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
+
+| Role | Repo | What it does |
+| --- | --- | --- |
+| Host config | [Proxmox config](/infrastructure/ansible-proxmox) | ZFS, networking, users, performance tuning, monitoring agents |
+| Apps on hosts | [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) | HAProxy, Cribl Edge, Cribl Stream |
+| Splunk install | [Splunk install](/observability/ansible-splunk) | Splunk Enterprise — indexers, search heads, license, storage tiering |
 
 ## Repos in this section
 

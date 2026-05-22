@@ -11,49 +11,68 @@ The goal: 30–50% ingest reduction without losing security signal.
 
 UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
 
+{/* Shape: parallel convergence (HAProxy fans to A+B, both converge on Splunk). */}
+{/* Boundary crossings: 0. Ranks: 4. Aspect: ~3:1 LR. Pass. */}
+
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  UniFi(("UniFi gear<br/>syslog:1514")) --> HAProxy(["HAProxy<br/>tcp/1514"])
-  HAProxy --> Edge1(["Cribl Edge A<br/>tcp/1514"])
-  HAProxy --> Edge2(["Cribl Edge B<br/>tcp/1514"])
-  Edge1 --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
-  Edge2 --> Splunk
+  Net([UniFi gear<br/>syslog tcp/1514])
+  HA([HAProxy<br/>tcp/1514])
+  EA([Cribl Edge A])
+  EB([Cribl Edge B])
+  SP[(Splunk Enterprise<br/>HEC :8088)]
 
-  style UniFi fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style HAProxy fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style Edge1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Edge2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  Net --> HA
+  HA --> EA --> SP
+  HA --> EB --> SP
 
-  linkStyle default stroke:#E06B4A,stroke-width:3px
+  classDef edge fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef proxy fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef store fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class Net,EA,EB edge
+  class HA proxy
+  class SP store
+
+  linkStyle 0 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-The Cribl pipeline at the Edge tier does the heavy lifting — drop verbose metric fields, route by event_type, enrich, mask. The Splunk indexers receive a smaller, cleaner stream.
+Coral dashed edges carry the data; the solid green edge is the physical syslog hop. Cribl Edge drops verbose fields, routes by `event_type`, enriches and masks — the indexer takes a smaller, cleaner payload.
 
 ## NetFlow pipeline
 
-NetFlow v9 / IPFIX from network devices follows the same shape, on a different port.
+NetFlow v9 / IPFIX from network devices follows the same shape on a different port. UDP is loss-tolerant by design, so HAProxy distributes rather than fails over.
+
+{/* Shape: parallel convergence. Identical topology to log pipeline, udp/2055. */}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  Net(("Network devices<br/>NetFlow udp/2055")) --> HA(["HAProxy<br/>udp/2055"])
-  HA --> EA(["Cribl Edge A<br/>udp/2055"])
-  HA --> EB(["Cribl Edge B<br/>udp/2055"])
-  EA --> Splunk[("Splunk Enterprise<br/>HEC/8088")]
-  EB --> Splunk
+  Net([Network devices<br/>NetFlow udp/2055])
+  HA([HAProxy<br/>udp/2055])
+  EA([Cribl Edge A])
+  EB([Cribl Edge B])
+  SP[(Splunk Enterprise<br/>HEC :8088)]
 
-  style Net fill:transparent,stroke:#4FB3A9,stroke-width:4px,color:#F4EFE6
-  style HA fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style EA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style EB fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
+  Net --> HA
+  HA --> EA --> SP
+  HA --> EB --> SP
 
-  linkStyle default stroke:#E06B4A,stroke-width:3px
+  classDef edge fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef proxy fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef store fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class Net,EA,EB edge
+  class HA proxy
+  class SP store
+
+  linkStyle 0 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-UDP NetFlow is loss-tolerant by design, so the HAProxy layer is more about distribution than failover. The Cribl pipelines de-duplicate, parse the flow records, and aggregate by tuple before forwarding.
+Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before forwarding.
 
 ## What lives where
 
@@ -64,7 +83,7 @@ UDP NetFlow is loss-tolerant by design, so the HAProxy layer is more about distr
 | Cribl Edge | (Ansible role) | [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | apps repo |
 | Splunk Enterprise | (manual / Ansible) | [ansible-splunk](https://github.com/JacobPEvans/ansible-splunk) | splunk repo |
 | Cribl pipelines | (manual / Cribl pack) | [cc-edge-* packs](https://github.com/JacobPEvans?tab=repositories&q=cc-edge) | pack repos |
-| Splunk knowledge objects | n/a | [VisiCore TA](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | TA repo |
+| Splunk knowledge objects | n/a | Splunk TA (AI observability) | TA repo |
 
 ## DR posture
 

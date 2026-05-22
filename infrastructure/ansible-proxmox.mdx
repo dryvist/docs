@@ -1,5 +1,5 @@
 ---
-title: "ansible-proxmox"
+title: "Proxmox config"
 description: "Ansible roles that configure the Proxmox host itself: ZFS pools, networking, users, performance tuning, monitoring agents."
 tier: 2
 ---
@@ -22,22 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  TP(["terraform-proxmox<br/>provisions"]) -->|inventory| AP(["ansible-proxmox<br/>configures host"])
-  AP -->|ZFS + tuning| Host[("Proxmox host")]
-  AP -->|agents| Cribl(["Cribl Edge"])
-  Host -->|ready for| APA(["ansible-proxmox-apps"])
-
-  style TP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AP fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Host fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Cribl fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style APA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Upstream | Downstream |
+| --- | --- |
+| [Proxmox provisioning](/infrastructure/terraform-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) |
 
 <RepoFit>
 Run once per host after Terraform finishes. Re-running is safe — every role is idempotent.

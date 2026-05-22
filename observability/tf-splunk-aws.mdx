@@ -1,5 +1,5 @@
 ---
-title: "tf-splunk-aws"
+title: "Splunk on AWS"
 description: "Terraform/Terragrunt for a cost-optimized Splunk deployment on AWS. VPC, encryption, IAM, indexers — ready for DR or workload split."
 tier: 2
 ---
@@ -22,26 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  TS(["tf-splunk-aws<br/>(this repo)"]) -->|provisions| VPC(["AWS VPC"])
-  TS -->|provisions| EC2(["EC2 indexers<br/>+ search heads"])
-  TS -->|provisions| KMS(["KMS · EBS"])
-  EC2 -->|inventory| AS(["ansible-splunk"])
-  AS -->|deploys| Splunk[("Splunk Enterprise")]
-  Cribl(["Cribl Stream"]) -.HEC.-> Splunk
-
-  style TS fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style VPC fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style EC2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style KMS fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AS fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Cribl fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Provisions | Hands off to |
+| --- | --- |
+| AWS VPC, EC2 indexers + search heads, KMS-encrypted EBS, IAM | [Splunk install (Ansible)](/observability/ansible-splunk) configures Splunk on top |
 
 <RepoFit>
 The AWS infrastructure side of Splunk. Pair with `ansible-splunk` to actually run Splunk on what this provisions.

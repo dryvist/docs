@@ -1,5 +1,5 @@
 ---
-title: "nix-ai"
+title: "AI tooling"
 description: "Every AI coding tool, packaged. Claude Code, Gemini CLI, Copilot, MLX modules, 15+ MCP servers — declarative, reproducible, version-pinned."
 tier: 2
 ---
@@ -22,22 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  NA(["nix-ai<br/>(this repo)"]) -->|overlay| ND(["nix-darwin"])
-  NA -->|packages| NH(["nix-home"])
-  NA -->|shell| Devs(["ad-hoc nix shell"])
-  NA -.consumes.-> AAI(["ai-assistant-instructions"])
-
-  style NA fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style ND fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style NH fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Devs fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AAI fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Feeds into | Consumes |
+| --- | --- |
+| [macOS host](/nix/nix-darwin) overlay, [User environment](/nix/nix-home) packages, ad-hoc `nix shell` | [ai-assistant-instructions](/ai-development/ai-assistant-instructions) rule set |
 
 <RepoFit>
 Anything that's "an AI tool I want everywhere" belongs here. Single-project AI experiments go in a project-local `nix-devenv`-style flake.

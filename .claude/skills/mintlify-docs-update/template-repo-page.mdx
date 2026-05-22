@@ -23,18 +23,9 @@ REPO_NAME is part of the SIDEBAR_GROUP_NAME surface. ONE_SENTENCE_INTRO.
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  Repo(["REPO_NAME"]) -->|RELATION_1| Neighbor1(["NEIGHBOR_REPO_1"])
-  Repo -->|RELATION_2| Neighbor2(["NEIGHBOR_REPO_2"])
-
-  style Repo fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Neighbor1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Neighbor2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Upstream | Downstream |
+| --- | --- |
+| [NEIGHBOR_REPO_1](/SIDEBAR_GROUP_PATH/NEIGHBOR_REPO_1) (RELATION_1) | [NEIGHBOR_REPO_2](/SIDEBAR_GROUP_PATH/NEIGHBOR_REPO_2) (RELATION_2) |
 
 <RepoFit>
 HOW_IT_FITS_SENTENCE — one line on the boundary of this repo's responsibility versus its neighbors'.

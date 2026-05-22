@@ -1,5 +1,5 @@
 ---
-title: "ansible-proxmox-apps"
+title: "Apps on Proxmox"
 description: "Ansible roles that deploy the application stack on top of configured Proxmox hosts: HAProxy, Cribl Edge, Cribl Stream."
 tier: 2
 ---
@@ -22,25 +22,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  AP(["ansible-proxmox<br/>host ready"]) -->|hands off| APA(["ansible-proxmox-apps"])
-  APA -->|deploys| HA(["HAProxy<br/>tcp/udp front door"])
-  APA -->|deploys| Edge(["Cribl Edge<br/>collection"])
-  APA -->|deploys| Stream(["Cribl Stream<br/>routing"])
-  HA --> Edge --> Stream
-  Stream -.HEC.-> Splunk[("Splunk Enterprise")]
-
-  style AP fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style APA fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style HA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Edge fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Stream fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Splunk fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+| Upstream | Deploys | Downstream |
+| --- | --- | --- |
+| [Proxmox config](/infrastructure/ansible-proxmox) hands off ready hosts | HAProxy (tcp/udp front door), Cribl Edge (collection), Cribl Stream (routing) | Cribl Stream forwards over HEC to Splunk Enterprise |
 
 <RepoFit>
 This is the deploy tier. Anything that's stateful and long-running on a homelab guest lands here.

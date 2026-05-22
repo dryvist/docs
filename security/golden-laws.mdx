@@ -1,0 +1,115 @@
+---
+title: "Golden laws"
+description: "Non-negotiable security rules. Every tool, workflow, and PR honors these — no exceptions, no waivers."
+tier: 2
+---
+
+{/* TIER-GUARD: intentionally over the 1200-word Tier-2 budget. This is a reference page that index-card readers print and pin; splitting would defeat the purpose. Keep on one page. */}
+
+> Fifteen rules. Zero exceptions. Every other page in this section is just an implementation of one of these.
+
+These are not aspirations. They are pre-conditions. A PR that violates one of these is a PR that does not merge. A tool that cannot honor them is a tool we do not use.
+
+## The laws
+
+### 1. No secret at rest in plaintext outside an authorized store
+
+The only legitimate homes for a secret value are: Doppler, Bitwarden, BWS, macOS Keychain, an SOPS-encrypted file, or an aws-vault-backed session. Everything else — `.env` files, shell history, screenshot pastes, "temporary" test fixtures — is a leak waiting to happen.
+
+**How we enforce it.** CI grep gates on every PR scan for secret-shaped strings (AWS key prefixes, GitHub PAT prefixes, JWT shapes, IP/account-ID patterns). The `agentsmd/rules/config-secrets.md` rule file codifies the scrubbed-value table. `.gitignore` blocks `.env*` repo-wide.
+
+### 2. AI tools cannot view protected secret values
+
+Not "should not." Cannot. The four-layer isolation (process scoping, keychain tier separation, explicit allow / deny lists, path-restricted sudoers) makes the read structurally impossible for the locked tier, and the unlocked tier's values reach the AI only inside an ephemeral subshell.
+
+**How we enforce it.** See [Local AI isolation](/security/local-ai-isolation) for the full proof. Every layer is reviewable in source; the deny lists are baked into the harness build.
+
+### 3. Human approval gates every potentially destructive action
+
+`rm -rf`, force-push, `git reset --hard`, `gh repo delete`, prod-database drops, Terraform destroy, package downgrades — every one requires an explicit human decision in the same session. AI assistants pause and ask; CI workflows route through review.
+
+**How we enforce it.** Branch protection on `main` and feature branches via `.github-tofu`. CODEOWNERS gates security-sensitive paths. The `agentsmd/rules/soul.md` rule forbids destructive shortcuts. `--no-verify` and `--force` trigger PR-review flags.
+
+### 4. MFA on every elevated session
+
+No AWS API call leaves the workstation without an MFA-derived session token. No GitHub admin operation runs without an `elevate-access` keychain unlock (which itself requires biometric Touch ID). No Bitwarden vault read happens without the master password plus device-bound second factor.
+
+**How we enforce it.** `aws-vault` config requires `mfa_serial` for every profile. The `elevate-access.keychain-db` is locked by default. Bitwarden TOTP is set across the vault. Touch ID for sudo is enabled in `nix-darwin/modules/darwin/security.nix`.
+
+### 5. One source of truth per secret
+
+A secret value lives in exactly one store. Doppler for AI provider keys and CI distribution. Keychain for macOS GitHub PATs. Bitwarden for human-only material. SOPS for at-rest-in-repo config. Duplicating a secret across stores creates drift; drift creates the question "which copy is current?"; the answer is always "the one you didn't check."
+
+**How we enforce it.** The decision tree in [overview](/security/overview) maps every secret type to exactly one tool. `secrets-sync` is a distribution layer, not a store — it writes from Doppler / repo-secrets to target repos and never the other way.
+
+### 6. Time-bound every credential
+
+Indefinite tokens are pre-leaked tokens. Every PAT carries an expiry. Every aws-vault session has a TTL. Every Doppler service token rotates on a schedule. Anything claiming "never expires" is rejected at creation.
+
+**How we enforce it.** Fine-grained GitHub PATs: 90-day max. `aws-vault` session_ttl: 1 hour soft cap. Doppler service tokens: 90 days aligned with the PAT. GitHub App private keys: annual rotation. SSH signing keys: rotated on key rollover. Rotation runbook lives in [secrets-sync](/security/secrets-sync).
+
+### 7. Fail closed, not open
+
+Ambiguity must never grant access. A missing config file, an unreachable target repo, an expired credential — every one terminates the operation. The default answer is "no."
+
+**How we enforce it.** `secrets-sync` validates PAT access against every target repo before writing any of them. Permission allow lists default-deny: any path or command not on the list is blocked. Pre-commit hooks abort on lint failures rather than warning.
+
+### 8. No bypass of safety checks
+
+`--no-verify`, `git push --force-with-lease` on `main`, `terraform apply -auto-approve` outside CI, suppressed lint warnings — these are the shapes of how production gets paged at 3am. If a check is wrong, fix the check; if the check is right, fix the code.
+
+**How we enforce it.** Global `agentsmd/rules/soul.md` codifies "always fix for real." PR template requires explicit justification for any flag that resembles a bypass. Pre-commit hooks cannot be disabled per-PR.
+
+### 9. Audit trail for every privileged action
+
+A blameless retrospective requires timestamps. AWS CloudTrail logs every API call. GitHub audit log captures every org / repo settings change. The sudoers file restricts sudo to two declarative Nix paths whose execution is itself logged in system.log.
+
+**How we enforce it.** CloudTrail is on by default in every AWS account; org-level rulesets in `.github-tofu` ensure the GitHub audit log is queryable; the `nix-darwin/modules/darwin/security.nix` sudoers allowlist is short enough to read in one sitting.
+
+### 10. Defense in depth — no single layer is the boundary
+
+If any one control fails, the next one catches. We assume the worst about every layer: the network is hostile, the host is compromised, the user is being phished, the AI is being prompt-injected. Layers compose multiplicatively.
+
+**How we enforce it.** The four-layer isolation in [Local AI isolation](/security/local-ai-isolation) is the canonical example. Every architecture review asks: "if this layer fails open, what's the next layer?" If the answer is "nothing," the design is rejected.
+
+### 11. Subprocess scoping for runtime secrets
+
+Secrets enter the environment of exactly one subprocess and disappear when that subprocess exits. They never live in the parent shell, never in shell history, never in `env` dumps, never in error-report uploads.
+
+**How we enforce it.** `claude-launchers.zsh` wraps every AI invocation in a subshell. `aws-vault exec --` and `doppler run --` scope their injections to the child only. Shell-init explicitly `unset GITHUB_TOKEN` so any accidental persistence is undone at next login.
+
+### 12. No secrets in logs
+
+Log aggregators are exfiltration targets — central, retained, often less-guarded than the systems they monitor. Secrets caught in a log line stay in the index forever.
+
+**How we enforce it.** Cribl Stream redact pipelines on every ingest path. Splunk anonymization rules on sensitive sourcetypes. Tool-side `--mask`, `--no-print`, and similar flags on every CLI that supports them. `set +x` around every `security find-generic-password` invocation.
+
+### 13. Encrypt in transit, encrypt at rest, no exceptions
+
+TLS 1.2+ is the floor for every egress. AES256 is the floor for every storage tier. Encrypted keychain DBs, encrypted disks (FileVault), encrypted backups, encrypted SOPS files. Plaintext is for screens, not bytes.
+
+**How we enforce it.** Terraform modules enforce S3 encryption (`AES256`) and CloudFront TLS 1.2+ minimums. macOS FileVault is on. Bitwarden's vault is encrypted end-to-end. SOPS encrypts repo-committed config with age. No flag flips this off.
+
+### 14. Rotate on suspicion, not just schedule
+
+Scheduled rotation catches drift. Event-driven rotation catches compromise. If a secret appears in a logfile, a screenshot, a console window left visible, a public commit (even if reverted) — rotate it within the hour, not the next quarter.
+
+**How we enforce it.** The rotation runbook in [secrets-sync](/security/secrets-sync#rotation-cadence-best-practice) is symmetric: same procedure for scheduled and ad-hoc. GitHub's secret-scanning + push-protection catch many of the "appears in a commit" cases automatically.
+
+### 15. Backup the vault itself — and test recovery
+
+Losing the secrets store loses every secret. Backups that have never been restored are not backups; they are claims about backups.
+
+**How we enforce it.** Bitwarden vault has both cloud and local exports. Age keys are escrowed in Bitwarden so a workstation wipe is recoverable. Doppler workspace exports run quarterly and the recovery procedure is tested annually. The `agentsmd/rules/config-secrets.md` runtime-injection table is the documented recovery path.
+
+## How these connect to the rest of the section
+
+| Law | Implementation |
+| --- | --- |
+| 1, 5, 12, 13 | [tools/doppler](/security/tools/doppler), [tools/sops](/security/tools/sops), [tools/bitwarden](/security/tools/bitwarden) |
+| 2, 8, 10, 11 | [local-ai-isolation](/security/local-ai-isolation) |
+| 3, 7, 9 | [secrets-sync](/security/secrets-sync) gates and audit; `.github-tofu` rulesets |
+| 4, 6, 14 | [tools/aws-vault](/security/tools/aws-vault), [tools/macos-keychain](/security/tools/macos-keychain) |
+| 15 | [tools/bitwarden](/security/tools/bitwarden), [tools/bws](/security/tools/bws) |
+
+If a contemplated change violates any of these, the change is not contemplated.

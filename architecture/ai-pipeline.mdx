@@ -10,41 +10,36 @@ Humans decide *what* to build. AI agents handle the *how*. Automation runs the b
 
 ## The pipeline
 
+{/* Shape: linear chain. Boundary crossings: 0. Ranks: 9×1. */}
+{/* Aspect: ~3:1 (LR). Role encoded via classDef, not subgraphs. */}
+
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  subgraph Human["Human"]
-    direction TB
-    H1(["Roadmap"])
-    H2(["GitHub Issues"])
-    H3(["PR review"])
-  end
-  subgraph AI["AI Agents"]
-    direction TB
-    A1(["Claude / Gemini / Copilot"])
-    A2(["Code"])
-    A3(["AI code review"])
-  end
-  subgraph Auto["Automation"]
-    direction TB
-    T1(["CI / testing"])
-    T2(["Lint & validate"])
-    T3(["Ship it"])
-  end
+  H1([Roadmap])
+  H2([Issue])
+  A1([Claude / Gemini])
+  A2([Code])
+  T1([CI])
+  T2([Lint])
+  A3([AI review])
+  H3([PR review])
+  T3([Ship])
+
   H1 --> H2 --> A1 --> A2 --> T1 --> T2 --> A3 --> H3 --> T3
 
-  style H1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style H2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style H3 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style A1 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style A2 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style A3 fill:transparent,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6
-  style T1 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style T2 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style T3 fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+  classDef human fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef ai    fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef auto  fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 
-  linkStyle default stroke:#E06B4A,stroke-width:3px
+  class H1,H2,H3 human
+  class A1,A2,A3 ai
+  class T1,T2,T3 auto
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
+
+Green nodes are human, coral are AI, ink are automation. The role is the node colour; the chain is the timeline — no zigzag because the diagram never asks the arrows to leave a column.
 
 ## The model-routing philosophy
 
@@ -84,4 +79,4 @@ See [AI Development · Overview](/ai-development/overview) for what each one doe
 
 ## Observability layer
 
-Every interaction in this pipeline emits OpenTelemetry. The data flows through Cribl Edge, Cribl Stream, and Splunk; the [VisiCore apps](/observability/overview) visualize it. If an AI agent touched code, there's a trace.
+Every interaction in this pipeline emits OpenTelemetry. The data flows through Cribl Edge, Cribl Stream, and Splunk; [purpose-built Splunk apps](/observability/overview) visualize it. If an AI agent touched code, there's a trace.

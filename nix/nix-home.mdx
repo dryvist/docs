@@ -1,5 +1,5 @@
 ---
-title: "nix-home"
+title: "User environment"
 description: "Cross-platform user environment via home-manager. Shell, git, editor, tmux, CLI tools — everything that lives in $HOME."
 tier: 2
 ---
@@ -21,19 +21,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart TB
-  NH(["nix-home<br/>(this repo)"]) -->|home.packages| Home[("$HOME")]
-  NH -->|programs.*| Dotfiles(["zsh · git · tmux<br/>direnv · ssh · gh"])
-  NA(["nix-ai"]) -.imported.-> NH
-  ND(["nix-darwin"]) -.imports.-> NH
-
-  style NH fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Home fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style Dotfiles fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style NA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style ND fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
+| Imported by | Manages |
+| --- | --- |
+| [macOS host](/nix/nix-darwin) (and consumes [AI tooling](/nix/nix-ai)) | `$HOME` packages and `programs.*` config — zsh, git, tmux, direnv, ssh, gh
 
   linkStyle default stroke:#E06B4A,stroke-width:3px
 ```

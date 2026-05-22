@@ -1,76 +1,64 @@
 ---
 title: "Observability"
-description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by the VisiCore apps."
+description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by purpose-built dashboards."
 tier: 1
 ---
 
 > If an AI agent touched code, there's a trace.
 
-Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. The VisiCore apps make it readable.
+Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. Purpose-built Splunk apps make it readable.
 
 ## AI telemetry pipeline
 
+{/* Shape: parallel convergence (4 tools → 4 packs → Stream → Splunk → apps). */}
+{/* Boundary crossings: 0. Total nodes: 11 (≤12). Aspect: ~3:1 LR. Pass. */}
+
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  subgraph Tools["AI coding tools"]
-    Claude(["Claude Code"])
-    Copilot(["GitHub Copilot"])
-    Gemini(["Gemini CLI"])
-    VSCode(["VS Code"])
-  end
+  Claude([Claude Code])
+  Copilot([Copilot])
+  Gemini([Gemini CLI])
+  VSC([VS Code])
 
-  subgraph Collect["Cribl Edge collectors"]
-    cco(["cc-edge-claude-code-otel"])
-    ccp(["cc-edge-copilot-otel"])
-    ccv(["cc-edge-vscode-io"])
-    cag(["cc-edge-gemini-antigravity-io"])
-  end
+  CCO([cc-edge-claude-code-otel])
+  CCP([cc-edge-copilot-otel])
+  CAG([cc-edge-gemini-antigravity-io])
+  CCV([cc-edge-vscode-io])
 
-  subgraph Route["Cribl Stream"]
-    Stream(["Routes · transforms · reduces"])
-  end
+  Stream([Cribl Stream])
+  SP[(Splunk indexer)]
+  App([Splunk apps])
 
-  subgraph Store["Splunk Enterprise"]
-    HEC(["HEC :8088"])
-    Index[("Indexer")]
-  end
+  Claude --> CCO --> Stream
+  Copilot --> CCP --> Stream
+  Gemini --> CAG --> Stream
+  VSC --> CCV --> Stream
+  Stream --> SP --> App
 
-  subgraph View["VisiCore apps"]
-    App(["Dashboard Studio v2"])
-    TA(["Knowledge objects + CIM"])
-  end
+  classDef tool  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef pack  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef route fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 
-  Claude --> cco --> Stream
-  Copilot --> ccp --> Stream
-  VSCode --> ccv --> Stream
-  Gemini --> cag --> Stream
-  Stream --> HEC --> Index --> App
-  Index --> TA
+  class Claude,Copilot,Gemini,VSC tool
+  class CCO,CCP,CAG,CCV pack
+  class Stream,SP,App route
 
-  style Claude fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Copilot fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Gemini fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style VSCode fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style cco fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style ccp fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style ccv fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style cag fill:transparent,stroke:#E06B4A,stroke-width:3px,color:#F4EFE6
-  style Stream fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style HEC fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Index fill:transparent,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6
-  style App fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style TA fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
+  linkStyle 0,1,2,3,4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 8,9 stroke:#4FB3A9,stroke-width:2px;
 ```
+
+Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated — a Copilot schema change doesn't break the Claude pipeline.
 
 ## Splunk apps
 
-| Repo | What it does |
+The AI-observability apps and TAs live under a separate organization at
+[github.com/visicore](https://github.com/visicore). Two pieces matter on this site:
+
+| Component | What it does |
 | --- | --- |
-| [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Dashboard Studio v2 dashboards. Cost, usage, performance per model, per project, per developer. |
-| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Technology add-on. Field aliases, CIM mappings, lookups, search-time transforms. |
+| Dashboards (app) | Dashboard Studio v2. Cost, usage, performance per model, per project, per developer. |
+| Technology add-on (TA) | Field aliases, CIM mappings, lookups, search-time transforms. The normalization layer. |
 
 ## Cribl Edge packs (collectors)
 
@@ -91,7 +79,7 @@ flowchart LR
 
 ## Why per-tool packs
 
-Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) is where the normalization happens.
+Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in the TA is where the normalization happens.
 
 ## Where Splunk runs
 

@@ -1,5 +1,5 @@
 ---
-title: "claude-code-plugins"
+title: "Claude Code plugins"
 description: "Custom Claude Code plugins: commands, skills, hooks, agents. Extends the base CLI with project-specific automation."
 tier: 2
 ---
@@ -22,26 +22,14 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## How it fits
 
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'primaryColor':'#4FB3A9','primaryTextColor':'#F4EFE6','primaryBorderColor':'#2F7E78','lineColor':'#E06B4A','secondaryColor':'#102937','tertiaryColor':'#0B1D2A','clusterBkg':'transparent','clusterBorder':'#4FB3A9','fontFamily':'Geist','fontSize':'15px'}}}%%
-flowchart LR
-  CC(["Claude Code CLI"]) -.installs.-> CCP(["claude-code-plugins<br/>(this repo)"])
-  CCP -->|commands| Cmds(["/ship · /finalize-pr<br/>/wrap-up · /retrospecting"])
-  CCP -->|skills| Skills(["receiving-code-review<br/>resolve-pr-threads<br/>finalize-pr"])
-  CCP -->|agents| Agents(["Explore · Plan<br/>code-reviewer"])
-  CCP -->|hooks| Hooks(["style guards<br/>permission gates"])
-  AAI(["ai-assistant-instructions"]) -.rules.-> CCP
+| Component | Examples |
+| --- | --- |
+| **Commands** | `/ship`, `/finalize-pr`, `/wrap-up`, `/retrospecting` |
+| **Skills** | `receiving-code-review`, `resolve-pr-threads`, `finalize-pr` |
+| **Agents** | Explore, Plan, code-reviewer |
+| **Hooks** | Style guards, permission gates |
 
-  style CC fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style CCP fill:transparent,stroke:#E06B4A,stroke-width:4px,color:#F4EFE6
-  style Cmds fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Skills fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Agents fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style Hooks fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-  style AAI fill:transparent,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6
-
-  linkStyle default stroke:#E06B4A,stroke-width:3px
-```
+Reads rules from [Assistant rules](/ai-development/ai-assistant-instructions); installs into Claude Code via its plugin loader.
 
 <RepoFit>
 Workflow logic. Anything that's "how Claude Code should approach a task" lives here. Anything that's "what the rules are" lives in `ai-assistant-instructions`.

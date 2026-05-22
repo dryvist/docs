@@ -66,9 +66,9 @@
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
+              "infrastructure/terraform-proxmox",
               "infrastructure/ansible-proxmox",
-              "infrastructure/ansible-proxmox-apps",
-              "infrastructure/terraform-proxmox"
+              "infrastructure/ansible-proxmox-apps"
             ]
           },
           {
@@ -78,13 +78,35 @@
             ]
           },
           {
+            "group": "Security",
+            "pages": [
+              "security/overview",
+              "security/golden-laws",
+              "security/how-it-fits-together",
+              "security/secrets-sync",
+              "security/local-ai-isolation",
+              {
+                "group": "Secrets tools",
+                "pages": [
+                  "security/tools/doppler",
+                  "security/tools/macos-keychain",
+                  "security/tools/aws-vault",
+                  "security/tools/sops",
+                  "security/tools/bitwarden",
+                  "security/tools/bws",
+                  "security/tools/openbao"
+                ]
+              }
+            ]
+          },
+          {
             "group": "Nix Ecosystem",
             "pages": [
               "nix/overview",
-              "nix/nix-ai",
               "nix/nix-darwin",
-              "nix/nix-devenv",
-              "nix/nix-home"
+              "nix/nix-home",
+              "nix/nix-ai",
+              "nix/nix-devenv"
             ]
           },
           {
@@ -131,7 +153,6 @@
       {
         "header": "Connect",
         "items": [
-          {"label": "Website", "href": "https://jacobpevans.com"},
           {"label": "GitHub", "href": "https://github.com/JacobPEvans"},
           {"label": "LinkedIn", "href": "https://www.linkedin.com/in/JacobPaulEvans/"}
         ]
