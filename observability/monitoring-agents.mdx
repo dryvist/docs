@@ -70,7 +70,7 @@ A missed ping is the first signal of a broken pipeline — every other failure m
 
 ## Forwarding to AWS DR
 
-The Splunk install behind `cribl-stream` is the homelab indexer. [`tf-splunk-aws`](/observability/tf-splunk-aws) provisions the AWS-side DR footprint: same data shape, smaller indexer tier, ready to take a failover. Cribl Stream's output config can be flipped from the homelab Splunk to the AWS HEC endpoint via a routing-rule change; the AI-observability dashboards keep working because they target the same indexes ([`VisiCore App`](/observability/visicore-app) + [`VisiCore TA`](/observability/visicore-ta)).
+The Splunk install behind `cribl-stream` is the homelab indexer. [`tf-splunk-aws`](/observability/tf-splunk-aws) provisions the AWS-side DR footprint: same data shape, smaller indexer tier, ready to take a failover. Cribl Stream's output config can be flipped from the homelab Splunk to the AWS HEC endpoint via a routing-rule change; downstream AI-observability dashboards keep working because they target the same indexes regardless of which Splunk tier is live.
 
 ## See also
 

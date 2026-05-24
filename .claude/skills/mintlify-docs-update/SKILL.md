@@ -16,9 +16,9 @@ Discover public repos under `JacobPEvans` and `dryvist`, diff against pages on t
 
 ## When NOT to use
 
-- Authoring deep technical content for a single page. Use the future `mintlify-page-author` skill (issue tracked).
-- Visual polish across the site. Use the future `mintlify-visual-audit` skill (issue tracked).
-- Rewriting `docs.json` from scratch. Use the future `mintlify-nav-sync` skill (issue tracked).
+- Authoring deep technical content for a single page. Edit the page directly — Claude is more capable than a fixed templated skill here.
+- Visual polish across the site. Edit the offending pages directly.
+- Rewriting `docs.json` from scratch. Edit it directly.
 
 ## Workflow
 
@@ -32,6 +32,24 @@ gh repo list dryvist --limit 200 --json name,description,visibility,isArchived,i
 ```
 
 Filter to: `visibility == PUBLIC` AND `isFork == false`. Skip the meta `docs` and `JacobPEvans` profile repos.
+
+**Then apply the coverage blacklist** (next section) before queuing anything for scaffolding.
+
+### Step 1a — Coverage blacklist
+
+These repos must NOT get a page on the public docs site. Auditors and `/auto-maintain` invocations of this skill must filter the enumerated list against this blacklist before Step 2:
+
+| Repo | Reason |
+| --- | --- |
+| `terraform-aws-bedrock` | Test/playground project; not part of the homelab story. |
+| `terraform-aws-static-website` | Being replaced by this docs site itself. |
+| `VisiCore_App_for_AI_Observability` | Work-related — kept out of personal docs. |
+| `VisiCore_TA_AI_Observability` | Work-related — kept out of personal docs. |
+| (any other repo under the `visicore` org) | Work-related — kept out of personal docs. |
+
+Hard rule: when in doubt, do not add the page. Ask the author first.
+
+If a blacklisted repo is found during Step 1, log it under the `blacklisted` reason in the Step-7 summary report — do not attempt to scaffold it.
 
 ### Step 2 — Categorize each repo
 
@@ -133,7 +151,7 @@ Over-budget pages get a `<!-- TIER-GUARD: over budget — consider splitting int
 - New MDX files under the right sidebar group
 - Updated `docs.json`
 - A summary report: `Added N pages: <list>`
-- A list of skipped repos with reasons (`already-documented`, `private`, `archived`, `fork`, `uncategorizable`)
+- A list of skipped repos with reasons (`already-documented`, `private`, `archived`, `fork`, `uncategorizable`, `blacklisted`)
 
 ## Flags (planned)
 
@@ -148,4 +166,3 @@ These flags are interpreted manually in the conversation; there is no CLI binary
 
 - See `tools/automation.mdx` for the user-facing description.
 - See `README.md` in this directory for human-readable usage.
-- See open issues with label `skill` for planned improvements.

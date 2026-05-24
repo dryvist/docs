@@ -14,7 +14,7 @@ tier: 2
 | --- | --- | --- |
 | macOS workstation | OrbStack K8s | Lowest-overhead path the host OS supports natively; OrbStack runs as a single binary, networks cleanly, doesn't need a full VM |
 | Proxmox cluster | LXC + Ansible | Lowest-overhead path the host OS supports natively; LXC is kernel-namespace processes, no virtualization between container and host network |
-| AWS | None | AWS workloads run on plain EC2 (with `terraform-runs-on` for CI, `terraform-aws-bedrock` for AI, `terraform-aws-static-website` for sites). No EKS — the AWS surface is too small to justify it |
+| AWS | None | AWS workloads run on plain EC2 (with `terraform-runs-on` for CI runners). No EKS — the AWS surface is too small to justify it |
 
 ## What runs on the OrbStack cluster
 
