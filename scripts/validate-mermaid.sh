@@ -10,13 +10,17 @@
 # PUPPETEER_EXECUTABLE_PATH. Local: `nix develop` provides mmdc; CI installs both.
 set -euo pipefail
 
+# Puppeteer config lives next to this script so the same flags apply locally
+# and in CI. --no-sandbox is required on GitHub-hosted Ubuntu runners.
+ppt_config="$(dirname "$0")/puppeteer-config.json"
+
 fail=0
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 while IFS= read -r f; do
   grep -q '^```mermaid' "$f" || continue
   md="$tmp/$(echo "$f" | tr '/' '_').md"
   cp "$f" "$md"
-  mmdc -i "$md" -o "$md.out.svg" --quiet 2>/tmp/_validate-mermaid.err || true
+  mmdc -i "$md" -o "$md.out.svg" -p "$ppt_config" --quiet 2>/tmp/_validate-mermaid.err || true
   # mmdc exits 0 even on parse errors (upstream bug); rely on stderr instead.
   # With --quiet, any stderr output from mmdc indicates a real problem.
   if [[ -s /tmp/_validate-mermaid.err ]]; then
