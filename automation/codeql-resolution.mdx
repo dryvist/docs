@@ -1,0 +1,75 @@
+---
+title: "CodeQL resolution"
+description: "CodeQL alerts are a separate gate from CI checks. /resolve-codeql is the skill that closes them automatically so /ship can complete."
+tier: 2
+---
+
+> CodeQL is not in `statusCheckRollup`. If you only check CI, you miss the CodeQL gate. `/resolve-codeql` fixes that.
+
+CodeQL is GitHub's static-analysis security scanner. It runs on every PR via the `Analyze (actions)` or `Analyze (javascript)` jobs (depending on what's enabled for the repo). When it finds a violation, it posts a **code-scanning alert** that blocks merge — but **does not** show up in `gh pr checks` or in the `statusCheckRollup` of a `gh pr view --json` query. Branch protection treats the alert as a separate signal.
+
+## Why this matters for `/ship`
+
+If `/finalize-pr` only queried `statusCheckRollup`, a PR could look ready (`statusCheckRollup.state: SUCCESS`) and still be blocked at merge time by an open CodeQL alert. The skill's Phase 3 explicitly runs a second, separate gate for CodeQL — using the REST code-scanning API, not GraphQL.
+
+```bash
+gh api repos/<owner>/<repo>/code-scanning/alerts \
+  --jq '[.[] | select(.state == "open")] | length'
+```
+
+If the result is non-zero, the PR is **not** ready, regardless of what CI says.
+
+## What `/resolve-codeql` does
+
+`/resolve-codeql fix` is the auto-resolution skill invoked by `/finalize-pr` Phase 2 when alerts exist:
+
+<Steps>
+  <Step title="Enumerate alerts">
+    Lists all open alerts for the repo, with rule ID, severity, and file:line.
+  </Step>
+  <Step title="Classify">
+    For each alert: is it a real vulnerability, an intentional pattern that should be suppressed, or a false positive?
+  </Step>
+  <Step title="Fix or suppress">
+    Real → patch the code with a fix that addresses the rule. Intentional → add a CodeQL inline suppression with a justification comment. False positive → dismiss via the API with `"reason": "false positive"`.
+  </Step>
+  <Step title="Push the fix commit">
+    Signed via the App installation token, attributed to `JacobPEvans-claude[bot]`.
+  </Step>
+  <Step title="Re-run CodeQL">
+    The push triggers a fresh CodeQL run automatically. Wait for it to complete before re-querying alert state.
+  </Step>
+</Steps>
+
+## Why GraphQL doesn't show CodeQL state
+
+The GraphQL `pullRequest` schema's `statusCheckRollup` aggregates check runs and status contexts. CodeQL alerts live in a separate `repository.codeScanningAlerts` connection — they're attached to the repo's default branch baseline, not to the PR's check run set.
+
+A canonical query for the PR-readiness gate (from [`gh-cli-patterns`](https://github.com/JacobPEvans/claude-code-plugins/blob/main/github-workflows/skills/gh-cli-patterns/SKILL.md)) reads `statusCheckRollup` for CI, then does a **separate** REST call for CodeQL. Both must be clean for a PR to be considered ready.
+
+## Async timing
+
+CodeQL runs are slower than most CI checks — often 2–5 minutes after a push. This timing mismatch is why `/finalize-pr` Phase 2.6 (the fix in flight) introduces an explicit wait-for-async-checks step: poll at 30-second intervals up to 5 minutes, only advance to Phase 3 when all known check kinds have a terminal status. Without this, `/finalize-pr` could treat a still-running CodeQL run as a hard failure and bail out.
+
+## What `/resolve-codeql` will NOT do
+
+- **Won't dismiss real alerts as false positive.** Dismissals require justification and are reserved for genuine FPs.
+- **Won't disable a CodeQL query.** Adjusting the CodeQL config is a deliberate human change.
+- **Won't loop indefinitely.** Capped at 3 fix attempts per PR per invocation — beyond that, surfaces the unfixed alerts for a human.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="/ship and /finalize-pr" icon="ship" href="/automation/ship-and-finalize">
+    The orchestrator that invokes `/resolve-codeql` as part of Phase 2.
+  </Card>
+  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
+    The plugin home for `/resolve-codeql` and the rest of the toolchain.
+  </Card>
+  <Card title="Source: codeql-resolver" icon="github" href="https://github.com/JacobPEvans/claude-code-plugins/tree/main/codeql-resolver">
+    The full plugin source.
+  </Card>
+  <Card title="GitHub CodeQL docs" icon="book" href="https://docs.github.com/en/code-security/code-scanning">
+    The upstream CodeQL documentation for query authoring and config.
+  </Card>
+</CardGroup>

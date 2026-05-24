@@ -135,6 +135,18 @@
             ]
           },
           {
+            "group": "Automation",
+            "pages": [
+              "automation/overview",
+              "automation/issue-to-pr-pipeline",
+              "automation/ai-workflows",
+              "automation/claude-code-routines",
+              "automation/ship-and-finalize",
+              "automation/codeql-resolution",
+              "automation/shape-issues"
+            ]
+          },
+          {
             "group": "Conventions",
             "pages": [
               "conventions/overview",

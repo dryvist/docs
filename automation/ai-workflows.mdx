@@ -1,0 +1,109 @@
+---
+title: "ai-workflows"
+description: "Sixteen reusable GitHub Actions workflows that turn issues into draft PRs, fix CI failures automatically, and gate merges. Consumer repos wire thin callers."
+tier: 2
+---
+
+> One repo of reusable workflows. Every consumer repo writes ten-line callers and inherits the entire pipeline.
+
+[`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows) ships 16 reusable GitHub Actions workflows (`on: workflow_call:`) that consumer repos invoke with `uses:` references. The AI orchestration, prompts, and rate guards live in the upstream workflow; the consumer caller declares the trigger and inherits secrets.
+
+## Event-triggered workflows
+
+These run on GitHub events. Wire one caller per workflow you want.
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `issue-triage.yml` | `issues: [opened]` | Categorizes, deduplicates, labels new issues |
+| `issue-resolver.yml` | `issues: [opened]` | Creates a draft PR when the issue is well-scoped and not excluded by labels |
+| `ci-fix.yml` | `workflow_run` of your CI workflow, `conclusion: failure` | Reads the failed log, pushes a fix commit |
+| `final-pr-review.yml` | `pull_request_review: [submitted]` | Final merge-readiness gate before human merge |
+| `project-router.yml` | `issues/pull_request: [opened, labeled]` | Routes items to GitHub Projects with smart field assignment |
+| `post-merge-docs-review.yml` | `push: [main]` → dispatch | After merge, audits docs touched by the commit, creates fix PRs |
+| `post-merge-tests.yml` | `push: [main]` → dispatch | After merge, analyzes the code changes and drafts targeted tests |
+| `issue-linker.yml` | `pull_request: [opened, closed]` | Links open issues to PRs on open; closes resolved issues on merge |
+| `notify-ai-pr.yml` | `pull_request: [opened]` from a bot | Slack notification when an AI-authored PR opens |
+
+## Scheduled workflows
+
+These run on cron — typically called with `schedule:` and a manual `workflow_dispatch:`.
+
+| Workflow | Default schedule | What it does |
+| --- | --- | --- |
+| `code-simplifier.yml` | Daily 04:00 UTC | DRY enforcement, dead code removal, drafts PRs |
+| `best-practices.yml` | Weekly Wed 03:00 UTC | Audit creating actionable recommendations |
+| `next-steps.yml` | Daily 05:00 UTC | Analyzes merge momentum, suggests next logical action |
+| `issue-sweeper.yml` | Weekly Mon 06:00 UTC | Scans open issues, comments on progress, closes resolved |
+| `issue-hygiene.yml` | Weekly Mon 07:00 UTC | Detects duplicates, links merged PRs, flags stale issues |
+| `label-sync.yml` | Weekly Sun 05:00 UTC | Syncs canonical labels from the `.github` repo to consumers |
+| `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
+
+## What's deprecated or disabled
+
+| Workflow | Status | Replacement |
+| --- | --- | --- |
+| `claude-review.yml` | DEPRECATED 2026-04-04. All jobs gated `if: false`. | External Gemini + Copilot PR reviews |
+| `pr-issue-linker.yml` | Auto-triggers explicitly disabled (`workflow_dispatch` only) | `issue-linker.yml` |
+
+Wiring a caller for a deprecated workflow is a no-op — the consumer caller runs, the upstream silently skips. Don't.
+
+## How a caller looks
+
+A consumer caller is the smallest YAML that declares a trigger, sets permissions, and forwards to the upstream:
+
+```yaml
+name: Issue Triage
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  run:
+    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@main
+    secrets: inherit
+```
+
+Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
+
+## Versioning
+
+Per [`ci-cd-policy.md`](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/ci-cd-policy.md), JacobPEvans self-references use `@main` or a major tag like `@v0` — never minor/patch pins. The full SemVer tags exist (`@v0.15.1`) and are tracked by Renovate, but consumers should ride a moving ref so upstream improvements land without a Renovate PR per repo.
+
+## Authentication
+
+Every reusable workflow uses [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action), authenticated via OpenRouter:
+
+- `secrets.OPENROUTER_API_KEY` — the API key (set spend limits in the OpenRouter dashboard)
+- `secrets.OPENROUTER_BASE_URL` — `https://openrouter.ai/api/v1`
+
+OAuth-token auth (the Claude Code subscription) is **explicitly forbidden** in unattended CI — it violates the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms). The full reasoning is in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+
+## Commit signing
+
+Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token immediately before calling the action, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot. The App credentials (`GH_APP_CLAUDE_BOT_PRIVATE_KEY`, `GH_APP_CLAUDE_BOT_ID`) are distributed by `secrets-sync` to every repo in the `_github_app_repos` anchor.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Getting started" icon="rocket" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+    Caller templates for every workflow, with the correct permission blocks.
+  </Card>
+  <Card title="Patterns" icon="puzzle-piece" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/PATTERNS.md">
+    The post-merge dispatch pattern, bot guards, and other recurring shapes.
+  </Card>
+  <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+    OpenRouter setup, cost controls, alternatives, why not OAuth.
+  </Card>
+  <Card title="Verification" icon="check-double" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/VERIFICATION.md">
+    The e2e runbook for checking a freshly-wired repo end to end.
+  </Card>
+  <Card title="Issue → PR pipeline on this repo" icon="route" href="/automation/issue-to-pr-pipeline">
+    Exactly which six callers are wired on `JacobPEvans/docs` and why.
+  </Card>
+  <Card title="Secret distribution" icon="lock" href="/security/secrets-sync">
+    How OPENROUTER_API_KEY and the App credentials land on each consumer repo.
+  </Card>
+</CardGroup>

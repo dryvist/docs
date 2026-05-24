@@ -1,0 +1,76 @@
+---
+title: "Automation"
+description: "How an issue becomes a merged PR with minimal human touch: ai-workflows in the cloud, claude-code-routines on cron, claude-code-plugins on the laptop."
+tier: 1
+---
+
+> File an issue. Walk away. Come back to a draft PR with green CI, AI review, and one human merge click left.
+
+This is the **issue → mergeable PR** pipeline. Three repos collaborate: `ai-workflows` runs on GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's cloud cron, `claude-code-plugins` is the local Claude Code escape hatch.
+
+## The end-to-end shape
+
+{/* Shape: linear chain. Boundary crossings: 0. Ranks: 6×1. */}
+{/* Aspect: ~2.5:1 (LR). Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  I([Issue])
+  T([AI triage])
+  D([Draft PR])
+  L([CI and review loop])
+  G{Final gate}
+  M([Merged])
+
+  I --> T --> D --> L --> G --> M
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+  classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class I src
+  class T,L ai
+  class D auto
+  class G gate
+  class M sink
+```
+
+A human files the issue and clicks merge. Everything in between runs without supervision.
+
+## The three layers
+
+| Layer | Where it lives | When it runs | What it owns |
+| --- | --- | --- | --- |
+| [ai-workflows](/automation/ai-workflows) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, draft PR creation, CI auto-fix, final review gate, project routing |
+| [claude-code-routines](/automation/claude-code-routines) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
+| [claude-code-plugins](/ai-development/claude-code-plugins) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch — finalize a PR you're iterating on |
+
+## The seven moving parts
+
+<CardGroup cols={2}>
+  <Card title="Issue → PR pipeline" icon="route" href="/automation/issue-to-pr-pipeline">
+    The eight-step cloud flow on a target repo. Which trigger fires which file, who reviews, what gates merge.
+  </Card>
+  <Card title="ai-workflows" icon="github" href="/automation/ai-workflows">
+    The 16 reusable workflows behind the cloud pipeline. Event-triggered and scheduled.
+  </Card>
+  <Card title="claude-code-routines" icon="clock" href="/automation/claude-code-routines">
+    Six cron-scheduled Claude routines. Org-wide maintenance, no per-repo wiring.
+  </Card>
+  <Card title="/ship + /finalize-pr" icon="ship" href="/automation/ship-and-finalize">
+    The local skill that closes the loop on a PR you're iterating on. Phases, exit modes, the known reliability gaps.
+  </Card>
+  <Card title="CodeQL resolution" icon="shield-check" href="/automation/codeql-resolution">
+    Why CodeQL is fixed separately from CI checks, and how `/resolve-codeql` plugs in.
+  </Card>
+  <Card title="Shaping issues" icon="hammer" href="/automation/shape-issues">
+    The `/shape-issues` skill that turns rough ideas into well-scoped issues the resolver can act on.
+  </Card>
+</CardGroup>
+
+## Source repos
+
+[`ai-workflows`](https://github.com/JacobPEvans/ai-workflows) · [`claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) · [`claude-code-plugins`](https://github.com/JacobPEvans/claude-code-plugins). The 30-second pitch lives at [AI pipeline](/architecture/ai-pipeline); this Automation section is the mechanics.
