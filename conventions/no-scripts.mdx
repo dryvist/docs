@@ -1,0 +1,122 @@
+---
+title: "No scripts in non-script files"
+description: "Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow."
+tier: 2
+---
+
+{/* TIER-GUARD: reference page — the iron law, four-tier search, and worked examples belong together. */}
+
+> Search first. Script only when every search tier is empty and the 10-line gate passes. Then put the script in a real file with a real extension.
+
+Inlined logic in a YAML `run:` step, a Markdown copy-paste block, or a heredoc smuggling a Bash loop is the worst of every world: untestable, unlintable, undiscoverable. The rules below apply to every repo across the org.
+
+## Iron law
+
+Scripts must live in `.sh`, `.py`, `.ts`, `.js`, `.rb`, or `.pl` files under one of:
+
+- `scripts/`
+- `.github/scripts/`
+- `.claude/hooks/`
+- `tests/`
+- `plugins/<name>/hooks/`
+
+Never inlined elsewhere.
+
+### Banned in non-script files
+
+- YAML `run:` with control flow (`if`, `for`, `while`, `case`) or 4+ lines
+- Multi-line Bash control flow in a single command
+- Heredocs carrying logic (`bash <<EOF`, `python <<EOF`, generated commit bodies)
+- Inline interpreters: `python -c`, `node -e`, `perl -e`, `ruby -e`, multi-line `bash -c`
+- Markdown copy-paste-execute blocks with logic
+
+### Allowed
+
+- Single-line pipelines (`|`, `&&`, `xargs`)
+- 1–3 line YAML `run:` without control flow
+- One-line heredocs feeding static prose
+
+## Four-tier search
+
+Before writing any new script, search every tier. Log one line per tier (`<tier>: <tool> — found / not-found, reason`). Empty rows reject the search.
+
+1. **Native CLIs / builtins** (`jq`, `gh`, `git`, `curl`)
+2. **Ecosystem primitives** (Ansible modules, Terraform resources, marketplace Actions, pre-commit)
+3. **Third-party packaged tools** (Homebrew, apt, pip, npm, cargo)
+4. **Popular community solutions** (GitHub projects, official plugins, `awesome-*` lists)
+
+## 10-line gate
+
+After an empty search:
+
+- Fewer than 10 non-comment lines → auto-approved
+- 10+ lines → requires explicit sign-off
+
+Code, shebangs, heredocs, and continuations count. Blanks and comments do not. Semicolon-stuffing to dodge the count is a violation, not a workaround.
+
+Hook blocks are terminal denials. Do not route around them by moving the logic to a different non-script file.
+
+## Worked examples
+
+### YAML `run:` with logic
+
+Wrong:
+
+```yaml
+- run: |
+    for pr in $(gh pr list --json number -q '.[].number'); do
+      if [[ $(date +%H) -ge 9 && $(date +%H) -le 17 ]]; then
+        gh pr merge "$pr" --squash --auto
+      fi
+    done
+```
+
+Right — extract to a script file, or use a native action:
+
+```yaml
+- run: .github/scripts/merge-if-quiet.sh
+- uses: peter-evans/enable-pull-request-automerge@v3
+```
+
+### Multi-line Bash control flow
+
+Wrong:
+
+```bash
+while IFS= read -r branch; do
+  gh api repos/x/y/git/refs/heads/$branch -X DELETE
+done < /tmp/branches.txt
+```
+
+Right:
+
+```bash
+gh api repos/x/y/branches --paginate --jq '.[].name' \
+  | xargs -I{} gh api --method DELETE repos/x/y/git/refs/heads/{}
+```
+
+### Heredoc smuggling logic
+
+Wrong: `git commit -m "$(cat <<'EOF' ... $(if ...) ... EOF)"`
+
+Right: `git commit -m "feat: standard release"` (generate the body in a script file if it needs computation)
+
+### Inline interpreters
+
+Wrong: `python -c "import json; print(json.load(open('x.json'))['key'])"`
+
+Right: `jq -r .key x.json`
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
+    How commit and PR shapes interact with release-please.
+  </Card>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    Marketplace actions and reusable workflows that replace most ad-hoc scripts.
+  </Card>
+  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+    The canonical example of the four-tier search applied to a real domain.
+  </Card>
+</CardGroup>

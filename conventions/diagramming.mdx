@@ -1,0 +1,70 @@
+---
+title: "Diagramming"
+description: "Every repo with non-trivial architecture ships diagrams. Inline Mermaid where GitHub renders, standalone .mmd + SVG otherwise."
+tier: 2
+---
+
+> Showing everything shows nothing. One diagram per concern, kept in sync with the code, beats one giant chart no one reads.
+
+Required for any repo with meaningful architecture. Stale diagrams are worse than no diagrams — they actively mislead. The rules below cover format, placement, and what to draw.
+
+## Format
+
+- **Inline fenced `mermaid` blocks** in Markdown — GitHub renders them natively, Mintlify renders them on the docs site
+- **Standalone `.mmd` sources** in `docs/assets/` when the diagram is referenced from multiple pages or needs to render outside Markdown
+- **Render to SVG** with `nix run nixpkgs#mermaid-cli -- -i x.mmd -o x.svg`
+
+## Placement
+
+| Where | What goes there |
+| --- | --- |
+| Repo root | `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` — diagrams inline |
+| `docs/` | Repo-internal documentation; diagrams inline where it reads well |
+| `docs/assets/` | `.mmd` sources + rendered `.svg` for top-level overviews linked from the README |
+| `docs.jacobpevans.com` (this site) | Cross-repo and architectural overviews |
+
+## What to draw
+
+- **System overview** for the repo as a whole
+- **Cross-repo context** when the repo's outputs feed other repos' inputs
+- **One diagram per major data flow** — do not collapse. If two flows are tangled enough to need two diagrams, they are tangled enough to need two diagrams
+- **Sequence diagrams** for multi-party flows (auth, API chains, CI pipelines)
+- **Component or deployment diagrams** for non-trivial topology
+
+## Style
+
+The canonical Mermaid style guide for the docs site lives in this repo's [`AGENTS.md`](https://github.com/JacobPEvans/docs/blob/main/AGENTS.md). The byte-for-byte theme directive, shape vocabulary, semantic `classDef` palette, indexed `linkStyle` palette, and the four narrative shapes (linear chain, parallel convergence, hierarchy, hub and spokes) are reusable across every repo that publishes diagrams alongside its code.
+
+Highlights:
+
+- One narrative shape per diagram — never combine
+- Subgraphs only for things that physically or logically co-locate (a cluster, a host, a network); never for roles or phases
+- Max 5 nodes per rank, 5 nodes per subgraph, 12 nodes per diagram
+- Every edge crosses at most one subgraph boundary
+- Use `classDef` for grouping, never per-node `style`
+- Color edges by semantic category via indexed `linkStyle`, never by `linkStyle default`
+
+## When not to use Mermaid
+
+If the content is a flat list, a comparison, or sequential steps without branching, prefer a table or `<Steps>` component. Mermaid is for shapes; tables and Steps are for everything else.
+
+| Use | When |
+| --- | --- |
+| `<Steps>` | Sequential process where each step is one action |
+| Table | Categorisation, comparison, "X column maps to Y column" |
+| Mermaid | One of the four narrative shapes; structure with 4+ nodes and real edges |
+| Prose with bold leads | Relationships that read better as a paragraph |
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="Architecture overview" icon="diagram-project" href="/architecture/overview">
+    The canonical examples of every narrative shape in production use.
+  </Card>
+  <Card title="How it fits together" icon="puzzle-piece" href="/how-it-fits-together">
+    A single linear-chain diagram doing the work of three text pages.
+  </Card>
+  <Card title="Security · how it fits together" icon="diagram-project" href="/security/how-it-fits-together">
+    Multiple diagrams, one per concern — the pattern in action.
+  </Card>
+</CardGroup>
