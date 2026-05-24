@@ -48,8 +48,17 @@ There is intentionally **no required approving review count** on solo-maintained
 ## Where to go next
 
 <CardGroup cols={2}>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    Marketplace actions, release-please conventions, dependency pinning, the full runner-label catalog, on-prem runner requirements.
+  </Card>
+  <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
+    Identity per execution context, the App-token pattern, deterministic-GHA signing.
+  </Card>
   <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
     The RunsOn tier — the runner pool itself, OIDC trust, migration guide.
+  </Card>
+  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+    Static checks in pre-commit, credentialed operations in CI via OIDC.
   </Card>
   <Card title="Security overview" icon="lock" href="/security/overview">
     How secrets reach a workflow, across all four runner tiers.

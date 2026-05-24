@@ -1,0 +1,32 @@
+---
+title: "Conventions"
+description: "Cross-repo writing standards — commit shape, when scripts are allowed, when diagrams are required."
+tier: 1
+---
+
+> Three standards that apply to every repo, public or private, regardless of language or tool.
+
+These conventions are the human-readable form of policies that AI assistants enforce automatically. Every contributor — human or model — works inside the same envelope, so PRs land consistently no matter who authored them.
+
+## What this section covers
+
+<CardGroup cols={2}>
+  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
+    No emoji in commit subjects, Conventional Commits, branch hygiene, the autonomy rules that decide when to ship vs ask.
+  </Card>
+  <Card title="No scripts in non-script files" icon="ban" href="/conventions/no-scripts">
+    Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow.
+  </Card>
+  <Card title="Diagramming" icon="diagram-project" href="/conventions/diagramming">
+    Every repo with non-trivial architecture ships diagrams. Inline Mermaid where GitHub renders, standalone `.mmd` + SVG otherwise.
+  </Card>
+</CardGroup>
+
+## Related standards elsewhere in the site
+
+- [Golden laws](/security/golden-laws) — the 15 non-negotiable security rules
+- [Repo boundaries](/ai-development/repo-boundaries) — how rules, plugins, and docs split across the three AI repos
+- [CI/CD policy](/infrastructure/cicd/policy) — release-please, dependency pinning, runner choice
+- [Terraform check placement](/infrastructure/terraform-check-placement) — static checks in pre-commit, credentialed ops in CI
+
+Standards that are AI-runtime only (tool routing, skill execution semantics, Bifrost routing) stay in [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) and are loaded as agent context. Anything humans need to read lives here.

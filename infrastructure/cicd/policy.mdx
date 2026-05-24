@@ -1,0 +1,94 @@
+---
+title: "CI/CD policy"
+description: "Marketplace actions over scripts, release-please for versioning, version-pinned dependencies, runner choice by workload."
+tier: 2
+---
+
+{/* TIER-GUARD: reference page — runner catalogs and release rules need to live together. */}
+
+> The CI tier is whatever the workload actually needs. Build it from marketplace actions, version-pin every dependency, and treat releases as permanent.
+
+The policy on this page applies to every workflow under `JacobPEvans/*` and `dryvist/*`. The companion page [`git-signing`](/infrastructure/cicd/git-signing) covers identity and signed-commit attribution; this page covers everything else.
+
+## Prefer native CI/CD constructs
+
+| Task | Use this | Not this |
+| --- | --- | --- |
+| CI/CD automation | Marketplace actions, reusable workflows, composite actions | Custom shell script |
+| GitHub Actions logic | Expressions, `fromJSON()`, matrix strategies | Python or bash in a `run:` step |
+
+Scripts belong in dedicated files (`.github/scripts/*.sh`, `scripts/*.py`), not inlined into YAML — see [No scripts in non-script files](/conventions/no-scripts) for the full rule.
+
+## GitHub Releases
+
+Treat published releases as permanent. Once a release is promoted from draft to published, do not modify or delete it — ever. GitHub technically allows edits and deletions; the policy here forbids it. If a correction is needed, create a new release.
+
+- Open releases as **drafts** until fully complete (all assets uploaded, notes finalized).
+- Promote draft to published only when everything is ready.
+- Every repo uses [release-please](https://github.com/googleapis/release-please) for automated version bumps:
+  - **Patch** bumps come from `fix:` commits
+  - **Minor** bumps come from `feat:` commits
+  - **Major** bumps are **human-initiated only** — edit `.release-please-manifest.json` manually. Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release workflow
+- Conventional-commit style preference:
+  - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
+  - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
+- Templates and reusable workflows live in [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github)
+
+Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
+
+## Dependency versioning
+
+| Action source | How to pin |
+| --- | --- |
+| Self-references (`JacobPEvans/*`) | `@main` or a major version tag — never SHA or minor/patch pins |
+| Trusted external actions | Version tags (major like `@v6` or full SemVer like `@v2.3.5`). Trusted orgs are listed in [`JacobPEvans/.github/renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json) |
+| Untrusted external actions | SHA commit hashes only — for orgs not on the trusted list. SHA pinning is the exception, not the default |
+
+## Runner choice
+
+RunsOn (AWS EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on)) is the default for Linux jobs. The control plane is paid for whether it is running jobs or not (~$3.50/mo fixed App Runner + CloudWatch); workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
+
+On-prem self-hosted is the documented exception for jobs that genuinely need local hardware — not a routine choice.
+
+| Workload | Runner |
+| --- | --- |
+| Linux job (lint, validate, build, test) | RunsOn — `runs-on=${{ github.run_id }}/runner=2cpu-linux-x64` |
+| Nix `flake check` (Linux) | RunsOn with more RAM — `runs-on=${{ github.run_id }}/cpu=4/ram=16/family=m7+c7/extras=s3-cache` |
+| `macos-latest` | GitHub-hosted — RunsOn EC2 Mac has a 24-hour minimum allocation; for short jobs `macos-latest` is cheaper despite the 10× billing multiplier |
+| `windows-latest` | RunsOn — supports Windows; case-by-case |
+| `*.lock.yml` from `gh-aw compile` | GitHub-hosted — lock files are regenerated; runner label must flow through the `.md` companion (gh-aw does not expose this yet) |
+| Disabled-schedule workflow (manual `workflow_dispatch` only) | GitHub-hosted — migration saves nothing |
+| Job requiring local hardware (OrbStack cluster, Proxmox LAN access, dev-loop instrumentation that cannot be replicated on a fresh EC2 spot instance) | **on-prem self-hosted** — `[self-hosted, Linux, ARM64]` (orbstack-kubernetes) or `[self-hosted, Linux]` (ansible-proxmox-apps); see "On-prem runner requirements" below |
+
+The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can correlate the GitHub Actions `workflow_job` webhook back to the originating run — without it, the job hangs in `queued`. Reusable workflows in `JacobPEvans/.github` accept a `runner_label` input (default `ubuntu-latest`); callers opt in by passing the RunsOn label string.
+
+Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps live in [`terraform-runs-on/docs/migration-guide.md`](https://github.com/JacobPEvans/terraform-runs-on/blob/main/docs/migration-guide.md).
+
+### On-prem runner requirements
+
+On-prem self-hosted runners are a single point of failure when the job has E2E coverage and the runner is broken or stale. Every on-prem runner must:
+
+1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`) — never a personal access token. App installation tokens auto-refresh; PATs silently expire and break the runner with no upstream visibility.
+2. **Pin the runner image (or VM template) by digest**, with Renovate tracking the digest. No floating tags.
+3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
+4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
+5. **Pre-flight check the secret-injection step** so it fails loud when required secrets are missing.
+
+Reference implementation: `orbstack-kubernetes/docker/actions-runner/` — see that repo's `Makefile` `runner-*` targets and `TESTING.md`.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
+    Identity per execution context and the App-token pattern that signs every AI-authored commit.
+  </Card>
+  <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
+    The RunsOn runner pool itself — provisioning, OIDC trust, migration guide.
+  </Card>
+  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+    Static checks in pre-commit, credentialed operations in CI via OIDC.
+  </Card>
+  <Card title="CI/CD overview" icon="server" href="/infrastructure/cicd/overview">
+    Runner tiers in context, plan/apply gating, branch rulesets.
+  </Card>
+</CardGroup>
