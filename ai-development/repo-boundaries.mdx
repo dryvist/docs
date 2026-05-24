@@ -16,7 +16,7 @@ The AI coding setup behind this site is split across three repositories on purpo
 | --- | --- | --- |
 | [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) | Rules | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, auto-loaded rules, the 5-step workflow, permission JSON |
 | [`claude-code-plugins`](/ai-development/claude-code-plugins) | Plugins | Slash commands, skills, agents, hooks, the plugin marketplace |
-| [`docs`](https://github.com/JacobPEvans/docs) | Documentation | This site — architecture, narrative, public-facing diagrams |
+| [`docs`](/introduction) | Documentation | This site — architecture, narrative, public-facing diagrams |
 
 The rules repo is vendor-agnostic — Claude Code, Gemini CLI, GitHub Copilot, and Codex all read the same files. The plugins repo is Claude-Code-specific because plugins are a Claude Code concept. The docs repo is for humans (and any AI that wants to understand the system).
 
@@ -66,16 +66,16 @@ A change that affects the public picture — a new plugin, a renamed rule, a shi
 ## Related repos
 
 <CardGroup cols={2}>
+  <Card title="How it fits together" icon="layer-group" href="/how-it-fits-together">
+    The portfolio-level view. AI development is one of six surfaces.
+  </Card>
+  <Card title="AI pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
+    How the rules + plugins + automation compose into an actual development loop.
+  </Card>
   <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
     The rules layer. AGENTS.md, auto-loaded rules, permissions, workflows.
   </Card>
   <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
     The plugins layer. Commands, skills, agents, and hooks for Claude Code.
-  </Card>
-  <Card title="AI pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
-    How the rules + plugins + automation compose into an actual development loop.
-  </Card>
-  <Card title="How it fits together" icon="layer-group" href="/how-it-fits-together">
-    The portfolio-level view. AI development is one of six surfaces.
   </Card>
 </CardGroup>
