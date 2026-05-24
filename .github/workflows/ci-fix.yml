@@ -1,0 +1,38 @@
+name: CI Fix
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: ci-fix-${{ github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.head_branch != 'main')
+    uses: JacobPEvans/ai-workflows/.github/workflows/ci-fix.yml@main
+    secrets: inherit
+    with:
+      repo_context: >-
+        Mintlify documentation site for docs.jacobpevans.com.
+        MDX pages with YAML frontmatter, mermaid diagrams using the
+        canonical hand-drawn Reef Green theme, navigation in docs.json.
+      ci_structure: >-
+        ci.yml validates docs.json with jq, installs mint via npm, and runs
+        mint broken-links to check internal MDX links. osv-scan.yml is a
+        reusable vuln-scan callout. CI fixes usually mean: docs.json JSON
+        syntax error, a broken internal link from a renamed/moved page, or
+        a mermaid block with a non-canonical theme directive.
