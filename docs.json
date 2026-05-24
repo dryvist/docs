@@ -113,6 +113,7 @@
             "group": "AI Development",
             "pages": [
               "ai-development/overview",
+              "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
               "ai-development/claude-code-plugins"
             ]
