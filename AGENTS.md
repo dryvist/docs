@@ -290,8 +290,19 @@ users it's the only signal of where the click will land.
 
 ```text
 click NodeId "/path/to/internal/page" "Short hover tooltip"
-click NodeId "https://github.com/owner/repo" "_blank" "Repo on GitHub"
+click NodeId "https://github.com/owner/repo" "Repo on GitHub" _blank
 ```
+
+**Argument order matters.** Mermaid's grammar is:
+
+```text
+click NodeId "URL" "tooltip" [target]
+```
+
+The target (`_blank`, `_self`, `_parent`, `_top`) is OPTIONAL, comes
+LAST, and is UNQUOTED. Putting `_blank` in quotes or before the
+tooltip is a parse error and the entire diagram silently fails to
+render — `mint dev` shows a blank space where the diagram should be.
 
 Place the `click` block AFTER all `classDef` definitions and `class`
 assignments, and BEFORE any `linkStyle` lines. Group internal links
@@ -304,9 +315,10 @@ overview, or hub diagram:
 
 - [ ] Every node whose label names a topic with a detail page has a `click` line
 - [ ] Internal links use site-relative paths (`/security/overview`), never the full domain
-- [ ] External links include `"_blank"` so they open in a new tab
+- [ ] External links end with **unquoted** `_blank` AFTER the tooltip
 - [ ] Tooltips are ≤40 chars and describe the destination (not the node)
 - [ ] No `click` points at a page that doesn't exist yet (would 404)
+- [ ] CI Mermaid validation passes (`bunx -y @mermaid-js/mermaid-cli@latest -i <file>.mdx -o /tmp/_out.md`)
 
 ### Example
 
@@ -316,7 +328,7 @@ flowchart LR
   classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   class Ovr,Repo hop
   click Ovr "/overview" "Read the full overview"
-  click Repo "https://github.com/owner/repo" "_blank" "Source on GitHub"
+  click Repo "https://github.com/owner/repo" "Source on GitHub" _blank
 ```
 
 ### When NOT to use clicks

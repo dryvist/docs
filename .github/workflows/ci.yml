@@ -27,3 +27,16 @@ jobs:
 
       - name: Check for broken internal links
         run: mint broken-links
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Chromium (Puppeteer runtime for Mermaid)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser
+
+      - name: Install Mermaid CLI
+        run: bun install --global @mermaid-js/mermaid-cli@latest
+
+      - name: Validate Mermaid diagrams in MDX files
+        env:
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+        run: ./scripts/validate-mermaid.sh
