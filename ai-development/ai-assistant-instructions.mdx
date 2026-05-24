@@ -20,6 +20,50 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Owns the **branching, commit, and PR conventions** — Conventional Commits, no emoji in subjects
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
 
+## The `CLAUDE.md` → `@AGENTS.md` convention
+
+**Every repo's `CLAUDE.md` is a thin import of `AGENTS.md` in the same folder. Always. No exceptions.**
+
+```markdown
+# AI Agents Configuration
+
+@AGENTS.md
+```
+
+That's the entire file. Two lines of content (plus a heading). All actual project guidance lives in `AGENTS.md`. Claude Code resolves `@AGENTS.md` as an inline file import ([official docs](https://code.claude.com/docs/en/memory)) — the contents are loaded into context exactly as if they had been written into `CLAUDE.md` directly.
+
+### Why
+
+| Problem the convention solves | How |
+| --- | --- |
+| **Vendor lock-in.** Claude reads `CLAUDE.md`, Codex / GitHub Copilot / Cursor / OpenAI agents read `AGENTS.md`, Gemini reads `GEMINI.md`. Duplicating content across them rots fast. | One canonical file (`AGENTS.md`), every other tool's config file imports it. |
+| **Context bloat.** A 12 KB `CLAUDE.md` burns tokens on every session. | `CLAUDE.md` becomes ~40 bytes; `AGENTS.md` carries the load and can still be split further via nested `@path` imports. |
+| **Size budgets.** The shared [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml) workflow defaults to `warn=6 KB`, `error=12 KB`. A fat `CLAUDE.md` trips that gate. | A 40-byte `CLAUDE.md` never trips it; `AGENTS.md` can opt into an `extended:` limit per repo via `.file-size.yml` when actually needed. |
+| **Single source of truth.** Moving project rules between files in different vendors' formats is an unforced error. | All edits land in one file. |
+
+### Where it applies
+
+**Every repo.** Public or private, monorepo or single-purpose, infra or app. If a repo has a `CLAUDE.md`, it must be the two-line import. Project-level instructions, command runbooks, conventions, and tool guidance all belong in `AGENTS.md` (or files it `@imports`).
+
+The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific files — each is a thin import of `AGENTS.md`.
+
+### How to migrate a repo
+
+1. Move every section of the existing `CLAUDE.md` into `AGENTS.md` (merge with any existing content, dedupe, prefer linking to `docs/*.md` for deep dives).
+2. Replace `CLAUDE.md` with the two-line import shown above.
+3. If `AGENTS.md` ends up > 12 KB, either trim further (link out to `docs/`) or add a `.file-size.yml` extension:
+
+   ```yaml
+   # .file-size.yml — extends the shared default for AGENTS.md only
+   extended:
+     limit: 32768
+     files:
+       - AGENTS
+   ```
+
+4. Mirror the same change in any other agent file (e.g. `GEMINI.md` → `@AGENTS.md`).
+5. Update CI: most repos already inherit the [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml) check from `JacobPEvans/.github`. No per-repo workflow edit needed.
+
 ## How it fits
 
 | Read by | Consumed by |
