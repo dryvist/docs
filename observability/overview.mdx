@@ -44,6 +44,14 @@ flowchart LR
   class CCO,CCP,CAG,CCV pack
   class Stream,SP,App route
 
+  click SP "/observability/ansible-splunk" "Splunk install + indexes"
+  %% Cribl Edge pack repos (CCO/CCP/CAG/CCV) intentionally NOT clickable —
+  %% Mermaid drops the _blank target attribute on flowchart clicks
+  %% (https://github.com/mermaid-js/mermaid/issues/3077,
+  %% https://github.com/mermaid-js/mermaid/issues/5550). The pack repo links
+  %% are listed in the table below this diagram, where Mintlify
+  %% auto-applies target="_blank" to external markdown links.
+
   linkStyle 0,1,2,3,4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
   linkStyle 8,9 stroke:#4FB3A9,stroke-width:2px;
 ```
