@@ -10,14 +10,14 @@ tier: 2
 
 ## The six routines
 
-| Routine | Schedule (UTC) | What it does |
+| Routine | Schedule (CT) | What it does |
 | --- | --- | --- |
-| Morning Briefing | Daily 10:00 | Read-only activity summary: new PR reviews, opened issues, CI failures, anything that needs attention |
-| The Sentinel | Daily 05:33 | Param/secret audit; picks one PR to review; flags operator-specific patterns |
-| The Custodian | Daily 07:00 | Weighted-random maintenance: stale branch cleanup, missing labels, repo health audit |
-| Issue Solver | Daily 00:00 + 12:00 CT | Picks one open issue, takes it from triage → draft PR in six phases |
-| Daily Polish | Daily 04:00 | Deep-clean one repo per day: README gaps, missing `.gitignore`, CI config, test coverage |
-| Weekly Scorecard | Mondays 10:00 | Portfolio health scores: repo count, open-issue median, CI pass rate, test coverage % |
+| Morning Briefing | Daily 5:00 AM | Read-only activity summary: new PR reviews, opened issues, CI failures, anything that needs attention |
+| The Sentinel | Daily 12:33 AM | Param/secret audit; picks one PR to review; flags operator-specific patterns |
+| The Custodian | Daily 2:00 AM | Weighted-random maintenance: stale branch cleanup, missing labels, repo health audit |
+| Issue Solver | Daily 7:00 AM + 7:00 PM | Picks one open issue, takes it from triage → draft PR in six phases |
+| Daily Polish | Daily 11:00 PM | Deep-clean one repo per day: README gaps, missing `.gitignore`, CI config, test coverage |
+| Weekly Scorecard | Mondays 5:00 AM | Portfolio health scores: repo count, open-issue median, CI pass rate, test coverage % |
 
 ## How the Issue Solver picks work
 
