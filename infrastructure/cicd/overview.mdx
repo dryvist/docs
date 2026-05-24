@@ -1,0 +1,69 @@
+---
+title: "CI/CD"
+description: "How the homelab and its repos run build, test, deploy: GitHub Actions on RunsOn AWS spot for IaC, the docs site auto-deploy via Mintlify, and the OIDC + plan/apply pattern that gates every infra change."
+tier: 1
+---
+
+> Every infra change goes through PR-plan, then OIDC-authenticated apply. Every doc change auto-deploys. Nothing runs on a developer laptop in anger.
+
+The CI/CD posture is small, opinionated, and uniform. Every repo that ships infrastructure or docs uses GitHub Actions; the runners are either GitHub-hosted (for cheap, ephemeral, no-secret jobs) or self-hosted on AWS spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on) (for jobs that need AWS creds, longer-running steps, or a stable IP). Secrets fan out via `secrets-sync`; auth into AWS is OIDC, never a long-lived access key in the repo.
+
+## The shape of every IaC pipeline
+
+| Stage | Trigger | Runs on | What it does |
+| --- | --- | --- | --- |
+| PR plan | `pull_request` | GitHub-hosted (no AWS creds needed for plan) | `terragrunt plan -no-color`, posted via `tf-summarize` as a redacted structural summary — addresses + change actions only, never resolved values |
+| Manual review | human reviewer | n/a | Reads the plan summary, checks impact, approves or asks for revisions |
+| Apply | `push` to `main` after merge | RunsOn AWS spot, OIDC into the target account | `terragrunt apply -auto-approve` gated by the `production` GitHub Environment approval |
+
+The redacted-plan rule is non-negotiable: PR plan output reveals only resource addresses and change actions. Resolved attribute values — anything an attacker reading a PR could weaponize — never appear in PR comments. See each repo's `docs/ci-plan-output-policy.md` for the rationale.
+
+## Runner selection
+
+The decision is mechanical:
+
+- **No AWS work, no large filesystem, no secrets-in-env beyond `GITHUB_TOKEN`** → GitHub-hosted. Cheapest, most ephemeral, and fine for the docs site, label sync, and PR plan jobs that don't authenticate to AWS.
+- **AWS work, OIDC into a real account, or any step that needs to outlive a six-hour GitHub-hosted runner** → RunsOn AWS spot. Same OIDC trust, much longer leash, much cheaper than GitHub-Larger runners.
+
+The runner pool is provisioned per-org through [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on). A workflow opts in by setting `runs-on: runs-on=...,family=ubuntu-22.04`; the GitHub App on the org maps that label to a spot instance from the pool. Idle pool = zero cost.
+
+## Secrets flow
+
+Three tiers in CI:
+
+| Tier | Where it lives | How CI reads it |
+| --- | --- | --- |
+| Tier 1 (CI-distributable) | Doppler → `secrets-sync` repo → matrix sync → target repo Actions secrets | `${{ secrets.NAME }}` directly in the workflow |
+| Tier 2 (high-sensitivity infra) | Doppler `iac-conf-mgmt/prd` only — never copied to GitHub | `dopplerhq/secrets-fetch-action` at workflow runtime, with a read-only service token from Tier 1 |
+| Tier 3 (at-rest, low-blast-radius) | SOPS-encrypted in the repo | `sops_decrypt_file` (Terragrunt) or `sops exec-env` (Ansible) at apply time |
+
+The full secrets-management posture, including how AI agents are structurally unable to read these tokens, lives in [Security](/security/overview). This page covers only the CI/CD-facing slice.
+
+## Branch protection and merge rules
+
+The `main` branch on every IaC repo is protected by a ruleset, not a legacy branch-protection rule:
+
+- Required signatures (GPG)
+- Required linear history (no merge commits)
+- Required review-thread resolution before merge
+- Squash or rebase merge methods only (no merge-commit option)
+- Copilot Code Review auto-requested on every PR (review-on-open, not review-on-push)
+
+There is intentionally **no required approving review count** for solo-maintained personal repos — the gates that matter are the ruleset checks and the OIDC scope of the apply role. For multi-maintainer org repos under `dryvist`, the count is set in that ruleset.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
+    The runner pool itself — AWS spot, OIDC trust, migration guide for existing workflows.
+  </Card>
+  <Card title="Security overview" icon="lock" href="/security/overview">
+    The full secrets posture across Doppler, SOPS, Keychain, BWS, and Bitwarden.
+  </Card>
+  <Card title="secrets-sync" icon="rotate" href="/security/secrets-sync">
+    How Tier-1 secrets reach each repo's Actions secrets store.
+  </Card>
+  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
+    Where CI/CD fits in the broader Proxmox + AWS picture.
+  </Card>
+</CardGroup>

@@ -33,11 +33,9 @@ gh repo list dryvist --limit 200 --json name,description,visibility,isArchived,i
 
 Filter to: `visibility == PUBLIC` AND `isFork == false`. Skip the meta `docs` and `JacobPEvans` profile repos.
 
-**Then apply the coverage blacklist** (next section) before queuing anything for scaffolding.
+### Step 2 — Coverage blacklist
 
-### Step 1a — Coverage blacklist
-
-These repos must NOT get a page on the public docs site. Auditors and `/auto-maintain` invocations of this skill must filter the enumerated list against this blacklist before Step 2:
+These repos must NOT get a page on the public docs site. Filter the enumerated list against this blacklist before categorization:
 
 | Repo | Reason |
 | --- | --- |
@@ -49,9 +47,9 @@ These repos must NOT get a page on the public docs site. Auditors and `/auto-mai
 
 Hard rule: when in doubt, do not add the page. Ask the author first.
 
-If a blacklisted repo is found during Step 1, log it under the `blacklisted` reason in the Step-7 summary report — do not attempt to scaffold it.
+If a blacklisted repo is found, log it under the `blacklisted` reason in the final summary report — do not attempt to scaffold it.
 
-### Step 2 — Categorize each repo
+### Step 3 — Categorize each repo
 
 Map repo name and topics to a sidebar group:
 
@@ -67,11 +65,11 @@ Map repo name and topics to a sidebar group:
 
 Ties → prefer the more specific match. When uncertain, ask before scaffolding.
 
-### Step 3 — Diff against existing pages
+### Step 4 — Diff against existing pages
 
 For each repo, the expected path is `<group-prefix><repo-name>.mdx`. If the file exists, skip. If it doesn't, queue for scaffolding.
 
-### Step 4 — Scaffold
+### Step 5 — Scaffold
 
 For each queued repo, copy `template-repo-page.mdx` and replace the marked placeholders:
 
@@ -88,11 +86,11 @@ Every token in `template-repo-page.mdx` must be replaced. The table below lists 
 | `REPO_LAST_ACTIVE` | relative time from `pushedAt` (e.g., `"this week"`, `"3 days ago"`) |
 | `REPO_URL` | `url` field |
 
-**Derived from Step 2 categorization:**
+**Derived from Step 3 categorization:**
 
 | Placeholder | How filled |
 | --- | --- |
-| `SIDEBAR_GROUP_NAME` | the matched group name from Step 2 (e.g., `Infrastructure`, `Nix Ecosystem`, `AI Development`, `Observability`, `Tools`) |
+| `SIDEBAR_GROUP_NAME` | the matched group name from Step 3 (e.g., `Infrastructure`, `Nix Ecosystem`, `AI Development`, `Observability`, `Tools`) |
 
 **Author-filled (skill emits empty markers; author writes the prose):**
 
@@ -113,11 +111,11 @@ Every token in `template-repo-page.mdx` must be replaced. The table below lists 
 
 Replacements happen via `Edit` tool with `replace_all: true`. Never use `sed` — this is exact-string replacement.
 
-### Step 5 — Update `docs.json`
+### Step 6 — Update `docs.json`
 
 For each new page, insert its path into the appropriate sidebar group's `pages` array, preserving alphabetical order. Use `Edit` on `docs.json`; never regenerate the file.
 
-### Step 6 — Validate
+### Step 7 — Validate
 
 Run, sequentially:
 
@@ -136,7 +134,7 @@ Hub-and-spoke layouts with `flowchart LR` will still stack their spokes
 vertically — replace the hub node with a horizontal subgraph border, or
 split into smaller diagrams.
 
-### Step 7 — Tiered word-count guard
+### Step 8 — Tiered word-count guard
 
 For every scaffolded page:
 

@@ -69,11 +69,17 @@
               "infrastructure/terraform-proxmox",
               "infrastructure/ansible-proxmox",
               "infrastructure/ansible-proxmox-apps",
-              "infrastructure/terraform-runs-on",
               "infrastructure/orbstack-kubernetes",
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
-              "infrastructure/secrets-sops"
+              "infrastructure/secrets-sops",
+              {
+                "group": "CI/CD",
+                "pages": [
+                  "infrastructure/cicd/overview",
+                  "infrastructure/cicd/terraform-runs-on"
+                ]
+              }
             ]
           },
           {

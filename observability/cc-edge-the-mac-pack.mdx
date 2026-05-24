@@ -1,97 +1,48 @@
 ---
 title: "Cribl Edge — Mac Pack"
-description: "Cribl Edge pack for macOS system, power, and performance telemetry. Native 4.18 Sources where they exist, exec/file sources for the rest."
+description: "How the macOS host-telemetry Cribl Edge pack is installed in this homelab and where its data lands. Full pack documentation lives in the repo itself."
 tier: 2
 ---
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> The Mac side of the OS telemetry stack. The macOS equivalent of `Splunk_TA_nix` — delivered through Cribl Edge instead of scripted inputs on a forwarder.
+> Where the Mac-side OS telemetry pack lives, how it gets onto the host, and which Splunk indexes it populates. Pack internals — Sources, predicates, override patterns, version-to-version changelogs — live in the repo's own README.
 
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io" />
 
-`cc-edge-the-mac-pack-io` is a Cribl Edge pack that collects macOS host telemetry — unified logs, system metrics, thermal pressure, per-process energy, battery health, and snapshot files. As of v0.3.0 it uses Cribl 4.18's native macOS Sources (`apple_unified_logs`, `system_metrics`) for the broad capture and falls back to exec sources only for data the native ones don't yet expose. It supersedes two predecessor repos (`cc-edge-macos-system` and `cc-edge-macos-power`, both archived).
+This page is the homelab-integration view of [`cc-edge-the-mac-pack-io`](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io). It covers where the pack runs, what it sends, and how it slots into the wider observability stack. For the full Cribl-side reference — every Source, every input, anomaly-detection rules, override patterns, release notes — read [the repo's README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#readme).
 
-## Design rule
+## Where it runs
 
-**Edge captures broadly, Stream filters.** This pack pulls every Apple subsystem's unified log and every host metric the native Sources expose. Per-use-case predicates — WindowServer ping detection, Jetsam triage, security event extraction — belong in Stream pipelines downstream, not in this pack.
+The pack targets a **native macOS Cribl Edge install**, managed declaratively via the host's Nix configuration. Three install constraints from this homelab's posture:
 
-## Targeted Edge install
+- The Edge install must be native to the Mac — exec inputs in the pack invoke macOS-only binaries (`pmset`, `ioreg`, `powermetrics`) and will not work from a Linux container.
+- The Mac runs Cribl Edge directly, not through OrbStack — the K8s cluster runs unrelated Cribl Edge instances for different workloads, and this pack does not target them.
+- A single Cribl Leader (the homelab one) controls the Edge fleet; pack updates propagate from the Leader, not from a developer laptop.
 
-The pack targets a **native macOS Cribl Edge install** (Nix-managed). Exec inputs that invoke macOS-only binaries (`powermetrics`, `pmset`, `ioreg`, `memory_pressure`) require host access and will not work from a Linux container or the OrbStack-deployed cluster. The file input (`mac-perf-snapshots`) also reads from a Mac filesystem path.
+## What it sends
 
-## Data sources
+Data lands in two Splunk indexes:
 
-| Input | Type | What it captures | Index |
-| --- | --- | --- | --- |
-| `in_apple_unified_logs` | Native 4.18 Source | All Apple subsystems (kernel, WindowServer, security, network, power, Spotlight, Time Machine, TCC, sandbox, launchservices, xpc, …) via `subsystem BEGINSWITH "com.apple"` | `os` |
-| `in_system_metrics` | Native 4.18 Source | Host CPU, memory, disk, network, process (60s poll) | `mac_perf` |
-| `macos-thermal` | Exec source | `pmset -g therm` — thermal/perf warning levels, CPU power status (60s) | `os` |
-| `macos-power-metrics` | Exec source (root) | `powermetrics` — per-process energy, CPU/GPU/ANE power, thermal pressure (300s) | `mac_perf` |
-| `macos-power-battery` | Exec source | `pmset -g batt` + `ioreg -r -c AppleSmartBattery` — charge, cycles, capacity, temperature (60s) | `os` |
-| `mac-perf-snapshots` | File source | NDJSON snapshot files emitted by an external collector | `mac_perf` |
-
-## Anomaly detection
-
-Edge keeps anomaly detection only for the signals that exec sources produce — anomaly detection for memory pressure, WindowServer ping timeouts, and Jetsam events moves to Stream-side pipelines downstream of this pack.
-
-| Condition | `anomaly_reason` | Detected at |
+| Index | Content | Used by |
 | --- | --- | --- |
-| `battery_health_percent < 80` | `battery_health_degraded` | Edge (this pack) |
-| Thermal pressure not Nominal | `thermal_pressure_elevated` | Edge (this pack) |
-| Memory pressure critical | (Stream-side, future) | Stream |
-| WindowServer ping timeout | (Stream-side, future) | Stream |
-| Jetsam event | (Stream-side, future) | Stream |
+| `os` | macOS unified logs (every Apple subsystem) and host-event signals | General OS troubleshooting, security event search |
+| `mac_perf` | Host CPU/memory/disk/network/process metrics and per-process energy | Performance dashboards, capacity planning |
 
-Alert on what Edge does flag:
+Per-use-case filtering — security event extraction, performance triage, alerting rules — lives in [Cribl Stream pipelines](/observability/monitoring-agents) downstream of this Edge install, not in the pack itself.
 
-```spl
-(index=os OR index=mac_perf) anomaly=true
-| stats count by host, anomaly_reason, _time
-```
+## Install
 
-## How it fits
+A new Mac joins the telemetry fleet by:
 
-| Upstream | This | Downstream |
-| --- | --- | --- |
-| macOS unified logs, system metrics, `pmset`, `powermetrics`, `ioreg`, NDJSON snapshot files | This pack — broad capture only | Cribl Stream pipelines (per-use-case filtering); Splunk (`index=os`, `index=mac_perf`) |
+1. Bringing up the Nix-managed Cribl Edge install (handled by the macOS host config — not Mintlify's concern).
+2. The Leader pushes the pack on first heartbeat. No per-host install command.
+
+For one-off testing on a Mac outside the managed fleet, the pack ships a `.crbl` artifact installable via Cribl's REST API; see the [repo README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#install) for that path. Production installs go through the Leader.
 
 <RepoFit>
-The macOS host-telemetry pack. It does not collect AI-tool telemetry — that's the job of the per-tool packs (`cc-edge-claude-code-otel` and friends).
+This page documents how the Mac Pack is deployed in this homelab. The pack itself — Sources, predicates, anomaly-detection rules, override patterns — is documented in its own repo.
 </RepoFit>
-
-## Customizing without forking
-
-Local overrides land in `/opt/cribl/local/cc-edge-the-mac-pack-io/inputs.yml` — Cribl Edge merges them on top of the pack defaults:
-
-```yaml
-inputs:
-  in_apple_unified_logs:
-    predicate: 'TRUEPREDICATE'   # capture 3rd-party app logs too
-  in_system_metrics:
-    pollingInterval: 30          # increase metric frequency
-  macos-power-metrics:
-    disabled: true               # disable if root unavailable
-  mac-perf-snapshots:
-    disabled: true               # disable if no external collector is running
-```
-
-## Installation
-
-```bash
-cp cc-edge-the-mac-pack-io.crbl /opt/cribl/state/packs/
-
-curl -X POST http://localhost:9000/api/v1/packs \
-  -H "Content-Type: application/json" \
-  -d '{"source":"cc-edge-the-mac-pack-io.crbl"}'
-
-curl -X POST http://localhost:9000/api/v1/version/commit
-curl -X POST http://localhost:9000/api/v1/system/settings/restart
-```
-
-## v0.3.0 — the architecture shift
-
-Six v0.2 exec inputs retired in favor of the native 4.18 Sources: `macos-memory-pressure`, `macos-vm-stat`, `macos-disk-io`, `macos-process-top`, `macos-windowserver-health`, `macos-jetsam-events`. `minLogStreamVersion` bumped to 4.18.0. Three exec inputs retained where no native equivalent exists: `macos-thermal`, `macos-power-metrics`, `macos-power-battery`. **Breaking** for any v0.2 dashboard filtering `sourcetype=macos:system:memory|windowserver|jetsam|process|diskio|vmstat` — that data is now under `macos:unified_log` and `macos:system:metrics`.
 
 ## Related repos
 
@@ -103,6 +54,6 @@ Six v0.2 exec inputs retired in favor of the native 4.18 Sources: `macos-memory-
     Cross-stack view of every collector and where it runs.
   </Card>
   <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io">
-    Full pack, inputs.yml, release notes, override patterns.
+    The pack itself: every Source, every input, anomaly-detection rules, override patterns, release notes.
   </Card>
 </CardGroup>
