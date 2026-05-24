@@ -10,30 +10,19 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-runs-on" />
 
-`terraform-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS — API Gateway + Lambda + ECS/Fargate — plus the IAM, networking, and budget guardrails it needs to spin up EC2 spot runners on demand. Workflows opt in with a `runs-on:` label; runners launch in seconds, run the job, terminate. Cribl.Cloud Free collects OTLP telemetry for cost and performance tracking.
+`terraform-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS — API Gateway + Lambda + ECS/Fargate — plus the IAM and networking it needs to spin up EC2 spot runners on demand. Workflows opt in with a `runs-on:` label; runners launch in seconds, run the job, terminate. Cribl.Cloud Free collects OTLP telemetry for runner performance tracking.
 
 ## What it does
 
-- Deploys RunsOn control plane (ECS/Fargate + Lambda + API Gateway) on AWS
+- Deploys the RunsOn control plane (ECS/Fargate + Lambda + API Gateway) on AWS
 - Spins up EC2 spot runners on demand across 3 availability zones in `us-east-2`
 - Falls back to on-demand instances automatically if spot capacity goes thin (spot circuit breaker)
 - Tags every runner with workflow/job/repo for AWS cost allocation
-- Ships an AWS Budgets alarm with thresholds at 50/80/100 percent of the monthly budget
 - Optional managed WAF (`enable_waf = true`, on by default) protects the public ingress
 - Optional Bedrock IAM grant (`enable_bedrock = true`) lets CI invoke Bedrock models directly
 - Forwards OTLP runner telemetry to Cribl.Cloud Free (zero-cost observability tier)
 
-## Cost shape
-
-| Component | Approx. monthly |
-| --- | --- |
-| Control plane (ECS/Fargate + Lambda + API Gateway) | $3–5 |
-| EC2 spot runners (actual workload) | $1–4 |
-| CloudWatch logs (30-day retention) | $0.50 |
-| Managed WAFv2 (when `enable_waf = true`) | $8 |
-| **Total at default config** | **~$13–18** |
-
-Budget alarm defaults to $20/month. Drop WAF and the spend envelope returns to ~$10.
+Cost guardrails (Budgets thresholds, alarm targets, expected spend envelope) live in the repo's own README — they're tuned per-deployment and don't belong in cross-repo docs.
 
 ## How it fits
 

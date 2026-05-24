@@ -1,43 +1,37 @@
 ---
 title: "CI/CD"
-description: "How the homelab and its repos run build, test, deploy: GitHub Actions on RunsOn AWS spot for IaC, the docs site auto-deploy via Mintlify, and the OIDC + plan/apply pattern that gates every infra change."
+description: "Four runner tiers (GitHub-hosted, RunsOn AWS spot, self-hosted Mac, self-hosted locked-down), the PR-plan / OIDC-apply pattern, and the branch ruleset that gates every merge."
 tier: 1
 ---
 
-> Every infra change goes through PR-plan, then OIDC-authenticated apply. Every doc change auto-deploys. Nothing runs on a developer laptop in anger.
+> Every infra change goes through PR-plan, then OIDC-authenticated apply. The runner tier follows the workload — never the other way around.
 
-The CI/CD posture is small, opinionated, and uniform. Every repo that ships infrastructure or docs uses GitHub Actions; the runners are either GitHub-hosted (for cheap, ephemeral, no-secret jobs) or self-hosted on AWS spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on) (for jobs that need AWS creds, longer-running steps, or a stable IP). Secrets fan out via `secrets-sync`; auth into AWS is OIDC, never a long-lived access key in the repo.
+The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do, not by what's cheapest in the abstract. The patterns below — plan/apply gating, OIDC trust, branch rulesets — are shared across all four tiers.
+
+For how secrets reach a workflow regardless of tier, read [Security](/security/overview) — this page does not duplicate that material.
+
+## Runner tiers
+
+Pick by what the workload actually needs:
+
+| Tier | Where | When to use |
+| --- | --- | --- |
+| **GitHub-hosted** | GitHub Actions cloud (free for public repos) | Public repos. No AWS work, no internal-host access, nothing that needs a private runner. Cheapest path. |
+| **RunsOn AWS spot** | EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes; same OIDC trust into AWS. Default for IaC apply jobs that authenticate to AWS. |
+| **Self-hosted Mac** | A Mac in the homelab running the Actions runner agent | Any macOS-only requirement: signing, codesigning, `xcrun`, `pmset`/`powermetrics` validation, macOS-native binary builds. There is no cloud equivalent. |
+| **Self-hosted locked-down** | A dedicated runner host in the homelab (separate from the Mac) | Pre-built environments, jobs that need tighter control over what's on the runner, jobs that handle highly-sensitive credentials that must never leave the homelab boundary, or anything that needs a network-locked execution environment. |
+
+The decision tree is workload-first: a macOS build picks the Mac tier; an IaC apply picks RunsOn; a public-repo lint picks GitHub-hosted; a sensitive-credential job picks the locked-down self-hosted runner. The cost ordering is "free → very cheap → host-cost → host-cost", but the cost is rarely what drives the choice.
 
 ## The shape of every IaC pipeline
 
-| Stage | Trigger | Runs on | What it does |
+| Stage | Trigger | Where it runs | What it does |
 | --- | --- | --- | --- |
-| PR plan | `pull_request` | GitHub-hosted (no AWS creds needed for plan) | `terragrunt plan -no-color`, posted via `tf-summarize` as a redacted structural summary — addresses + change actions only, never resolved values |
+| PR plan | `pull_request` | The tier the repo declares (typically GitHub-hosted or RunsOn) | `terragrunt plan -no-color`, posted via `tf-summarize` as a redacted structural summary — addresses + change actions only, never resolved values |
 | Manual review | human reviewer | n/a | Reads the plan summary, checks impact, approves or asks for revisions |
-| Apply | `push` to `main` after merge | RunsOn AWS spot, OIDC into the target account | `terragrunt apply -auto-approve` gated by the `production` GitHub Environment approval |
+| Apply | `push` to `main` after merge | The repo's apply-tier runner, OIDC into the target account | `terragrunt apply -auto-approve` gated by the `production` GitHub Environment approval |
 
 The redacted-plan rule is non-negotiable: PR plan output reveals only resource addresses and change actions. Resolved attribute values — anything an attacker reading a PR could weaponize — never appear in PR comments. See each repo's `docs/ci-plan-output-policy.md` for the rationale.
-
-## Runner selection
-
-The decision is mechanical:
-
-- **No AWS work, no large filesystem, no secrets-in-env beyond `GITHUB_TOKEN`** → GitHub-hosted. Cheapest, most ephemeral, and fine for the docs site, label sync, and PR plan jobs that don't authenticate to AWS.
-- **AWS work, OIDC into a real account, or any step that needs to outlive a six-hour GitHub-hosted runner** → RunsOn AWS spot. Same OIDC trust, much longer leash, much cheaper than GitHub-Larger runners.
-
-The runner pool is provisioned per-org through [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on). A workflow opts in by setting `runs-on: runs-on=...,family=ubuntu-22.04`; the GitHub App on the org maps that label to a spot instance from the pool. Idle pool = zero cost.
-
-## Secrets flow
-
-Three tiers in CI:
-
-| Tier | Where it lives | How CI reads it |
-| --- | --- | --- |
-| Tier 1 (CI-distributable) | Doppler → `secrets-sync` repo → matrix sync → target repo Actions secrets | `${{ secrets.NAME }}` directly in the workflow |
-| Tier 2 (high-sensitivity infra) | Doppler `iac-conf-mgmt/prd` only — never copied to GitHub | `dopplerhq/secrets-fetch-action` at workflow runtime, with a read-only service token from Tier 1 |
-| Tier 3 (at-rest, low-blast-radius) | SOPS-encrypted in the repo | `sops_decrypt_file` (Terragrunt) or `sops exec-env` (Ansible) at apply time |
-
-The full secrets-management posture, including how AI agents are structurally unable to read these tokens, lives in [Security](/security/overview). This page covers only the CI/CD-facing slice.
 
 ## Branch protection and merge rules
 
@@ -49,19 +43,16 @@ The `main` branch on every IaC repo is protected by a ruleset, not a legacy bran
 - Squash or rebase merge methods only (no merge-commit option)
 - Copilot Code Review auto-requested on every PR (review-on-open, not review-on-push)
 
-There is intentionally **no required approving review count** for solo-maintained personal repos — the gates that matter are the ruleset checks and the OIDC scope of the apply role. For multi-maintainer org repos under `dryvist`, the count is set in that ruleset.
+There is intentionally **no required approving review count** on solo-maintained personal repos — the gates that matter are the ruleset checks and the OIDC scope of the apply role. Multi-maintainer org repos under `dryvist` set the count in their own rulesets.
 
 ## Where to go next
 
 <CardGroup cols={2}>
   <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
-    The runner pool itself — AWS spot, OIDC trust, migration guide for existing workflows.
+    The RunsOn tier — the runner pool itself, OIDC trust, migration guide.
   </Card>
   <Card title="Security overview" icon="lock" href="/security/overview">
-    The full secrets posture across Doppler, SOPS, Keychain, BWS, and Bitwarden.
-  </Card>
-  <Card title="secrets-sync" icon="rotate" href="/security/secrets-sync">
-    How Tier-1 secrets reach each repo's Actions secrets store.
+    How secrets reach a workflow, across all four runner tiers.
   </Card>
   <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
     Where CI/CD fits in the broader Proxmox + AWS picture.
