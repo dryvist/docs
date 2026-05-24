@@ -16,9 +16,9 @@ Discover public repos under `JacobPEvans` and `dryvist`, diff against pages on t
 
 ## When NOT to use
 
-- Authoring deep technical content for a single page. Use the future `mintlify-page-author` skill (issue tracked).
-- Visual polish across the site. Use the future `mintlify-visual-audit` skill (issue tracked).
-- Rewriting `docs.json` from scratch. Use the future `mintlify-nav-sync` skill (issue tracked).
+- Authoring deep technical content for a single page. Edit the page directly — Claude is more capable than a fixed templated skill here.
+- Visual polish across the site. Edit the offending pages directly.
+- Rewriting `docs.json` from scratch. Edit it directly.
 
 ## Workflow
 
@@ -33,7 +33,23 @@ gh repo list dryvist --limit 200 --json name,description,visibility,isArchived,i
 
 Filter to: `visibility == PUBLIC` AND `isFork == false`. Skip the meta `docs` and `JacobPEvans` profile repos.
 
-### Step 2 — Categorize each repo
+### Step 2 — Coverage blacklist
+
+These repos must NOT get a page on the public docs site. Filter the enumerated list against this blacklist before categorization:
+
+| Repo | Reason |
+| --- | --- |
+| `terraform-aws-bedrock` | Test/playground project; not part of the homelab story. |
+| `terraform-aws-static-website` | Being replaced by this docs site itself. |
+| `VisiCore_App_for_AI_Observability` | Work-related — kept out of personal docs. |
+| `VisiCore_TA_AI_Observability` | Work-related — kept out of personal docs. |
+| (any other repo under the `visicore` org) | Work-related — kept out of personal docs. |
+
+Hard rule: when in doubt, do not add the page. Ask the author first.
+
+If a blacklisted repo is found, log it under the `blacklisted` reason in the final summary report — do not attempt to scaffold it.
+
+### Step 3 — Categorize each repo
 
 Map repo name and topics to a sidebar group:
 
@@ -49,11 +65,11 @@ Map repo name and topics to a sidebar group:
 
 Ties → prefer the more specific match. When uncertain, ask before scaffolding.
 
-### Step 3 — Diff against existing pages
+### Step 4 — Diff against existing pages
 
 For each repo, the expected path is `<group-prefix><repo-name>.mdx`. If the file exists, skip. If it doesn't, queue for scaffolding.
 
-### Step 4 — Scaffold
+### Step 5 — Scaffold
 
 For each queued repo, copy `template-repo-page.mdx` and replace the marked placeholders:
 
@@ -70,11 +86,11 @@ Every token in `template-repo-page.mdx` must be replaced. The table below lists 
 | `REPO_LAST_ACTIVE` | relative time from `pushedAt` (e.g., `"this week"`, `"3 days ago"`) |
 | `REPO_URL` | `url` field |
 
-**Derived from Step 2 categorization:**
+**Derived from Step 3 categorization:**
 
 | Placeholder | How filled |
 | --- | --- |
-| `SIDEBAR_GROUP_NAME` | the matched group name from Step 2 (e.g., `Infrastructure`, `Nix Ecosystem`, `AI Development`, `Observability`, `Tools`) |
+| `SIDEBAR_GROUP_NAME` | the matched group name from Step 3 (e.g., `Infrastructure`, `Nix Ecosystem`, `AI Development`, `Observability`, `Tools`) |
 
 **Author-filled (skill emits empty markers; author writes the prose):**
 
@@ -95,11 +111,11 @@ Every token in `template-repo-page.mdx` must be replaced. The table below lists 
 
 Replacements happen via `Edit` tool with `replace_all: true`. Never use `sed` — this is exact-string replacement.
 
-### Step 5 — Update `docs.json`
+### Step 6 — Update `docs.json`
 
 For each new page, insert its path into the appropriate sidebar group's `pages` array, preserving alphabetical order. Use `Edit` on `docs.json`; never regenerate the file.
 
-### Step 6 — Validate
+### Step 7 — Validate
 
 Run, sequentially:
 
@@ -118,7 +134,7 @@ Hub-and-spoke layouts with `flowchart LR` will still stack their spokes
 vertically — replace the hub node with a horizontal subgraph border, or
 split into smaller diagrams.
 
-### Step 7 — Tiered word-count guard
+### Step 8 — Tiered word-count guard
 
 For every scaffolded page:
 
@@ -133,7 +149,7 @@ Over-budget pages get a `<!-- TIER-GUARD: over budget — consider splitting int
 - New MDX files under the right sidebar group
 - Updated `docs.json`
 - A summary report: `Added N pages: <list>`
-- A list of skipped repos with reasons (`already-documented`, `private`, `archived`, `fork`, `uncategorizable`)
+- A list of skipped repos with reasons (`already-documented`, `private`, `archived`, `fork`, `uncategorizable`, `blacklisted`)
 
 ## Flags (planned)
 
@@ -148,4 +164,3 @@ These flags are interpreted manually in the conversation; there is no CLI binary
 
 - See `tools/automation.mdx` for the user-facing description.
 - See `README.md` in this directory for human-readable usage.
-- See open issues with label `skill` for planned improvements.

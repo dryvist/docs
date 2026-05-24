@@ -1,0 +1,60 @@
+---
+title: "CI/CD"
+description: "Four runner tiers (GitHub-hosted, RunsOn AWS spot, self-hosted Mac, self-hosted locked-down), the PR-plan / OIDC-apply pattern, and the branch ruleset that gates every merge."
+tier: 1
+---
+
+> Every infra change goes through PR-plan, then OIDC-authenticated apply. The runner tier follows the workload — never the other way around.
+
+The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do, not by what's cheapest in the abstract. The patterns below — plan/apply gating, OIDC trust, branch rulesets — are shared across all four tiers.
+
+For how secrets reach a workflow regardless of tier, read [Security](/security/overview) — this page does not duplicate that material.
+
+## Runner tiers
+
+Pick by what the workload actually needs:
+
+| Tier | Where | When to use |
+| --- | --- | --- |
+| **GitHub-hosted** | GitHub Actions cloud (free for public repos) | Public repos. No AWS work, no internal-host access, nothing that needs a private runner. Cheapest path. |
+| **RunsOn AWS spot** | EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes; same OIDC trust into AWS. Default for IaC apply jobs that authenticate to AWS. |
+| **Self-hosted Mac** | A Mac in the homelab running the Actions runner agent | Any macOS-only requirement: signing, codesigning, `xcrun`, `pmset`/`powermetrics` validation, macOS-native binary builds. There is no cloud equivalent. |
+| **Self-hosted locked-down** | A dedicated runner host in the homelab (separate from the Mac) | Pre-built environments, jobs that need tighter control over what's on the runner, jobs that handle highly-sensitive credentials that must never leave the homelab boundary, or anything that needs a network-locked execution environment. |
+
+The decision tree is workload-first: a macOS build picks the Mac tier; an IaC apply picks RunsOn; a public-repo lint picks GitHub-hosted; a sensitive-credential job picks the locked-down self-hosted runner. The cost ordering is "free → very cheap → host-cost → host-cost", but the cost is rarely what drives the choice.
+
+## The shape of every IaC pipeline
+
+| Stage | Trigger | Where it runs | What it does |
+| --- | --- | --- | --- |
+| PR plan | `pull_request` | The tier the repo declares (typically GitHub-hosted or RunsOn) | `terragrunt plan -no-color`, posted via `tf-summarize` as a redacted structural summary — addresses + change actions only, never resolved values |
+| Manual review | human reviewer | n/a | Reads the plan summary, checks impact, approves or asks for revisions |
+| Apply | `push` to `main` after merge | The repo's apply-tier runner, OIDC into the target account | `terragrunt apply -auto-approve` gated by the `production` GitHub Environment approval |
+
+The redacted-plan rule is non-negotiable: PR plan output reveals only resource addresses and change actions. Resolved attribute values — anything an attacker reading a PR could weaponize — never appear in PR comments. See each repo's `docs/ci-plan-output-policy.md` for the rationale.
+
+## Branch protection and merge rules
+
+The `main` branch on every IaC repo is protected by a ruleset, not a legacy branch-protection rule:
+
+- Required signatures (GPG)
+- Required linear history (no merge commits)
+- Required review-thread resolution before merge
+- Squash or rebase merge methods only (no merge-commit option)
+- Copilot Code Review auto-requested on every PR (review-on-open, not review-on-push)
+
+There is intentionally **no required approving review count** on solo-maintained personal repos — the gates that matter are the ruleset checks and the OIDC scope of the apply role. Multi-maintainer org repos under `dryvist` set the count in their own rulesets.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
+    The RunsOn tier — the runner pool itself, OIDC trust, migration guide.
+  </Card>
+  <Card title="Security overview" icon="lock" href="/security/overview">
+    How secrets reach a workflow, across all four runner tiers.
+  </Card>
+  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
+    Where CI/CD fits in the broader Proxmox + AWS picture.
+  </Card>
+</CardGroup>

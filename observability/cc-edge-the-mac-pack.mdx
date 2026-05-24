@@ -1,0 +1,59 @@
+---
+title: "Cribl Edge — Mac Pack"
+description: "How the macOS host-telemetry Cribl Edge pack is installed in this homelab and where its data lands. Full pack documentation lives in the repo itself."
+tier: 2
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> Where the Mac-side OS telemetry pack lives, how it gets onto the host, and which Splunk indexes it populates. Pack internals — Sources, predicates, override patterns, version-to-version changelogs — live in the repo's own README.
+
+<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io" />
+
+This page is the homelab-integration view of [`cc-edge-the-mac-pack-io`](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io). It covers where the pack runs, what it sends, and how it slots into the wider observability stack. For the full Cribl-side reference — every Source, every input, anomaly-detection rules, override patterns, release notes — read [the repo's README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#readme).
+
+## Where it runs
+
+The pack targets a **native macOS Cribl Edge install**, managed declaratively via the host's Nix configuration. Three install constraints from this homelab's posture:
+
+- The Edge install must be native to the Mac — exec inputs in the pack invoke macOS-only binaries (`pmset`, `ioreg`, `powermetrics`) and will not work from a Linux container.
+- The Mac runs Cribl Edge directly, not through OrbStack — the K8s cluster runs unrelated Cribl Edge instances for different workloads, and this pack does not target them.
+- A single Cribl Leader (the homelab one) controls the Edge fleet; pack updates propagate from the Leader, not from a developer laptop.
+
+## What it sends
+
+Data lands in two Splunk indexes:
+
+| Index | Content | Used by |
+| --- | --- | --- |
+| `os` | macOS unified logs (every Apple subsystem) and host-event signals | General OS troubleshooting, security event search |
+| `mac_perf` | Host CPU/memory/disk/network/process metrics and per-process energy | Performance dashboards, capacity planning |
+
+Per-use-case filtering — security event extraction, performance triage, alerting rules — lives in [Cribl Stream pipelines](/observability/monitoring-agents) downstream of this Edge install, not in the pack itself.
+
+## Install
+
+A new Mac joins the telemetry fleet by:
+
+1. Bringing up the Nix-managed Cribl Edge install (handled by the macOS host config — not Mintlify's concern).
+2. The Leader pushes the pack on first heartbeat. No per-host install command.
+
+For one-off testing on a Mac outside the managed fleet, the pack ships a `.crbl` artifact installable via Cribl's REST API; see the [repo README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#install) for that path. Production installs go through the Leader.
+
+<RepoFit>
+This page documents how the Mac Pack is deployed in this homelab. The pack itself — Sources, predicates, anomaly-detection rules, override patterns — is documented in its own repo.
+</RepoFit>
+
+## Related repos
+
+<CardGroup cols={2}>
+  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/orbstack-kubernetes">
+    The K8s cluster — runs unrelated Cribl Edge instances. This pack does not target that cluster.
+  </Card>
+  <Card title="Monitoring agents" icon="chart-line" href="/observability/monitoring-agents">
+    Cross-stack view of every collector and where it runs.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io">
+    The pack itself: every Source, every input, anomaly-detection rules, override patterns, release notes.
+  </Card>
+</CardGroup>

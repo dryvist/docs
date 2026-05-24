@@ -1,0 +1,78 @@
+---
+title: "Self-hosted GitHub Actions runners"
+description: "Terraform/Terragrunt for RunsOn — self-hosted GitHub Actions runners on AWS EC2 spot. Cheaper, faster, observable."
+tier: 2
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> GitHub Actions runners on AWS spot, on demand. ~10× cheaper than GitHub-hosted compute and twice as fast on warm cache.
+
+<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-runs-on" />
+
+`terraform-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS — API Gateway + Lambda + ECS/Fargate — plus the IAM and networking it needs to spin up EC2 spot runners on demand. Workflows opt in with a `runs-on:` label; runners launch in seconds, run the job, terminate. Cribl.Cloud Free collects OTLP telemetry for runner performance tracking.
+
+## What it does
+
+- Deploys the RunsOn control plane (ECS/Fargate + Lambda + API Gateway) on AWS
+- Spins up EC2 spot runners on demand across 3 availability zones in `us-east-2`
+- Falls back to on-demand instances automatically if spot capacity goes thin (spot circuit breaker)
+- Tags every runner with workflow/job/repo for AWS cost allocation
+- Optional managed WAF (`enable_waf = true`, on by default) protects the public ingress
+- Optional Bedrock IAM grant (`enable_bedrock = true`) lets CI invoke Bedrock models directly
+- Forwards OTLP runner telemetry to Cribl.Cloud Free (zero-cost observability tier)
+
+Cost guardrails (Budgets thresholds, alarm targets, expected spend envelope) live in the repo's own README — they're tuned per-deployment and don't belong in cross-repo docs.
+
+## How it fits
+
+| Trigger | Runtime |
+| --- | --- |
+| `runs-on=...` label in any workflow `runs-on:` clause | A fresh EC2 spot instance per job, terminating on completion |
+
+<RepoFit>
+The compute layer for CI. Replaces GitHub-hosted `ubuntu-latest` runners across the org for any workflow that benefits from cheaper, faster, or larger compute.
+</RepoFit>
+
+## Post-setup hardening
+
+After the first apply finishes and the GitHub App is registered through the ingress URL, flip `enable_admin_routes = false` and re-apply. That closes the public `/admin` and `/setup` routes; the runner + webhook paths keep working.
+
+## Getting started
+
+<Steps>
+  <Step title="Clone and let direnv activate the dev shell">
+    `git clone --bare https://github.com/JacobPEvans/terraform-runs-on.git terraform-runs-on/.git && cd terraform-runs-on && git worktree add main main && cd main && direnv allow`
+  </Step>
+  <Step title="Supply credentials via aws-vault + Doppler">
+    Profile is `tf-runs-on`; Doppler config is inherited from `iac-conf-mgmt/prd`. `RUNSON_LICENSE_KEY` is mapped into `license_key` via `terragrunt.hcl`.
+  </Step>
+  <Step title="Bootstrap">
+    `aws-vault exec tf-runs-on -- doppler run -- terragrunt init && terragrunt apply`. The bootstrap creates its own S3 state + DynamoDB lock table on first run.
+  </Step>
+  <Step title="Use a runner">
+    In any workflow: `runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/family=c7+m7"`. The `github.run_id` segment is what RunsOn correlates back to the originating workflow.
+  </Step>
+</Steps>
+
+## Migrating existing repos
+
+The repo ships `docs/migration-guide.md` — the canonical per-repo playbook: which workflows benefit, which don't, the runner-label catalog used across the org, rollout order, and how to verify a migrated workflow actually landed on a RunsOn runner instead of a GitHub-hosted one.
+
+## CI/CD safety
+
+PR plans are posted via [`tf-summarize`](https://github.com/dineshba/tf-summarize) as a redacted structural summary — resource addresses + change actions only. Resolved attribute values never appear in PR comments. Merge to `main` triggers an OIDC-authenticated `terragrunt apply` (gated by the `production` GitHub Environment approval). See `docs/ci-plan-output-policy.md` for the full rationale.
+
+## Related repos
+
+<CardGroup cols={2}>
+  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
+    Where RunsOn fits in the broader AWS surface.
+  </Card>
+  <Card title="terraform-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
+    The DR-tier AWS footprint these runners can deploy to.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/terraform-runs-on">
+    Full module, migration guide, CI plan-output policy.
+  </Card>
+</CardGroup>

@@ -37,8 +37,6 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
 | Repo | Purpose |
 | --- | --- |
 | [`terraform-aws`](https://github.com/JacobPEvans/terraform-aws) | Splunk DR footprint — cold capacity for failover |
-| [`terraform-aws-bedrock`](https://github.com/JacobPEvans/terraform-aws-bedrock) | Bedrock agents (public API endpoint, no auth) |
-| [`terraform-aws-static-website`](https://github.com/JacobPEvans/terraform-aws-static-website) | Reusable static-site module (S3 + CloudFront + ACM + Route53) |
 | [`terraform-runs-on`](https://github.com/JacobPEvans/terraform-runs-on) | Self-hosted GitHub Actions runners on AWS spot instances |
 | [`tf-splunk-aws`](https://github.com/JacobPEvans/tf-splunk-aws) | Cost-optimised Splunk deployment on AWS |
 
@@ -57,11 +55,28 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
   <Card title="terraform-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
     AWS DR footprint for Splunk failover. Cold infra, ready to go warm.
   </Card>
-  <Card title="terraform-aws-bedrock" icon="brain-circuit" href="https://github.com/JacobPEvans/terraform-aws-bedrock">
-    Bedrock agents and supporting resources for the AI assistant API.
+  <Card title="CI/CD" icon="play" href="/infrastructure/cicd/overview">
+    GitHub Actions strategy: self-hosted RunsOn AWS spot, OIDC, plan/apply pattern.
+  </Card>
+  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/orbstack-kubernetes">
+    Local Kubernetes cluster on macOS — monitoring stack + AI gateway.
   </Card>
   <Card title="tf-splunk-aws" icon="chart-line" href="/observability/tf-splunk-aws">
     Cost-optimized Splunk deployment on AWS.
+  </Card>
+</CardGroup>
+
+## Cross-cutting topics
+
+<CardGroup cols={2}>
+  <Card title="Kubernetes overview" icon="cube" href="/infrastructure/kubernetes-overview">
+    OrbStack as the local control plane; what runs on K8s vs LXC vs Docker.
+  </Card>
+  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
+    The four-question decision tree for every new workload.
+  </Card>
+  <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
+    Encrypted-at-rest secrets across Terraform and Ansible repos.
   </Card>
 </CardGroup>
 

@@ -1,0 +1,63 @@
+---
+title: "LXC vs Docker"
+description: "The decision framework: when LXC wins, when Docker is the necessary evil, why high-volume network traffic must never cross Docker's virtualized network stack."
+tier: 2
+---
+
+> LXC by default. Docker only when a vendor leaves no native path. There is no third option.
+
+Every workload in the homelab gets routed through the same four-question decision tree. The answer almost always comes out the same way — LXC + Ansible role — because the cost of running through Docker's virtualized networking is hidden until it bites at scale. This page is the rationale and the tree, in the order they're actually applied.
+
+## The decision tree
+
+1. **Does a vendor ship a Docker-only image with no native path?** If yes: Docker on the dedicated `docker-host` VM. Document the exception at the top of the consuming repo's `CLAUDE.md`. The exception list is short and stays short.
+2. **Is there a single binary or a native package?** If yes: LXC + an Ansible role under [`ansible-proxmox-apps`](/infrastructure/ansible-proxmox-apps). Default path.
+3. **Is this CI or automation?** If yes: Docker on the `docker-host` VM, on the isolated `ci_runners` network. Ephemeral container per job; no persistent state.
+4. **Is this dev or test?** Docker on the `docker-host` VM, Swarm overlay if it needs orchestration. Same isolation as CI.
+
+If a workload doesn't fit one of those four, the workload is wrong — not the tree.
+
+## Why LXC wins on this stack
+
+LXC containers are kernel-namespace processes — same kernel, same network stack, no virtualization layer between the container and the host's network. For a stack that moves syslog, NetFlow, OTLP, and HEC traffic at homelab volumes, that matters. HAProxy in front of Cribl Edge, Cribl Edge in front of Cribl Stream, Cribl Stream in front of Splunk — every hop adds latency, and every hop that crosses Docker's bridge network adds latency on top of latency.
+
+LXC also matches the operational model. [`terraform-proxmox`](/infrastructure/terraform-proxmox) provisions LXC and VMs from a single Terragrunt apply. [`ansible-proxmox`](/infrastructure/ansible-proxmox) configures hosts. [`ansible-proxmox-apps`](/infrastructure/ansible-proxmox-apps) lands the workload. The triad is the production path; everything that lives in this triad gets re-deployed on the same cadence and observed on the same dashboards.
+
+## Why Docker keeps a slot
+
+Some vendors only ship containers. Some upstream projects vanish the moment you ask whether they support a native install. When that's the answer, you don't fight it — you put the container on a dedicated `docker-host` VM and accept the cost. Docker isn't banned; it's penned. The pen lives on its own VM so its virtualized networking can't leak into the bare-metal data plane.
+
+`docker-host` also hosts the CI runners (separate `ci_runners` network) and the dev/test stack (Swarm overlay). Everything ephemeral, everything bounded, everything off the production critical path.
+
+## Specific exceptions
+
+| Workload | Where | Why |
+| --- | --- | --- |
+| Splunk Enterprise | Bare-metal-ish VM | Vendor Docker ruled out for network volume |
+| Qdrant (vector DB) | LXC with nesting | Vendor Docker image, lightweight, RAG workload — nesting keeps it on LXC's network |
+| GitHub Actions runners | Docker on `docker-host` + a dedicated runner on the LLM box | Ephemeral per-job; the LLM-box runner needs live homelab access for some workflows |
+| Cribl Edge / Stream / HAProxy | LXC | Native packages, network-heavy data plane |
+| Home Assistant | LXC | Native install via supervised path |
+
+## The OrbStack split
+
+The local Mac doesn't run LXC — that's a Linux kernel feature. The Mac runs [OrbStack Kubernetes](/infrastructure/orbstack-kubernetes) for the equivalent role: an isolated control plane for the monitoring stack that mirrors what the homelab Edge/Stream/Splunk triad does on Proxmox. K8s on OrbStack is the right answer there for the same reason LXC is the right answer on Proxmox: it's the lowest-overhead path that the host OS supports natively.
+
+In other words: LXC on Linux, OrbStack/K8s on macOS, Docker only when neither host can route around the vendor.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Kubernetes overview" icon="cube" href="/infrastructure/kubernetes-overview">
+    The OrbStack K8s philosophy and what runs on K8s vs LXC vs Docker.
+  </Card>
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+    The deploy tier where the LXC defaults actually land.
+  </Card>
+  <Card title="Homelab" icon="house" href="/about/homelab">
+    The full "what runs where" table and the hardware footprint.
+  </Card>
+  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
+    The Proxmox triad and the AWS module map.
+  </Card>
+</CardGroup>
