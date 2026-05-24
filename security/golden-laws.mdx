@@ -16,7 +16,7 @@ These are not aspirations. They are pre-conditions. A PR that violates one of th
 
 The only legitimate homes for a secret value are: Doppler, Bitwarden, BWS, macOS Keychain, an SOPS-encrypted file, or an aws-vault-backed session. Everything else — `.env` files, shell history, screenshot pastes, "temporary" test fixtures — is a leak waiting to happen.
 
-**How we enforce it.** CI grep gates on every PR scan for secret-shaped strings (AWS key prefixes, GitHub PAT prefixes, JWT shapes, IP/account-ID patterns). The `agentsmd/rules/config-secrets.md` rule file codifies the scrubbed-value table. `.gitignore` blocks `.env*` repo-wide.
+**How we enforce it.** CI grep gates on every PR scan for secret-shaped strings (AWS key prefixes, GitHub PAT prefixes, JWT shapes, IP/account-ID patterns). [Scrubbed values](/security/scrubbed-values) codifies the placeholder table and runtime injection paths. `.gitignore` blocks `.env*` repo-wide.
 
 ### 2. AI tools cannot view protected secret values
 
@@ -28,7 +28,7 @@ Not "should not." Cannot. The four-layer isolation (process scoping, keychain ti
 
 `rm -rf`, force-push, `git reset --hard`, `gh repo delete`, prod-database drops, Terraform destroy, package downgrades — every one requires an explicit human decision in the same session. AI assistants pause and ask; CI workflows route through review.
 
-**How we enforce it.** Branch protection on `main` and feature branches via `.github-tofu`. CODEOWNERS gates security-sensitive paths. The `agentsmd/rules/soul.md` rule forbids destructive shortcuts. `--no-verify` and `--force` trigger PR-review flags.
+**How we enforce it.** Branch protection on `main` and feature branches via `.github-tofu`. CODEOWNERS gates security-sensitive paths. [Commit conventions](/conventions/commit-conventions) forbids destructive shortcuts. `--no-verify` and `--force` trigger PR-review flags.
 
 ### 4. MFA on every elevated session
 
@@ -58,7 +58,7 @@ Ambiguity must never grant access. A missing config file, an unreachable target 
 
 `--no-verify`, `git push --force-with-lease` on `main`, `terraform apply -auto-approve` outside CI, suppressed lint warnings — these are the shapes of how production gets paged at 3am. If a check is wrong, fix the check; if the check is right, fix the code.
 
-**How we enforce it.** Global `agentsmd/rules/soul.md` codifies "always fix for real." PR template requires explicit justification for any flag that resembles a bypass. Pre-commit hooks cannot be disabled per-PR.
+**How we enforce it.** [Commit conventions](/conventions/commit-conventions) codifies "always fix for real" and the autonomy boundaries. PR templates require explicit justification for any flag that resembles a bypass. Pre-commit hooks cannot be disabled per-PR.
 
 ### 9. Audit trail for every privileged action
 
@@ -100,7 +100,7 @@ Scheduled rotation catches drift. Event-driven rotation catches compromise. If a
 
 Losing the secrets store loses every secret. Backups that have never been restored are not backups; they are claims about backups.
 
-**How we enforce it.** Bitwarden vault has both cloud and local exports. Age keys are escrowed in Bitwarden so a workstation wipe is recoverable. Doppler workspace exports run quarterly and the recovery procedure is tested annually. The `agentsmd/rules/config-secrets.md` runtime-injection table is the documented recovery path.
+**How we enforce it.** Bitwarden vault has both cloud and local exports. Age keys are escrowed in Bitwarden so a workstation wipe is recoverable. Doppler workspace exports run quarterly and the recovery procedure is tested annually. The [runtime-injection table](/security/scrubbed-values#runtime-secret-injection) is the documented recovery path.
 
 ## How these connect to the rest of the section
 

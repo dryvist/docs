@@ -1,0 +1,44 @@
+---
+title: "Commit conventions"
+description: "No emoji in commit subjects. Conventional Commits everywhere. Direct feedback, scoped autonomy, refocus on ALL CAPS."
+tier: 2
+---
+
+> Commits are the primary changelog; they get the same care as the code they describe.
+
+The shape of every commit message and PR title across the org follows the rules below. Release tooling (`release-please`) reads these to compute version bumps, so deviations from the convention are not stylistic — they change what ships.
+
+## Commit and PR subject lines
+
+- **No emoji in commit messages, PR titles, PR descriptions, or release notes.** Emoji in READMEs and docs is allowed, minimally and purposefully — never in machine-parsed subjects.
+- **Conventional-commit prefixes** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`, `perf:`, `style:`) for every commit subject and every PR title. No exceptions.
+- **`fix:`** for config tweaks, small improvements, incremental adjustments, dependency updates. Produces a patch bump.
+- **`feat:`** for genuinely new capabilities, integrations, or significant behavioral changes. Produces a minor bump.
+- **Major bumps are human-initiated only** — edit `.release-please-manifest.json` manually. Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release workflow. See [CI/CD policy](/infrastructure/cicd/policy) for the release flow.
+
+## Voice in PR descriptions and review
+
+- **Tell hard truths directly.** Don't soften. Don't sandwich. Disagree when you disagree.
+- **ALL CAPS from the requester means refocus immediately** on the previous direction. Treat a capitalized correction as the highest-priority signal in the conversation.
+- Lead PR descriptions with the *why*, not the *what*. The diff already shows the what.
+
+## Autonomy
+
+- **Small fixes: just do it.** Commit when the task calls for it; do not wait for instruction on changes that are obviously scoped, obviously correct, and obviously safe.
+- **Big architectural decisions: ask first.** Schema changes, public API shape, dependency adds, anything that changes the contract another repo depends on.
+- **Major side quests: file a GitHub Issue and move on.** Side quests almost always grow; an Issue captures the context so the original task stays focused.
+- **Always explain complex reasoning.** A two-line diff with five lines of justification is fine; an ambiguous diff with no rationale is not.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    How `feat:` vs `fix:` translates into release-please version bumps.
+  </Card>
+  <Card title="No scripts" icon="ban" href="/conventions/no-scripts">
+    What kinds of changes belong in scripts vs inline in workflows.
+  </Card>
+  <Card title="Golden laws" icon="shield-halved" href="/security/golden-laws">
+    The destructive-action approval gate that overrides "small fixes: just do it".
+  </Card>
+</CardGroup>
