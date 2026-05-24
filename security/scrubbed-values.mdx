@@ -71,11 +71,11 @@ Tool deep-dives for each store live under [Secrets tools](/security/overview#whi
 
 ```bash
 # WRONG — prompts on every command
-TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w) terragrunt plan
-TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w) terragrunt apply
+TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain") terragrunt plan
+TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain") terragrunt apply
 
 # CORRECT — one prompt, then inject the variable
-ANTHROPIC_API_KEY=$(security find-generic-password -s ANTHROPIC_API_KEY -w)
+ANTHROPIC_API_KEY=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain")
 TF_VAR_anthropic_key=$ANTHROPIC_API_KEY terragrunt plan
 TF_VAR_anthropic_key=$ANTHROPIC_API_KEY terragrunt apply
 ```
