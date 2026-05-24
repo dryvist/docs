@@ -1,0 +1,32 @@
+name: Issue Resolver
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  id-token: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: >-
+    issue-resolver-${{ github.repository }}-${{
+    github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    uses: JacobPEvans/ai-workflows/.github/workflows/issue-resolver.yml@main
+    secrets: inherit
+    with:
+      repo_context: >-
+        Mintlify documentation site for docs.jacobpevans.com.
+        Pages are MDX with YAML frontmatter under topic directories
+        (architecture/, ai-development/, automation/, security/,
+        infrastructure/, observability/, configuration/, nix/, tools/,
+        about/). Navigation lives in docs.json. Mermaid diagrams use
+        the canonical hand-drawn Reef Green theme directive (see
+        AGENTS.md). Public content only - no real IPs, hostnames,
+        credentials, or references to private repos.
