@@ -263,6 +263,73 @@ shapes; tables and Steps are for everything else.
 | Mermaid | One of the four shapes above; structure ≥ 4 nodes with real edges |
 | Prose with bold leads | Relationships that read better as a paragraph |
 
+## Mermaid — drill-down links
+
+Make diagram nodes navigable. Mintlify honors Mermaid's `click`
+directive: each node gets a pointer cursor, a hover tooltip, and
+navigates on click. This is the canonical way to get "zoom in to a
+detail page" behaviour on this site — no custom components, no SVG
+export, no JavaScript.
+
+### When to add clicks
+
+Add `click` whenever a node represents a topic that has its own
+detail page on this site or its own canonical external URL (a repo,
+a dashboard, a vendor doc). This is **the default for context,
+overview, and hub diagrams** — not an optional embellishment.
+
+Skip clicks for: nodes that don't map to a real destination (a
+transient process, an abstract concept like "Code" or "Ship"), or
+destinations that are still TODO and would 404.
+
+### Canonical syntax
+
+Use the two forms below, byte-for-byte. Internal links first,
+external second. Always include a short tooltip — for hover-only
+users it's the only signal of where the click will land.
+
+```text
+click NodeId "/path/to/internal/page" "Short hover tooltip"
+click NodeId "https://github.com/owner/repo" "_blank" "Repo on GitHub"
+```
+
+Place the `click` block AFTER all `classDef` definitions and `class`
+assignments, and BEFORE any `linkStyle` lines. Group internal links
+first, then external. One `click` per line.
+
+### Self-check addition
+
+Append these to the existing self-check before emitting any context,
+overview, or hub diagram:
+
+- [ ] Every node whose label names a topic with a detail page has a `click` line
+- [ ] Internal links use site-relative paths (`/security/overview`), never the full domain
+- [ ] External links include `"_blank"` so they open in a new tab
+- [ ] Tooltips are ≤40 chars and describe the destination (not the node)
+- [ ] No `click` points at a page that doesn't exist yet (would 404)
+
+### Example
+
+```text
+flowchart LR
+  Ovr([Overview]) --> Repo([Source])
+  classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class Ovr,Repo hop
+  click Ovr "/overview" "Read the full overview"
+  click Repo "https://github.com/owner/repo" "_blank" "Source on GitHub"
+```
+
+### When NOT to use clicks
+
+- **Pure sequence / timeline diagrams** where every node is a stage
+  in one flow (e.g. CI step "Lint") — clicks would imply each stage
+  has its own page when the whole pipeline is one page.
+- **Diagrams in repo READMEs that render on GitHub.** GitHub's
+  Mermaid renderer also honors `click`, but absolute URLs are
+  required there. Prefer keeping site-relative click diagrams on
+  docs.jacobpevans.com; if a README needs an interactive diagram,
+  link out to the relevant docs page instead.
+
 ## Phases
 
 - **Phase A** (current): foundation, theme, full nav skeleton, 8 priority diagrams, 9 category overviews, profile banner

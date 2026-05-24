@@ -59,6 +59,13 @@ flowchart LR
   class Obs sink
   class Sec gate
 
+  click Inf "/infrastructure/overview" "Terraform · Ansible · Proxmox"
+  click Cfg "/configuration/overview" "Ansible-managed configuration"
+  click Obs "/observability/overview" "Cribl · Splunk · OTEL"
+  click Nix "/nix/overview" "macOS host · user env · dev shells"
+  click AI "/ai-development/overview" "Claude · Gemini · Copilot · MLX"
+  click Sec "/security/overview" "Doppler · SOPS · Keychain"
+
   linkStyle 0,1,2,3 stroke:#4FB3A9,stroke-width:2px;
   linkStyle 4,5,6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
