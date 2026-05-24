@@ -1,0 +1,106 @@
+---
+title: "Local LLM benchmarking"
+description: "Reproducible benchmark harness for MLX-quantized LLMs on Apple Silicon. One envelope schema, one HuggingFace dataset, one viewer."
+tier: 2
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> One envelope schema, every upstream eval tool, one public HF dataset.
+
+<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/mlx-benchmarks" />
+
+`mlx-benchmarks` is the result-envelope contract and publisher for benchmarking MLX-quantized and locally-hosted LLMs on Apple Silicon. It is the thin glue between upstream evaluation tools (`lm-eval`, `vllm benchmark_serving`, agent-framework harnesses) and a single public HuggingFace dataset, with a Gradio viewer on top.
+
+## What it does
+
+- Defines **envelope v1** in `schema.json` — the authoritative, versioned contract every published shard validates against.
+- Provides `mlx-bench-publish`, a CLI that converts raw tool output into the envelope, validates it, and uploads to the [HF dataset](https://huggingface.co/datasets/JacobPEvans/mlx-benchmarks) with content-addressed filenames (`data/run-<timestamp>-<git_sha>-<suite>-<model_slug>.parquet`).
+- Owns converters for `lm-eval`, `vllm benchmark_serving`, and framework-eval (OpenAI / Qwen-Agent / smolagents / ADK).
+- Auto-detects runtime metadata (OS, chip, memory, Python, MLX, lm-eval versions) via `detect_system()` so envelopes are fully reproducible without hand-curation.
+- Deploys a [Gradio viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) to HF Spaces on every `main` push touching `space/`.
+
+## How it fits
+
+{/* Shape: linear chain. nix-ai feeds inference; this repo is the envelope/publisher; HF stores and visualizes. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  NixAI([nix-ai])
+  Serve([vllm-mlx + llama-swap])
+  Eval([lm-eval · vllm · framework-eval])
+  Bench([mlx-benchmarks])
+  Dataset[("HF dataset")]
+  Viewer([HF Space viewer])
+
+  NixAI --> Serve
+  Serve -->|":11434/v1"| Eval
+  Eval -->|"results_*.json"| Bench
+  Bench -->|"envelope v1 + publish"| Dataset
+  Dataset --> Viewer
+
+  classDef source fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef stack  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef core   fill:#102937,stroke:#4FB3A9,stroke-width:3px,color:#F4EFE6;
+  classDef sink   fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
+
+  class NixAI source
+  class Serve,Eval stack
+  class Bench core
+  class Dataset,Viewer sink
+
+  linkStyle 0,1,2,3,4 stroke:#4FB3A9,stroke-width:2px;
+```
+
+| Feeds into | Consumes |
+| --- | --- |
+| [HF dataset](https://huggingface.co/datasets/JacobPEvans/mlx-benchmarks), [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) | [`nix-ai`](/nix/nix-ai) (vllm-mlx, llama-swap), `lm-eval`, `vllm`, agent-framework SDKs |
+
+<RepoFit>
+Anything that runs an LLM benchmark and wants the result comparable across tools, models, and dates goes through this envelope. Per-tool harness logic stays upstream; the publisher stays thin. No CI benchmarking — MLX needs Apple Silicon hardware, so runs are local; CI only validates the publisher against fixtures.
+</RepoFit>
+
+## Getting started
+
+<Steps>
+  <Step title="Bring up the inference stack">
+    From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .`. This starts `vllm-mlx` + `llama-swap` on `localhost:11434` via [`nix-ai`](/nix/nix-ai). Or run `vllm-mlx serve` directly if you're not on the Nix stack.
+  </Step>
+  <Step title="Install and authenticate">
+    `git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
+  </Step>
+  <Step title="Run a smoke benchmark">
+    Point `lm-eval` at the local endpoint:
+    ```bash
+    BASE="http://localhost:11434/v1/chat/completions"
+    .venv/bin/lm_eval --model local-chat-completions \
+      --model_args "base_url=$BASE,model=mlx-community/Qwen3.5-9B-MLX-4bit" \
+      --tasks gsm8k_cot_zeroshot --limit 10 \
+      --output_path ./run-output
+    ```
+  </Step>
+  <Step title="Publish (dry-run first)">
+    `.venv/bin/mlx-bench-publish ./run-output/<model-dir>/results_*.json --kind lm-eval --suite reasoning --dry-run` validates the envelope locally against `schema.json`. Drop `--dry-run` to push to the HF dataset.
+  </Step>
+  <Step title="View results">
+    Open the [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) — it auto-loads every published shard. Or `cd space && python app.py` for a local copy.
+  </Step>
+</Steps>
+
+## Related repos
+
+<CardGroup cols={2}>
+  <Card title="nix-ai" icon="snowflake" href="/nix/nix-ai">
+    Packages the inference stack: `vllm-mlx` LaunchAgent, `llama-swap`, MLX module derivations. Where models actually run.
+  </Card>
+  <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
+    macOS host config. Composes `nix-ai` into the system flake so benchmarks have a reproducible environment.
+  </Card>
+  <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
+    Model routing + permission policy. Tells AI clients which models to benchmark.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/mlx-benchmarks">
+    Schema, publisher, converters, full README, `docs/architecture.md`.
+  </Card>
+</CardGroup>

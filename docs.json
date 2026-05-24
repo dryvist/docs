@@ -157,6 +157,7 @@
             "group": "Tools",
             "pages": [
               "tools/overview",
+              "tools/mlx-benchmarks",
               "tools/automation"
             ]
           },
