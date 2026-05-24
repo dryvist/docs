@@ -85,8 +85,7 @@ Distributed automatically by [`secrets-sync`](/security/secrets-sync) when a rep
 
 | Secret / variable | Source | Purpose |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` (secret) | `_all_repos` | Auth for `claude-code-action` to call Claude via OpenRouter |
-| `OPENROUTER_BASE_URL` (secret) | `_all_repos` | OpenRouter endpoint |
+| `ANTHROPIC_API_KEY` (secret) | `_all_repos` | Auth for `claude-code-action` to call the Anthropic API directly |
 | `GH_APP_CLAUDE_BOT_PRIVATE_KEY` (secret) | `_github_app_repos` | Mints App tokens for signed commits attributed to `JacobPEvans-claude[bot]` |
 | `GH_APP_CLAUDE_BOT_ID` (variable) | `_github_app_repos` | App identifier |
 
@@ -125,6 +124,6 @@ For the local iteration loop on a PR you're editing yourself, see [`/ship` and `
     Caller templates and the live workflow catalog.
   </Card>
   <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    Why OpenRouter, not OAuth tokens; cost controls; alternative providers.
+    Why direct Anthropic API, not OAuth tokens; cost controls; fallback providers.
   </Card>
 </CardGroup>

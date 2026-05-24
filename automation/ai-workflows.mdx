@@ -74,12 +74,11 @@ Per [`ci-cd-policy.md`](https://github.com/JacobPEvans/ai-assistant-instructions
 
 ## Authentication
 
-Every reusable workflow uses [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action), authenticated via OpenRouter:
+Every reusable workflow uses [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action), authenticated directly against the Anthropic API:
 
-- `secrets.OPENROUTER_API_KEY` — the API key (set spend limits in the OpenRouter dashboard)
-- `secrets.OPENROUTER_BASE_URL` — `https://openrouter.ai/api/v1`
+- `secrets.ANTHROPIC_API_KEY` — Anthropic API key. Spend draws from the Claude Max plan's $200/month automation credits.
 
-OAuth-token auth (the Claude Code subscription) is **explicitly forbidden** in unattended CI — it violates the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms). The full reasoning is in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+OAuth tokens from a Claude Code subscription session are **explicitly forbidden** in unattended CI — they violate the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms). OpenRouter is supported as a fallback provider (set `secrets.OPENROUTER_API_KEY` and `secrets.OPENROUTER_BASE_URL`) but is no longer the default. The provider matrix lives in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
 
 ## Commit signing
 
@@ -95,7 +94,7 @@ Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token imm
     The post-merge dispatch pattern, bot guards, and other recurring shapes.
   </Card>
   <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    OpenRouter setup, cost controls, alternatives, why not OAuth.
+    Anthropic API key setup, cost controls, fallback providers, why not OAuth.
   </Card>
   <Card title="Verification" icon="check-double" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/VERIFICATION.md">
     The e2e runbook for checking a freshly-wired repo end to end.
@@ -104,6 +103,6 @@ Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token imm
     Exactly which six callers are wired on `JacobPEvans/docs` and why.
   </Card>
   <Card title="Secret distribution" icon="lock" href="/security/secrets-sync">
-    How OPENROUTER_API_KEY and the App credentials land on each consumer repo.
+    How ANTHROPIC_API_KEY and the App credentials land on each consumer repo.
   </Card>
 </CardGroup>
