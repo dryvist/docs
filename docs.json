@@ -130,8 +130,8 @@
             "group": "Tools",
             "pages": [
               "tools/overview",
-              "tools/automation",
-              "tools/mlx-benchmarks"
+              "tools/mlx-benchmarks",
+              "tools/automation"
             ]
           },
           {

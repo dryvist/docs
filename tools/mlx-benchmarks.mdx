@@ -68,7 +68,7 @@ Anything that runs an LLM benchmark and wants the result comparable across tools
     From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .`. This starts `vllm-mlx` + `llama-swap` on `localhost:11434` via [`nix-ai`](/nix/nix-ai). Or run `vllm-mlx serve` directly if you're not on the Nix stack.
   </Step>
   <Step title="Install and authenticate">
-    `git clone github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
+    `git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
   </Step>
   <Step title="Run a smoke benchmark">
     Point `lm-eval` at the local endpoint:
