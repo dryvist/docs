@@ -23,6 +23,20 @@ Pick by what the workload actually needs:
 
 The decision tree is workload-first: a macOS build picks the Mac tier; an IaC apply picks RunsOn; a public-repo lint picks GitHub-hosted; a sensitive-credential job picks the locked-down self-hosted runner. The cost ordering is "free → very cheap → host-cost → host-cost", but the cost is rarely what drives the choice.
 
+## Self-hosted runner reliability
+
+The two self-hosted tiers (Mac and locked-down) are the only ones the org physically operates — and they are the single points of failure for any E2E gate that targets them. Both have first-hand experience with silent runner death blocking PRs at merge (most recently [JacobPEvans/orbstack-kubernetes#234](https://github.com/JacobPEvans/orbstack-kubernetes/pull/234)).
+
+Every self-hosted runner MUST satisfy all five of:
+
+1. **GitHub App auth, not personal access token.** The runner image authenticates via `APP_ID` + `APP_PRIVATE_KEY` and mints registration tokens from installation tokens internally — auto-refreshing, never expires while the App stays installed. PATs silently expire (fine-grained PATs cap at one year) and break the runner with no upstream visibility; PRs block at merge and nobody notices until someone tries to ship.
+2. **Digest-pinned runner image or VM template.** No floating tags (`:latest`, `:ubuntu-jammy` alone). Use `image@sha256:...` with Renovate's docker-compose / docker-image manager tracking the digest, or pin the VM build artifact and bump deliberately.
+3. **Process-level healthcheck** — Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent — that probes the runner's actual ability to do its job (reach `api.github.com`, talk to the cluster, etc.). Failed health must surface in standard inspection tools (`docker compose ps`, `systemctl status`).
+4. **Dead-man's-switch heartbeat** to healthchecks.io or equivalent, pinged only when the runner is healthy. Silence pages someone. Without this, the runner dies and nobody notices until a PR blocks.
+5. **Pre-flight secret check** that asserts required secrets (App key, kubeconfig, age key) are non-empty in the injected env before launching the runner process. Fail loud with the actionable error instead of letting the runner enter a silent retry loop.
+
+Reference implementation: [`orbstack-kubernetes/docker/actions-runner/`](https://github.com/JacobPEvans/orbstack-kubernetes/tree/main/docker/actions-runner) (`docker-compose.yml`, `Makefile` `runner-*` targets, `docs/TESTING.md`).
+
 ## The shape of every IaC pipeline
 
 | Stage | Trigger | Where it runs | What it does |
