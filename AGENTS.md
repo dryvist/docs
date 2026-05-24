@@ -282,31 +282,53 @@ Skip clicks for: nodes that don't map to a real destination (a
 transient process, an abstract concept like "Code" or "Ship"), or
 destinations that are still TODO and would 404.
 
-### Canonical syntax
+### Canonical syntax — INTERNAL links only
 
-Use the two forms below, byte-for-byte. Internal links first,
-external second. Always include a short tooltip — for hover-only
-users it's the only signal of where the click will land.
+Use only this form. One `click` per line. Always include a tooltip —
+for hover-only users it's the only signal of where the click goes.
 
 ```text
 click NodeId "/path/to/internal/page" "Short hover tooltip"
-click NodeId "https://github.com/owner/repo" "Repo on GitHub" _blank
 ```
-
-**Argument order matters.** Mermaid's grammar is:
-
-```text
-click NodeId "URL" "tooltip" [target]
-```
-
-The target (`_blank`, `_self`, `_parent`, `_top`) is OPTIONAL, comes
-LAST, and is UNQUOTED. Putting `_blank` in quotes or before the
-tooltip is a parse error and the entire diagram silently fails to
-render — `mint dev` shows a blank space where the diagram should be.
 
 Place the `click` block AFTER all `classDef` definitions and `class`
-assignments, and BEFORE any `linkStyle` lines. Group internal links
-first, then external. One `click` per line.
+assignments, and BEFORE any `linkStyle` lines.
+
+### External URLs — do NOT click them from the diagram
+
+Mermaid has open bugs
+([#3077](https://github.com/mermaid-js/mermaid/issues/3077),
+[#5550](https://github.com/mermaid-js/mermaid/issues/5550)) where
+`_blank` is parsed but silently dropped from the rendered SVG.
+Clicking an external link on a node navigates the current tab away —
+the diagram disappears, the back button is the only way home.
+
+Workaround: put external links in a **table** or **CardGroup**
+directly under the diagram. Mintlify automatically adds
+`target="_blank" rel="noreferrer"` to external markdown anchors, so
+those open in a new tab correctly.
+
+Inside the Mermaid block, click ONLY the internal nodes; leave the
+external-pointing nodes without a `click` directive and add an HTML
+comment naming where the repo lives:
+
+```text
+flowchart LR
+  Tool([Tool]) --> Pack([cc-edge-foo])
+  click Tool "/observability/overview" "Tool overview"
+  %% No click on Pack — external repo lives in the table below.
+```
+
+Then the table directly under the diagram carries the external link:
+
+```text
+| Repo | Notes |
+| --- | --- |
+| [cc-edge-foo](https://github.com/owner/cc-edge-foo) | What it does |
+```
+
+When the Mermaid bugs are fixed upstream, this convention will
+expand to allow external clicks; until then, internal-only.
 
 ### Self-check addition
 
@@ -314,21 +336,21 @@ Append these to the existing self-check before emitting any context,
 overview, or hub diagram:
 
 - [ ] Every node whose label names a topic with a detail page has a `click` line
-- [ ] Internal links use site-relative paths (`/security/overview`), never the full domain
-- [ ] External links end with **unquoted** `_blank` AFTER the tooltip
+- [ ] All `click` URLs are site-relative paths (`/security/overview`), never external `https://...`
+- [ ] External repo URLs live in a table or CardGroup beside the diagram, NOT in `click` directives
 - [ ] Tooltips are ≤40 chars and describe the destination (not the node)
 - [ ] No `click` points at a page that doesn't exist yet (would 404)
-- [ ] CI Mermaid validation passes (`bunx -y @mermaid-js/mermaid-cli@latest -i <file>.mdx -o /tmp/_out.md`)
+- [ ] CI Mermaid validation passes (`./scripts/validate-mermaid.sh` from repo root)
 
 ### Example
 
 ```text
 flowchart LR
-  Ovr([Overview]) --> Repo([Source])
+  Ovr([Overview]) --> Detail([Detail page])
   classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  class Ovr,Repo hop
+  class Ovr,Detail hop
   click Ovr "/overview" "Read the full overview"
-  click Repo "https://github.com/owner/repo" "Source on GitHub" _blank
+  click Detail "/overview/detail" "The deep dive"
 ```
 
 ### When NOT to use clicks
@@ -337,8 +359,8 @@ flowchart LR
   in one flow (e.g. CI step "Lint") — clicks would imply each stage
   has its own page when the whole pipeline is one page.
 - **Diagrams in repo READMEs that render on GitHub.** GitHub's
-  Mermaid renderer also honors `click`, but absolute URLs are
-  required there. Prefer keeping site-relative click diagrams on
+  Mermaid renderer honors `click` differently and absolute URLs are
+  required there. Keep site-relative click diagrams on
   docs.jacobpevans.com; if a README needs an interactive diagram,
   link out to the relevant docs page instead.
 
