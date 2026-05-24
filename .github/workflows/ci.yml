@@ -30,13 +30,13 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Install Chromium (Puppeteer runtime for Mermaid)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq chromium-browser
+      - uses: browser-actions/setup-chrome@v1
+        id: setup-chrome
 
       - name: Install Mermaid CLI
         run: bun install --global @mermaid-js/mermaid-cli@latest
 
       - name: Validate Mermaid diagrams in MDX files
         env:
-          PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: ./scripts/validate-mermaid.sh
