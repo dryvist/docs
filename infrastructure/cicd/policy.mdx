@@ -46,7 +46,7 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 ## Runner choice
 
-RunsOn (AWS EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on)) is the default for Linux jobs. The control plane is paid for whether it is running jobs or not (~$3.50/mo fixed App Runner + CloudWatch); workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
+RunsOn (AWS EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on)) is the default for Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume; once it is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
 
 On-prem self-hosted is the documented exception for jobs that genuinely need local hardware — not a routine choice.
 
