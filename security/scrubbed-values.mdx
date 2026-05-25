@@ -22,14 +22,6 @@ tier: 2
 
 Never write a real value even in a "wrong" example — the example becomes committed text. Use `${USER}`, `${REPO_ROOT}`, `${MAINTAINER_EMAIL}`, `${NAS_HOST}`, `<redacted>` for shape stand-ins where the placeholder needs to look like a variable.
 
-## Cost and subscription references
-
-The same posture applies to monetary costs and subscription tiers.
-
-- **Never name a specific AI subscription tier** (`Claude Max`, `ChatGPT Pro`, `GitHub Copilot Business`). Marketing tiers change names; the broadcast of personal-spend decisions has no business in public docs. Use the generic noun — `Claude subscription`, `ChatGPT subscription`, `Copilot subscription` — and describe the *mechanism* (`included monthly automation credits`, `metered API usage`) if it matters.
-- **Never state a monetary cost as `$N/day`.** The canonical unit on this site is monthly, with the per-instance figure and the instances-per-month count visible so the math is reviewable: `~$X per instance × ~Y instances/month ≈ ~$Z/month`. If you do not know the instance frequency, say `a small fixed monthly cost` instead of inventing one.
-- Schedule frequencies (`2×/day`, `weekly`) and rate limits (`5 attempts per PR per day`) are not costs and stay as-is.
-
 ## Portable path references
 
 **Never commit absolute user paths** (`/Users/{username}/*`, `/home/{username}/*`, `$HOME/*`, `~/*`).
