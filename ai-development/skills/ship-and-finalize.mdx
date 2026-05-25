@@ -6,7 +6,7 @@ tier: 2
 
 > One command. Commit, push, open the PR, fix CodeQL, resolve threads, fix CI, verify everything is green. Never merges. That's a human decision.
 
-`/ship` is the local escape hatch for the cloud pipeline. The cloud pipeline ([ai-workflows](/automation/ai-workflows), [claude-code-routines](/automation/claude-code-routines)) gets a PR opened and reviewed without you. `/ship` is what you run from a Claude Code session when **you** are the one iterating on a PR and want it driven to a ready-to-merge state in one command.
+`/ship` is the local escape hatch for the cloud pipeline. The cloud pipeline ([ai-workflows](/automation/cloud-pipelines/ai-workflows), [claude-code-routines](/automation/scheduled-routines/claude-code-routines)) gets a PR opened and reviewed without you. `/ship` is what you run from a Claude Code session when **you** are the one iterating on a PR and want it driven to a ready-to-merge state in one command.
 
 ## What `/ship` does
 
@@ -103,15 +103,15 @@ Tracked as a PR against [`claude-code-plugins`](https://github.com/JacobPEvans/c
 
 | Situation | Use |
 | --- | --- |
-| Issue is filed, you want a PR drafted without thinking | [`ai-workflows`](/automation/ai-workflows) (the cloud pipeline triggered on issue open) |
+| Issue is filed, you want a PR drafted without thinking | [`ai-workflows`](/automation/cloud-pipelines/ai-workflows) (the cloud pipeline triggered on issue open) |
 | You're editing a PR locally and want CI/threads/CodeQL handled in one command | `/ship` from your Claude Code session |
-| You want a daily org-wide sweep | [`claude-code-routines`](/automation/claude-code-routines) (cron-scheduled) |
+| You want a daily org-wide sweep | [`claude-code-routines`](/automation/scheduled-routines/claude-code-routines) (cron-scheduled) |
 | You want to know if a PR is *really* ready to merge | `/finalize-pr <N>` directly — gives you the canonical gate output without re-running fixes |
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="CodeQL resolution" icon="shield-check" href="/automation/codeql-resolution">
+  <Card title="CodeQL resolution" icon="shield-check" href="/ai-development/skills/codeql-resolution">
     Why CodeQL is fixed separately from CI checks, and what `/resolve-codeql` does.
   </Card>
   <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">

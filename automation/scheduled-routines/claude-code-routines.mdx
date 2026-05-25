@@ -56,6 +56,8 @@ Each routine runs in Anthropic's cloud sandbox with pre-installed `gh` CLI. Auth
 
 Slack output goes through the official Slack MCP connector. The full operator-setup walkthrough lives in [`docs/CLOUD_ROUTINES_AUTH.md`](https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md) in the source repo.
 
+The local Claude Code that develops and deploys these routines is configured declaratively via [`nix-claude-code`](/nix/nix-claude-code) — plugin set, MCP wiring, permissions, and hooks all version-pinned in Nix.
+
 ## Current deploy gotcha
 
 The native GitHub Actions deploy (`.github/workflows/deploy-routines.yml`) is **disabled** because `anthropics/claude-code-action@v1` does not carry the organization UUID binding that the Routines API requires — `RemoteTrigger` calls fail with `Unable to resolve organization UUID`.
@@ -94,7 +96,7 @@ The two systems are complementary — ai-workflows handles the per-event reactio
   <Card title="Cloud routine auth" icon="key" href="https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md">
     Operator setup — env vars, Slack MCP, token strategy.
   </Card>
-  <Card title="ai-workflows" icon="github" href="/automation/ai-workflows">
+  <Card title="ai-workflows" icon="github" href="/automation/cloud-pipelines/ai-workflows">
     The event-driven half of the same ecosystem.
   </Card>
   <Card title="Issue → PR pipeline" icon="route" href="/automation/issue-to-pr-pipeline">

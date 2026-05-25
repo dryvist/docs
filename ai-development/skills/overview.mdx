@@ -1,0 +1,37 @@
+---
+title: "Skills"
+description: "Local Claude Code slash-commands that pick up where the cloud pipeline stops. Use them from a session when you are the one iterating on a PR."
+tier: 1
+---
+
+> Cloud pipelines get a PR opened, reviewed, and CI'd without you. Skills are what you run from a Claude Code session when you are the one driving a PR to merge.
+
+A **skill** in this catalog is a slash-command shipped by [`JacobPEvans/claude-code-plugins`](/ai-development/claude-code-plugins). The plugin repo carries the source — each skill is a folder with `SKILL.md`, prompts, and supporting scripts; this section carries the human-readable narrative for the load-bearing ones.
+
+Skills are the local-execution counterpart to the [cloud pipelines](/automation/cloud-pipelines/overview) and [scheduled routines](/automation/scheduled-routines/overview). When the cloud finishes the job, you do not run a skill. When the cloud opens a draft PR but cannot drive it all the way (CodeQL alert needs human triage, review threads need negotiation, CI flake needs a retry strategy), you `/ship` it from a session.
+
+## What is documented here
+
+| Skill | Use when |
+| --- | --- |
+| [`/ship` and `/finalize-pr`](/ai-development/skills/ship-and-finalize) | You have a PR open and want it driven to a fully-mergeable state in one command |
+| [`/resolve-codeql`](/ai-development/skills/codeql-resolution) | A PR is blocked on a CodeQL alert that does not show up in `gh pr checks` |
+
+More skills exist in `claude-code-plugins`; only the ones that participate in the issue → mergeable PR flow are written up here. The full catalog (commands, hooks, agents, skills) lives on the [claude-code-plugins page](/ai-development/claude-code-plugins).
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
+    The source repo and full plugin catalog.
+  </Card>
+  <Card title="Cloud pipelines" icon="github" href="/automation/cloud-pipelines/overview">
+    The event-triggered half — what skills do not have to do because the cloud already handled it.
+  </Card>
+  <Card title="Issue to PR pipeline" icon="diagram-project" href="/automation/issue-to-pr-pipeline">
+    Where each skill plugs into the broader flow.
+  </Card>
+  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
+    The voice and commit-shape rules every skill applies before pushing.
+  </Card>
+</CardGroup>

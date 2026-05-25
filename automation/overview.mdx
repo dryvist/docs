@@ -44,30 +44,24 @@ A human files the issue and clicks merge. Everything in between runs without sup
 
 | Layer | Where it lives | When it runs | What it owns |
 | --- | --- | --- | --- |
-| [ai-workflows](/automation/ai-workflows) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, draft PR creation, CI auto-fix, final review gate, project routing |
-| [claude-code-routines](/automation/claude-code-routines) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
-| [claude-code-plugins](/ai-development/claude-code-plugins) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch — finalize a PR you're iterating on |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, draft PR creation, CI auto-fix, final review gate, project routing |
+| [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
+| [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch — finalize a PR you're iterating on |
 
-## The six moving parts
+## Where to go next
 
 <CardGroup cols={2}>
   <Card title="Issue → PR pipeline" icon="route" href="/automation/issue-to-pr-pipeline">
     The eight-step cloud flow on a target repo. Which trigger fires which file, who reviews, what gates merge.
   </Card>
-  <Card title="ai-workflows" icon="github" href="/automation/ai-workflows">
-    The 16 reusable workflows behind the cloud pipeline. Event-triggered and scheduled.
+  <Card title="Cloud pipelines" icon="github" href="/automation/cloud-pipelines/overview">
+    The 16 event-triggered reusable workflows behind the per-repo half of the automation surface.
   </Card>
-  <Card title="claude-code-routines" icon="clock" href="/automation/claude-code-routines">
-    Six cron-scheduled Claude routines. Org-wide maintenance, no per-repo wiring.
+  <Card title="Scheduled routines" icon="clock" href="/automation/scheduled-routines/overview">
+    Cron-scheduled Claude routines. Org-wide maintenance, no per-repo wiring.
   </Card>
-  <Card title="/ship + /finalize-pr" icon="ship" href="/automation/ship-and-finalize">
-    The local skill that closes the loop on a PR you're iterating on. Phases, exit modes, the known reliability gaps.
-  </Card>
-  <Card title="CodeQL resolution" icon="shield-check" href="/automation/codeql-resolution">
-    Why CodeQL is fixed separately from CI checks, and how `/resolve-codeql` plugs in.
-  </Card>
-  <Card title="Shaping issues" icon="hammer" href="/automation/shape-issues">
-    The `/shape-issues` skill that turns rough ideas into well-scoped issues the resolver can act on.
+  <Card title="Skills" icon="ship" href="/ai-development/skills/overview">
+    Local Claude Code slash-commands — `/ship`, `/resolve-codeql` — that close the loop on a PR you are iterating on.
   </Card>
 </CardGroup>
 

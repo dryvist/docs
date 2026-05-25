@@ -70,13 +70,13 @@ Permission shape varies per workflow — `issue-resolver` needs `pull-requests: 
 
 ## Versioning
 
-Per [`ci-cd-policy.md`](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/ci-cd-policy.md), JacobPEvans self-references use `@main` or a major tag like `@v0` — never minor/patch pins. The full SemVer tags exist (`@v0.15.1`) and are tracked by Renovate, but consumers should ride a moving ref so upstream improvements land without a Renovate PR per repo.
+Per the [CI/CD policy](/infrastructure/cicd/policy#dependency-versioning), JacobPEvans self-references use `@main` or a major tag like `@v0` — never minor/patch pins. The full SemVer tags exist (`@v0.15.1`) and are tracked by Renovate, but consumers should ride a moving ref so upstream improvements land without a Renovate PR per repo.
 
 ## Authentication
 
 Every reusable workflow uses [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action), authenticated directly against the Anthropic API:
 
-- `secrets.ANTHROPIC_API_KEY` — Anthropic API key. Spend draws from the Claude Max plan's $200/month automation credits.
+- `secrets.ANTHROPIC_API_KEY` — Anthropic API key. Spend draws from the included monthly automation credits on the Claude subscription that backs these workflows.
 
 OAuth tokens from a Claude Code subscription session are **explicitly forbidden** in unattended CI — they violate the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms). OpenRouter is supported as a fallback provider (set `secrets.OPENROUTER_API_KEY` and `secrets.OPENROUTER_BASE_URL`) but is no longer the default. The provider matrix lives in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
 

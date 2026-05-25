@@ -21,7 +21,7 @@ The pipeline on this repo, [`JacobPEvans/docs`](https://github.com/JacobPEvans/d
 | 7 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
 | 8 | Human clicks **Merge** | n/a | n/a | The only manual step |
 
-The deprecated `claude-review.yml` (removed 2026-04-04 in favor of Gemini + Copilot reviews) and the disabled-auto-trigger `pr-issue-linker.yml` are not wired. See [ai-workflows](/automation/ai-workflows) for the full catalog and what's not active.
+The deprecated `claude-review.yml` (removed 2026-04-04 in favor of Gemini + Copilot reviews) and the disabled-auto-trigger `pr-issue-linker.yml` are not wired. See [ai-workflows](/automation/cloud-pipelines/ai-workflows) for the full catalog and what's not active.
 
 ## How the six callers connect
 
@@ -89,7 +89,7 @@ Distributed automatically by [`secrets-sync`](/security/secrets-sync) when a rep
 | `GH_APP_CLAUDE_BOT_PRIVATE_KEY` (secret) | `_github_app_repos` | Mints App tokens for signed commits attributed to `JacobPEvans-claude[bot]` |
 | `GH_APP_CLAUDE_BOT_ID` (variable) | `_github_app_repos` | App identifier |
 
-Per [`git-signing.md`](https://github.com/JacobPEvans/ai-assistant-instructions/blob/main/agentsmd/rules/git-signing.md), every AI workflow mints a `JacobPEvans-claude` installation token immediately before calling `claude-code-action@v1`, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot.
+Per [Git signing](/infrastructure/cicd/git-signing), every AI workflow mints a `JacobPEvans-claude` installation token immediately before calling `claude-code-action@v1`, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot.
 
 ## Rate and safety guards
 
@@ -109,15 +109,15 @@ The cloud pipeline gets a PR to **draft + reviewed**. It does NOT:
 - Override branch protection or required reviewers
 - Touch repos outside the current org boundary
 
-For the local iteration loop on a PR you're editing yourself, see [`/ship` and `/finalize-pr`](/automation/ship-and-finalize).
+For the local iteration loop on a PR you're editing yourself, see [`/ship` and `/finalize-pr`](/ai-development/skills/ship-and-finalize).
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="ai-workflows" icon="github" href="/automation/ai-workflows">
+  <Card title="ai-workflows" icon="github" href="/automation/cloud-pipelines/ai-workflows">
     The full catalog of 16 reusable workflows, event-triggered + scheduled.
   </Card>
-  <Card title="claude-code-routines" icon="clock" href="/automation/claude-code-routines">
+  <Card title="claude-code-routines" icon="clock" href="/automation/scheduled-routines/claude-code-routines">
     The cron half — six routines that scan the org and pick up loose ends.
   </Card>
   <Card title="ai-workflows getting started" icon="book" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md">

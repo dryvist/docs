@@ -1,0 +1,79 @@
+---
+title: "Declarative Claude Code"
+description: "Claude Code as composable home-manager modules. Plugins, marketplaces, skills, hooks, MCP, and permissions declared in Nix and rolled back atomically."
+tier: 2
+---
+
+import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
+
+> Declare the Claude Code you want. Apply. Roll it back with one command. Reproduce it on every machine.
+
+<RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/nix-claude-code" />
+
+`nix-claude-code` ships [Claude Code](https://www.anthropic.com/claude-code) as composable home-manager modules. Marketplaces, plugins, statusline themes, hooks, MCP servers, and permission rules are all declared as Nix data — version-pinned in `flake.lock`, atomically rolled back with `darwin-rebuild --rollback`, identical across macOS and Linux.
+
+## What you get
+
+- **Every marketplace, wired up.** Anthropic's official marketplaces (`claude-plugins-official`, `anthropic-agent-skills`) plus 15+ curated community marketplaces, refreshing automatically.
+- **Plugins as data.** Every plugin you enable lands in `programs.claude.enabledPlugins`, pinned by `flake.lock`, rolled back with the rest of your generation.
+- **Permissions you can read.** Auto-approved tools, deny lists, and the WebFetch allowlist as structured Nix data — the same data feeds Codex, Gemini, and any other AI agent you wire up.
+- **Statusline themes.** Pick `powerline`, `ccstatusline`, or `daniel3303` with a single option.
+- **MCP plumbing.** Surface `programs.claude.mcpServers` from your favorite MCP runtime; they wire into Claude's `settings.json` exactly as the [official plugin reference](https://code.claude.com/docs/en/plugins-reference) specifies.
+- **Built on Anthropic's spec.** Reads `.claude-plugin/marketplace.json` and `.claude-plugin/plugin.json` per the upstream contract — no proprietary formats.
+
+## How it fits
+
+| Feeds into | Consumes |
+| --- | --- |
+| [User environment](/nix/nix-home) (home.packages), [AI tooling](/nix/nix-ai) overlay, scheduled-routine host | [ai-assistant-instructions](/ai-development/ai-assistant-instructions) rule set, [claude-code-plugins](/ai-development/claude-code-plugins) marketplace |
+
+<RepoFit>
+The declarative path to a Claude Code install. If you want a single fully-configured Claude Code that survives a workstation wipe, this is the layer that produces it.
+</RepoFit>
+
+The four-repo Nix split each owns a slice of the install:
+
+- [`nix-darwin`](/nix/nix-darwin) — system layer (macOS, Homebrew, security)
+- [`nix-home`](/nix/nix-home) — user dev environment (shell, git, linters, credentials)
+- [`nix-ai`](/nix/nix-ai) — AI tool ecosystem (Claude Code binary, Gemini CLI, MCP servers, MLX modules)
+- [`nix-devenv`](/nix/nix-devenv) — reusable per-language project shells
+- **`nix-claude-code` (this page)** — declarative Claude Code *configuration* on top of the binary that `nix-ai` packages
+
+`nix-ai` answers "where does the Claude Code binary come from?"; `nix-claude-code` answers "which plugins, hooks, MCP servers, and permissions should it have when it starts?".
+
+## Getting started
+
+<Steps>
+  <Step title="Add the flake input">
+    Add `nix-claude-code.url = "github:dryvist/nix-claude-code"` to your flake `inputs`. Set `nix-claude-code.inputs.nixpkgs.follows = "nixpkgs"` and the same for `home-manager` so versions stay aligned.
+  </Step>
+  <Step title="Scaffold from a template">
+    `nix flake init -t github:dryvist/nix-claude-code#minimal` (or `#flake-parts` if you already use flake-parts). The minimal template is the fastest way to see the wiring.
+  </Step>
+  <Step title="Declare the install">
+    Set `programs.claude.enabledPlugins`, `programs.claude.mcpServers`, and `programs.claude.permissions` in your home-manager config. Run `home-manager switch` or `darwin-rebuild switch`.
+  </Step>
+  <Step title="Roll back if needed">
+    `darwin-rebuild --rollback` (or the home-manager equivalent) reverts the entire Claude Code install — plugin set, permissions, hooks, MCP wiring — to the previous generation in one command.
+  </Step>
+</Steps>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
+    The binary layer this configures.
+  </Card>
+  <Card title="nix-home" icon="user-gear" href="/nix/nix-home">
+    Where the home-manager modules attach to your user env.
+  </Card>
+  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
+    The marketplace this can install plugins from.
+  </Card>
+  <Card title="Scheduled routines" icon="clock" href="/automation/scheduled-routines/overview">
+    The cloud cron sibling that uses the same Claude Code install pattern.
+  </Card>
+  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/nix-claude-code">
+    Modules, templates, full README.
+  </Card>
+</CardGroup>
