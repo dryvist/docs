@@ -59,13 +59,11 @@ The routing is opinionated, not magic: clear rules in `~/CLAUDE.md` and `AGENTS.
 
 ## Local AI gateway (Bifrost)
 
-Bifrost is the OpenAI-compatible HTTP gateway that sits between every AI tool on the workstation and whichever provider eventually answers the call. It exposes `http://localhost:30080/v1/chat/completions` and fans out to OpenAI, Gemini, OpenRouter, and the local MLX server based on the task class.
+[Bifrost](/tools/bifrost) is the OpenAI-compatible HTTP gateway that sits between every AI tool on the workstation and whichever provider eventually answers the call. It exposes `http://localhost:30080/v1/chat/completions` and fans out to OpenAI, Gemini, OpenRouter, and the local MLX server based on the task class.
 
-- **Never hardcode model identifiers in committed config.** Models change weekly; identifiers rot. Tools resolve task classes (Research, Coding, Review, Pre-commit) to a current model at call time via `listmodels`.
-- **Local MLX models carry an `mlx-local/` prefix** when called through Bifrost (it expects `provider/model` format). Calling the vllm-mlx server directly on port 11434 uses the bare HuggingFace model ID — no prefix.
-- **Cloud models go in unprefixed.** Bifrost handles routing; do not add a provider prefix yourself.
+Tools resolve task classes (Research, Coding, Review, Pre-commit) to a current model at call time — never hardcode model identifiers in committed config. When `localOnlyMode` is enabled, every request routes exclusively to the local MLX inference server on port 11434.
 
-When `localOnlyMode` is enabled (or the `--local` flag is passed), every task routes to the MLX inference server on port 11434 and no cloud API calls happen. Verify the LaunchAgent is running before invoking: `launchctl list | grep vllm-mlx`.
+See [Bifrost](/tools/bifrost) for routing conventions, local-only mode details, and provider capabilities.
 
 ### PAL MCP
 

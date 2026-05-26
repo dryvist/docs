@@ -158,7 +158,8 @@
             "pages": [
               "tools/overview",
               "tools/mlx-benchmarks",
-              "tools/automation"
+              "tools/automation",
+              "tools/bifrost"
             ]
           },
           {
