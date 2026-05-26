@@ -1,0 +1,47 @@
+---
+title: "PAL MCP"
+description: "Multi-model coordination layer on top of Bifrost — parallel calls across models and consensus verification for critical decisions."
+tier: 2
+---
+
+> When one model's answer isn't enough.
+
+**PAL MCP** is the multi-model coordination layer that sits on top of [Bifrost](/tools/bifrost). Where Bifrost routes a single request to the best provider, PAL MCP runs across multiple models simultaneously — either to gather diverse perspectives (`clink`) or to validate agreement on a high-stakes decision (`consensus`).
+
+For routine single-model work, use Bifrost directly. PAL MCP is for the two specific coordination scenarios below.
+
+## Tools
+
+### clink
+
+Runs the same prompt against multiple models in parallel and returns all responses with model attribution.
+
+- **Use case:** Research, brainstorming, exploring alternative approaches
+- **When to reach for it:** Any time you want more than one AI perspective on a problem without waiting for sequential calls
+
+### consensus
+
+Queries multiple models on a decision and computes an agreement score.
+
+- **Use case:** High-stakes choices — architecture decisions, security reviews, ambiguous merge calls
+- **When to reach for it:** When you need confidence that the answer isn't just one model's bias
+
+Every other PAL-provided tool has a native Claude Code equivalent. Use `clink` and `consensus` for these coordination patterns; use Bifrost directly for everything else.
+
+## Priority order
+
+1. **Anthropic official** — Claude Code plugins, skills, patterns
+2. **Bifrost** — multi-provider routing for single-model calls
+3. **PAL MCP** — `clink` and `consensus` only
+4. **Personal or custom** — only when no alternative exists
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Bifrost" icon="arrow-right-arrow-left" href="/tools/bifrost">
+    The underlying AI gateway PAL MCP builds on.
+  </Card>
+  <Card title="AI development pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
+    How PAL MCP fits into the broader workflow.
+  </Card>
+</CardGroup>

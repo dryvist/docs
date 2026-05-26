@@ -1,0 +1,65 @@
+---
+title: "Bifrost"
+description: "Local OpenAI-compatible AI gateway for multi-provider routing across OpenAI, Gemini, OpenRouter, and local MLX inference."
+tier: 2
+---
+
+> One endpoint. Every provider. Zero hardcoded model names.
+
+**Bifrost** is an open-source, high-performance AI gateway ([github.com/maximhq/bifrost](https://github.com/maximhq/bifrost)) that exposes a single OpenAI-compatible HTTP interface and routes requests to whichever provider — or local model — best fits the task. In this stack it runs at `http://localhost:30080/v1/chat/completions` and fans out to OpenAI, Gemini, OpenRouter, and the local MLX inference server.
+
+## Why Bifrost
+
+Models change weekly. Hardcoding `gpt-4o` or `claude-opus-4` into dotfiles means constant drift. Bifrost decouples the *task class* from the *current best model*: tools declare what kind of work they're doing (Research, Coding, Review, Pre-commit), and Bifrost resolves that to the right model at call time via `listmodels`.
+
+## Provider routing
+
+| Provider | When used |
+| --- | --- |
+| **OpenAI** | Coding and complex reasoning tasks |
+| **Gemini** | Code review, broad-context analysis |
+| **OpenRouter** | Unified marketplace — fallback and exploration |
+| **Local MLX** | Quick edits, offline work, Apple Silicon native inference |
+
+## Model naming conventions
+
+Two naming schemes coexist depending on the call path:
+
+- **Through Bifrost** — local MLX models carry an `mlx-local/` prefix (Bifrost expects `provider/model` format). Cloud models are unprefixed; Bifrost handles routing automatically.
+- **Direct to vllm-mlx on port 11434** — bare HuggingFace model ID, no prefix.
+
+Never add a provider prefix to cloud model names yourself — Bifrost handles it.
+
+## Local-only mode
+
+When `localOnlyMode` is enabled or the `--local` flag is passed, every request routes to the MLX inference server on port 11434 and no cloud API calls happen. Verify the LaunchAgent is running before invoking:
+
+```bash
+launchctl list | grep vllm-mlx
+```
+
+## PAL MCP
+
+PAL MCP is the multi-model coordination layer built on top of Bifrost. For most single-model operations use Bifrost directly. See [PAL MCP](/tools/pal-mcp) for the `clink` and `consensus` tools that enable parallel calls and multi-model agreement.
+
+## Priority order
+
+1. **Anthropic official** — Claude Code plugins, skills, patterns
+2. **Bifrost** — multi-provider routing at `localhost:30080`
+3. **PAL MCP** — only for `clink` and `consensus`
+4. **Personal or custom** — only when no alternative exists
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="PAL MCP" icon="layer-group" href="/tools/pal-mcp">
+    Multi-model coordination layer on top of Bifrost.
+  </Card>
+  <Card title="AI development pipeline" icon="arrow-right-arrow-left" href="/architecture/ai-pipeline">
+    How Bifrost fits into the broader AI dev workflow.
+  </Card>
+</CardGroup>
+
+---
+
+**Upstream:** [github.com/maximhq/bifrost](https://github.com/maximhq/bifrost)
