@@ -158,6 +158,46 @@ This is the same shape as PXE-boot install, but it works without any
 network-side infrastructure (DHCP option 66/67, TFTP server, HTTP boot
 server). The USB stick is the entire delivery mechanism.
 
+## Pattern 4 — PXE-boot as the override of last resort
+
+When USB-boot keeps falling through to the wrong OS on internal disks
+(legacy BMC `bootdev=floppy options=persistent` is silently one-shot
+on many firmwares — the override is consumed on the next boot, then
+BIOS falls through to the default disk priority), PXE is the
+reliable last-mile remote install path:
+
+1. Stand up `dnsmasq` in **proxyDHCP mode** on a host that already
+   sits on the target VLAN (we use the existing healthy hypervisor).
+   `--dhcp-no-override --dhcp-range=<subnet>,proxy` supplements the
+   existing gateway's DHCP with PXE options only, without conflicting.
+   `--port=0` disables the DNS half so it doesn't clash with the
+   site's real resolver.
+2. Build a **custom iPXE binary with an `EMBED=` script** baked in.
+   Most distro packages of iPXE do not auto-execute the DHCP-offered
+   bootfile URL when chainloaded from BIOS PXE — iterating on dnsmasq
+   config alone will never make iPXE chain. Embedding the script
+   inside `undionly.kpxe` makes the chain deterministic, with no
+   external fetch dependency.
+3. **Boot kernel + initrd directly via iPXE, not the ISO via
+   sanboot.** sanboot of a large auto-install ISO is unreliable on
+   pre-2010 server NICs and BMC video stacks. Extracting the kernel
+   and initrd from the ISO (`mount -o loop` then copy
+   `boot/linux26` + `boot/initrd.img`) and serving them via HTTP
+   is small (~70 MB), bursty but reliable.
+4. **Pass the answer-file URL on the kernel cmdline.** Modern
+   Linux installers (Proxmox VE's auto-installer, Debian preseed,
+   RHEL kickstart) accept fetch URLs as kernel parameters. The
+   installer's first network-up step fetches the answer file
+   over HTTP and proceeds unattended.
+
+The IPMI side is still `bootdev=pxe options=persistent` plus a
+power-cycle. The "persistent" keyword is still ignored on legacy
+BMCs, but PXE doesn't have the same fall-through-to-disk-OS problem
+that USB does — if the PXE server is reachable, the install
+proceeds; if not, the chassis simply hangs at "PXE boot failed",
+which is observable from the BMC screen-capture and IPMI sensor
+data.
+
 ## What we learned along the way
 
 - **Reach for plain HTTP first.** The fancier protocol — Java applet,
