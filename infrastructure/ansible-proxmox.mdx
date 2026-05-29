@@ -15,6 +15,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## What it does
 
 - Provisions ZFS pools and datasets with sensible defaults for VM and LXC storage
+- Realizes the Terraform `node_storage` contract (the `zfs_pools` role): creates datasets, sets quotas, and registers PVE storage — pool creation from raw disks stays a per-host commissioning step
 - Sets up network bonding and bridges to match the homelab topology
 - Applies performance tuning (CPU governor, swap, sysctl) for VM density
 - Installs and configures monitoring agents that feed Splunk via Cribl

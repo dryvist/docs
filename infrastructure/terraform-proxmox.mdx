@@ -16,6 +16,8 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 - Defines compute, network, and storage for every homelab guest
 - Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
+- Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)
+- Declares per-node ZFS storage (`node_storage`) that Ansible provisions — Terraform references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
 
