@@ -15,6 +15,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: JacobPEvans/.github/.github/workflows/_gh-aw-pin-refresh.yml@main
+    uses: JacobPEvans-personal/.github/.github/workflows/_gh-aw-pin-refresh.yml@main
     secrets:
       GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
