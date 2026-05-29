@@ -19,5 +19,5 @@ concurrency:
 
 jobs:
   route:
-    uses: JacobPEvans/ai-workflows/.github/workflows/project-router.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/project-router.yml@main
     secrets: inherit

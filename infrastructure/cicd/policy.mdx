@@ -44,6 +44,17 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 | Trusted external actions | Version tags (major like `@v6` or full SemVer like `@v2.3.5`). Trusted orgs are listed in [`JacobPEvans/.github/renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json) |
 | Untrusted external actions | SHA commit hashes only — for orgs not on the trusted list. SHA pinning is the exception, not the default |
 
+## Reusable workflow ownership
+
+Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `uses:` — GitHub allows no variables there and does not follow repository move or rename redirects for those references. So when a shared-CI repository changes ownership, every consumer's `uses:` must be updated at the same time.
+
+Canonical homes, treated as fixed to avoid breaking every consumer's CI:
+
+| Workflow set | Canonical location |
+| --- | --- |
+| `ai-workflows` reusable workflows | `dryvist/ai-workflows` |
+| Shared `.github` reusable workflows | `JacobPEvans-personal/.github` |
+
 ## Runner choice
 
 RunsOn (AWS EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on)) is the default for Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume; once it is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
