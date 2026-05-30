@@ -67,11 +67,13 @@
             "pages": [
               "infrastructure/overview",
               "infrastructure/terraform-proxmox",
+              "infrastructure/terraform-unifi",
               "infrastructure/ansible-proxmox",
               "infrastructure/ansible-proxmox-apps",
               "infrastructure/orbstack-kubernetes",
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
+              "infrastructure/media-stack",
               "infrastructure/legacy-bmc-tactics",
               "infrastructure/secrets-sops",
               "infrastructure/terraform-check-placement",

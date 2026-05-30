@@ -11,7 +11,7 @@ The homelab is a real production environment, just for one person. Proxmox clust
 
 | Layer | What's there | Notes |
 | --- | --- | --- |
-| Compute | Custom Proxmox host + two Dell PowerEdge servers (R410, R710) joining the cluster | Heterogeneous mix — single-engineer homelab, parts opportunistically combined |
+| Compute | 3-node Proxmox cluster: `pve1` (custom AMD desktop), `pve2` (Dell PowerEdge R410), `pve3` (Dell PowerEdge R710) | Heterogeneous mix — single-engineer homelab, parts opportunistically combined; 3 nodes give natural majority quorum |
 | Local LLM | Dedicated bare-metal NixOS box (Ryzen 9 + ROCm-capable GPU, ~12 TB RAIDZ1 model library) | Outside the Proxmox cluster — GPU-bound workload kept off hypervisor to avoid passthrough overhead |
 | Storage | ZFS on Proxmox hosts; SAS backplane on R710 for cluster bulk storage; NVMe for hot tiers | Mixed-tier by accident, kept by design — bulk on SAS, working sets on NVMe |
 | Networking | UniFi end-to-end: gateway, switches (with 10G SFP+ uplinks), APs | Single-pane management; 10G fiber backbone where it matters |
@@ -99,6 +99,7 @@ LXC by default. Native packages where possible. Docker is the exception — high
 | Cribl Edge | LXC | Native package, network-heavy |
 | Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
 | Home Assistant | LXC | Native install via supervised path |
+| Media stack (`download-vpn` + `sonarr`/`radarr` + `plex`) | LXC chain on a dedicated VLAN | VPN-locked download tier; netfilter killswitch enforces that any non-VPN egress drops |
 | docker-host | VM | Isolated landing pad for vendor Docker images |
 | GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
 | Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
