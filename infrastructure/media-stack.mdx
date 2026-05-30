@@ -1,34 +1,16 @@
 ---
-title: "Media stack (VPN-locked)"
-description: "Container-first media pipeline (download + *arr + library) where the download tier can only egress through a VPN, enforced by a netfilter killswitch."
+title: "Self-hosted Netflix"
+description: "A self-hosted media library running as an LXC chain on a dedicated VLAN of the homelab cluster."
 tier: 2
 ---
 
-> The download tier has exactly one path to the internet: through the VPN. If the VPN drops, the container drops with it.
+The homelab runs a self-hosted Netflix: a media library served from LXCs on a dedicated VLAN, managed by Ansible, provisioned by `terraform-proxmox`. The VLAN is defined in `terraform-unifi` alongside every other service tier.
 
-The homelab's media stack runs as a chain of LXCs on a dedicated VLAN. The shape is conventional — a download client, the `*arr` indexers, a library server — but with a hard rule that the download container cannot reach the internet except through a VPN tunnel.
+The media VLAN follows the same per-service pattern as the rest of the homelab — VLAN number encodes the service tier, IP scheme is `cidrhost(prefix, vmid)`, and firewall policy is managed by `terraform-unifi`.
 
-## The chain
+## Container choice
 
-| Tier | Role | Why a container, why this VLAN |
-| --- | --- | --- |
-| `download-vpn` | Download client + VPN gateway | Outbound is gated by killswitch; LXC keeps it on the host's network stack so policy is enforceable at the kernel layer |
-| `sonarr` / `radarr` | Indexers, automation | LXC; talks to `download-vpn` over the media VLAN, not the public internet |
-| `plex` | Library / streaming | LXC; reads from a media library dataset on the cluster storage tier |
-
-All four sit on the same VLAN (`media_svc` in the per-service scheme). The VLAN itself has no policy out to the wider infrastructure — it can reach the library and the download client and the internet (through the VPN tunnel only), and nothing else.
-
-## Why VPN-locked
-
-The download tier is the only piece of the homelab that initiates outbound traffic to consumer protocols. Treating it as untrusted and forcing its egress through a known-policy VPN tunnel:
-
-- Keeps ISP-visible traffic on the homelab's terms
-- Makes a leak detectable: any outbound packet from the LXC that didn't traverse the VPN interface gets dropped by netfilter, so "did this leak?" is answerable from logs
-- Lets the `*arr` containers reach the same download client over the local VLAN without any of them needing the VPN themselves
-
-## Container-first, not Docker
-
-The download client and VPN gateway are commonly shipped as Docker images. The homelab runs them as LXC instead, configured by Ansible. Reasons are the same as the [LXC vs Docker decision tree](/infrastructure/lxc-vs-docker): kernel-namespace processes give predictable network handling, which is exactly what a killswitch needs.
+LXC, not Docker — consistent with the [LXC vs Docker](/infrastructure/lxc-vs-docker) decision tree. Native packages where they exist; Ansible manages config.
 
 ## Related
 

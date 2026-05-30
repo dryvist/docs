@@ -99,7 +99,7 @@ LXC by default. Native packages where possible. Docker is the exception — high
 | Cribl Edge | LXC | Native package, network-heavy |
 | Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
 | Home Assistant | LXC | Native install via supervised path |
-| Media stack (`download-vpn` + `sonarr`/`radarr` + `plex`) | LXC chain on a dedicated VLAN | VPN-locked download tier; netfilter killswitch enforces that any non-VPN egress drops |
+| Self-hosted Netflix | LXC chain on a dedicated VLAN | Governed by the same UniFi policy + Proxmox placement patterns as the rest of the homelab |
 | docker-host | VM | Isolated landing pad for vendor Docker images |
 | GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
 | Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
