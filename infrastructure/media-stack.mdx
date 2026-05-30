@@ -4,9 +4,7 @@ description: "A self-hosted media library running as an LXC chain on a dedicated
 tier: 2
 ---
 
-The homelab runs a self-hosted Netflix: a media library served from LXCs on a dedicated VLAN, managed by Ansible, provisioned by `terraform-proxmox`. The VLAN is defined in `terraform-unifi` alongside every other service tier.
-
-The media VLAN follows the same per-service pattern as the rest of the homelab — VLAN number encodes the service tier, IP scheme is `cidrhost(network_cidrs[vlan], vmid)`, and firewall policy is managed by `terraform-unifi`.
+The homelab runs a self-hosted Netflix: a media library served from LXCs on a dedicated VLAN, managed by Ansible, provisioned by `terraform-proxmox`. The VLAN is defined in `terraform-unifi` alongside every other service tier, and follows the same per-service segmentation pattern.
 
 ## Container choice
 

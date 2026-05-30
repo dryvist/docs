@@ -14,10 +14,10 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
-- Defines every infrastructure VLAN (DNS, compute, BMC, SIEM, pipeline, data, AI, apps, media, home automation) as `unifi-network` resources
-- Builds port profiles per role: trunk for hypervisor uplinks, untagged-per-VLAN for single-purpose appliances
+- Defines every infrastructure VLAN as `unifi-network` resources
+- Builds port profiles per role
 - Encodes firewall rules and fixed-IP reservations alongside the network they apply to
-- All CIDR values come from one canonical source (Doppler), shared with `terraform-proxmox` — no second source of truth
+- Subnet values stay in the secret store and are consumed by both `terraform-unifi` and `terraform-proxmox` — single source, no drift
 
 ## How it fits
 
@@ -32,9 +32,7 @@ Network plumbing only. VM/LXC placement on top of these VLANs is `terraform-prox
 
 ## Why per-service VLANs
 
-The homelab uses VLAN-as-service-tier. A guest's VLAN encodes what kind of workload it is (DNS, observability, app, media, etc.) and therefore which policies apply to it. The number stays meaningful from L2 up through firewall rules and DNS naming, which keeps the inventory comprehensible at a glance.
-
-VLAN IDs are OSI-ordered low → high so the number itself reads like a tier label. Per-guest IP is derived as `cidrhost(network_cidrs[vlan], vmid)` — last octet equals the VMID, gateway is `.1`. The VMID alone tells you the host; the host's VLAN tells you which prefix.
+The homelab uses VLAN-as-service-tier: a guest's VLAN encodes what kind of workload it is, and therefore which policies apply to it. That keeps the inventory comprehensible at a glance and lets firewall policy attach to a tier rather than to individual hosts.
 
 ## Related repos
 
