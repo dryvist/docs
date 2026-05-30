@@ -1,0 +1,25 @@
+---
+title: "Self-hosted Netflix"
+description: "A self-hosted media library running as an LXC chain on a dedicated VLAN of the homelab cluster."
+tier: 2
+---
+
+The homelab runs a self-hosted Netflix: a media library served from LXCs on a dedicated VLAN, managed by Ansible, provisioned by `terraform-proxmox`. The VLAN is defined in `terraform-unifi` alongside every other service tier, and follows the same per-service segmentation pattern.
+
+## Container choice
+
+LXC, not Docker — consistent with the [LXC vs Docker](/infrastructure/lxc-vs-docker) decision tree. Native packages where they exist; Ansible manages config.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
+    Why the decision tree lands on LXC for this stack.
+  </Card>
+  <Card title="UniFi networking" icon="network-wired" href="/infrastructure/repos/terraform-unifi">
+    Where the media VLAN itself is defined.
+  </Card>
+  <Card title="Homelab" icon="house" href="/about/homelab">
+    What the full cluster looks like.
+  </Card>
+</CardGroup>

@@ -43,13 +43,16 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
 ## Repos in this section
 
 <CardGroup cols={2}>
-  <Card title="terraform-proxmox" icon="server" href="/infrastructure/terraform-proxmox">
+  <Card title="terraform-proxmox" icon="server" href="/infrastructure/repos/terraform-proxmox">
     VMs and LXC containers on the Proxmox cluster.
   </Card>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/ansible-proxmox">
+  <Card title="terraform-unifi" icon="network-wired" href="/infrastructure/repos/terraform-unifi">
+    UniFi networks, VLANs, port profiles, firewall rules — network-as-code.
+  </Card>
+  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
     Host config — ZFS, networking, users, hardening.
   </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
     App deploy — HAProxy, Cribl Edge, Cribl Stream.
   </Card>
   <Card title="terraform-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
@@ -58,7 +61,7 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
   <Card title="CI/CD" icon="play" href="/infrastructure/cicd/overview">
     GitHub Actions strategy: self-hosted RunsOn AWS spot, OIDC, plan/apply pattern.
   </Card>
-  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/orbstack-kubernetes">
+  <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/repos/orbstack-kubernetes">
     Local Kubernetes cluster on macOS — monitoring stack + AI gateway.
   </Card>
   <Card title="tf-splunk-aws" icon="chart-line" href="/observability/tf-splunk-aws">
@@ -77,6 +80,9 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
   </Card>
   <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
     Encrypted-at-rest secrets across Terraform and Ansible repos.
+  </Card>
+  <Card title="Self-hosted Netflix" icon="film" href="/infrastructure/media-stack">
+    Media library on a dedicated VLAN.
   </Card>
 </CardGroup>
 

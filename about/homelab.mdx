@@ -11,11 +11,11 @@ The homelab is a real production environment, just for one person. Proxmox clust
 
 | Layer | What's there | Notes |
 | --- | --- | --- |
-| Compute | Custom Proxmox host + two Dell PowerEdge servers (R410, R710) joining the cluster | Heterogeneous mix — single-engineer homelab, parts opportunistically combined |
-| Local LLM | Dedicated bare-metal NixOS box (Ryzen 9 + ROCm-capable GPU, ~12 TB RAIDZ1 model library) | Outside the Proxmox cluster — GPU-bound workload kept off hypervisor to avoid passthrough overhead |
-| Storage | ZFS on Proxmox hosts; SAS backplane on R710 for cluster bulk storage; NVMe for hot tiers | Mixed-tier by accident, kept by design — bulk on SAS, working sets on NVMe |
+| Compute | 3-node Proxmox cluster: `pve1`, `pve2`, `pve3` | Heterogeneous mix — single-engineer homelab, parts opportunistically combined; 3 nodes give natural majority quorum |
+| Local LLM | Dedicated bare-metal NixOS box with discrete GPU and a large local model library | Outside the Proxmox cluster — GPU-bound workload kept off hypervisor to avoid passthrough overhead |
+| Storage | ZFS on Proxmox hosts; SAS backplane on one node for cluster bulk storage; NVMe for hot tiers | Mixed-tier by accident, kept by design — bulk on SAS, working sets on NVMe |
 | Networking | UniFi end-to-end: gateway, switches (with 10G SFP+ uplinks), APs | Single-pane management; 10G fiber backbone where it matters |
-| Power | Rack UPS (Eaton 5P750R) for servers; separate UPS for the Home Assistant Pi | Active NUT monitoring planned once the LLM box is built |
+| Power | Rack UPS for servers; separate UPS for the Home Assistant Pi | Active NUT monitoring planned once the LLM box is built |
 | Rack management | Raspberry Pi running Home Assistant; iDRAC vKVM jump VM in cluster for Java Web Start console access | Old BMC firmware needs a Java Web Start client; the jump VM keeps Java off the laptop |
 
 ## Network topology
@@ -99,6 +99,7 @@ LXC by default. Native packages where possible. Docker is the exception — high
 | Cribl Edge | LXC | Native package, network-heavy |
 | Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
 | Home Assistant | LXC | Native install via supervised path |
+| Self-hosted Netflix | LXC chain on a dedicated VLAN | Governed by the same UniFi policy + Proxmox placement patterns as the rest of the homelab |
 | docker-host | VM | Isolated landing pad for vendor Docker images |
 | GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
 | Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
@@ -106,7 +107,7 @@ LXC by default. Native packages where possible. Docker is the exception — high
 
 ## Provisioning + configuration
 
-[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top. For the rationale on LXC defaults vs the Docker exception, see [LXC vs Docker](/infrastructure/lxc-vs-docker); for the macOS counterpart that runs the monitoring stack as Kubernetes, see [Kubernetes overview](/infrastructure/kubernetes-overview) and [`orbstack-kubernetes`](/infrastructure/orbstack-kubernetes).
+[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top. For the rationale on LXC defaults vs the Docker exception, see [LXC vs Docker](/infrastructure/lxc-vs-docker); for the macOS counterpart that runs the monitoring stack as Kubernetes, see [Kubernetes overview](/infrastructure/kubernetes-overview) and [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
 
 ## DR plan
 

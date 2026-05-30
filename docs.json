@@ -35,6 +35,10 @@
       {
         "label": "Profile",
         "href": "https://github.com/JacobPEvans"
+      },
+      {
+        "label": "dryvist",
+        "href": "https://github.com/dryvist"
       }
     ],
     "primary": {
@@ -66,12 +70,19 @@
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
-              "infrastructure/terraform-proxmox",
-              "infrastructure/ansible-proxmox",
-              "infrastructure/ansible-proxmox-apps",
-              "infrastructure/orbstack-kubernetes",
+              {
+                "group": "Repos",
+                "pages": [
+                  "infrastructure/repos/terraform-proxmox",
+                  "infrastructure/repos/terraform-unifi",
+                  "infrastructure/repos/ansible-proxmox",
+                  "infrastructure/repos/ansible-proxmox-apps",
+                  "infrastructure/repos/orbstack-kubernetes"
+                ]
+              },
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
+              "infrastructure/media-stack",
               "infrastructure/legacy-bmc-tactics",
               "infrastructure/secrets-sops",
               "infrastructure/terraform-check-placement",
@@ -214,7 +225,8 @@
       {
         "header": "Connect",
         "items": [
-          {"label": "GitHub", "href": "https://github.com/JacobPEvans"},
+          {"label": "GitHub (JacobPEvans)", "href": "https://github.com/JacobPEvans"},
+          {"label": "GitHub (dryvist)", "href": "https://github.com/dryvist"},
           {"label": "LinkedIn", "href": "https://www.linkedin.com/in/JacobPaulEvans/"}
         ]
       },
@@ -222,6 +234,7 @@
         "header": "Docs",
         "items": [
           {"label": "Source repo", "href": "https://github.com/JacobPEvans/docs"},
+          {"label": "Source repo (dryvist)", "href": "https://github.com/dryvist/docs"},
           {"label": "Built with Mintlify", "href": "https://mintlify.com"},
           {"label": "Dryvist", "href": "https://docs.dryvist.com"}
         ]

@@ -24,7 +24,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Upstream | Deploys | Downstream |
 | --- | --- | --- |
-| [Proxmox config](/infrastructure/ansible-proxmox) hands off ready hosts | HAProxy (tcp/udp front door), Cribl Edge (collection), Cribl Stream (routing) | Cribl Stream forwards over HEC to Splunk Enterprise |
+| [Proxmox config](/infrastructure/repos/ansible-proxmox) hands off ready hosts | HAProxy (tcp/udp front door), Cribl Edge (collection), Cribl Stream (routing) | Cribl Stream forwards over HEC to Splunk Enterprise |
 
 <RepoFit>
 This is the deploy tier. Anything that's stateful and long-running on a homelab guest lands here.
@@ -50,7 +50,7 @@ This is the deploy tier. Anything that's stateful and long-running on a homelab 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/ansible-proxmox">
+  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
     Host config. Must run first.
   </Card>
   <Card title="Observability" icon="chart-line" href="/observability/overview">

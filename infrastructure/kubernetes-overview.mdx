@@ -6,7 +6,7 @@ tier: 2
 
 > The Mac runs Kubernetes. The homelab does not. They do the same job, on the platform each host actually supports natively.
 
-[OrbStack](https://orbstack.dev/) provides a Kubernetes cluster on macOS that the [`orbstack-kubernetes`](/infrastructure/orbstack-kubernetes) manifest set deploys workloads into. There is no Kubernetes anywhere else on this stack — the homelab Proxmox cluster runs [LXC + Ansible](/infrastructure/lxc-vs-docker) for the equivalent role. This page explains why the split exists and what runs where.
+[OrbStack](https://orbstack.dev/) provides a Kubernetes cluster on macOS that the [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) manifest set deploys workloads into. There is no Kubernetes anywhere else on this stack — the homelab Proxmox cluster runs [LXC + Ansible](/infrastructure/lxc-vs-docker) for the equivalent role. This page explains why the split exists and what runs where.
 
 ## Where Kubernetes lives
 
@@ -33,7 +33,7 @@ Four healthchecks.io CronJobs ping every five minutes as dead-man switches: `pip
 
 ## What does not run on the OrbStack cluster
 
-- The homelab data plane (HAProxy, the production Cribl Edge tier, Splunk Enterprise) — that's [`ansible-proxmox-apps`](/infrastructure/ansible-proxmox-apps) on LXC.
+- The homelab data plane (HAProxy, the production Cribl Edge tier, Splunk Enterprise) — that's [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) on LXC.
 - The macOS host telemetry pack ([`cc-edge-the-mac-pack`](/observability/cc-edge-the-mac-pack)) — that needs a **native macOS Cribl Edge install**, not a container, because its exec inputs call `powermetrics`, `pmset`, `ioreg`, `memory_pressure`.
 - Long-lived stateful workloads (databases, indexers). The cluster is reset more often than it's preserved; nothing of value lives there.
 
@@ -54,7 +54,7 @@ The choice between K8s, LXC, and Docker comes down to: what platform is the host
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="orbstack-kubernetes" icon="server" href="/infrastructure/orbstack-kubernetes">
+  <Card title="orbstack-kubernetes" icon="server" href="/infrastructure/repos/orbstack-kubernetes">
     The repo, manifests, Makefile, the self-hosted runner setup.
   </Card>
   <Card title="LXC vs Docker decision tree" icon="cube" href="/infrastructure/lxc-vs-docker">
