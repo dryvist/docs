@@ -1,19 +1,35 @@
 ---
 title: "Conventions"
-description: "Cross-repo writing standards — commit shape, when scripts are allowed, when diagrams are required."
+description: "Cross-repo writing standards — commit shape, branch shape, PR shape, transport, scripts, diagrams."
 tier: 1
 ---
 
-> Three standards that apply to every repo, public or private, regardless of language or tool.
+> Standards that apply to every repo, public or private, regardless of language or tool.
 
 These conventions are the human-readable form of policies that AI assistants enforce automatically. Every contributor — human or model — works inside the same envelope, so PRs land consistently no matter who authored them.
 
 ## What this section covers
 
+### Git & GitHub
+
 <CardGroup cols={2}>
   <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
-    No emoji in commit subjects, Conventional Commits, branch hygiene, the autonomy rules that decide when to ship vs ask.
+    No emoji in commit subjects, Conventional Commits, the autonomy rules that decide when to ship vs ask.
   </Card>
+  <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
+    Conventional Branch — short-form types only. `feat/<name>`, never `feature/<name>`.
+  </Card>
+  <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
+    PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge default.
+  </Card>
+  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
+    SSH for public repos, HTTPS for private repos. Visibility decides — not owner, not org.
+  </Card>
+</CardGroup>
+
+### Writing & structure
+
+<CardGroup cols={2}>
   <Card title="No scripts in non-script files" icon="ban" href="/conventions/no-scripts">
     Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow.
   </Card>

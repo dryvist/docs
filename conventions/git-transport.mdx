@@ -1,0 +1,87 @@
+---
+title: "Git transport"
+description: "SSH for public repos, HTTPS for private repos. Visibility decides — not owner, not org. Keeps least-privilege token gates meaningful for writes."
+tier: 2
+---
+
+> Two transports, one rule: pick by **visibility**, not by owner.
+
+Every repo across the org has exactly one canonical transport. The visibility of the repo decides which.
+
+## The rule
+
+| Repo visibility | Transport | Remote URL shape | Authenticates via |
+| --- | --- | --- | --- |
+| Public | SSH | `git@github.com:<owner>/<repo>.git` | Unlocked SSH key |
+| Private | HTTPS | `https://github.com/<owner>/<repo>.git` | GitHub token (PAT or fine-grained) |
+
+The owner — personal account, org, fork — does not matter. A public dryvist repo gets SSH; a private personal repo gets HTTPS. The transport is a property of the repo, not the account.
+
+## Why split this way
+
+The two scenarios that drive the rule:
+
+### Public repos use SSH because there's nothing to gate
+
+A public repo's read path needs no auth (anyone can `git clone https://…`), and the write path is gated by GitHub-side branch protection and ruleset rules rather than client-side credentials. Routing public pushes through SSH:
+
+- Skips per-command credential lookups (no token timeout, no keychain unlock).
+- Keeps the GitHub PAT scope completely orthogonal to public writes. Even a read-only PAT can push to a public repo over SSH, because the SSH key, not the PAT, is what GitHub authenticates.
+- Works fine on hosts where no PAT is configured at all (CI runners with deploy keys, for example).
+
+### Private repos use HTTPS because the token tier needs to gate writes
+
+A private repo's write path is *only* gated by client-side credentials. If a private repo used SSH:
+
+- An unlocked SSH key would auto-authenticate to every private repo the user can reach — no per-repo scope, no per-tier scope, no audit trail of which tool initiated the push.
+- Any process with read access to `~/.ssh/id_*` could push, because SSH is binary "key works" or "key doesn't" — there is no fine-grained scope on the SSH side.
+
+Routing private pushes through HTTPS forces the git client to look up a credential on every `git push`. That credential lookup goes through the platform's token store (macOS keychain, `git-credential-manager`, OS keyring, etc.), which can hold tokens scoped narrowly — read-only on most repos, read+write on a specific set, admin on a smaller set. The same tier system that gates `gh` API calls now also gates `git push`.
+
+Without an appropriately-scoped token in the credential store, a private push fails at the credential prompt. That failure is the point: it makes the user (or AI agent) escalate explicitly to a higher-privilege token before any write reaches the remote.
+
+## Setting the right remote URL
+
+After cloning, verify and fix the remote if wrong:
+
+```bash
+# Inspect
+git remote -v
+
+# Fix a private repo that was accidentally cloned over SSH
+git remote set-url origin https://github.com/<owner>/<repo>.git
+
+# Fix a public repo that was accidentally cloned over HTTPS
+git remote set-url origin git@github.com:<owner>/<repo>.git
+```
+
+When in doubt about visibility:
+
+```bash
+gh repo view <owner>/<repo> --json visibility --jq .visibility
+# PUBLIC  → use SSH
+# PRIVATE → use HTTPS
+```
+
+## What this does not cover
+
+- **Specific token tiers, PAT scopes, or which keychain holds which token.** That's per-machine setup; it lives in private user-level documentation, not on this public site. Public docs explain *that* a credential lookup happens; the *which credential and how* is private operational detail.
+- **CI authentication.** GitHub Actions, deploy keys, and OIDC federation use their own per-job credentials wired into the workflow. The SSH-vs-HTTPS rule is for local developer transports, not CI.
+- **Submodules.** Treat the submodule URL the same way: public submodule → SSH, private submodule → HTTPS, regardless of how the parent repo is cloned.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
+    Branch names are transport-agnostic. The conventions are the same on either remote.
+  </Card>
+  <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
+    PR creation uses the `gh` CLI, which respects the same token tier as a private `git push`.
+  </Card>
+  <Card title="Golden laws" icon="shield-halved" href="/security/golden-laws">
+    The non-negotiable rules around secrets, force-pushes, and admin operations.
+  </Card>
+  <Card title="GitHub authentication docs" icon="github" href="https://docs.github.com/en/authentication">
+    Upstream reference on connecting to GitHub over SSH and HTTPS.
+  </Card>
+</CardGroup>

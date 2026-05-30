@@ -170,6 +170,9 @@
             "pages": [
               "conventions/overview",
               "conventions/commit-conventions",
+              "conventions/branch-conventions",
+              "conventions/pr-conventions",
+              "conventions/git-transport",
               "conventions/no-scripts",
               "conventions/diagramming"
             ]

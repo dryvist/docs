@@ -1,0 +1,63 @@
+---
+title: "Pull request conventions"
+description: "PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge default; no merge commits."
+tier: 2
+---
+
+> The PR title becomes a commit subject the moment it merges. Write it like a commit, because it is one.
+
+Pull requests are the unit of change that lands on `main`. The title, the description, and the merge strategy together decide what the changelog says and how easily someone six months from now can answer "why did this happen?".
+
+## Title
+
+- **Use the same [conventional-commit prefix](/conventions/commit-conventions) the squash commit will have.** `feat: …`, `fix: …`, `chore(scope): …`. The squash-merge takes the PR title as the commit subject verbatim; if the prefix is wrong, `release-please` computes the wrong version bump.
+- **No emoji.** Same rule as commit subjects — machine-parsed surface, no decoration.
+- **Under 70 characters.** Lengthy context belongs in the body, not the subject line that GitHub truncates in the merged-PR list.
+- **Imperative mood**, present tense: "add netflow firewall rule", not "added" or "adding".
+- **Scope is optional, lowercase, in parens** when used: `feat(api): rate-limit token refresh`.
+
+## Body
+
+Three sections, in this order:
+
+1. **`## Summary`** — 1–3 bullets covering *why* this change exists. Not the diff (the reader sees that); the motivation. If the PR closes a Linear issue or GitHub issue, say so here (`Closes JAC-50`, `Fixes #127`).
+2. **`## Test plan`** — bulleted markdown checklist. What CI runs automatically (`bun run build`, `pnpm test`, `tofu fmt -check`), and what a reviewer still has to verify by hand (browser smoke test, manual `terragrunt plan`, anything CI cannot see). Tick the boxes as work completes.
+3. **Optional: `## Security notes`** — when the change touches credentials, IAM scopes, network exposure, secret-store layout, or anything else where the security review is non-obvious from the diff. Empty section = "I considered it and there is nothing to flag" (different from "I did not think about security").
+
+Lead with the *why*. The diff already shows the *what*. PR descriptions that just restate the diff in English are dead text — the reader skims past them straight to the files.
+
+## Merge strategy
+
+- **Squash-merge is the default.** One PR = one commit on `main`. The PR title becomes the commit subject; the PR description becomes the commit body. `release-please` walks this linear history to compute version bumps.
+- **No merge commits** on `main`. The Settings → "Allow merge commits" toggle stays off org-wide.
+- **Rebase-merge is allowed** for stacked PRs where each constituent commit is itself a clean conventional-commit and worth preserving separately. Rare. Default to squash.
+- **No force-push to `main`.** Force-push to your own feature branch is fine while the PR is open.
+
+## Review
+
+- CI must be green before merge. CodeQL alerts must be resolved, not dismissed — see [Golden laws](/security/golden-laws).
+- A reviewer's `request changes` blocks merge until the author addresses every comment, either with a fix or with a written reply explaining why no fix is needed. Silent dismissal is not acceptable.
+- The author drives the conversation. If a reviewer goes quiet for > 24h on an open PR, the author pings them in the PR thread or on Slack — the PR stops waiting silently.
+
+## Voice in the description and review thread
+
+- **Tell hard truths directly.** Don't soften with "perhaps" or "maybe consider". Disagree explicitly when you disagree.
+- **ALL CAPS from the requester means refocus immediately.** A capitalized correction is the highest-priority signal in the conversation; everything else pauses until that direction is followed.
+- **Explain complex reasoning.** A two-line diff with five lines of justification is fine; an ambiguous diff with no rationale is not.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
+    The vocabulary the PR title uses. Subject rules, voice, autonomy — all the same.
+  </Card>
+  <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
+    Branch type predicts the PR title prefix. One decision, made once.
+  </Card>
+  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
+    Why private-repo PR pushes go over HTTPS even when public repos use SSH.
+  </Card>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    The release-please flow that consumes the squash-commit subject.
+  </Card>
+</CardGroup>
