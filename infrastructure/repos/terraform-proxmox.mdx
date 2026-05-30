@@ -26,7 +26,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 | | Upstream | Downstream |
 | --- | --- | --- |
 | Trigger | `terragrunt apply` from the operator | Outputs an Ansible-ready inventory |
-| Talks to | Proxmox cluster API (read/write) | [`ansible-proxmox`](/infrastructure/ansible-proxmox), [`ansible-proxmox-apps`](/infrastructure/ansible-proxmox-apps) |
+| Talks to | Proxmox cluster API (read/write) | [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox), [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) |
 
 <RepoFit>
 Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmox` or `ansible-proxmox-apps`.
@@ -52,10 +52,10 @@ Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmo
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/ansible-proxmox">
+  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
     Configures the host once Terraform has provisioned it.
   </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
     Deploys HAProxy, Cribl Edge, Cribl Stream on top.
   </Card>
   <Card title="tf-splunk-aws" icon="chart-line" href="/observability/tf-splunk-aws">

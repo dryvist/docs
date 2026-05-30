@@ -25,7 +25,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Upstream | Downstream |
 | --- | --- |
-| [Proxmox provisioning](/infrastructure/terraform-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/ansible-proxmox-apps) |
+| [Proxmox provisioning](/infrastructure/repos/terraform-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/repos/ansible-proxmox-apps) |
 
 <RepoFit>
 Run once per host after Terraform finishes. Re-running is safe — every role is idempotent.
@@ -51,10 +51,10 @@ Run once per host after Terraform finishes. Re-running is safe — every role is
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="terraform-proxmox" icon="server" href="/infrastructure/terraform-proxmox">
+  <Card title="terraform-proxmox" icon="server" href="/infrastructure/repos/terraform-proxmox">
     The provisioner. Run this first.
   </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/ansible-proxmox-apps">
+  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
     The app deployer. Run this third.
   </Card>
   <Card title="Configuration overview" icon="screwdriver-wrench" href="/configuration/overview">
