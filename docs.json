@@ -43,7 +43,7 @@
     ],
     "primary": {
       "type": "github",
-      "href": "https://github.com/dryvist/docs"
+      "href": "https://github.com/JacobPEvans/docs"
     }
   },
   "navigation": {
@@ -233,7 +233,8 @@
       {
         "header": "Docs",
         "items": [
-          {"label": "Source repo", "href": "https://github.com/dryvist/docs"},
+          {"label": "Source repo", "href": "https://github.com/JacobPEvans/docs"},
+          {"label": "Source repo (dryvist)", "href": "https://github.com/dryvist/docs"},
           {"label": "Built with Mintlify", "href": "https://mintlify.com"},
           {"label": "Dryvist", "href": "https://docs.dryvist.com"}
         ]
