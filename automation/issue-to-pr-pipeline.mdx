@@ -1,0 +1,129 @@
+---
+title: "Issue to PR pipeline"
+description: "The eight-step cloud flow that turns a new GitHub issue into a draft PR with green CI, AI review, and a merge-readiness comment."
+tier: 2
+---
+
+> Open issue. Don't open the dashboard. Come back in five minutes to a draft PR ready for your eyes.
+
+The pipeline on this repo, [`JacobPEvans/docs`](https://github.com/JacobPEvans/docs), uses six thin caller files in `.github/workflows/` that delegate to reusable workflows in [`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows). Each caller is 10–30 lines; the AI work all lives in the upstream reusable workflow.
+
+## What runs, in order
+
+| Step | Trigger | Caller file | Reusable workflow | What it does |
+| --- | --- | --- | --- | --- |
+| 1 | `issues: [opened]` | `issue-triage.yml` | `ai-workflows/.github/workflows/issue-triage.yml@main` | Categorizes, deduplicates, labels |
+| 2 | `issues: [opened]` | `issue-resolver.yml` | `ai-workflows/.github/workflows/issue-resolver.yml@main` | Creates a **draft PR** if the issue is well-scoped and not on the excluded-labels list |
+| 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller — handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
+| 4 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | `ai-workflows/.github/workflows/ci-fix.yml@main` | Reads the failed CI log, pushes a fix commit (up to 2 attempts per PR, 5 per day) |
+| 5 | `pull_request_review: [submitted]` | `final-pr-review.yml` | `ai-workflows/.github/workflows/final-pr-review.yml@main` | Final merge-readiness gate — checks TODOs, debugger artifacts, CI rollup |
+| 6 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `ai-workflows/.github/workflows/project-router.yml@main` | Routes the item to the right GitHub Project with smart field assignment |
+| 7 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
+| 8 | Human clicks **Merge** | n/a | n/a | The only manual step |
+
+The deprecated `claude-review.yml` (removed 2026-04-04 in favor of Gemini + Copilot reviews) and the disabled-auto-trigger `pr-issue-linker.yml` are not wired. See [ai-workflows](/automation/cloud-pipelines/ai-workflows) for the full catalog and what's not active.
+
+## How the six callers connect
+
+{/* Shape: hub-and-spokes. 1 hub, 6 leaves stacked via invisible links. */}
+{/* Aspect: ~4:3 (LR). Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  R([docs repo])
+
+  subgraph callers[Caller files in .github/workflows/]
+    direction TB
+    A([issue-triage])
+    B([issue-resolver])
+    C([ci-fix])
+    D([final-pr-review])
+    E([project-router])
+    F([post-merge-docs-review])
+    A ~~~ B ~~~ C ~~~ D ~~~ E ~~~ F
+  end
+
+  R --> A
+
+  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class R host
+  class A,B,C,D,E,F ai
+```
+
+The hub is the consumer repo; each caller is a one-shot wrapper around an upstream reusable workflow. They run independently when their trigger fires.
+
+## What each caller actually contains
+
+A caller is the minimum YAML to declare a trigger, set permissions, and call the upstream:
+
+```yaml
+name: Issue Triage
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  run:
+    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@main
+    secrets: inherit
+```
+
+Two patterns are slightly larger:
+
+- **`ci-fix.yml`** passes a `repo_context` and `ci_structure` describing what the repo is and what CI runs, so the AI knows what to fix.
+- **`post-merge-docs-review.yml`** uses the [Post-Merge Dispatch Pattern](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/PATTERNS.md#post-merge-dispatch-pattern) — a two-job file because `push` events aren't supported by `claude-code-action@v1`, so the caller re-dispatches as `workflow_dispatch`.
+
+## Secrets the pipeline needs
+
+Distributed automatically by [`secrets-sync`](/security/secrets-sync) when a repo is added to the `_github_app_repos` and `_all_repos` anchors in `secrets-config.yml`:
+
+| Secret / variable | Source | Purpose |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` (secret) | `_all_repos` | Auth for `claude-code-action` to call the Anthropic API directly |
+| `GH_APP_CLAUDE_BOT_PRIVATE_KEY` (secret) | `_github_app_repos` | Mints App tokens for signed commits attributed to `JacobPEvans-claude[bot]` |
+| `GH_APP_CLAUDE_BOT_ID` (variable) | `_github_app_repos` | App identifier |
+
+Per [Git signing](/infrastructure/cicd/git-signing), every AI workflow mints a `JacobPEvans-claude` installation token immediately before calling `claude-code-action@v1`, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot.
+
+## Rate and safety guards
+
+The reusable workflows enforce conservative defaults so a runaway loop can't burn cloud spend:
+
+- **`issue-resolver.yml`** — `max_attempts: 1` per issue, `daily_limit: 5` per repo, `excluded_labels: "type:security,type:feature,type:breaking,size:l,size:xl"` won't touch
+- **`ci-fix.yml`** — `daily_run_limit: 5` per repo, max 2 fix attempts per PR
+- **`final-pr-review.yml`** — `daily_run_limit: 5`
+- **All workflows** — fork PRs blocked by `if:` guards, branch protection enforces the final merge gate
+
+## The pieces this doesn't include
+
+The cloud pipeline gets a PR to **draft + reviewed**. It does NOT:
+
+- Mark the PR ready for merge — that's a human decision
+- Click the merge button — never automated
+- Override branch protection or required reviewers
+- Touch repos outside the current org boundary
+
+For the local iteration loop on a PR you're editing yourself, see [`/ship` and `/finalize-pr`](/ai-development/skills/ship-and-finalize).
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="ai-workflows" icon="github" href="/automation/cloud-pipelines/ai-workflows">
+    The full catalog of 16 reusable workflows, event-triggered + scheduled.
+  </Card>
+  <Card title="claude-code-routines" icon="clock" href="/automation/scheduled-routines/claude-code-routines">
+    The cron half — six routines that scan the org and pick up loose ends.
+  </Card>
+  <Card title="ai-workflows getting started" icon="book" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+    Caller templates and the live workflow catalog.
+  </Card>
+  <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+    Why direct Anthropic API, not OAuth tokens; cost controls; fallback providers.
+  </Card>
+</CardGroup>

@@ -123,6 +123,7 @@
               "nix/nix-home",
               "nix/nix-ai",
               "nix/nix-devenv",
+              "nix/nix-claude-code",
               "nix/package-placement"
             ]
           },
@@ -132,7 +133,36 @@
               "ai-development/overview",
               "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
-              "ai-development/claude-code-plugins"
+              "ai-development/claude-code-plugins",
+              {
+                "group": "Skills",
+                "pages": [
+                  "ai-development/skills/overview",
+                  "ai-development/skills/ship-and-finalize",
+                  "ai-development/skills/codeql-resolution"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Automation",
+            "pages": [
+              "automation/overview",
+              "automation/issue-to-pr-pipeline",
+              {
+                "group": "Cloud pipelines",
+                "pages": [
+                  "automation/cloud-pipelines/overview",
+                  "automation/cloud-pipelines/ai-workflows"
+                ]
+              },
+              {
+                "group": "Scheduled routines",
+                "pages": [
+                  "automation/scheduled-routines/overview",
+                  "automation/scheduled-routines/claude-code-routines"
+                ]
+              }
             ]
           },
           {

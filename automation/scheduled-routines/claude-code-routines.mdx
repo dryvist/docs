@@ -1,0 +1,105 @@
+---
+title: "claude-code-routines"
+description: "Six cron-scheduled Claude Code routines that watch the whole org without per-repo wiring. Pick up loose ends the event-triggered pipeline misses."
+tier: 2
+---
+
+> Cron, not events. Org-wide, not per-repo. One configuration, scans everything.
+
+[`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) ships six prompt files that run on schedule inside Anthropic's cloud-hosted Claude Code sandbox. They discover repos under `$GH_OWNER` via `gh search`, do their work using `gh` CLI calls, and report results to Slack via the official Slack MCP connector. There is no per-repo wiring — drop a repo into the org and the routines pick it up on the next run.
+
+## The six routines
+
+| Routine | Schedule (CT) | What it does |
+| --- | --- | --- |
+| Morning Briefing | Daily 5:00 AM | Read-only activity summary: new PR reviews, opened issues, CI failures, anything that needs attention |
+| The Sentinel | Daily 12:33 AM | Param/secret audit; picks one PR to review; flags operator-specific patterns |
+| The Custodian | Daily 2:00 AM | Weighted-random maintenance: stale branch cleanup, missing labels, repo health audit |
+| Issue Solver | Daily 7:00 AM + 7:00 PM | Picks one open issue, takes it from triage → draft PR in six phases |
+| Daily Polish | Daily 11:00 PM | Deep-clean one repo per day: README gaps, missing `.gitignore`, CI config, test coverage |
+| Weekly Scorecard | Mondays 5:00 AM | Portfolio health scores: repo count, open-issue median, CI pass rate, test coverage % |
+
+## How the Issue Solver picks work
+
+The most ambitious routine. Six phases, all running in the same sandbox session:
+
+<Steps>
+  <Step title="Discover">
+    Shell-only. `gh search issues` across `$GH_OWNER` for the last 90 days, open + unassigned. Scored via `jq` weights — `bug=+50`, `good-first-issue=+40`, `type:security=-40`, `type:breaking=-40`, recent-activity bonus.
+  </Step>
+  <Step title="Triage">
+    Claude Sonnet classifies the top 5 by solvability + complexity (trivial/small/medium/large).
+  </Step>
+  <Step title="Investigate">
+    A read-only subagent reads the affected code and locates the exact lines that need changes.
+  </Step>
+  <Step title="Implement">
+    Pre-flight secret scan (`grep -P` against known patterns). Creates a branch via `gh api repos/.../git/refs`. Pushes file changes via Contents API — the App installation token auto-signs every commit.
+  </Step>
+  <Step title="Verify">
+    Best-effort CI polling at 30-second intervals up to 5 minutes. Records the final `ci_status` (passed / failed / pending / none).
+  </Step>
+  <Step title="Submit">
+    Opens a **draft PR only** — never `--ready`, never auto-merge. If the issue is too complex, comments on the issue explaining what was tried and gives up cleanly.
+  </Step>
+</Steps>
+
+## How routines authenticate
+
+Each routine runs in Anthropic's cloud sandbox with pre-installed `gh` CLI. Authentication is via environment variables set in the cloud routine configuration at [claude.ai/code/routines](https://claude.ai/code):
+
+| Env var | Purpose |
+| --- | --- |
+| `GH_TOKEN` | GitHub PAT for `gh` CLI |
+| `GH_OWNER` | The org or user to scan (e.g. `JacobPEvans`) |
+| `GH_OWNERS` | The Sentinel uses this — a list of orgs to spot-check |
+
+Slack output goes through the official Slack MCP connector. The full operator-setup walkthrough lives in [`docs/CLOUD_ROUTINES_AUTH.md`](https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md) in the source repo.
+
+The local Claude Code that develops and deploys these routines is configured declaratively via [`nix-claude-code`](/nix/nix-claude-code) — plugin set, MCP wiring, permissions, and hooks all version-pinned in Nix.
+
+## Current deploy gotcha
+
+The native GitHub Actions deploy (`.github/workflows/deploy-routines.yml`) is **disabled** because `anthropics/claude-code-action@v1` does not carry the organization UUID binding that the Routines API requires — `RemoteTrigger` calls fail with `Unable to resolve organization UUID`.
+
+**Workaround in use today**: a local `deploy-routine-changes` skill (under `.claude/skills/` in the routines repo) drives `RemoteTrigger get/update/create` calls during interactive Claude Code sessions. The interactive harness has the org binding the GHA runner lacks. The fallback is the [`/schedule update`](https://claude.ai/code) CLI flow if `RemoteTrigger` breaks in interactive mode too.
+
+When Anthropic fixes the OAuth token to carry org UUID, the workflow can be restored. Until then, deploys are manual + interactive.
+
+## What routines do NOT do
+
+| Won't | Why |
+| --- | --- |
+| Merge any PR | Same merge prohibition as `/finalize-pr` |
+| Open non-draft PRs | Human review is always the gate |
+| Cross org boundaries | Owner derived from current config only |
+| Touch archived or fork repos | `gh search` filters them out |
+| Run during incidents | No event-driven escape hatch — wait for next cron tick |
+
+## Where this fits relative to ai-workflows
+
+| If you want… | Use… |
+| --- | --- |
+| A PR draft within minutes of opening an issue | `ai-workflows/issue-resolver.yml` event-triggered caller |
+| A daily sweep that catches issues the event flow missed | `claude-code-routines` Issue Solver |
+| To audit health across the whole org | `claude-code-routines` Sentinel + Weekly Scorecard |
+| To fix CI failure on a PR you're iterating on right now | `/ship` from a local Claude Code session |
+
+The two systems are complementary — ai-workflows handles the per-event reaction, claude-code-routines handles the org-wide sweep.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Source repo" icon="github" href="https://github.com/JacobPEvans/claude-code-routines">
+    The six prompt files, schedule manifest, deploy notes.
+  </Card>
+  <Card title="Cloud routine auth" icon="key" href="https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md">
+    Operator setup — env vars, Slack MCP, token strategy.
+  </Card>
+  <Card title="ai-workflows" icon="github" href="/automation/cloud-pipelines/ai-workflows">
+    The event-driven half of the same ecosystem.
+  </Card>
+  <Card title="Issue → PR pipeline" icon="route" href="/automation/issue-to-pr-pipeline">
+    The per-repo cloud flow that runs in parallel.
+  </Card>
+</CardGroup>

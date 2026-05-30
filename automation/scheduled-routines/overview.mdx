@@ -1,0 +1,38 @@
+---
+title: "Scheduled routines"
+description: "Cron-driven Claude Code sessions that watch the whole org. Pick up loose ends the event-triggered pipeline misses."
+tier: 1
+---
+
+> Time in (cron). Org-wide scan out. One configuration, every repo under `$GH_OWNER`, no per-repo wiring.
+
+Scheduled routines are the **cron-driven** half of the automation surface. The event-triggered cloud pipelines react to things that already happened in a single repo; the routines run on a schedule, scan the whole org, and pick up loose ends — stale READMEs, missing `.gitignore` rules, unresolved review threads, weekly summaries — that nothing else watches for.
+
+The event-driven sibling is documented under [Cloud pipelines](/automation/cloud-pipelines/overview).
+
+## What runs on a schedule
+
+The routines live in [`JacobPEvans/claude-code-routines`](/automation/scheduled-routines/claude-code-routines) as a small set of prompt files. Each one runs inside Anthropic's cloud-hosted Claude Code sandbox on its own schedule, discovers repos via `gh search`, does its work using `gh` CLI calls, and reports results to Slack.
+
+There is no per-repo wiring. Add a repo to the org and the routines pick it up on the next scheduled run.
+
+## How the install is managed
+
+The local Claude Code that runs these routines is configured declaratively in Nix via [`dryvist/nix-claude-code`](/nix/nix-claude-code) — plugins, marketplaces, skills, hooks, MCP servers, and permissions as composable home-manager modules. Reproducible across machines, rolled back with one command.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="claude-code-routines" icon="clock" href="/automation/scheduled-routines/claude-code-routines">
+    The routine catalog, schedules, and operator setup.
+  </Card>
+  <Card title="nix-claude-code" icon="snowflake" href="/nix/nix-claude-code">
+    Declarative Claude Code via home-manager modules. How the routine host stays reproducible.
+  </Card>
+  <Card title="Cloud pipelines" icon="github" href="/automation/cloud-pipelines/overview">
+    The event-triggered sibling that handles per-repo issues and CI failures.
+  </Card>
+  <Card title="Issue to PR pipeline" icon="diagram-project" href="/automation/issue-to-pr-pipeline">
+    Where routines fit relative to the rest of the issue-to-PR flow.
+  </Card>
+</CardGroup>

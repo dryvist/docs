@@ -1,0 +1,70 @@
+---
+title: "Automation"
+description: "How an issue becomes a merged PR with minimal human touch: ai-workflows in the cloud, claude-code-routines on cron, claude-code-plugins on the laptop."
+tier: 1
+---
+
+> File an issue. Walk away. Come back to a draft PR with green CI, AI review, and one human merge click left.
+
+This is the **issue → mergeable PR** pipeline. Three repos collaborate: `ai-workflows` runs on GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's cloud cron, `claude-code-plugins` is the local Claude Code escape hatch.
+
+## The end-to-end shape
+
+{/* Shape: linear chain. Boundary crossings: 0. Ranks: 6×1. */}
+{/* Aspect: ~2.5:1 (LR). Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  I([Issue])
+  T([AI triage])
+  D([Draft PR])
+  L([CI and review loop])
+  G{Final gate}
+  M([Merged])
+
+  I --> T --> D --> L --> G --> M
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+  classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class I src
+  class T,L ai
+  class D auto
+  class G gate
+  class M sink
+```
+
+A human files the issue and clicks merge. Everything in between runs without supervision.
+
+## The three layers
+
+| Layer | Where it lives | When it runs | What it owns |
+| --- | --- | --- | --- |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, draft PR creation, CI auto-fix, final review gate, project routing |
+| [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
+| [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch — finalize a PR you're iterating on |
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Issue → PR pipeline" icon="route" href="/automation/issue-to-pr-pipeline">
+    The eight-step cloud flow on a target repo. Which trigger fires which file, who reviews, what gates merge.
+  </Card>
+  <Card title="Cloud pipelines" icon="github" href="/automation/cloud-pipelines/overview">
+    The 16 event-triggered reusable workflows behind the per-repo half of the automation surface.
+  </Card>
+  <Card title="Scheduled routines" icon="clock" href="/automation/scheduled-routines/overview">
+    Cron-scheduled Claude routines. Org-wide maintenance, no per-repo wiring.
+  </Card>
+  <Card title="Skills" icon="ship" href="/ai-development/skills/overview">
+    Local Claude Code slash-commands — `/ship`, `/resolve-codeql` — that close the loop on a PR you are iterating on.
+  </Card>
+</CardGroup>
+
+## Source repos
+
+[`ai-workflows`](https://github.com/JacobPEvans/ai-workflows) · [`claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) · [`claude-code-plugins`](https://github.com/JacobPEvans/claude-code-plugins). The 30-second pitch lives at [AI pipeline](/architecture/ai-pipeline); this Automation section is the mechanics.
