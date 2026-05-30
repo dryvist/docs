@@ -1,0 +1,68 @@
+---
+title: "Bifrost AI gateway"
+description: "OpenAI-compatible HTTP gateway that routes AI requests from local tools to the right provider — OpenAI, Gemini, OpenRouter, or local MLX inference."
+tier: 2
+---
+
+> One endpoint for every AI tool. Bifrost handles the routing.
+
+Bifrost is the OpenAI-compatible HTTP gateway that sits between every AI tool on the workstation and whichever provider eventually answers the call. It exposes `http://localhost:30080/v1/chat/completions` and fans out to OpenAI, Gemini, OpenRouter, and the local MLX server based on the task class.
+
+- **GitHub:** https://github.com/maximhq/bifrost
+- **Homepage:** https://www.getmaxim.ai/bifrost
+
+## Model routing conventions
+
+Never hardcode model identifiers in committed config. Models change frequently; identifiers rot. Tools resolve task classes (Research, Coding, Review, Pre-commit) to a current model at call time via `listmodels`.
+
+| Context | Format |
+| --- | --- |
+| Local MLX models through Bifrost | `mlx-local/<model>` — Bifrost expects `provider/model` |
+| Direct vllm-mlx on port 11434 | bare HuggingFace model ID — no prefix |
+| Cloud models through Bifrost | unprefixed — Bifrost routes by task class |
+
+## Local-only mode
+
+When `localOnlyMode` is enabled or the `--local` flag is passed, every request routes to the MLX inference server on port 11434. No cloud API calls occur.
+
+Verify the LaunchAgent is running before enabling local-only mode:
+
+```bash
+launchctl list | grep vllm-mlx
+```
+
+## Priority in the AI gateway stack
+
+Bifrost is the second layer in the gateway priority order:
+
+1. **Anthropic official** — Claude Code plugins, skills, patterns
+2. **Bifrost AI gateway** — multi-provider routing at `localhost:30080`
+3. **PAL MCP** — only for `clink` (parallel calls) and `consensus` (multi-model agreement)
+4. **Personal or custom** — only when no alternative exists
+
+## Capabilities
+
+Bifrost supports 23+ providers including OpenAI, Anthropic, AWS Bedrock, Google Vertex, and local inference servers. Key features:
+
+- **Intelligent failover** — transparent routing to a configured fallback when a provider is unavailable
+- **Semantic caching** — caches responses by semantic similarity, reducing cost and latency
+- **MCP support** — Model Context Protocol integration for multi-tool coordination
+- **Prometheus metrics** — built-in observability for latency, throughput, and cost tracking
+
+Performance at scale: <100 µs gateway overhead at 5,000 RPS.
+
+## Deployment
+
+Bifrost runs locally as a lightweight gateway process. Options:
+
+```bash
+npx bifrost@latest       # 30-second startup via NPX
+```
+
+Docker containers and a Go SDK are also available for embedded or orchestrated deployments.
+
+## See also
+
+- [AI development pipeline](/architecture/ai-pipeline) — how Bifrost fits into the full model-routing pipeline
+- [PAL MCP](/architecture/ai-pipeline#pal-mcp) — the multi-model coordination layer on top of Bifrost
+- [nix-ai](/nix/nix-ai) — Nix package and config layer that manages the Bifrost process
