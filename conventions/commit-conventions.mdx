@@ -32,11 +32,14 @@ The shape of every commit message and PR title across the org follows the rules 
 ## What this connects to
 
 <CardGroup cols={2}>
+  <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
+    Branch type predicts the commit prefix. One decision, made once.
+  </Card>
+  <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
+    PR title becomes the squash-commit subject verbatim — same rules.
+  </Card>
   <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
     How `feat:` vs `fix:` translates into release-please version bumps.
-  </Card>
-  <Card title="No scripts" icon="ban" href="/conventions/no-scripts">
-    What kinds of changes belong in scripts vs inline in workflows.
   </Card>
   <Card title="Golden laws" icon="shield-halved" href="/security/golden-laws">
     The destructive-action approval gate that overrides "small fixes: just do it".

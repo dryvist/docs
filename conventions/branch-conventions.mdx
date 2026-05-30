@@ -1,0 +1,75 @@
+---
+title: "Branch conventions"
+description: "Conventional Branch — short-form types only. `feat/<name>`, never `feature/<name>`. Lowercase, kebab-case names."
+tier: 2
+---
+
+> One branch shape across every repo. Read the type and the scope from the branch name alone — no `git log` required.
+
+Branch names follow [Conventional Branch](https://conventional-branch.github.io): a short type prefix, a `/`, and a kebab-case description. The type matches the [commit conventions](/conventions/commit-conventions) prefix that the eventual squash commit will use, so the branch name predicts the changelog entry.
+
+## Shape
+
+```text
+<type>/<short-kebab-case-name>
+```
+
+- `<type>` is one of the allowed short forms below — never the long form.
+- `<short-kebab-case-name>` is lowercase, hyphen-separated, descriptive but tight (≤ 5 words is usually enough).
+- No issue numbers, no usernames, no dates — those belong in commit bodies and PR descriptions, not branch names.
+
+Examples:
+
+| Good | Bad | Why |
+| --- | --- | --- |
+| `feat/add-syslog-firewall` | `feature/add-syslog-firewall` | Long form `feature`; banned. |
+| `fix/dns-resolver-restart` | `bugfix/dns-resolver-restart` | Long form `bugfix`; banned. |
+| `chore/pin-tofu-1.10` | `chore/JAC-127` | Issue ID instead of a description. |
+| `docs/end-goal-sweep` | `docs/jacob-pe-friday-cleanup` | Author name; irrelevant in 6 months. |
+| `refactor/extract-vlan-helper` | `refactor/v2` | Vague; says nothing. |
+
+## Allowed types — short forms only
+
+These match the [Conventional Commits](/conventions/commit-conventions) prefixes one-to-one. **Always the short form.** `feat` not `feature`. `fix` not `bugfix`. No exceptions.
+
+| Type | Use for |
+| --- | --- |
+| `feat/` | New capability, integration, or significant behavioral change. Maps to `feat:` commit → minor version bump. |
+| `fix/` | Bug fix, small improvement, config tweak, dependency bump. Maps to `fix:` commit → patch bump. |
+| `chore/` | Maintenance that does not affect users — formatting passes, internal refactors that change no behavior, repo hygiene. |
+| `docs/` | Documentation-only changes (`README.md`, `docs/`, `*.mdx`, comments). No code changes. |
+| `refactor/` | Code restructuring that intentionally changes neither behavior nor external API. |
+| `test/` | Adding or fixing tests without changing the code under test. |
+| `ci/` | CI/CD workflow changes (`.github/workflows/`, `pre-commit` config, runner pinning). |
+| `build/` | Build-system / dependency changes (`flake.nix`, `package.json`, lockfiles) that don't fit `chore`. |
+| `perf/` | Performance improvements that change neither behavior nor API. |
+| `style/` | Pure formatting (whitespace, semicolons). Almost always swallowed into `chore` or `refactor` — rare. |
+
+If two types fit, pick the one that produces the right version bump. `feat:` → minor, `fix:` → patch, everything else → no version bump (per [release-please](https://github.com/googleapis/release-please) defaults).
+
+## Why short forms
+
+The aliases the long forms suggest (`feature`, `bugfix`) don't appear in any Conventional Commits / Conventional Branch spec. Mixing both creates two parallel taxonomies that release tooling, branch protection rules, and CODEOWNERS regexes have to match independently. One canonical set keeps everything (CI, automation, AI agents, humans skimming `git branch`) on the same page.
+
+The full Conventional Branch spec, including the `release/` and `hotfix/` types this org does not use, lives at [conventional-branch.github.io](https://conventional-branch.github.io). The commitlint config that enforces the matching commit prefixes is [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional).
+
+## Worktree layout
+
+Branch slashes survive as directory separators when this org's bare-repo + worktree layout is used. `feat/add-x` becomes `<repo>/feat/add-x/`. That makes `feat/`, `fix/`, etc. literal directories on disk — another reason to use the short types: `feature/` would mean five extra characters in every working path forever.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
+    The matching commit prefix vocabulary. Branch type and commit type are one decision, made once.
+  </Card>
+  <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
+    PR title inherits the conventional-commit prefix from the branch.
+  </Card>
+  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
+    SSH for public, HTTPS for private. Picks transport by visibility, not by branch.
+  </Card>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    How `feat:` and `fix:` translate into release-please version bumps once the branch merges.
+  </Card>
+</CardGroup>
