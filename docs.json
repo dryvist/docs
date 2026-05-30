@@ -103,6 +103,14 @@
                   "infrastructure/cicd/git-signing",
                   "infrastructure/cicd/tofu-runs-on"
                 ]
+              },
+              {
+                "group": "Terraform on AWS",
+                "pages": [
+                  "infrastructure/terraform/overview",
+                  "infrastructure/terraform/aws-bootstrap",
+                  "infrastructure/terraform/consuming-repo"
+                ]
               }
             ]
           },
