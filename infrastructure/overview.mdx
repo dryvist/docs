@@ -86,6 +86,21 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
   </Card>
 </CardGroup>
 
+## What runs where
+
+| Workload | Where | Why |
+| --- | --- | --- |
+| Proxmox host | Bare metal | Hypervisor |
+| HAProxy | LXC | Lightweight, native systemd unit |
+| Cribl Edge | LXC | Native package, network-heavy |
+| Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
+| Home Assistant | LXC | Native install via supervised path |
+| Self-hosted Netflix | LXC chain on a dedicated VLAN | Governed by the same UniFi policy + Proxmox placement patterns as the rest of the homelab |
+| docker-host | VM | Isolated landing pad for vendor Docker images |
+| GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
+| Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
+| Local LLM inference | Bare-metal NixOS | GPU-bound; kept off Proxmox to avoid passthrough overhead and to run whatever OS gives the fastest ROCm path |
+
 ## Deployment philosophy
 
 <Tip>
