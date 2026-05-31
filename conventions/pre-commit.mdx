@@ -1,0 +1,125 @@
+---
+title: "Pre-commit architecture"
+description: "One canonical home per artifact. Hook definitions in dryvist/nix-devenv, shared lint configs in dryvist/.github, version pinning via flake.lock."
+tier: 2
+---
+
+{/* TIER-GUARD: reference page — the canonical-home matrix and the two consumption paths belong together. */}
+
+> One canonical home per artifact. No per-repo duplication of hook definitions or shared lint configs.
+
+Across the workspace, dozens of repos had their own `.pre-commit-config.yaml` with the same baseline hooks rewritten everywhere, plus shared lint configs (`.markdownlint`, `.tflint.hcl`, `.ansible-lint`, `.yamllint`) copy-pasted across multiple repos. The shared pre-commit architecture eliminates that duplication so a single source of truth drives every consumer.
+
+## Canonical homes
+
+| Artifact | Canonical home | How consumers pull it |
+| --- | --- | --- |
+| Hook definitions (Nix path) | [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) `lib/pre-commit-hooks.nix` + `flake-modules/profiles/<name>.nix` | `imports = [ inputs.nix-devenv.flakeModules.<profile> ]` in the consumer's `flake.nix` |
+| Hook definitions (non-Nix path) | [`dryvist/.github`](https://github.com/dryvist/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh |
+| `.markdownlint-cli2.yaml` | `dryvist/.github` at the root | Same root location pre-dates the precommit layer; kept for the existing markdownlint workflow's benefit |
+| `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `dryvist/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold |
+| `zizmor.yml` workflow-security policy | `dryvist/.github` at the root | Passed as `--config` by the base profile's zizmor hook |
+
+## Six profiles
+
+Pick one per consumer repo.
+
+| Profile | Adds on top of base hygiene | Matches |
+| --- | --- | --- |
+| `base` | Generic file hygiene (whitespace, EOL, YAML/JSON/TOML, large files, private keys, merge conflicts), markdownlint-cli2, zizmor, treefmt | Most repos |
+| `nix` | Alias for `base` — `deadnix` and `statix` already in base file-glob to `.nix` automatically | `nix-*` repos |
+| `markdown` | Alias for `base` — `markdownlint-cli2` already in base file-globs to `.md` automatically | Markdown-heavy repos |
+| `terraform` | `terraform-format`, `terraform-validate`, `tflint` | `terraform-*`, `tofu-*` |
+| `ansible` | `ansible-lint`, `yamllint` | `ansible-*` |
+| `python` | `ruff`, `ruff-format`, `mypy` | Python repos |
+
+`base`, `nix`, and `markdown` are deliberately identical modules; the name signals intent to the reader.
+
+## Consumer pattern — Nix path
+
+```nix
+# flake.nix in any consumer repo
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-25.11-darwin";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    nix-devenv = {
+      url = "github:dryvist/nix-devenv";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs =
+    inputs@{ flake-parts, nix-devenv, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
+      imports = [ nix-devenv.flakeModules.terraform ];
+      perSystem = { system, ... }: {
+        devShells.default = nix-devenv.devShells.${system}.terraform;
+      };
+    };
+}
+```
+
+Scaffold this layout into a new repo via:
+
+```bash
+nix flake init -t github:dryvist/nix-devenv#with-hooks
+direnv allow
+pre-commit install
+```
+
+## Consumer pattern — non-Nix path
+
+```bash
+# Pick the matching profile template
+gh api repos/dryvist/.github/contents/precommit/templates/terraform.yaml \
+  -H "Accept: application/vnd.github.raw" > .pre-commit-config.yaml
+
+# Materialise the configs the hooks need
+gh api repos/dryvist/.github/contents/precommit/configs/tflint.hcl \
+  -H "Accept: application/vnd.github.raw" > .tflint.hcl
+gh api repos/dryvist/.github/contents/.markdownlint-cli2.yaml \
+  -H "Accept: application/vnd.github.raw" > .markdownlint-cli2.yaml
+gh api repos/dryvist/.github/contents/zizmor.yml \
+  -H "Accept: application/vnd.github.raw" > zizmor.yml
+
+pre-commit install
+```
+
+## Why one canonical home per artifact
+
+- **Single update propagates everywhere.** `nix flake update` in the consumer (or in nix-devenv for cross-org propagation) pulls every hook to a new pinned version. No per-repo `rev:` bumps.
+- **Drift dies.** Before consolidation the inventory found `pre-commit-terraform` pinned at six different revs across the workspace and `markdownlint-cli` at four. Canonical pinning eliminates that.
+- **New repo onboarding is one line.** `nix flake init -t github:dryvist/nix-devenv#with-hooks` plus picking a profile, no copy-paste of 30 lines of YAML.
+
+## What stays per-repo
+
+The architecture explicitly does NOT centralise everything. Hooks with low coverage in the inventory stay opt-in per repo because they have high false-positive rates or dominate the hook cycle:
+
+- `checkov` (terraform security) — appears in 3 inventory repos; opt-in via `pre-commit.settings.hooks.checkov.enable = true;`
+- `bandit` (Python security) — appears in 1 repo
+- `detect-secrets` — appears in 1 repo
+- AWS / GCP / Azure `tflint` plugins — repo-targeting; canonical `tflint.hcl` enables only the core terraform plugin
+
+## Rules
+
+- Don't add hook definitions to a consumer-repo `.pre-commit-config.yaml`. If the canonical profile doesn't cover something, add it to `nix-devenv`'s base profile or the matching language profile, then pull it through everywhere on the next `nix flake update`.
+- Don't duplicate shared lint config files (`.markdownlint`, `.tflint.hcl`, `.ansible-lint`, `.yamllint`). Pull them via the Nix path (`fetch-shared-configs`) or copy at scaffold from `dryvist/.github` (non-Nix path).
+- A clean migration PR adds `flake.nix` + `flake.lock`, modifies `.envrc`, deletes `.pre-commit-config.yaml`, and deletes the duplicated lint config files that the canonical now covers.
+
+See [`agentsmd/rules/pre-commit.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/pre-commit.md) for the auto-loaded rule that codifies these decisions for AI agents.
+
+## Known limitations
+
+- `cachix/git-hooks.nix`'s built-in `tflint` wrapper drops args beyond `$1`, so the `terraform` profile's `--config <sharedConfigs.tflint>` plumbing doesn't reach tflint. Consumers either keep a synced copy of the canonical `.tflint.hcl` in the repo (tflint's local-config discovery finds it) or override `tflint.args` to `lib.mkForce [ ]`.
+- `terraform-validate` hooks need network access to `tofu init` external modules. `nix flake check` runs hooks in a sandboxed environment without network. Repos with external module references override `terraform-validate.enable = lib.mkForce false` for the flake-check path and rely on CI's OIDC-authenticated `terragrunt validate` to cover the check.
+- `gitleaks` is not in `cachix/git-hooks.nix`'s built-in hook set yet. Consumers wire it as a custom hook locally; a follow-up adds it to the base profile.
+
+## References
+
+- [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) — Nix-path canonical
+- [`dryvist/.github` `precommit/README.md`](https://github.com/dryvist/.github/blob/main/precommit/README.md) — non-Nix-path canonical + architecture rationale
+- [`dryvist/ai-assistant-instructions` `agentsmd/rules/pre-commit.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/pre-commit.md) — auto-loaded rule for AI agents
+- [cachix/git-hooks.nix](https://github.com/cachix/git-hooks.nix) — upstream hook framework
+- [flake-parts](https://flake.parts) — Nix flake composition framework
