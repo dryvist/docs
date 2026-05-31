@@ -55,7 +55,7 @@ Each per-project directory is independent: its own state object lives in its own
 
 ## The bootstrap module
 
-Paste the block below into `main.tf`. It is the entire module — no submodules, no provider aliases, no remote dependencies.
+The Terraform code lives in [`dryvist/terraform-aws-template`][repo] (Apache-2.0, public). Each per-project bootstrap directory is a small root module that wires the published module to the project's values:
 
 ```hcl
 terraform {
@@ -68,9 +68,9 @@ terraform {
     }
   }
 
-  # The first `terraform apply` runs with local state.
-  # After the bucket exists, uncomment this block (substitute the outputs)
-  # and run `terraform init -migrate-state` to lift state into the bucket.
+  # First `terraform apply` runs with local state. Once the bucket exists,
+  # uncomment this block (substitute the bucket name the apply emits) and
+  # run `terraform init -migrate-state` to lift state into the bucket.
   #
   # backend "s3" {
   #   bucket       = "tfstate-<project>-<account-id>"
@@ -81,244 +81,48 @@ terraform {
   # }
 }
 
-variable "project" {
-  description = "Short kebab-case project id. Matches the consuming repo's last segment."
-  type        = string
-}
-
-variable "github_org" {
-  description = "GitHub organization that owns the consuming repo."
-  type        = string
-}
-
-variable "github_repo" {
-  description = "Name of the consuming repo. Used in the OIDC sub-claim match."
-  type        = string
-}
-
-variable "branch_pattern" {
-  description = "Branch name CI is allowed to assume the role from on push."
-  type        = string
-  default     = "main"
-}
-
-variable "operator_user_arns" {
-  description = "IAM user ARNs of human operators allowed to assume the role with MFA."
-  type        = list(string)
-  default     = []
-}
-
-variable "aws_region" {
-  description = "Region for the state bucket."
-  type        = string
-  default     = "us-east-1"
-}
-
 provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      Project     = var.project
-      ManagedBy   = "Terraform"
-      Repo        = "${var.github_org}/${var.github_repo}"
-      Environment = "bootstrap"
-    }
-  }
+  region = "us-east-1"
 }
 
-data "aws_caller_identity" "current" {}
+module "state_backend" {
+  source = "git::https://github.com/dryvist/terraform-aws-template.git?ref=v0.1.0"
 
-data "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
+  project        = "proxmox"
+  github_org     = "<github-org>"
+  github_repo    = "terraform-proxmox"
+  branch_pattern = "main"
+
+  operator_user_arns = [
+    "arn:aws:iam::<account-id>:user/<operator>",
+  ]
 }
 
-locals {
-  bucket_name = "tfstate-${var.project}-${data.aws_caller_identity.current.account_id}"
-  role_name   = "tf-${var.project}"
-}
-
-resource "aws_s3_bucket" "state" {
-  bucket = local.bucket_name
-}
-
-resource "aws_s3_bucket_versioning" "state" {
-  bucket = aws_s3_bucket.state.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
-  bucket = aws_s3_bucket.state.id
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "state" {
-  bucket                  = aws_s3_bucket.state.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "state" {
-  bucket = aws_s3_bucket.state.id
-  rule {
-    id     = "expire-noncurrent-versions"
-    status = "Enabled"
-    filter {}
-    noncurrent_version_expiration {
-      noncurrent_days = 90
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "deny_insecure_transport" {
-  bucket = aws_s3_bucket.state.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "DenyInsecureTransport"
-      Effect    = "Deny"
-      Principal = "*"
-      Action    = "s3:*"
-      Resource  = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
-      Condition = {
-        Bool = { "aws:SecureTransport" = "false" }
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role" "terraform" {
-  name = local.role_name
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = concat(
-      [
-        {
-          Sid       = "GitHubOIDCBranchPush"
-          Effect    = "Allow"
-          Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
-          Action    = "sts:AssumeRoleWithWebIdentity"
-          Condition = {
-            StringEquals = {
-              "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            }
-            StringLike = {
-              "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${var.branch_pattern}"
-            }
-          }
-        },
-        {
-          Sid       = "GitHubOIDCPullRequest"
-          Effect    = "Allow"
-          Principal = { Federated = data.aws_iam_openid_connect_provider.github.arn }
-          Action    = "sts:AssumeRoleWithWebIdentity"
-          Condition = {
-            StringEquals = {
-              "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            }
-            StringLike = {
-              "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:pull_request"
-            }
-          }
-        }
-      ],
-      length(var.operator_user_arns) > 0 ? [{
-        Sid       = "OperatorAssumeWithMFA"
-        Effect    = "Allow"
-        Principal = { AWS = var.operator_user_arns }
-        Action    = "sts:AssumeRole"
-        Condition = {
-          Bool = { "aws:MultiFactorAuthPresent" = "true" }
-        }
-      }] : []
-    )
-  })
-}
-
-resource "aws_iam_role_policy" "state" {
-  name = "${local.role_name}-state"
-  role = aws_iam_role.terraform.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid      = "ListBucket"
-        Effect   = "Allow"
-        Action   = ["s3:ListBucket", "s3:GetBucketVersioning"]
-        Resource = aws_s3_bucket.state.arn
-      },
-      {
-        Sid      = "ObjectAccess"
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-        Resource = "${aws_s3_bucket.state.arn}/*"
-      }
-    ]
-  })
-}
-
-output "state_bucket" {
-  description = "Name of the S3 bucket for Terraform state."
-  value       = aws_s3_bucket.state.bucket
-}
-
-output "state_bucket_arn" {
-  description = "ARN of the state bucket."
-  value       = aws_s3_bucket.state.arn
-}
-
-output "tf_role_arn" {
-  description = "Role ARN for the consuming repo's backend, local dev, and CI."
-  value       = aws_iam_role.terraform.arn
-}
-
-output "aws_region" {
-  description = "Region where the state bucket lives."
-  value       = var.aws_region
-}
-
-output "state_key_prefix" {
-  description = "Prefix the consuming repo writes its state objects under."
-  value       = "${var.project}/"
-}
+output "backend_config"   { value = module.state_backend.backend_config }
+output "tf_role_arn"      { value = module.state_backend.tf_role_arn }
+output "state_bucket"     { value = module.state_backend.state_bucket }
+output "state_key_prefix" { value = module.state_backend.state_key_prefix }
 ```
 
-The S3-native lock object (`<project>/terraform.tfstate.tflock`) is just another S3 object under the same prefix as state — no separate IAM permission is required for it, and no DynamoDB table.
+Full input / output reference and the list of underlying AWS resources live in the module repo's [README][readme]. The module pins to a tagged release (`v0.1.0` above) — breaking changes ship as new majors so existing bootstraps stay valid until you re-pin.
+
+The S3-native lock object (`<project>/terraform.tfstate.tflock`) is just another S3 object under the same prefix as state — no separate IAM permission required, no DynamoDB table.
+
+[repo]: https://github.com/dryvist/terraform-aws-template
+[readme]: https://github.com/dryvist/terraform-aws-template/blob/main/README.md
 
 ## Bootstrap the chicken-and-egg
 
 <Steps>
   <Step title="Apply locally">
-    Create a `terraform.tfvars` next to `main.tf`:
-
-    ```hcl
-    project            = "proxmox"
-    github_org         = "<github-org>"
-    github_repo        = "terraform-proxmox"
-    branch_pattern     = "main"
-    operator_user_arns = [
-      "arn:aws:iam::<account-id>:user/<operator>",
-    ]
-    ```
-
-    Then:
+    With the module block above pointing at your project's values:
 
     ```bash
     terraform init      # local state — no backend block yet
     terraform apply
     ```
 
-    Confirm the apply. Save the outputs — `terraform output -json` gives you a single blob you can pipe into the consuming repo's backend block.
+    Confirm the apply. `terraform output backend_config` emits the ready-to-paste `backend "s3" {}` block for the consuming repo (`terraform output -raw backend_config > /tmp/backend.tf` to ship it straight to a file).
   </Step>
   <Step title="Uncomment the backend block">
     In `main.tf`, uncomment the `backend "s3"` block at the top of the `terraform {}` block and substitute the outputs the apply just produced:
