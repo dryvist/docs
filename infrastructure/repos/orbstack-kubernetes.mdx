@@ -33,7 +33,7 @@ Four `healthchecks.io` CronJobs ping every 5 minutes as dead-man switches: `pipe
 
 | Upstream | Downstream |
 | --- | --- |
-| AI coding tools (Claude Code, Gemini, VS Code, Copilot) emit OTLP to the cluster | Local Stream forwards over HEC to the [homelab Splunk](/observability/ansible-splunk); Edge-managed also reports to Cribl Cloud |
+| AI coding tools (Claude Code, Gemini, VS Code, Copilot) emit OTLP to the cluster | Local Stream forwards over HEC to the [homelab Splunk](/observability/repos/ansible-splunk); Edge-managed also reports to Cribl Cloud |
 
 <RepoFit>
 The macOS development counterpart to the homelab Cribl Edge tier. Same data shape, different host — designed so a session on the laptop produces the same telemetry as one on a workstation behind the homelab Edge.
@@ -67,7 +67,7 @@ E2E tests run on a self-hosted ARM64 runner: a stock `myoung34/github-runner:ubu
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="cc-edge-the-mac-pack" icon="apple" href="/observability/cc-edge-the-mac-pack">
+  <Card title="cc-edge-the-mac-pack" icon="apple" href="/observability/repos/cc-edge-the-mac-pack">
     The macOS-native Cribl Edge pack — captures host telemetry that this cluster does not.
   </Card>
   <Card title="Monitoring agents" icon="chart-line" href="/observability/monitoring-agents">

@@ -44,7 +44,7 @@ flowchart LR
   class CCO,CCP,CAG,CCV pack
   class Stream,SP,App route
 
-  click SP "/observability/ansible-splunk" "Splunk install + indexes"
+  click SP "/observability/repos/ansible-splunk" "Splunk install + indexes"
   %% Cribl Edge pack repos (CCO/CCP/CAG/CCV) intentionally NOT clickable —
   %% Mermaid drops the _blank target attribute on flowchart clicks
   %% (https://github.com/mermaid-js/mermaid/issues/3077,
@@ -92,10 +92,10 @@ Each AI coding tool emits slightly different telemetry shapes. Per-tool packs ke
 ## Where Splunk runs
 
 <CardGroup cols={2}>
-  <Card title="tf-splunk-aws" icon="aws" href="/observability/tf-splunk-aws">
+  <Card title="tf-splunk-aws" icon="aws" href="/observability/repos/tf-splunk-aws">
     Terraform for the AWS-side Splunk footprint. VPC, KMS, EC2, IAM — DR-ready.
   </Card>
-  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/ansible-splunk">
+  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
     The configuration tier. Splunk install, indexes, HEC tokens, storage tiering.
   </Card>
 </CardGroup>
@@ -103,7 +103,7 @@ Each AI coding tool emits slightly different telemetry shapes. Per-tool packs ke
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Mac Pack" icon="apple" href="/observability/cc-edge-the-mac-pack">
+  <Card title="Mac Pack" icon="apple" href="/observability/repos/cc-edge-the-mac-pack">
     The macOS host telemetry pack — unified logs, system metrics, power.
   </Card>
   <Card title="Monitoring agents" icon="chart-line" href="/observability/monitoring-agents">

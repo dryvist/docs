@@ -34,7 +34,7 @@ Four healthchecks.io CronJobs ping every five minutes as dead-man switches: `pip
 ## What does not run on the OrbStack cluster
 
 - The homelab data plane (HAProxy, the production Cribl Edge tier, Splunk Enterprise) — that's [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) on LXC.
-- The macOS host telemetry pack ([`cc-edge-the-mac-pack`](/observability/cc-edge-the-mac-pack)) — that needs a **native macOS Cribl Edge install**, not a container, because its exec inputs call `powermetrics`, `pmset`, `ioreg`, `memory_pressure`.
+- The macOS host telemetry pack ([`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack)) — that needs a **native macOS Cribl Edge install**, not a container, because its exec inputs call `powermetrics`, `pmset`, `ioreg`, `memory_pressure`.
 - Long-lived stateful workloads (databases, indexers). The cluster is reset more often than it's preserved; nothing of value lives there.
 
 ## The Edge → Stream → Splunk invariant

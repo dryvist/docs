@@ -192,9 +192,14 @@
             "group": "Observability",
             "pages": [
               "observability/overview",
-              "observability/ansible-splunk",
-              "observability/tf-splunk-aws",
-              "observability/cc-edge-the-mac-pack",
+              {
+                "group": "Repos",
+                "pages": [
+                  "observability/repos/ansible-splunk",
+                  "observability/repos/tf-splunk-aws",
+                  "observability/repos/cc-edge-the-mac-pack"
+                ]
+              },
               "observability/monitoring-agents"
             ]
           },

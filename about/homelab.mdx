@@ -20,95 +20,24 @@ The homelab is a real production environment, just for one person. Proxmox clust
 
 ## Network topology
 
-{/* Shape: hub-and-spokes. UniFi is the hub. 5 nodes. Boundary crossings: 0. */}
-
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
-  Net([Internet])
-  UF([UniFi gateway])
-  PVE([Proxmox cluster])
-  Mac([Mac / phone])
-  LLM([Local LLM box])
-
-  Net --> UF
-  UF --> PVE
-  UF --> Mac
-  UF --> LLM
-
-  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-  classDef gateway  fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-  classDef cluster  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-
-  class Net external
-  class UF gateway
-  class PVE,Mac,LLM cluster
-
-  linkStyle 0,1,2,3 stroke:#4FB3A9,stroke-width:2px;
-```
-
-Solid green edges are physical / network. WireGuard tunnels traverse the Internet → UniFi edge. The UniFi gateway is the centre of the LAN; Proxmox, personal devices, and the bare-metal LLM box all hang off it.
+The UniFi gateway sits at the centre of the LAN; the Proxmox cluster, personal devices, and the bare-metal LLM box all hang off it. WireGuard tunnels traverse the Internet → UniFi edge. Per-service VLANs encode workload tier. Diagram and the network-as-code that defines it: [`terraform-unifi`](/infrastructure/repos/terraform-unifi).
 
 ## Data flow
 
-{/* Shape: linear chain (UniFi gear → HAProxy → Cribl → Splunk → AWS DR). */}
-{/* 5 nodes. Boundary crossings: 0. Telemetry edges dashed coral. */}
-
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
-  Src([UniFi + devices])
-  HA([HAProxy])
-  Edge([Cribl Edge])
-  SP[(Splunk Enterprise)]
-  AWS([AWS DR])
-
-  Src --> HA --> Edge --> SP --> AWS
-
-  classDef src   fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef proxy fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef store fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
-  classDef dr    fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-
-  class Src,Edge src
-  class HA proxy
-  class SP store
-  class AWS dr
-
-  linkStyle 0,1,2 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
-```
-
-Coral dashed edges are telemetry; the amber dotted edge to AWS is the disaster-recovery replication path. Same nodes as the network diagram, different concern — split per Rule 1.
+UniFi gear and host telemetry feed HAProxy → Cribl Edge → Splunk → AWS DR. Full log and NetFlow pipelines: [Data pipelines](/architecture/data-pipelines).
 
 ## Container philosophy
 
-LXC by default. Native packages where possible. Docker is the exception — high-volume network traffic must never cross Docker's virtualized networking. The decision tree:
-
-1. Vendor ships Docker-only image with no native path → Docker on the dedicated `docker-host` VM. Documented exception at the top of the repo's `CLAUDE.md`.
-2. Single binary or native package → LXC + Ansible role.
-3. CI/automation → Docker on the docker-host VM, isolated `ci_runners` network.
-4. Dev / test → Docker on the docker-host VM, Swarm overlay.
+LXC is the default for production homelab services; Docker is the exception, fenced off to a dedicated `docker-host` VM whenever a vendor ships Docker-only images. The four-question decision tree: [LXC vs Docker](/infrastructure/lxc-vs-docker).
 
 ## What runs where
 
-| Workload | Where | Why |
-| --- | --- | --- |
-| Proxmox host | Bare metal | Hypervisor |
-| HAProxy | LXC | Lightweight, native systemd unit |
-| Cribl Edge | LXC | Native package, network-heavy |
-| Splunk Enterprise | Bare-metal-ish VM | Vendor-only Docker option ruled out for network volume |
-| Home Assistant | LXC | Native install via supervised path |
-| Self-hosted Netflix | LXC chain on a dedicated VLAN | Governed by the same UniFi policy + Proxmox placement patterns as the rest of the homelab |
-| docker-host | VM | Isolated landing pad for vendor Docker images |
-| GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
-| Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
-| Local LLM inference | Bare-metal NixOS | GPU-bound; kept off Proxmox to avoid passthrough overhead and to run whatever OS gives the fastest ROCm path |
+Most workloads run as LXC on the Proxmox cluster — HAProxy, Cribl Edge, Home Assistant, Qdrant. Splunk Enterprise gets a bare-metal-ish VM for network volume. Docker is fenced off to a single `docker-host` VM. Local LLM inference runs bare-metal on NixOS to dodge passthrough overhead. Full per-workload inventory: [Infrastructure overview](/infrastructure/overview).
 
 ## Provisioning + configuration
 
-[terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) builds the VMs and LXCs. [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) configures the host. [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) configures everything on top. For the rationale on LXC defaults vs the Docker exception, see [LXC vs Docker](/infrastructure/lxc-vs-docker); for the macOS counterpart that runs the monitoring stack as Kubernetes, see [Kubernetes overview](/infrastructure/kubernetes-overview) and [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
+[`terraform-proxmox`](/infrastructure/repos/terraform-proxmox) builds VMs and LXCs. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The macOS counterpart that runs the monitoring stack as Kubernetes is [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
 
 ## DR plan
 
-[terraform-aws](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change; the AI-observability dashboards keep working because they target the same indexes. The full cross-stack map of every collector and where it runs lives at [Monitoring agents](/observability/monitoring-agents).
+[`terraform-aws`](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change. Details: [tf-splunk-aws](/observability/repos/tf-splunk-aws).

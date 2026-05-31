@@ -13,8 +13,8 @@ The monitoring stack runs across four hosts: the homelab Proxmox cluster, the ma
 | Collector | Where it runs | What it collects | Forwards to |
 | --- | --- | --- | --- |
 | `cribl-edge` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
-| `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, ingest reduction, routing | Splunk HEC ([`ansible-splunk`](/observability/ansible-splunk)) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge install (Nix-managed) | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/cc-edge-the-mac-pack) | Stream (downstream of pack) |
+| `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, ingest reduction, routing | Splunk HEC ([`ansible-splunk`](/observability/repos/ansible-splunk)) |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge install (Nix-managed) | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack) | Stream (downstream of pack) |
 | `cribl-edge-standalone` (OrbStack) | StatefulSet in [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) `monitoring` namespace | AI tool telemetry — Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
 | `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl Cloud | Cribl Cloud |
 | `cribl-stream-standalone` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
@@ -36,7 +36,7 @@ The AI-coding-tool packs sit on top of the OrbStack cluster's `cribl-edge-standa
 | [`cc-edge-gemini-antigravity-io`](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini Antigravity |
 | [`cc-edge-macos-system`](https://github.com/JacobPEvans/cc-edge-macos-system) | macOS-native system events (archived predecessor) |
 
-The macOS host telemetry pack [`cc-edge-the-mac-pack`](/observability/cc-edge-the-mac-pack) targets the **native macOS** Cribl Edge install (not the OrbStack-deployed one) — its exec inputs call macOS-only binaries that need host access, not a Linux container.
+The macOS host telemetry pack [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack) targets the **native macOS** Cribl Edge install (not the OrbStack-deployed one) — its exec inputs call macOS-only binaries that need host access, not a Linux container.
 
 ## REST collectors
 
@@ -70,7 +70,7 @@ A missed ping is the first signal of a broken pipeline — every other failure m
 
 ## Forwarding to AWS DR
 
-The Splunk install behind `cribl-stream` is the homelab indexer. [`tf-splunk-aws`](/observability/tf-splunk-aws) provisions the AWS-side DR footprint: same data shape, smaller indexer tier, ready to take a failover. Cribl Stream's output config can be flipped from the homelab Splunk to the AWS HEC endpoint via a routing-rule change; downstream AI-observability dashboards keep working because they target the same indexes regardless of which Splunk tier is live.
+The Splunk install behind `cribl-stream` is the homelab indexer. [`tf-splunk-aws`](/observability/repos/tf-splunk-aws) provisions the AWS-side DR footprint: same data shape, smaller indexer tier, ready to take a failover. Cribl Stream's output config can be flipped from the homelab Splunk to the AWS HEC endpoint via a routing-rule change; downstream AI-observability dashboards keep working because they target the same indexes regardless of which Splunk tier is live.
 
 ## See also
 
@@ -81,10 +81,10 @@ The Splunk install behind `cribl-stream` is the homelab indexer. [`tf-splunk-aws
   <Card title="orbstack-kubernetes" icon="cube" href="/infrastructure/repos/orbstack-kubernetes">
     The OrbStack K8s cluster running the macOS-side monitoring stack.
   </Card>
-  <Card title="cc-edge-the-mac-pack" icon="apple" href="/observability/cc-edge-the-mac-pack">
+  <Card title="cc-edge-the-mac-pack" icon="apple" href="/observability/repos/cc-edge-the-mac-pack">
     The macOS host telemetry pack — what runs on the native Edge install.
   </Card>
-  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/ansible-splunk">
+  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
     The Splunk install everything routes into.
   </Card>
 </CardGroup>
