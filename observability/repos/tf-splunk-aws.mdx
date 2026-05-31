@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/tf-splunk-aws" />
 
-`tf-splunk-aws` provisions a complete Splunk Enterprise footprint on AWS: VPC, subnets, security groups, KMS keys, IAM roles, EBS volumes, EC2 instances ready for the [`ansible-splunk`](/observability/ansible-splunk) role to land on. The shape is intentional — smaller, cost-optimized indexer tier suitable for DR or workload offload.
+`tf-splunk-aws` provisions a complete Splunk Enterprise footprint on AWS: VPC, subnets, security groups, KMS keys, IAM roles, EBS volumes, EC2 instances ready for the [`ansible-splunk`](/observability/repos/ansible-splunk) role to land on. The shape is intentional — smaller, cost-optimized indexer tier suitable for DR or workload offload.
 
 ## What it does
 
@@ -24,7 +24,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Provisions | Hands off to |
 | --- | --- |
-| AWS VPC, EC2 indexers + search heads, KMS-encrypted EBS, IAM | [Splunk install (Ansible)](/observability/ansible-splunk) configures Splunk on top |
+| AWS VPC, EC2 indexers + search heads, KMS-encrypted EBS, IAM | [Splunk install (Ansible)](/observability/repos/ansible-splunk) configures Splunk on top |
 
 <RepoFit>
 The AWS infrastructure side of Splunk. Pair with `ansible-splunk` to actually run Splunk on what this provisions.
@@ -50,7 +50,7 @@ The AWS infrastructure side of Splunk. Pair with `ansible-splunk` to actually ru
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/ansible-splunk">
+  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
     Configures the Splunk Enterprise install on what this provisions.
   </Card>
   <Card title="Observability overview" icon="chart-line" href="/observability/overview">
