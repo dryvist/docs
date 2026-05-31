@@ -1,6 +1,6 @@
 # CLAUDE.md — docs.jacobpevans.com
 
-Source for [docs.jacobpevans.com](https://docs.jacobpevans.com), a Mintlify-based personal documentation site covering homelab infrastructure, AI development, observability, and security.
+Source for [docs.jacobpevans.com](https://docs.jacobpevans.com), a Mintlify-based personal documentation site covering homelab infrastructure, security, AI development, and observability.
 
 Full agent instructions are in [AGENTS.md](./AGENTS.md). Key points for quick reference:
 
