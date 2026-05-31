@@ -1,14 +1,14 @@
 ---
 title: "claude-code-routines"
-description: "Six cron-scheduled Claude Code routines that watch the whole org without per-repo wiring. Pick up loose ends the event-triggered pipeline misses."
+description: "Seven cron-scheduled Claude Code routines that watch the whole org without per-repo wiring. Pick up loose ends the event-triggered pipeline misses."
 tier: 2
 ---
 
 > Cron, not events. Org-wide, not per-repo. One configuration, scans everything.
 
-[`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) ships six prompt files that run on schedule inside Anthropic's cloud-hosted Claude Code sandbox. They discover repos under `$GH_OWNER` via `gh search`, do their work using `gh` CLI calls, and report results to Slack via the official Slack MCP connector. There is no per-repo wiring — drop a repo into the org and the routines pick it up on the next run.
+[`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) ships seven prompt files that run on schedule inside Anthropic's cloud-hosted Claude Code sandbox. They discover repos under `$GH_OWNER` via `gh search`, do their work using `gh` CLI calls, and report results to Slack via the official Slack MCP connector. There is no per-repo wiring — drop a repo into the org and the routines pick it up on the next run.
 
-## The six routines
+## The seven routines
 
 | Routine | Schedule (CT) | What it does |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ tier: 2
 | The Custodian | Daily 2:00 AM | Weighted-random maintenance: stale branch cleanup, missing labels, repo health audit |
 | Issue Solver | Daily 7:00 AM + 7:00 PM | Picks one open issue, takes it from triage → draft PR in six phases |
 | Daily Polish | Daily 11:00 PM | Deep-clean one repo per day: README gaps, missing `.gitignore`, CI config, test coverage |
+| Docs Sync | Daily 3:13 AM | Reads 48h of estate change; opens a public `docs` PR (scrubbed) and a private `docs-starlight` PR (DRY links to docs.jacobpevans.com) |
 | Weekly Scorecard | Mondays 5:00 AM | Portfolio health scores: repo count, open-issue median, CI pass rate, test coverage % |
 
 ## How the Issue Solver picks work

@@ -1,0 +1,23 @@
+# Committed, public-safe gitleaks baseline for docs.jacobpevans.com.
+#
+# Used by .github/workflows/secret-scan.yml as the FALLBACK when the private full
+# ruleset is unavailable (fork PRs that cannot read the GITLEAKS_PRIVATE_CONFIG
+# secret). It intentionally contains NOTHING org-specific: only gitleaks' built-in
+# credential rules plus an allowlist of approved documentation placeholders. The
+# org-specific patterns live solely in the private docs-starlight repo and reach
+# this repo's CI as an encrypted secret. See security/scrubbed-values.mdx.
+
+title = "docs public secret-scan baseline"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Approved public documentation placeholders — never flag these."
+regexes = [
+  '''192\.168\.0\.[0-9]{1,3}''',
+  '''(192\.0\.2|198\.51\.100|203\.0\.113)\.[0-9]{1,3}''',
+  '''2001:db8:''',
+  '''example\.(com|org|local|test)''',
+  '''(your-token-here|<token>|<redacted>)''',
+]
