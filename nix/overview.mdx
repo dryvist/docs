@@ -57,6 +57,12 @@ The boundary between system, user, and project is intentional:
 
 `programs.*` declarations follow the same boundary; home-manager merges both layers cleanly.
 
+## Continuous integration
+
+Nix CI runs through shared reusable workflows — `_nix-validate.yml` for `nix flake check` and `_nix-build.yml` for macOS builds — so every repo validates the same way. Caching uses the GitHub Actions cache (`actions/cache`) backed by the public `cache.nixos.org` binary cache.
+
+These workflows do **not** use FlakeHub. FlakeHub's hosted binary cache no longer offers a useful free tier, so there is nothing to gain from it — and a FlakeHub-backed cache action fails CI outright when it cannot authenticate to `api.flakehub.com`. The Determinate Systems **Nix installer** (`determinate-nix-action`) and the Determinate Nix module stay in use: both are free and independent of the FlakeHub cache.
+
 ## Repos in this section
 
 <CardGroup cols={2}>
