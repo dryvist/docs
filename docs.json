@@ -185,7 +185,8 @@
               "conventions/pr-conventions",
               "conventions/git-transport",
               "conventions/no-scripts",
-              "conventions/diagramming"
+              "conventions/diagramming",
+              "conventions/pre-commit"
             ]
           },
           {
