@@ -18,6 +18,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Owns the **model-routing policy** — when to reach for Claude vs Gemini vs Copilot vs local MLX
 - Owns the **tool-use rules** — Read over `cat`, Edit over `sed`, Bash for shell-only
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, Nix tool policy, Bifrost-routing details
+- Owns the **secret-scanning rule** — the `SENSITIVE_DENYLIST` contract and the multi-layer gate that keeps real homelab values (domains, internal IPs, node and pool names) out of public repos
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
 
 Cross-repo writing standards that humans also need to read — commit conventions, no-scripts, diagramming, CI/CD policy, Terraform check placement, Nix package placement, scrubbed values — live on this docs site. See [Conventions](/conventions/overview) for the full set.
