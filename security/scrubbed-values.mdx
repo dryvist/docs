@@ -28,7 +28,7 @@ The public `docs` repo runs a fail-closed [gitleaks](https://github.com/gitleaks
 
 The rules come in two layers, so the *list of what counts as sensitive stays private*:
 
-- A committed, generic baseline (`.gitleaks.toml`) — gitleaks' built-in credential rules plus the placeholder allowlist above. It contains nothing org-specific, so it is safe to keep in this public repo. Fork PRs (which cannot read repository secrets) are scanned with this baseline.
+- A committed, generic baseline (`.gitleaks.toml.example`) — gitleaks' built-in credential rules plus the placeholder allowlist above. It contains nothing org-specific, so it is safe to keep in this public repo. CI does not use it directly; it is the fallback for fork PRs that cannot read the secret.
 - The full org-specific ruleset lives **only** in a private repo and reaches this repo's CI as an encrypted secret. The scan runs with `--redact`, so neither the patterns nor any match ever appear in public logs.
 
 The same private ruleset is consumed by the [Docs Sync routine](/automation/scheduled-routines/claude-code-routines), which scrubs drafted content before it is ever committed here — the CI gate is the backstop for anything authored by hand.
