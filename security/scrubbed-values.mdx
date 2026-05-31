@@ -24,14 +24,11 @@ Never write a real value even in a "wrong" example — the example becomes commi
 
 ## Enforcement: the secret-scan gate
 
-The public `docs` repo runs a fail-closed [gitleaks](https://github.com/gitleaks/gitleaks) check (`.github/workflows/secret-scan.yml`) on every PR and push to `main`. A finding fails the job, so a sensitive value cannot merge.
+The public `docs` repo runs a fail-closed [gitleaks](https://github.com/gitleaks/gitleaks) check (`.github/workflows/secret-scan.yml`) on every PR and push to `main`, via [`gitleaks-action`](https://github.com/gitleaks/gitleaks-action). A finding fails the job, so a sensitive value cannot merge.
 
-The rules come in two layers, so the *list of what counts as sensitive stays private*:
+So the *list of what counts as sensitive stays private*, the rule set is **never committed**. It lives only as the `dryvist` org Actions secret `GITLEAKS_PRIVATE_CONFIG`, injected into CI at run time. The scan runs with `--redact`, and the public-output features (PR comments, SARIF artifact, job summary) are disabled, so neither the patterns nor any match ever surface publicly. `useDefault` covers generic credentials; org-specific rules cover the values that must never appear here.
 
-- A committed, generic baseline (`.gitleaks.toml.example`) — gitleaks' built-in credential rules plus the placeholder allowlist above. It contains nothing org-specific, so it is safe to keep in this public repo. CI does not use it directly; it is the fallback for fork PRs that cannot read the secret.
-- The full org-specific ruleset lives **only** in a private repo and reaches this repo's CI as an encrypted secret. The scan runs with `--redact`, so neither the patterns nor any match ever appear in public logs.
-
-The same private ruleset is consumed by the [Docs Sync routine](/automation/scheduled-routines/claude-code-routines), which scrubs drafted content before it is ever committed here — the CI gate is the backstop for anything authored by hand.
+The same gate runs on the draft PRs opened by the [Docs Sync routine](/automation/scheduled-routines/claude-code-routines), so machine-authored content is held to the same bar as anything authored by hand.
 
 ## Portable path references
 
