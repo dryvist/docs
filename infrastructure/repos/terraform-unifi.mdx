@@ -34,6 +34,10 @@ Network plumbing only. VM/LXC placement on top of these VLANs is `terraform-prox
 
 The homelab uses VLAN-as-service-tier: a guest's VLAN encodes what kind of workload it is, and therefore which policies apply to it. That keeps the inventory comprehensible at a glance and lets firewall policy attach to a tier rather than to individual hosts.
 
+## Authentication
+
+UniFi services use API-key authentication. Credential management details are documented in internal documentation.
+
 ## Network topology
 
 {/* Shape: hub-and-spokes. UniFi is the hub. 5 nodes. Boundary crossings: 0. */}
