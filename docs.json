@@ -117,7 +117,6 @@
                 "pages": [
                   "security/tools/doppler",
                   "security/tools/macos-keychain",
-                  "security/tools/network-keychain",
                   "security/tools/aws-vault",
                   "security/tools/sops",
                   "security/tools/bitwarden",
