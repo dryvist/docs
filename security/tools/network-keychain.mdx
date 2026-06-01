@@ -1,0 +1,98 @@
+---
+title: "network keychain"
+description: "The third macOS keychain database — holds UniFi credentials. Two distinct credentials, two API tiers, one common confusion: the cloud key does not authenticate the local controller."
+tier: 2
+---
+
+> Two UniFi credentials live here. They authenticate different APIs. Reaching for the wrong one returns 401.
+
+## Where it sits
+
+`network.keychain-db` is a third macOS keychain database alongside the two covered in [macOS Keychain](/security/tools/macos-keychain): `automation` (AI-readable) and `elevate-access` (human-only). Today it holds the UniFi network controller credentials; nothing else.
+
+| Database | Unlock posture | Holds |
+| --- | --- | --- |
+| `automation.keychain-db` | Unlocked at login | GitHub PATs, BWS tokens, Claude credentials |
+| `elevate-access.keychain-db` | Locked, GUI unlock prompt | Higher-tier PATs, admin tokens |
+| `network.keychain-db` | Per-read prompt (may cache) | UniFi credentials |
+
+The split exists because UniFi credentials authenticate the network fabric itself — losing them is recoverable only at the gateway console — and grouping them under their own database keeps that blast radius separate from GitHub or AI tokens.
+
+## Two credentials, two scopes
+
+The single most common mistake here is assuming the API key authenticates everything UniFi. It does not.
+
+| Service name | Scope | Auth method | When to use |
+| --- | --- | --- | --- |
+| `UNIFI_API_KEY` | **Cloud tier** — `api.ui.com`, `unifi.ui.com` | `X-API-KEY` header | Cloud SSO, UID broker, remote-access APIs. **Does not authenticate the local controller.** |
+| `UNIFI_USERNAME` + `UNIFI_PASSWORD` | **Local controller** — `https://<udw-gateway>` | Cookie session via `POST /api/auth/login`, then `X-CSRF-Token` from response headers | Direct network / port-conf / VLAN / firewall API calls against the on-prem controller. |
+
+`UNIFI_API_KEY` against the local controller returns **HTTP 401**, even though the same key works against the cloud endpoints. The Terraform [`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest) provider and every direct script that hits the local UDW must use the username + password cookie flow — not the API key.
+
+## Reading a credential
+
+The last positional argument is the keychain path. Omit it and `security` searches the login keychain only, which does not contain these entries.
+
+```bash
+# Fetch each once into a variable — the prompt fires per read.
+UNIFI_USERNAME=$(security find-generic-password \
+  -s UNIFI_USERNAME \
+  -w \
+  "${HOME}/Library/Keychains/network.keychain-db")
+
+UNIFI_PASSWORD=$(security find-generic-password \
+  -s UNIFI_PASSWORD \
+  -w \
+  "${HOME}/Library/Keychains/network.keychain-db")
+
+UNIFI_API_KEY=$(security find-generic-password \
+  -s UNIFI_API_KEY \
+  -w \
+  "${HOME}/Library/Keychains/network.keychain-db")
+```
+
+Same pattern as every other keychain read on this site: fetch once, inject the variable across the session, never inline `$(security find-generic-password ...)` into each command.
+
+## Cookie-auth flow against the local controller
+
+The local UDW does not accept bearer or API-key auth. The flow is two requests:
+
+1. `POST <controller>/api/auth/login` with body `{"username": "...", "password": "..."}`. The response sets a session cookie **and** returns `X-CSRF-Token` in its headers.
+2. Every subsequent request to `<controller>/proxy/network/api/...` sends the cookie back and includes `X-CSRF-Token: <value>` as a header.
+
+```bash
+# Step 1 — login, capture both the cookie jar and the CSRF token.
+CSRF=$(curl -sk \
+  -c /tmp/unifi-cookies \
+  -D - \
+  -H 'Content-Type: application/json' \
+  -d "{\"username\":\"$UNIFI_USERNAME\",\"password\":\"$UNIFI_PASSWORD\"}" \
+  "https://<udw-gateway>/api/auth/login" \
+  | awk -F': ' 'tolower($1)=="x-csrf-token" {print $2}' | tr -d '\r')
+
+# Step 2 — call the API with cookie + CSRF header.
+curl -sk \
+  -b /tmp/unifi-cookies \
+  -H "X-CSRF-Token: $CSRF" \
+  "https://<udw-gateway>/proxy/network/api/s/default/rest/networkconf"
+```
+
+For Terraform, the same provider handles this internally — supply `username` / `password` / `api_url` via env vars or variables and the provider does the cookie dance per apply.
+
+## What does not go here
+
+- Cloud-tier UniFi keys for hosts other than this laptop — those belong wherever that host's automation reads keys.
+- Anything CI needs — CI cannot read a macOS keychain. Mirror to Doppler or a runtime store if a CI job needs UniFi access.
+- API keys that are dual-use against another service — service-name `UNIFI_*` is reserved for UniFi.
+
+## Anti-patterns
+
+- Putting any of these in a committed config — see [scrubbed values](/security/scrubbed-values) and [golden law 1](/security/golden-laws#1-no-secret-at-rest-in-plaintext-outside-an-authorized-store). The fact that `UNIFI_API_KEY` is cloud-tier is non-secret structural info — fine to publish — but the value itself never lands in a file.
+- Using `UNIFI_API_KEY` to talk to the local controller. It will return 401 and the session will eat ~30 seconds before falling back to cookie auth.
+- Inlining `security find-generic-password` per command. Every call may prompt; one per request can be acceptable, three per request is a UX cliff.
+
+## See also
+
+- [macOS Keychain](/security/tools/macos-keychain) — the `automation` / `elevate-access` split and the AI-readable boundary.
+- [terraform-unifi](/infrastructure/repos/terraform-unifi) — the primary consumer of `UNIFI_USERNAME` + `UNIFI_PASSWORD`.
+- [Scrubbed values](/security/scrubbed-values) — how to write examples without leaking the real controller URL.
