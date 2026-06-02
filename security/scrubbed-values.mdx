@@ -22,6 +22,14 @@ tier: 2
 
 Never write a real value even in a "wrong" example — the example becomes committed text. Use `${USER}`, `${REPO_ROOT}`, `${MAINTAINER_EMAIL}`, `${NAS_HOST}`, `<redacted>` for shape stand-ins where the placeholder needs to look like a variable.
 
+## Enforcement: the secret-scan gate
+
+The public `docs` repo runs a fail-closed [gitleaks](https://github.com/gitleaks/gitleaks) check (`.github/workflows/secret-scan.yml`) on every PR and push to `main`, via [`gitleaks-action`](https://github.com/gitleaks/gitleaks-action). A finding fails the job, so a sensitive value cannot merge.
+
+So the *list of what counts as sensitive stays private*, the rule set is **never committed**. It lives only as the `dryvist` org Actions secret `GITLEAKS_PRIVATE_CONFIG`, injected into CI at run time. The scan runs with `--redact`, and the public-output features (PR comments, SARIF artifact, job summary) are disabled, so neither the patterns nor any match ever surface publicly. `useDefault` covers generic credentials; org-specific rules cover the values that must never appear here.
+
+The same gate runs on the draft PRs opened by the [Docs Sync routine](/automation/scheduled-routines/claude-code-routines), so machine-authored content is held to the same bar as anything authored by hand.
+
 ## Portable path references
 
 **Never commit absolute user paths** (`/Users/{username}/*`, `/home/{username}/*`, `$HOME/*`, `~/*`).
