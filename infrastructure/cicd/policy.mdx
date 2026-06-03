@@ -32,7 +32,7 @@ Treat published releases as permanent. Once a release is promoted from draft to 
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
-- Templates and reusable workflows live in [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github)
+- Reusable workflows are homed in [`dryvist/.github`](https://github.com/dryvist/.github) (the canonical org home) — see [Reusable workflow ownership](#reusable-workflow-ownership) for the few still being relocated
 
 Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
 
@@ -48,12 +48,13 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `uses:` — GitHub allows no variables there and does not follow repository move or rename redirects for those references. So when a shared-CI repository changes ownership, every consumer's `uses:` must be updated at the same time.
 
-Canonical homes, treated as fixed to avoid breaking every consumer's CI:
+**dryvist is the canonical home for everything dryvist uses** — `JacobPEvans-personal/*` may depend on `dryvist/*`, never the reverse. Reference each workflow by its literal current owner below until a pending relocation lands:
 
-| Workflow set | Canonical location |
-| --- | --- |
-| `ai-workflows` reusable workflows | `dryvist/ai-workflows` |
-| Shared `.github` reusable workflows | `JacobPEvans-personal/.github` |
+| Workflow set | Current home | Status |
+| --- | --- | --- |
+| `ai-workflows` reusable workflows | `dryvist/ai-workflows` | canonical |
+| Nix + release-please reusable workflows | `dryvist/.github` | canonical |
+| Other shared `.github` workflows (`_markdown-lint`, `_ci-gate`, …) | `JacobPEvans-personal/.github` | pending relocation to `dryvist/.github` |
 
 ## Runner choice
 
@@ -71,7 +72,7 @@ On-prem self-hosted is the documented exception for jobs that genuinely need loc
 | Disabled-schedule workflow (manual `workflow_dispatch` only) | GitHub-hosted — migration saves nothing |
 | Job requiring local hardware (OrbStack cluster, Proxmox LAN access, dev-loop instrumentation that cannot be replicated on a fresh EC2 spot instance) | **on-prem self-hosted** — `[self-hosted, Linux, ARM64]` (orbstack-kubernetes) or `[self-hosted, Linux]` (ansible-proxmox-apps); see "On-prem runner requirements" below |
 
-The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can correlate the GitHub Actions `workflow_job` webhook back to the originating run — without it, the job hangs in `queued`. Reusable workflows in `JacobPEvans/.github` accept a `runner_label` input (default `ubuntu-latest`); callers opt in by passing the RunsOn label string.
+The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can correlate the GitHub Actions `workflow_job` webhook back to the originating run — without it, the job hangs in `queued`. The shared reusable workflows accept a `runner_label` input (default `ubuntu-latest`); callers opt in by passing the RunsOn label string.
 
 Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps live in [`terraform-runs-on/docs/migration-guide.md`](https://github.com/JacobPEvans/terraform-runs-on/blob/main/docs/migration-guide.md).
 
