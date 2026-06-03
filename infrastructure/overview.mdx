@@ -1,12 +1,12 @@
 ---
 title: "Infrastructure"
-description: "Terraform modules for Proxmox, AWS disaster recovery, Bedrock agents, static sites, and self-hosted GitHub Actions runners."
+description: "OpenTofu modules for Proxmox, AWS disaster recovery, Bedrock agents, static sites, and self-hosted GitHub Actions runners."
 tier: 1
 ---
 
-> Provision once with Terraform, configure with Ansible, run forever.
+> Provision once with OpenTofu, configure with Ansible, run forever.
 
-The infrastructure layer is Terraform-managed. Every module is opinionated about deployment shape: LXC for production homelab workloads, Docker on a dedicated VM only when vendor-locked, AWS for disaster recovery and managed services.
+The infrastructure layer is OpenTofu-managed — the `terraform-*` repo names are legacy; the engine inside is `tofu` (see [IaC tooling](/infrastructure/iac-tooling)). Every module is opinionated about deployment shape: LXC for production homelab workloads, Docker on a dedicated VM only when vendor-locked, AWS for disaster recovery and managed services.
 
 ## The Proxmox stack
 
@@ -15,7 +15,7 @@ The infrastructure layer is Terraform-managed. Every module is opinionated about
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  TP([Proxmox provisioning<br/>Terraform])
+  TP([Proxmox provisioning<br/>OpenTofu])
   AP([Proxmox config<br/>Ansible])
   APA([Apps on Proxmox<br/>Ansible])
 
@@ -30,7 +30,7 @@ flowchart LR
   linkStyle 0,1 stroke:#F4EFE6,stroke-width:1.5px;
 ```
 
-Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configures hosts (green), then deploys the app stack on top.
+OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures hosts (green), then deploys the app stack on top.
 
 ## AWS module map
 
@@ -79,7 +79,7 @@ Terraform builds VMs and LXCs (coral). Ansible takes the inventory and configure
     The four-question decision tree for every new workload.
   </Card>
   <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
-    Encrypted-at-rest secrets across Terraform and Ansible repos.
+    Encrypted-at-rest secrets across OpenTofu and Ansible repos.
   </Card>
   <Card title="Self-hosted Netflix" icon="film" href="/infrastructure/media-stack">
     Media library on a dedicated VLAN.

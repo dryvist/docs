@@ -70,6 +70,7 @@
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
+              "infrastructure/iac-tooling",
               {
                 "group": "Repos",
                 "pages": [
