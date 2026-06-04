@@ -8,9 +8,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The homelab network is described in HCL. Every VLAN, WLAN, port profile, WAN uplink, and the VPN server is a Terraform resource — adopted from the live controller, not built from scratch.
 
-<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/terraform-unifi" />
+<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-unifi" />
 
-`terraform-unifi` puts the UniFi controller's data plane behind the same provisioning workflow that builds the rest of the homelab. The [`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest) provider drives the controller API; Terragrunt resolves environment-specific subnets from a single source.
+`tofu-unifi` puts the UniFi controller's data plane behind the same provisioning workflow that builds the rest of the homelab. The [`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest) provider drives the controller API; Terragrunt resolves environment-specific subnets from a single source.
 
 ## What it does
 
@@ -20,7 +20,7 @@ One generic module per resource type covers the controller's data plane:
 - MAC-pinned fixed-IP reservations
 - Firewall groups (the port/address sets); firewall *rules* are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
 - WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
-- Subnet values stay in the secret store and are consumed by both `terraform-unifi` and `terraform-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
+- Subnet values stay in the secret store and are consumed by both `tofu-unifi` and `terraform-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
 
 ## How it fits
 
@@ -117,7 +117,7 @@ Solid green edges are physical / network. WireGuard tunnels traverse the Interne
   <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
     Why most workloads on these VLANs are LXC, not Docker.
   </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/terraform-unifi">
+  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tofu-unifi">
     Provider config, networks, port profiles, firewall rules.
   </Card>
 </CardGroup>
