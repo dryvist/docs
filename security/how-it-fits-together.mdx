@@ -14,7 +14,7 @@ The tools page lists what each one does. This page shows how they connect. Read 
 | --- | --- |
 | **CI Tier 1 secret** | Doppler → `secrets-sync` repo → matrix job → target repo Actions secret |
 | **CI Tier 2 secret (infra)** | Doppler → `dopplerhq/secrets-fetch-action` at workflow runtime → env vars |
-| **Local Terraform** | `aws-vault exec` → `doppler run` → `terragrunt plan` |
+| **Local OpenTofu** | `aws-vault exec` → `doppler run` → `terragrunt plan` |
 | **Local AI session** | `gh-claude-<tier>` launcher → subshell → keychain read → `exec claude` → exit erases env |
 | **At-rest encrypted config** | `sops -e` → committed `.sops.json` → `sops -d` at CI/local boot |
 
@@ -104,6 +104,6 @@ See [Local AI isolation](/security/local-ai-isolation) for the diagram and the f
 
 - **CI Tier 1**: [secrets-sync](/security/secrets-sync)
 - **CI Tier 2**: [doppler](/security/tools/doppler#runtime-fetch-via-github-actions)
-- **Local Terraform**: [aws-vault](/security/tools/aws-vault) + [doppler](/security/tools/doppler)
+- **Local OpenTofu**: [aws-vault](/security/tools/aws-vault) + [doppler](/security/tools/doppler)
 - **Local AI session**: [local-ai-isolation](/security/local-ai-isolation) + [macos-keychain](/security/tools/macos-keychain)
 - **Encrypted config**: [sops](/security/tools/sops)

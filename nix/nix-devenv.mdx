@@ -1,6 +1,6 @@
 ---
 title: "Dev shells"
-description: "Reusable per-project Nix dev shells. Terraform, Ansible, Kubernetes, Python, ML — one flake per stack."
+description: "Reusable per-project Nix dev shells. OpenTofu, Ansible, Kubernetes, Python, ML — one flake per stack."
 tier: 2
 ---
 
@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/nix-devenv" />
 
-`nix-devenv` is a library of dev shells. Every project repo in the portfolio pulls its `flake.nix` from here. One source of truth for what "the Terraform dev shell" or "the ML dev shell" contains.
+`nix-devenv` is a library of dev shells. Every project repo in the portfolio pulls its `flake.nix` from here. One source of truth for what "the OpenTofu dev shell" or "the ML dev shell" contains.
 
 ## What it does
 
@@ -23,7 +23,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Provides | Activated by |
 | --- | --- |
-| Per-project `flake.nix` templates (Terraform, Ansible, K8s, Python, ML, docs, etc.) | `direnv` (`.envrc` runs `use flake`) on `cd` into the project |
+| Per-project `flake.nix` templates (OpenTofu, Ansible, K8s, Python, ML, docs, etc.) | `direnv` (`.envrc` runs `use flake`) on `cd` into the project |
 
 <RepoFit>
 Anything project-scoped belongs here. Anything machine-scoped belongs in [nix-darwin](/nix/nix-darwin) or [nix-home](/nix/nix-home).

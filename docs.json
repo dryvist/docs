@@ -3,6 +3,12 @@
   "theme": "mint",
   "name": "Jacob P Evans",
   "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
+  "redirects": [
+    { "source": "/infrastructure/repos/terraform-proxmox", "destination": "/infrastructure/repos/tofu-proxmox" },
+    { "source": "/infrastructure/repos/terraform-unifi", "destination": "/infrastructure/repos/tofu-unifi" },
+    { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
+    { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" }
+  ],
   "colors": {
     "primary": "#4FB3A9",
     "light": "#2F7E78",
@@ -74,8 +80,8 @@
               {
                 "group": "Repos",
                 "pages": [
-                  "infrastructure/repos/terraform-proxmox",
-                  "infrastructure/repos/terraform-unifi",
+                  "infrastructure/repos/tofu-proxmox",
+                  "infrastructure/repos/tofu-unifi",
                   "infrastructure/repos/ansible-proxmox",
                   "infrastructure/repos/ansible-proxmox-apps",
                   "infrastructure/repos/orbstack-kubernetes"
@@ -87,14 +93,14 @@
               "infrastructure/zfs-backup-replication",
               "infrastructure/legacy-bmc-tactics",
               "infrastructure/secrets-sops",
-              "infrastructure/terraform-check-placement",
+              "infrastructure/tofu-check-placement",
               {
                 "group": "CI/CD",
                 "pages": [
                   "infrastructure/cicd/overview",
                   "infrastructure/cicd/policy",
                   "infrastructure/cicd/git-signing",
-                  "infrastructure/cicd/terraform-runs-on"
+                  "infrastructure/cicd/tofu-runs-on"
                 ]
               }
             ]

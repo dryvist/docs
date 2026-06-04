@@ -26,7 +26,7 @@ Not "should not." Cannot. The four-layer isolation (process scoping, keychain ti
 
 ### 3. Human approval gates every potentially destructive action
 
-`rm -rf`, force-push, `git reset --hard`, `gh repo delete`, prod-database drops, Terraform destroy, package downgrades — every one requires an explicit human decision in the same session. AI assistants pause and ask; CI workflows route through review.
+`rm -rf`, force-push, `git reset --hard`, `gh repo delete`, prod-database drops, OpenTofu destroy, package downgrades — every one requires an explicit human decision in the same session. AI assistants pause and ask; CI workflows route through review.
 
 **How we enforce it.** Branch protection on `main` and feature branches via `.github-tofu`. CODEOWNERS gates security-sensitive paths. [Commit conventions](/conventions/commit-conventions) forbids destructive shortcuts. `--no-verify` and `--force` trigger PR-review flags.
 
@@ -56,7 +56,7 @@ Ambiguity must never grant access. A missing config file, an unreachable target 
 
 ### 8. No bypass of safety checks
 
-`--no-verify`, `git push --force-with-lease` on `main`, `terraform apply -auto-approve` outside CI, suppressed lint warnings — these are the shapes of how production gets paged at 3am. If a check is wrong, fix the check; if the check is right, fix the code.
+`--no-verify`, `git push --force-with-lease` on `main`, `tofu apply -auto-approve` outside CI, suppressed lint warnings — these are the shapes of how production gets paged at 3am. If a check is wrong, fix the check; if the check is right, fix the code.
 
 **How we enforce it.** [Commit conventions](/conventions/commit-conventions) codifies "always fix for real" and the autonomy boundaries. PR templates require explicit justification for any flag that resembles a bypass. Pre-commit hooks cannot be disabled per-PR.
 
@@ -88,7 +88,7 @@ Log aggregators are exfiltration targets — central, retained, often less-guard
 
 TLS 1.2+ is the floor for every egress. AES256 is the floor for every storage tier. Encrypted keychain DBs, encrypted disks (FileVault), encrypted backups, encrypted SOPS files. Plaintext is for screens, not bytes.
 
-**How we enforce it.** Terraform modules enforce S3 encryption (`AES256`) and CloudFront TLS 1.2+ minimums. macOS FileVault is on. Bitwarden's vault is encrypted end-to-end. SOPS encrypts repo-committed config with age. No flag flips this off.
+**How we enforce it.** OpenTofu modules enforce S3 encryption (`AES256`) and CloudFront TLS 1.2+ minimums. macOS FileVault is on. Bitwarden's vault is encrypted end-to-end. SOPS encrypts repo-committed config with age. No flag flips this off.
 
 ### 14. Rotate on suspicion, not just schedule
 

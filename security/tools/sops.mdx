@@ -10,7 +10,7 @@ tier: 2
 
 SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving the keys readable. The encrypted output is a regular file with structured contents — e.g. `terraform.sops.json`, `secrets.enc.yaml` — that lives in git and is decrypted at runtime by the age private key. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells SOPS which paths to encrypt and with which keys (see [.sops.yaml configuration](#sops-yaml-configuration) below).
 
-It is **not** a vault. It is checked-in, encrypted-at-rest configuration — perfect for: Terraform variables that name internal networks, initial-bootstrap passwords for Proxmox/iDRAC, ansible variables that vary per host but aren't truly secret-secret.
+It is **not** a vault. It is checked-in, encrypted-at-rest configuration — perfect for: OpenTofu variables that name internal networks, initial-bootstrap passwords for Proxmox/iDRAC, ansible variables that vary per host but aren't truly secret-secret.
 
 ## What does not belong in SOPS
 
@@ -31,7 +31,7 @@ It is **not** a vault. It is checked-in, encrypted-at-rest configuration — per
     The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable; values stay encrypted in git history forever.
   </Step>
   <Step title="Decrypt at runtime">
-    `sops -d` (often via Terraform/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
+    `sops -d` (often via OpenTofu/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
   </Step>
 </Steps>
 
@@ -56,7 +56,7 @@ Only the public half of the age key appears here. The private half lives at `~/.
 sops .sops.json
 ```
 
-`sops` opens the editor; you edit plaintext; on save it re-encrypts. Never `git add` an unencrypted copy. Pre-commit hooks (provided in `terraform-proxmox` and friends) verify every staged `.sops.json` is actually encrypted.
+`sops` opens the editor; you edit plaintext; on save it re-encrypts. Never `git add` an unencrypted copy. Pre-commit hooks (provided in `tofu-proxmox` and friends) verify every staged `.sops.json` is actually encrypted.
 
 ## Rotating the age key
 
@@ -83,4 +83,4 @@ A plaintext "starter" config like `terraform.tfvars.example` that gets renamed t
 
 - [Doppler](/security/tools/doppler) — for values that rotate.
 - [Bitwarden](/security/tools/bitwarden) — where age private keys are escrowed.
-- [`terraform-proxmox`](https://github.com/JacobPEvans/terraform-proxmox) — canonical example of `.sops.yaml` + pre-commit + editing workflow.
+- [`tofu-proxmox`](https://github.com/JacobPEvans/terraform-proxmox) — canonical example of `.sops.yaml` + pre-commit + editing workflow.

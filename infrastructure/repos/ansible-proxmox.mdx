@@ -6,7 +6,7 @@ tier: 2
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> Terraform made the box. This makes it Proxmox.
+> OpenTofu made the box. This makes it Proxmox.
 
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox" />
 
@@ -15,7 +15,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## What it does
 
 - Provisions ZFS pools and datasets with sensible defaults for VM and LXC storage
-- Realizes the Terraform `node_storage` contract (the `zfs_pools` role): creates datasets, sets quotas, and registers PVE storage — pool creation from raw disks stays a per-host commissioning step
+- Realizes the OpenTofu `node_storage` contract (the `zfs_pools` role): creates datasets, sets quotas, and registers PVE storage — pool creation from raw disks stays a per-host commissioning step
 - Sets up network bonding and bridges to match the homelab topology
 - Applies performance tuning (CPU governor, swap, sysctl) for VM density
 - Installs and configures monitoring agents that feed Splunk via Cribl
@@ -25,10 +25,10 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Upstream | Downstream |
 | --- | --- |
-| [Proxmox provisioning](/infrastructure/repos/terraform-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/repos/ansible-proxmox-apps) |
+| [Proxmox provisioning](/infrastructure/repos/tofu-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/repos/ansible-proxmox-apps) |
 
 <RepoFit>
-Run once per host after Terraform finishes. Re-running is safe — every role is idempotent.
+Run once per host after OpenTofu finishes. Re-running is safe — every role is idempotent.
 </RepoFit>
 
 ## Getting started
@@ -37,8 +37,8 @@ Run once per host after Terraform finishes. Re-running is safe — every role is
   <Step title="Clone and enter the dev shell">
     `git clone https://github.com/JacobPEvans/ansible-proxmox && cd ansible-proxmox && nix develop`
   </Step>
-  <Step title="Point at the Terraform inventory">
-    Ansible reads the host list that `terraform-proxmox` wrote out. The README covers the exact path and var precedence.
+  <Step title="Point at the OpenTofu inventory">
+    Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
   </Step>
   <Step title="Resolve secrets via Doppler">
     `DOPPLER_TOKEN` lets the playbook fetch host passwords, SSH keys, and monitoring tokens at run time. No secrets in git.
@@ -51,7 +51,7 @@ Run once per host after Terraform finishes. Re-running is safe — every role is
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="terraform-proxmox" icon="server" href="/infrastructure/repos/terraform-proxmox">
+  <Card title="tofu-proxmox" icon="server" href="/infrastructure/repos/tofu-proxmox">
     The provisioner. Run this first.
   </Card>
   <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">

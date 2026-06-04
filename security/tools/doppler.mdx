@@ -41,7 +41,7 @@ For Tier 2 secrets that must never sit in GitHub Actions stores:
     inject-env-vars: true
 ```
 
-The service token `GH_ACTION_DOPPLER_IAC_CONF_MGMT` is itself a Tier 1 secret distributed by `secrets-sync` to the two `_infra_repos`: `ansible-proxmox-apps` and `terraform-runs-on`.
+The service token `GH_ACTION_DOPPLER_IAC_CONF_MGMT` is itself a Tier 1 secret distributed by `secrets-sync` to the two `_infra_repos`: `ansible-proxmox-apps` and `tofu-runs-on`.
 
 ## Local-dev chain
 
@@ -53,7 +53,7 @@ aws-vault exec tf-proxmox -- doppler run -- terragrunt plan
 
 Secrets injection happens at `terragrunt`'s subprocess launch — no values touch your shell history or environment.
 
-For Terraform variables specifically, Doppler's name-transformer flag prefixes everything as `TF_VAR_*`:
+For OpenTofu variables specifically, Doppler's name-transformer flag prefixes everything as `TF_VAR_*`:
 
 ```bash
 doppler run --name-transformer tf-var -- terragrunt plan

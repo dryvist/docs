@@ -1,5 +1,5 @@
 ---
-title: "Terraform check placement"
+title: "OpenTofu check placement"
 description: "Static checks in pre-commit, credentialed operations in CI via OIDC. aws-vault never appears in repo automation."
 tier: 2
 ---
@@ -8,20 +8,20 @@ tier: 2
 
 > Static checks belong in pre-commit (mirrored in CI). Credential-requiring operations belong in CI only, via OIDC. `aws-vault` never appears in hooks, workflows, Makefiles, or scripts.
 
-The placement rules below apply to every Terraform / OpenTofu / Terragrunt repo across the org. Static checks run on every commit locally and are mirrored as a CI job; anything that touches AWS runs in CI only, authenticated with OIDC.
+The placement rules below apply to every OpenTofu / Terragrunt repo across the org. Static checks run on every commit locally and are mirrored as a CI job; anything that touches AWS runs in CI only, authenticated with OIDC.
 
 ## Canonical pattern
 
 | Check | Pre-commit (local + CI mirror) | CI only (OIDC) | Never |
 | --- | --- | --- | --- |
-| `terraform fmt -check` | yes | mirrored | — |
-| `terraform validate` (with `init -backend=false`) | yes | mirrored | — |
+| `tofu fmt -check` | yes | mirrored | — |
+| `tofu validate` (with `init -backend=false`) | yes | mirrored | — |
 | `tflint` | yes | mirrored | — |
 | `terraform_docs` | yes | mirrored | — |
 | `gitleaks` / `detect-private-key` | yes | mirrored | — |
 | Generic hygiene (whitespace, EOL, YAML, large files) | yes | mirrored | — |
-| `terraform plan` | — | yes (OIDC, post via `tfcmt`) | wrapped in `aws-vault` |
-| `terraform apply` | — | yes (OIDC, gated environment) | wrapped in `aws-vault` |
+| `tofu plan` | — | yes (OIDC, post via `tfcmt`) | wrapped in `aws-vault` |
+| `tofu apply` | — | yes (OIDC, gated environment) | wrapped in `aws-vault` |
 | `trivy` / `checkov` (security) | optional | dedicated job | wrapped in `aws-vault` |
 | `terragrunt validate` / `terragrunt plan` | — (delete the hook) | yes (OIDC) | as a hook |
 
@@ -29,7 +29,7 @@ The placement rules below apply to every Terraform / OpenTofu / Terragrunt repo 
 
 **No credentials in hooks, ever.** `aws-vault`, `doppler`, AWS SDK calls, and anything requiring a keychain or injected secret are forbidden in `entry:` fields, `args:`, Makefile targets, `justfile` recipes, and scripts called from any of these. Pre-commit must run from a fresh checkout with no `AWS_*` env vars set.
 
-**`terraform validate` runs with `init -backend=false`.** No backend creds, no provider creds needed. This is how `hashicorp/terraform-provider-aws` and `opentofu/opentofu` run their own pre-commit hooks.
+**`tofu validate` runs with `init -backend=false`.** No backend creds, no provider creds needed. This is how `hashicorp/terraform-provider-aws` and `opentofu/opentofu` run their own pre-commit hooks.
 
 **Delete `terragrunt-validate` and `terragrunt-plan` hooks entirely.** Do not retain them under `stages: [manual]`. If a developer wants to run `terragrunt plan` locally, they invoke it from the dev shell outside pre-commit. Matches `gruntwork-io/terragrunt` practice (zero credentialed hooks).
 
@@ -49,7 +49,7 @@ The placement rules below apply to every Terraform / OpenTofu / Terragrunt repo 
 
 GitHub Actions logs and PR comments are world-readable on public repos. Every workflow that handles real credentials or plan output must apply these controls.
 
-**`terraform plan` output is sensitive.** It can reveal AWS account IDs, ARNs, internal IPv4/IPv6 ranges, internal hostnames, resource names, security-group rules, S3 bucket names, IAM principals, EC2 AMI IDs, Proxmox node names, VM/container counts. Do not stream raw `tofu plan -no-color` to a `run:` step without masking. Use `tfcmt --patch` (compact diff mode) when posting to PRs; gate comments to `pull_request` from same-repo branches only — never from public forks.
+**`tofu plan` output is sensitive.** It can reveal AWS account IDs, ARNs, internal IPv4/IPv6 ranges, internal hostnames, resource names, security-group rules, S3 bucket names, IAM principals, EC2 AMI IDs, Proxmox node names, VM/container counts. Do not stream raw `tofu plan -no-color` to a `run:` step without masking. Use `tfcmt --patch` (compact diff mode) when posting to PRs; gate comments to `pull_request` from same-repo branches only — never from public forks.
 
 **Mask before logging, not after.** The first step of every job that handles real creds must `::add-mask::` the AWS account ID and any environment-derived domain or IP prefix. Read the account ID from `aws sts get-caller-identity` and pipe through `::add-mask::` *before* any other step runs.
 
@@ -57,9 +57,9 @@ GitHub Actions logs and PR comments are world-readable on public repos. Every wo
 
 **No `set -x` or `set -o xtrace`.** Bash trace mode echoes every command including variable expansions; masking only fires on stdout content, not the command line itself.
 
-**No `terraform show -json` artifact uploads.** Plan binary files (`tfplan`) contain resolved variable values including `sensitive = true` strings. Default position: do not upload plan files; re-plan in the apply job.
+**No `tofu show -json` artifact uploads.** Plan binary files (`tfplan`) contain resolved variable values including `sensitive = true` strings. Default position: do not upload plan files; re-plan in the apply job.
 
-**`pull_request_target` is forbidden for terraform jobs.** Use `pull_request` (same-repo branches only) or `workflow_run` for fork-PR plans with output written to a downloadable artifact.
+**`pull_request_target` is forbidden for OpenTofu jobs.** Use `pull_request` (same-repo branches only) or `workflow_run` for fork-PR plans with output written to a downloadable artifact.
 
 **Trivy / Checkov SARIF uploads are safe** (rule violations only), but their stdout is not — apply the same masking.
 

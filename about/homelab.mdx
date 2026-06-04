@@ -1,6 +1,6 @@
 ---
 title: "Homelab"
-description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl — all managed with Terraform, Ansible, and Nix."
+description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl — all managed with OpenTofu, Ansible, and Nix."
 ---
 
 > The goal: fault-tolerant infrastructure I can rebuild from a single `nix build`.
@@ -20,7 +20,7 @@ The homelab is a real production environment, just for one person. Proxmox clust
 
 ## Network topology
 
-The UniFi gateway sits at the centre of the LAN; the Proxmox cluster, personal devices, and the bare-metal LLM box all hang off it. WireGuard tunnels traverse the Internet → UniFi edge. Per-service VLANs encode workload tier. Diagram and the network-as-code that defines it: [`terraform-unifi`](/infrastructure/repos/terraform-unifi).
+The UniFi gateway sits at the centre of the LAN; the Proxmox cluster, personal devices, and the bare-metal LLM box all hang off it. WireGuard tunnels traverse the Internet → UniFi edge. Per-service VLANs encode workload tier. Diagram and the network-as-code that defines it: [`tofu-unifi`](/infrastructure/repos/tofu-unifi).
 
 ## Data flow
 
@@ -36,8 +36,8 @@ Most workloads run as LXC on the Proxmox cluster — HAProxy, Cribl Edge, Home A
 
 ## Provisioning + configuration
 
-[`terraform-proxmox`](/infrastructure/repos/terraform-proxmox) builds VMs and LXCs. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The macOS counterpart that runs the monitoring stack as Kubernetes is [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
+[`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) builds VMs and LXCs. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The macOS counterpart that runs the monitoring stack as Kubernetes is [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
 
 ## DR plan
 
-[`terraform-aws`](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change. Details: [tf-splunk-aws](/observability/repos/tf-splunk-aws).
+[`tofu-aws`](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change. Details: [tf-splunk-aws](/observability/repos/tf-splunk-aws).

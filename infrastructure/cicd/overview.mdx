@@ -17,7 +17,7 @@ Pick by what the workload actually needs:
 | Tier | Where | When to use |
 | --- | --- | --- |
 | **GitHub-hosted** | GitHub Actions cloud (free for public repos) | Public repos. No AWS work, no internal-host access, nothing that needs a private runner. Cheapest path. |
-| **RunsOn AWS spot** | EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes; same OIDC trust into AWS. Default for IaC apply jobs that authenticate to AWS. |
+| **RunsOn AWS spot** | EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes; same OIDC trust into AWS. Default for IaC apply jobs that authenticate to AWS. |
 | **Self-hosted Mac** | A Mac in the homelab running the Actions runner agent | Any macOS-only requirement: signing, codesigning, `xcrun`, `pmset`/`powermetrics` validation, macOS-native binary builds. There is no cloud equivalent. |
 | **Self-hosted locked-down** | A dedicated runner host in the homelab (separate from the Mac) | Pre-built environments, jobs that need tighter control over what's on the runner, jobs that handle highly-sensitive credentials that must never leave the homelab boundary, or anything that needs a network-locked execution environment. |
 
@@ -54,10 +54,10 @@ There is intentionally **no required approving review count** on solo-maintained
   <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
     Identity per execution context, the App-token pattern, deterministic-GHA signing.
   </Card>
-  <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
+  <Card title="tofu-runs-on" icon="play" href="/infrastructure/cicd/tofu-runs-on">
     The RunsOn tier — the runner pool itself, OIDC trust, migration guide.
   </Card>
-  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Static checks in pre-commit, credentialed operations in CI via OIDC.
   </Card>
   <Card title="Security overview" icon="lock" href="/security/overview">

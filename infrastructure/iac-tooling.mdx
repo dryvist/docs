@@ -1,10 +1,10 @@
 ---
 title: "IaC tooling: OpenTofu and Terragrunt"
-description: "OpenTofu is the canonical engine across every dryvist IaC repo. Terraform survives only in legacy repo names. Terragrunt stays where it does real work and is being phased out where it is a thin wrapper."
+description: "OpenTofu is the canonical engine across every dryvist IaC repo. These docs use the tofu-* names ahead of the repo renames. Terragrunt stays where it does real work and is being phased out where it is a thin wrapper."
 tier: 1
 ---
 
-> The engine is OpenTofu. "Terraform" is gone from everything except the repo names — and renaming those would cost more than it's worth.
+> The engine is OpenTofu. These docs already use the `tofu-*` names everywhere — even where the underlying repos and module sources still carry the legacy `terraform-*` slug. The documentation rename leads the infrastructure rename on purpose.
 
 This page is the decision record for two questions that come up every time someone opens an IaC repo here: *are we on Terraform or OpenTofu?* and *do we actually need Terragrunt?* Short answers: OpenTofu, and only sometimes.
 
@@ -23,17 +23,17 @@ For a homelab and personal org, OpenTofu is the no-regrets default and there is 
 - **Native state encryption.** OpenTofu encrypts state (including remote state) natively, without an external KMS workflow.
 - **Dynamic config.** OpenTofu 1.8+ allows variables and locals inside `backend` and `provider` blocks — the single biggest reason teams historically reached for a wrapper. ([encore](https://encore.dev/articles/opentofu-vs-terraform-2026))
 
-## "Terraform" is just a legacy prefix
+## The docs use `tofu-*` ahead of the repos
 
-Repos named `terraform-proxmox`, `terraform-unifi`, `terraform-aws`, and friends predate the migration. The prefix is historical; the engine inside is `tofu`. Newer repos already broke the pattern — `.github-tofu` uses the `tofu-*` prefix.
+These docs name the repos `tofu-proxmox`, `tofu-unifi`, `tofu-aws`, and friends. That is the end-state, and the documentation gets there first. The engine inside every one of them is already `tofu`; the `tofu-*` display name simply stops pretending otherwise. Newer repos already broke the pattern — `.github-tofu` uses the `tofu-*` prefix natively.
 
-**Convention going forward:** new IaC repos use `tofu-*`. Existing `terraform-*` repos keep their names.
+**Convention going forward:** new IaC repos use `tofu-*`. The docs use `tofu-*` for every IaC repo regardless of whether the underlying git slug has been renamed yet.
 
-We do **not** mass-rename. A rename would churn module `source` references (`git::https://github.com/dryvist/terraform-aws-template.git?ref=v0.1.0`), GitHub redirect history, CI configuration, and every docs link — for cosmetic gain. This is the same reasoning that keeps `JacobPEvans/*` references in place rather than rewriting them to `dryvist/*`: the redirect holds, and the churn would have to be maintained forever. When a `terraform-*` reference reads as the engine rather than the repo name, fix the word; never rename the repo on sight.
+What the docs **do not** rewrite is anything load-bearing. The repo links still point at the real URL (`github.com/dryvist/terraform-proxmox` until that repo is actually renamed — the link text reads `tofu-proxmox`, the `href` resolves), and module `source` references (`git::https://github.com/dryvist/terraform-aws-template.git?ref=v0.1.0`), CI configuration, the `registry.opentofu.org` / `registry.terraform.io` provider URLs, pre-commit hook IDs, and the `tf-*` AWS role names are untouched. The display name leads; the identifiers follow when the repos are renamed for real. This is deliberate: the docs describe the world we are moving to, and the redirect from the old repo slug holds until the rename lands.
 
 ## Where Terragrunt earns its place
 
-Terragrunt is used in most repos, but in this environment it is mostly a *configuration wrapper*, not the multi-module orchestrator it was built to be. It does real work in exactly two repos — `terraform-proxmox` and `terraform-unifi` — where it:
+Terragrunt is used in most repos, but in this environment it is mostly a *configuration wrapper*, not the multi-module orchestrator it was built to be. It does real work in exactly two repos — `tofu-proxmox` and `tofu-unifi` — where it:
 
 - decrypts SOPS files through the `sops_decrypt_file` data source,
 - merges a three-layer input model — committed `deployment.json`, SOPS-encrypted config, and Doppler environment variables,
@@ -75,8 +75,8 @@ Everywhere else, Terragrunt only generates a backend and a provider block. OpenT
 
 | Repo | Engine | Terragrunt today | Direction |
 | --- | --- | --- | --- |
-| `terraform-proxmox` / `terraform-unifi` | tofu | SOPS + 3-layer merge + `after_hook` | Keep — earns its place |
-| `terraform-github` / `terraform-runs-on` / `terraform-aws` (basic) | tofu | Backend + provider generation only | Phase out → native OpenTofu config |
+| `tofu-proxmox` / `tofu-unifi` | tofu | SOPS + 3-layer merge + `after_hook` | Keep — earns its place |
+| `tofu-github` / `tofu-runs-on` / `tofu-aws` (basic) | tofu | Backend + provider generation only | Phase out → native OpenTofu config |
 | `tf-splunk-aws` | tofu | Multi-env `include` (dev/stg/prod) | Re-evaluate → native per-env `tfvars` |
 | `.github-tofu` | tofu | None | Already native — the target shape |
 
@@ -85,7 +85,7 @@ We lose nothing we actually use: no repo uses `dependency` / `dependencies` cros
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+  <Card title="Check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Where IaC checks run — static in pre-commit, credentialed in CI via OIDC. Already mandates deleting Terragrunt hooks.
   </Card>
   <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
