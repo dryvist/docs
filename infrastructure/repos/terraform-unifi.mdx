@@ -1,12 +1,12 @@
 ---
 title: "UniFi networking"
-description: "Terraform/Terragrunt management of UniFi networks, VLANs, port profiles, firewall rules, and fixed IPs. Network-as-code for the homelab."
+description: "Terraform/Terragrunt management of the UniFi controller — networks, WLANs, port profiles, fixed IPs, firewall groups, WAN uplinks, the WireGuard VPN, RADIUS, and dynamic DNS. Network-as-code for the homelab."
 tier: 2
 ---
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> The homelab network is described in HCL. Every VLAN, every port profile, every firewall rule is a Terraform resource.
+> The homelab network is described in HCL. Every VLAN, WLAN, port profile, WAN uplink, and the VPN server is a Terraform resource — adopted from the live controller, not built from scratch.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/terraform-unifi" />
 
@@ -14,10 +14,13 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
-- Defines every infrastructure VLAN as `unifi-network` resources
-- Builds port profiles per role
-- Encodes firewall rules and fixed-IP reservations alongside the network they apply to
-- Subnet values stay in the secret store and are consumed by both `terraform-unifi` and `terraform-proxmox` — single source, no drift
+One generic module per resource type covers the controller's data plane:
+
+- Infrastructure VLANs / networks, WLANs, and per-role port profiles
+- MAC-pinned fixed-IP reservations
+- Firewall groups (the port/address sets); firewall *rules* are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
+- WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
+- Subnet values stay in the secret store and are consumed by both `terraform-unifi` and `terraform-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
 
 ## How it fits
 
@@ -30,9 +33,42 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 Network plumbing only. VM/LXC placement on top of these VLANs is `terraform-proxmox`'s job; host config inside those VMs is Ansible's.
 </RepoFit>
 
+## Adoption model
+
+The controller came first; the code adopts it. Existing objects are pulled in with
+`import` blocks (by controller ID, by MAC for clients, by name for WANs) and then
+field-aligned so the committed config matches reality — a clean adoption plans to zero
+change, not a re-create. Two safety rails are non-negotiable: a full controller snapshot
+is committed to a companion read-side repo as the rollback reference **before every
+apply**, and the plan is reviewed for any destroy/replace **before** it runs. New firewall
+rules ship disabled and are flipped on one at a time in later changes.
+
 ## Why per-service VLANs
 
 The homelab uses VLAN-as-service-tier: a guest's VLAN encodes what kind of workload it is, and therefore which policies apply to it. That keeps the inventory comprehensible at a glance and lets firewall policy attach to a tier rather than to individual hosts.
+
+## Provider notes (UniFi Network 9)
+
+The `ubiquiti-community/unifi` provider is current and capable, but it lags UniFi
+**Network 9** in a few spots worth knowing before you adopt a controller. These are
+provider/controller version gaps, not configuration mistakes:
+
+- **Legacy firewall rules vs the new index range.** Network 9 renumbered gateway
+  firewall-rule indices; the provider still validates the old range. New rules can't be
+  created in either band until the provider catches up, so rule config is written but
+  parked (disabled) for now. Firewall *groups* are unaffected.
+- **No zone-based firewall resources yet.** Network 9's zone-based firewall has no
+  provider resource; that policy stays UI-managed.
+- **Failover-only WAN.** A failover-only uplink stores a sentinel priority the provider's
+  validation rejects — omit the priority and let the load-balance type imply it.
+- **No static-WAN-IP attribute.** A static WAN's address is read-only from the provider's
+  side; it stays controller-managed and imports cleanly.
+- **Benign per-plan churn.** The provider re-proposes a handful of computed fields on
+  every plan (WLAN, port-profile, RADIUS defaults). These aren't real changes — they
+  apply idempotently and don't mutate the controller.
+
+The rule of thumb when the provider rejects a controller-correct value: pin what you can,
+defer what you can't, and document it — don't fight the provider.
 
 ## Authentication
 
