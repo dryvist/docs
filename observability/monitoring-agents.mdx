@@ -8,6 +8,49 @@ tier: 2
 
 The monitoring stack runs across four hosts: the homelab Proxmox cluster, the macOS workstation, the [OrbStack K8s cluster](/infrastructure/repos/orbstack-kubernetes) on that workstation, and the AWS-side Splunk install. Each tier picks the lowest-overhead path the host OS supports natively. This page maps every collector to a host and a destination.
 
+{/* Shape: parallel convergence. Two host subgraphs; both Stream tiers land on Splunk; AWS is the failover. 7 nodes, ≤1 boundary per edge. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  subgraph homelab["Proxmox homelab"]
+    hEdge(["Cribl Edge"])
+    hStream(["Cribl Stream"])
+    splunk[("Splunk")]
+  end
+  subgraph mac["macOS workstation"]
+    mEdge(["Native Cribl Edge"])
+    oEdge(["OrbStack Edge + OTel"])
+    oStream(["OrbStack Cribl Stream"])
+  end
+  awsdr[("Splunk DR · AWS")]
+
+  hEdge --> hStream
+  mEdge --> oStream
+  oEdge --> oStream
+  hStream --> splunk
+  oStream --> splunk
+  splunk -.failover.-> awsdr
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
+  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+
+  class hEdge,mEdge,oEdge src
+  class hStream,oStream hop
+  class splunk sink
+  class awsdr external
+
+  click splunk "/observability/repos/ansible-splunk" "The homelab Splunk install"
+  click awsdr "/observability/repos/tf-splunk-aws" "The AWS DR footprint"
+
+  linkStyle 0,1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 5 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+Every Edge feeds a Stream; only Stream reaches Splunk; the AWS tier is one routing-rule flip away. Detail per collector below.
+
 ## The collectors
 
 | Collector | Where it runs | What it collects | Forwards to |
