@@ -1,6 +1,6 @@
 ---
-title: "Self-hosted Netflix"
-description: "A self-hosted media library running as an LXC chain on a dedicated VLAN of the homelab cluster."
+title: "Self-hosted Netflix & personal backup"
+description: "A self-hosted media library plus the personal-backup services that ride the same footprint — Immich for photos, Time Machine for Macs — on dedicated VLANs of the homelab cluster."
 tier: 2
 ---
 
@@ -9,6 +9,15 @@ The homelab runs a self-hosted Netflix: a media library served from LXCs on a de
 ## Container choice
 
 LXC, not Docker — consistent with the [LXC vs Docker](/infrastructure/lxc-vs-docker) decision tree. Native packages where they exist; Ansible manages config.
+
+## Personal backup on the same footprint
+
+The same self-hosted footprint replaces two cloud subscriptions with services that keep the data at home:
+
+- **Immich** — a self-hosted photo and video library, the iCloud Photos alternative. Phones and Macs back up automatically to it. It's the one workload here that runs Docker-in-LXC (an official multi-container stack), with the photo library living on a ZFS dataset bind-mounted into the container.
+- **Time Machine** — the Macs back up to an SMB share on the homelab NAS, presented as a native Time Machine target (Samba's `vfs_fruit` advertises it as an Apple Time Capsule). The same NAS serves read-only media shares for Infuse on Apple TV.
+
+These are backup *targets*, and they are themselves protected: their datasets ride the [ZFS snapshot + replication layers](/infrastructure/zfs-backup-replication) like everything else — a backup that isn't backed up is a single point of failure.
 
 ## Related
 
