@@ -90,6 +90,7 @@
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
               "infrastructure/media-stack",
+              "infrastructure/local-llm",
               "infrastructure/zfs-backup-replication",
               "infrastructure/legacy-bmc-tactics",
               "infrastructure/secrets-sops",
