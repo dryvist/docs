@@ -1,12 +1,12 @@
 ---
 title: "UniFi networking"
-description: "Terraform/Terragrunt management of the UniFi controller — networks, WLANs, port profiles, fixed IPs, firewall groups, WAN uplinks, the WireGuard VPN, RADIUS, and dynamic DNS. Network-as-code for the homelab."
+description: "OpenTofu/Terragrunt management of the UniFi controller — networks, WLANs, port profiles, fixed IPs, firewall groups, WAN uplinks, the WireGuard VPN, RADIUS, and dynamic DNS. Network-as-code for the homelab."
 tier: 2
 ---
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> The homelab network is described in HCL. Every VLAN, WLAN, port profile, WAN uplink, and the VPN server is a Terraform resource — adopted from the live controller, not built from scratch.
+> The homelab network is described in HCL. Every VLAN, WLAN, port profile, WAN uplink, and the VPN server is an OpenTofu resource — adopted from the live controller, not built from scratch.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-unifi" />
 
@@ -20,7 +20,7 @@ One generic module per resource type covers the controller's data plane:
 - MAC-pinned fixed-IP reservations
 - Firewall groups (the port/address sets); firewall *rules* are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
 - WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
-- Subnet values stay in the secret store and are consumed by both `tofu-unifi` and `terraform-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
+- Subnet values stay in the secret store and are consumed by both `tofu-unifi` and `tofu-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
 
 ## How it fits
 
@@ -30,7 +30,7 @@ One generic module per resource type covers the controller's data plane:
 | Talks to | UniFi controller API (read/write) | The L2/L3 fabric every other repo's hosts live on |
 
 <RepoFit>
-Network plumbing only. VM/LXC placement on top of these VLANs is `terraform-proxmox`'s job; host config inside those VMs is Ansible's.
+Network plumbing only. VM/LXC placement on top of these VLANs is `tofu-proxmox`'s job; host config inside those VMs is Ansible's.
 </RepoFit>
 
 ## Adoption model
@@ -108,7 +108,7 @@ Solid green edges are physical / network. WireGuard tunnels traverse the Interne
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="terraform-proxmox" icon="server" href="/infrastructure/repos/terraform-proxmox">
+  <Card title="tofu-proxmox" icon="server" href="/infrastructure/repos/tofu-proxmox">
     The provisioner that lands VMs/LXCs on these VLANs.
   </Card>
   <Card title="Self-hosted Netflix" icon="film" href="/infrastructure/media-stack">

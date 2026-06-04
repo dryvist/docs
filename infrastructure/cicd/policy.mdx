@@ -58,7 +58,7 @@ Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `u
 
 ## Runner choice
 
-RunsOn (AWS EC2 spot via [`terraform-runs-on`](/infrastructure/cicd/terraform-runs-on)) is the default for Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume; once it is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
+RunsOn (AWS EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on)) is the default for Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume; once it is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
 
 On-prem self-hosted is the documented exception for jobs that genuinely need local hardware — not a routine choice.
 
@@ -74,7 +74,7 @@ On-prem self-hosted is the documented exception for jobs that genuinely need loc
 
 The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can correlate the GitHub Actions `workflow_job` webhook back to the originating run — without it, the job hangs in `queued`. The shared reusable workflows accept a `runner_label` input (default `ubuntu-latest`); callers opt in by passing the RunsOn label string.
 
-Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps live in [`terraform-runs-on/docs/migration-guide.md`](https://github.com/JacobPEvans/terraform-runs-on/blob/main/docs/migration-guide.md).
+Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps live in [`tofu-runs-on/docs/migration-guide.md`](https://github.com/JacobPEvans/terraform-runs-on/blob/main/docs/migration-guide.md).
 
 ### On-prem runner requirements
 
@@ -94,10 +94,10 @@ Reference implementation: `orbstack-kubernetes/docker/actions-runner/` — see t
   <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
     Identity per execution context and the App-token pattern that signs every AI-authored commit.
   </Card>
-  <Card title="terraform-runs-on" icon="play" href="/infrastructure/cicd/terraform-runs-on">
+  <Card title="tofu-runs-on" icon="play" href="/infrastructure/cicd/tofu-runs-on">
     The RunsOn runner pool itself — provisioning, OIDC trust, migration guide.
   </Card>
-  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Static checks in pre-commit, credentialed operations in CI via OIDC.
   </Card>
   <Card title="CI/CD overview" icon="server" href="/infrastructure/cicd/overview">

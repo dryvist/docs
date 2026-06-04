@@ -1,10 +1,10 @@
 ---
 title: "AWS Vault"
-description: "MFA-protected AWS credential sessions — one profile per Terraform root, paired with Doppler for runtime secret injection."
+description: "MFA-protected AWS credential sessions — one profile per OpenTofu root, paired with Doppler for runtime secret injection."
 tier: 2
 ---
 
-> One profile per Terraform root. MFA on every session. Cached for a bounded TTL.
+> One profile per OpenTofu root. MFA on every session. Cached for a bounded TTL.
 
 ## What AWS Vault is for
 
@@ -27,12 +27,12 @@ tier: 2
   </Step>
 </Steps>
 
-One profile per Terraform root keeps blast radius small. A `tf-proxmox` session has no rights to `tf-runs-on` infrastructure even if you accidentally `exec` the wrong terragrunt root.
+One profile per OpenTofu root keeps blast radius small. A `tf-proxmox` session has no rights to `tf-runs-on` infrastructure even if you accidentally `exec` the wrong terragrunt root.
 
-| Profile | Terraform root | Doppler config |
+| Profile | OpenTofu root | Doppler config |
 | --- | --- | --- |
-| `tf-proxmox` | `terraform-proxmox` | `iac-conf-mgmt/prd` |
-| `tf-runs-on` | `terraform-runs-on` | `iac-conf-mgmt/prd` |
+| `tf-proxmox` | `tofu-proxmox` | `iac-conf-mgmt/prd` |
+| `tf-runs-on` | `tofu-runs-on` | `iac-conf-mgmt/prd` |
 | `tf-splunk-aws` | `tf-splunk-aws` | (uses repo secrets directly) |
 
 Per-profile workspace/account specifics live in [`docs.dryvist.com`](https://docs.dryvist.com) (dryvist internal).
@@ -69,12 +69,12 @@ Real account IDs do not appear in this docs site.
 1. Add a `[profile <name>]` block to `~/.aws/config` with the IAM user's `mfa_serial`.
 2. Store the long-lived access key via `aws-vault add <name>`. The keychain backend stores it; `~/.aws/credentials` stays empty.
 3. Verify with `aws-vault exec <name> -- aws sts get-caller-identity`.
-4. Plumb the profile name into the Terraform root's docs (README) so the Terragrunt invocation has a copy-pasteable command.
+4. Plumb the profile name into the OpenTofu root's docs (README) so the Terragrunt invocation has a copy-pasteable command.
 
 ## Best practices
 
 - Always `aws-vault exec` — never `aws-vault env` or `aws-vault login`, which spread the session beyond the subprocess.
-- Pair with Doppler on every Terraform call. Naked `aws-vault exec ... -- terragrunt plan` skips runtime config injection and tempts hardcoded values in `.tfvars`.
+- Pair with Doppler on every OpenTofu call. Naked `aws-vault exec ... -- terragrunt plan` skips runtime config injection and tempts hardcoded values in `.tfvars`.
 - Cap `session_ttl` to 1 hour. Longer sessions are convenience that fights least-privilege.
 - Enable CloudTrail. The audit trail for `aws-vault` is on the AWS side — there's no local log.
 

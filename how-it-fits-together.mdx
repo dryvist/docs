@@ -12,7 +12,7 @@ description: "Six surfaces, one stack — and how each one depends on the others
     Doppler · SOPS · Keychain · Bitwarden · BWS
   </Card>
   <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
-    Terraform · Ansible · Proxmox
+    OpenTofu · Ansible · Proxmox
   </Card>
   <Card title="Observability" icon="chart-line" href="/observability/overview">
     Cribl · Splunk · OTEL
@@ -59,7 +59,7 @@ flowchart LR
   class Obs sink
   class Sec gate
 
-  click Inf "/infrastructure/overview" "Terraform · Ansible · Proxmox"
+  click Inf "/infrastructure/overview" "OpenTofu · Ansible · Proxmox"
   click Cfg "/configuration/overview" "Ansible-managed configuration"
   click Obs "/observability/overview" "Cribl · Splunk · OTEL"
   click Nix "/nix/overview" "macOS host · user env · dev shells"

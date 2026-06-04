@@ -4,7 +4,7 @@ description: "Ansible playbooks for Proxmox host setup, application stack on VMs
 tier: 1
 ---
 
-> Terraform builds the box. Ansible makes it useful.
+> OpenTofu builds the box. Ansible makes it useful.
 
 Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host, the application stack on top, and Splunk Enterprise as a separate concern because of its scale and uptime requirements.
 
@@ -34,7 +34,7 @@ flowchart TB
   linkStyle 0,1,2 stroke:#F4EFE6,stroke-width:1.5px;
 ```
 
-Terraform outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
+OpenTofu outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
 
 | Role | Repo | What it does |
 | --- | --- | --- |
@@ -66,9 +66,9 @@ Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` reso
 
 <CardGroup cols={2}>
   <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
-    The Terraform side that provisions everything Ansible configures.
+    The OpenTofu side that provisions everything Ansible configures.
   </Card>
-  <Card title="terraform-proxmox" icon="vault" href="/infrastructure/repos/terraform-proxmox">
+  <Card title="tofu-proxmox" icon="vault" href="/infrastructure/repos/tofu-proxmox">
     How VMs and LXCs are provisioned before Ansible touches them.
   </Card>
 </CardGroup>

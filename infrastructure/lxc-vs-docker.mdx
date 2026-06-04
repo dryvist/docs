@@ -21,7 +21,7 @@ If a workload doesn't fit one of those four, the workload is wrong — not the t
 
 LXC containers are kernel-namespace processes — same kernel, same network stack, no virtualization layer between the container and the host's network. For a stack that moves syslog, NetFlow, OTLP, and HEC traffic at homelab volumes, that matters. HAProxy in front of Cribl Edge, Cribl Edge in front of Cribl Stream, Cribl Stream in front of Splunk — every hop adds latency, and every hop that crosses Docker's bridge network adds latency on top of latency.
 
-LXC also matches the operational model. [`terraform-proxmox`](/infrastructure/repos/terraform-proxmox) provisions LXC and VMs from a single Terragrunt apply. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures hosts. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) lands the workload. The triad is the production path; everything that lives in this triad gets re-deployed on the same cadence and observed on the same dashboards.
+LXC also matches the operational model. [`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) provisions LXC and VMs from a single Terragrunt apply. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures hosts. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) lands the workload. The triad is the production path; everything that lives in this triad gets re-deployed on the same cadence and observed on the same dashboards.
 
 ## Why Docker keeps a slot
 

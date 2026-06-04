@@ -78,7 +78,7 @@ Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before 
 
 | Layer | Provisioned by | Configured by | Source repo |
 | --- | --- | --- | --- |
-| Proxmox host / VMs / LXCs | [terraform-proxmox](https://github.com/JacobPEvans/terraform-proxmox) | [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) | both |
+| Proxmox host / VMs / LXCs | [tofu-proxmox](https://github.com/JacobPEvans/terraform-proxmox) | [ansible-proxmox](https://github.com/JacobPEvans/ansible-proxmox) | both |
 | HAProxy | (Ansible role) | [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | apps repo |
 | Cribl Edge | (Ansible role) | [ansible-proxmox-apps](https://github.com/JacobPEvans/ansible-proxmox-apps) | apps repo |
 | Splunk Enterprise | (manual / Ansible) | [ansible-splunk](https://github.com/JacobPEvans/ansible-splunk) | splunk repo |
@@ -87,4 +87,4 @@ Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before 
 
 ## DR posture
 
-Splunk Cloud failover is provisioned via [terraform-aws](https://github.com/JacobPEvans/terraform-aws) — AWS resources (EC2, S3, Route 53) that come up cold and accept the same HEC traffic if the home cluster is offline. Cribl Edge routes can be flipped to point at the AWS endpoint with a single config change.
+Splunk Cloud failover is provisioned via [tofu-aws](https://github.com/JacobPEvans/terraform-aws) — AWS resources (EC2, S3, Route 53) that come up cold and accept the same HEC traffic if the home cluster is offline. Cribl Edge routes can be flipped to point at the AWS endpoint with a single config change.

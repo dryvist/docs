@@ -22,7 +22,7 @@ The monitoring stack runs across four hosts: the homelab Proxmox cluster, the ma
 
 ## The Edge → Stream → Splunk invariant
 
-Across every tier, the architectural rule is the same: Edge collects, Stream routes, Splunk indexes. Edge does not talk directly to Splunk anywhere on this stack. Stream is the only component with Splunk egress. On the OrbStack cluster this is enforced by network policies that lock Edge egress to Stream on HEC port 8088 only; on the homelab Proxmox side the rule is operational (single Stream tier, well-known HEC endpoint), reinforced by firewall rules in `terraform-proxmox/modules/firewall/`.
+Across every tier, the architectural rule is the same: Edge collects, Stream routes, Splunk indexes. Edge does not talk directly to Splunk anywhere on this stack. Stream is the only component with Splunk egress. On the OrbStack cluster this is enforced by network policies that lock Edge egress to Stream on HEC port 8088 only; on the homelab Proxmox side the rule is operational (single Stream tier, well-known HEC endpoint), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
 
 ## Per-tool Cribl Edge packs
 

@@ -1,6 +1,6 @@
 ---
 title: "Proxmox provisioning"
-description: "Terraform/Terragrunt provisioning for Proxmox VMs and LXC containers. The first tier of the homelab stack."
+description: "OpenTofu/Terragrunt provisioning for Proxmox VMs and LXC containers. The first tier of the homelab stack."
 tier: 2
 ---
 
@@ -10,14 +10,14 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-proxmox" />
 
-`terraform-proxmox` defines every VM and LXC in the homelab as Terraform resources. Terragrunt provides DRY config across environments. The Proxmox provider talks to the cluster API; nothing here touches a host directly.
+`tofu-proxmox` defines every VM and LXC in the homelab as OpenTofu resources. Terragrunt provides DRY config across environments. The Proxmox provider talks to the cluster API; nothing here touches a host directly.
 
 ## What it does
 
 - Defines compute, network, and storage for every homelab guest
 - Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
 - Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)
-- Declares per-node ZFS storage (`node_storage`) that Ansible provisions — Terraform references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
+- Declares per-node ZFS storage (`node_storage`) that Ansible provisions — OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
 
@@ -53,7 +53,7 @@ Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmo
 
 <CardGroup cols={2}>
   <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
-    Configures the host once Terraform has provisioned it.
+    Configures the host once OpenTofu has provisioned it.
   </Card>
   <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
     Deploys HAProxy, Cribl Edge, Cribl Stream on top.

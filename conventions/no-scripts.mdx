@@ -41,7 +41,7 @@ Never inlined elsewhere.
 Before writing any new script, search every tier. Log one line per tier (`<tier>: <tool> — found / not-found, reason`). Empty rows reject the search.
 
 1. **Native CLIs / builtins** (`jq`, `gh`, `git`, `curl`)
-2. **Ecosystem primitives** (Ansible modules, Terraform resources, marketplace Actions, pre-commit)
+2. **Ecosystem primitives** (Ansible modules, OpenTofu resources, marketplace Actions, pre-commit)
 3. **Third-party packaged tools** (Homebrew, apt, pip, npm, cargo)
 4. **Popular community solutions** (GitHub projects, official plugins, `awesome-*` lists)
 
@@ -116,7 +116,7 @@ Right: `jq -r .key x.json`
   <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
     Marketplace actions and reusable workflows that replace most ad-hoc scripts.
   </Card>
-  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     The canonical example of the four-tier search applied to a real domain.
   </Card>
 </CardGroup>

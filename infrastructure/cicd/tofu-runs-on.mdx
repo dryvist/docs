@@ -1,6 +1,6 @@
 ---
 title: "Self-hosted GitHub Actions runners"
-description: "Terraform/Terragrunt for RunsOn — self-hosted GitHub Actions runners on AWS EC2 spot. Cheaper, faster, observable."
+description: "OpenTofu/Terragrunt for RunsOn — self-hosted GitHub Actions runners on AWS EC2 spot. Cheaper, faster, observable."
 tier: 2
 ---
 
@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-runs-on" />
 
-`terraform-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS — API Gateway + Lambda + ECS/Fargate — plus the IAM and networking it needs to spin up EC2 spot runners on demand. Workflows opt in with a `runs-on:` label; runners launch in seconds, run the job, terminate. Cribl.Cloud Free collects OTLP telemetry for runner performance tracking.
+`tofu-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS — API Gateway + Lambda + ECS/Fargate — plus the IAM and networking it needs to spin up EC2 spot runners on demand. Workflows opt in with a `runs-on:` label; runners launch in seconds, run the job, terminate. Cribl.Cloud Free collects OTLP telemetry for runner performance tracking.
 
 ## What it does
 
@@ -69,7 +69,7 @@ PR plans are posted via [`tf-summarize`](https://github.com/dineshba/tf-summariz
   <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
     Where RunsOn fits in the broader AWS surface.
   </Card>
-  <Card title="terraform-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
+  <Card title="tofu-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
     The DR-tier AWS footprint these runners can deploy to.
   </Card>
   <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/terraform-runs-on">
