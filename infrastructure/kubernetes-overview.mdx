@@ -31,6 +31,48 @@ Six StatefulSets in a single `monitoring` namespace:
 
 Four healthchecks.io CronJobs ping every five minutes as dead-man switches: `pipeline-heartbeat`, `heartbeat-splunk`, `heartbeat-edge`, `heartbeat-otel`.
 
+{/* Shape: component/hub. The OrbStack monitoring namespace and its two egresses (Splunk HEC, Cribl Cloud). 7 nodes, 5-node subgraph cap respected. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  subgraph orb["OrbStack · monitoring namespace"]
+    bifrost(["Bifrost gateway"])
+    otel(["otel-collector"])
+    edge(["cribl-edge-standalone"])
+    stream(["cribl-stream-standalone"])
+    managed(["cribl-edge-managed"])
+  end
+  splunk[("Splunk HEC")]
+  cloud[("Cribl Cloud")]
+
+  bifrost --> otel
+  edge --> stream
+  otel --> stream
+  stream --> splunk
+  managed --> cloud
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
+  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+
+  class bifrost,edge src
+  class otel,stream,managed hop
+  class splunk sink
+  class cloud external
+
+  click stream "/infrastructure/repos/orbstack-kubernetes" "The OrbStack manifests"
+  click splunk "/observability/repos/ansible-splunk" "Splunk HEC"
+
+  linkStyle 0,1,2,3 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 4 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+`cribl-mcp-server` (Cribl Cloud's MCP API surface) sits alongside but carries no pipeline traffic, so it's off the flow above.
+
+## What does not run on the OrbStack cluster
+
 ## What does not run on the OrbStack cluster
 
 - The homelab data plane (HAProxy, the production Cribl Edge tier, Splunk Enterprise) — that's [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) on LXC.

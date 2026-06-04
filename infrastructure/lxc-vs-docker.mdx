@@ -17,6 +17,41 @@ Every workload in the homelab gets routed through the same four-question decisio
 
 If a workload doesn't fit one of those four, the workload is wrong — not the tree.
 
+{/* Shape: decision tree. Four gates cascade; LXC is the default outcome, docker-host the exception. 6 nodes. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart TB
+  q1{"Vendor Docker-only,<br/>no native path?"}
+  q2{"Single binary or<br/>native package?"}
+  q3{"CI or automation?"}
+  q4{"Dev or test?"}
+  lxc(["LXC + Ansible role"])
+  dh(["Docker on docker-host VM"])
+
+  q1 -->|yes| dh
+  q1 -->|no| q2
+  q2 -->|yes| lxc
+  q2 -->|no| q3
+  q3 -->|yes| dh
+  q3 -->|no| q4
+  q4 -->|yes| dh
+
+  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef auto fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+
+  class q1,q2,q3,q4 gate
+  class lxc host
+  class dh auto
+
+  linkStyle 2 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 0,4,6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+  linkStyle 1,3,5 stroke:#F4EFE6,stroke-width:1.5px;
+```
+
+The default path (green) lands on LXC; every amber branch is a penned-Docker exception on `docker-host`.
+
 ## Why LXC wins on this stack
 
 LXC containers are kernel-namespace processes — same kernel, same network stack, no virtualization layer between the container and the host's network. For a stack that moves syslog, NetFlow, OTLP, and HEC traffic at homelab volumes, that matters. HAProxy in front of Cribl Edge, Cribl Edge in front of Cribl Stream, Cribl Stream in front of Splunk — every hop adds latency, and every hop that crosses Docker's bridge network adds latency on top of latency.
