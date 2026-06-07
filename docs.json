@@ -87,6 +87,7 @@
                   "infrastructure/repos/orbstack-kubernetes"
                 ]
               },
+              "infrastructure/vmid-network-tiers",
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
               "infrastructure/media-stack",

@@ -1,0 +1,108 @@
+---
+title: "VMID & network tier model"
+description: "A structured 6-digit VMID and a trust-ordered set of VLAN tiers, designed so that a guest's identity and its network line up by construction — first digit of the VMID equals the VLAN tag ÷ 10."
+tier: 2
+---
+
+> Every guest gets a 6-digit identity number, every network is a trust-ordered tier, and the two are wired together: a guest's VMID announces which tier it belongs to, and that tier *is* its VLAN. Identity and placement stop being two facts to keep in sync — they become one fact, encoded once.
+
+Most homelabs hand out VM IDs in arrival order — `100`, `101`, `102` — and pick a VLAN per service by hand. That works until it doesn't: nothing about ID `137` tells you what it is or where it lives, and the mapping between guests and networks lives only in someone's head. This model replaces both ad-hoc schemes with a single positional convention. The VMID encodes the guest's role; the role's tier number, times ten, is the VLAN it runs on. Sort the guests numerically and they fall into trust order for free.
+
+The page below is the high-level design rationale. The exhaustive, digit-by-digit allocation tables are intentionally not here — that detailed spec is maintained in the private infrastructure docs.
+
+## The VMID positional scheme
+
+A VMID is six digits, each position carrying meaning. Read left to right, the digits go from coarsest grouping to finest:
+
+```text
+[Tier][Sub-tier][Crit][OS][Instance][Env]
+   │      │        │    │      │       │
+   │      │        │    │      │       └─ environment (prod / stg / test / dev / sbx)
+   │      │        │    │      └───────── instance number within the group
+   │      │        │    └──────────────── OS family (0 = LXC, the common case)
+   │      │        └───────────────────── criticality, rolling 0–9 (lower = more critical)
+   │      └────────────────────────────── sub-tier (0 user-facing, 1 mgmt, 2 download)
+   └───────────────────────────────────── trust tier (1–9)
+```
+
+Because the most significant digit is the tier and the next is the sub-tier, a plain numeric sort groups guests **by tier, then sub-tier, then criticality** — no tags, no naming convention to enforce, just arithmetic.
+
+| Position | Meaning | Notes |
+| --- | --- | --- |
+| Tier | Trust tier, `1`–`9` | Most-trusted (`1`) to least-trusted (`9`). Equals VLAN ÷ 10. |
+| Sub-tier | Role within the tier | `0` user-facing, `1` management (present in **every** tier), `2` download/ingest |
+| Criticality | Rolling `0`–`9` | Lower is more critical; `5` is the default middle |
+| OS | OS family | `0` = LXC (most guests), other digits for VM OS families |
+| Instance | Instance counter | Distinguishes replicas within the same group |
+| Env | Environment | prod / stg / test / dev / sbx, repeating across `0–4` / `5–9` |
+
+A worked example: a media service (Tier 7) that is user-facing (sub-tier `0`), normal criticality (`5`), running as an LXC (`0`), first instance (`0`), in production (`0`) sorts as `750000`. Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
+
+## Trust-ordered tiers map to VLANs
+
+There are nine tiers, ordered from most-trusted core infrastructure down to untrusted and guest devices. Each tier's VLAN tag is simply the tier number times ten, so the tier you read off a VMID is the network the guest belongs on.
+
+| Tier | VLAN tag | Name | What lives here |
+| --- | --- | --- | --- |
+| 1 | 10 | Core services | Foundational infrastructure everything else depends on |
+| 2 | 20 | Storage | NAS, block/object storage, backup targets |
+| 3 | 30 | Data / pipeline / compute | Data movement, batch, general compute |
+| 4 | 40 | Observability & security | Monitoring, logging, security tooling |
+| 5 | 50 | AI / ML | Inference, training, model-serving workloads |
+| 6 | 60 | Applications | General self-hosted application services |
+| 7 | 70 | Media | Media library and its supporting services |
+| 8 | 80 | Home & IoT | Home automation and IoT devices |
+| 9 | 90 | Untrusted / surveillance / guest | Cameras, guest access, anything least-trusted |
+
+Three special-purpose VLANs sit outside the tier numbering:
+
+| VLAN tag | Name | Purpose |
+| --- | --- | --- |
+| 1 | Default | Native / fallback network |
+| 5 | Management | Infrastructure management, including BMC / out-of-band |
+| 53 | DNS | Dedicated DNS network (named for port 53) |
+
+**CIDR pattern, not the real subnet.** Each VLAN's subnet follows the pattern `192.168.<vlan-tag>.0/24` — the VLAN tag drops straight into the third octet. The real subnets are secret and injected at runtime, never committed; the pattern above is a placeholder shape, not a live address.
+
+[UniFi zones](/infrastructure/repos/tofu-unifi) group one or more VLANs by trust posture rather than mapping one zone per VLAN. The current zones are **Management**, **Default**, and **IoT-Untrusted**, with a **DMZ** zone planned for future externally-reachable workloads.
+
+## DHCP and DNS-first addressing
+
+Guests do **not** carry hardcoded IP addresses. Each guest gets its address by DHCP and is referenced everywhere by name — `{hostname}.{subdomain}` — with DNS owning the actual IP. Infrastructure-as-code carries hostnames, not octets, so a guest can move, re-IP, or be rebuilt without rewriting any references to it.
+
+The one requirement that makes this work: **every guest must have a defined hostname.** A guest without a name has nothing for DNS to resolve, so the hostname is non-negotiable — it is the primary key.
+
+| Concern | DNS-first answer |
+| --- | --- |
+| What owns the IP? | DNS — the address is a DHCP lease, resolved by name |
+| What does IaC reference? | `{hostname}.{subdomain}` — never a raw IP |
+| When are static IPs used? | The exception only: core network gear and servers that must be reachable before DNS is up |
+| What must every guest have? | A hostname — the requirement the whole model rests on |
+
+Migration to this model is **incremental**, not a flag day. New guests adopt the convention immediately; existing guests move over as windows allow.
+
+## Target state, rolled out in phases
+
+This is a design, and parts of it are still being realized. The honest status:
+
+- The **tier ↔ VLAN renumber** and **re-homing of existing hosts** onto their correct tiers are target-state. They are rolled out in phases as maintenance windows open, not all at once.
+- DHCP + DNS-first addressing is being adopted incrementally alongside the renumber.
+
+Treat the tables above as the destination. The detailed, per-guest allocation and the live rollout state are maintained in the private infrastructure docs.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="tofu-unifi" icon="network-wired" href="/infrastructure/repos/tofu-unifi">
+    Networks, VLANs, zones, and firewall rules as code — where the tier-to-VLAN mapping is enforced.
+  </Card>
+  <Card title="tofu-proxmox" icon="server" href="/infrastructure/repos/tofu-proxmox">
+    VMs and LXC containers — where VMIDs are assigned and guests are placed on their tier's VLAN.
+  </Card>
+  <Card title="Infrastructure overview" icon="layer-group" href="/infrastructure/overview">
+    How provisioning, configuration, and placement fit together across the homelab.
+  </Card>
+  <Card title="Scrubbed values" icon="shield-halved" href="/security/scrubbed-values">
+    Why subnets here are patterns, not real addresses — the public-repo scrubbing rules.
+  </Card>
+</CardGroup>
