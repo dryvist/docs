@@ -53,10 +53,6 @@ The aliases the long forms suggest (`feature`, `bugfix`) don't appear in any Con
 
 The full Conventional Branch spec, including the `release/` and `hotfix/` types this org does not use, lives at [conventional-branch.github.io](https://conventional-branch.github.io). The commitlint config that enforces the matching commit prefixes is [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional).
 
-## Worktree layout
-
-Branch slashes survive as directory separators when this org's bare-repo + worktree layout is used. `feat/add-x` becomes `<repo>/feat/add-x/`. That makes `feat/`, `fix/`, etc. literal directories on disk — another reason to use the short types: `feature/` would mean five extra characters in every working path forever.
-
 ## What this connects to
 
 <CardGroup cols={2}>
