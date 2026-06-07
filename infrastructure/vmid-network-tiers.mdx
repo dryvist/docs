@@ -36,7 +36,7 @@ Because the most significant digit is the tier and the next is the sub-tier, a p
 | Instance | Instance counter | Distinguishes replicas within the same group |
 | Env | Environment | prod / stg / test / dev / sbx, repeating across `0–4` / `5–9` |
 
-A worked example: a media service (Tier 7) that is user-facing (sub-tier `0`), normal criticality (`5`), running as an LXC (`0`), first instance (`0`), in production (`0`) sorts as `750000`. Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
+A worked example — Plex, the media library's user-facing service — decodes as `702000`: tier `7` (media) · sub-tier `0` (user-facing) · criticality `2` (more critical than the default `5`) · OS `0` (LXC) · instance `0` · env `0` (prod). Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
 
 ## Trust-ordered tiers map to VLANs
 
