@@ -49,6 +49,8 @@ That's the entire file. Two lines of content (plus a heading). All actual projec
 
 The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific files — each is a thin import of `AGENTS.md`.
 
+**The one exception is `ai-assistant-instructions` itself.** Its `AGENTS.md` is already auto-loaded globally on Nix-managed machines (the home-level `~/CLAUDE.md` imports it), so a project-level `@AGENTS.md` import there would load the identical bytes twice in every session. That repo's `CLAUDE.md` is a stub explaining exactly this, and its auto-loaded rules likewise come from the global `~/.claude/rules` wiring rather than a per-repo `.claude/rules` symlink.
+
 ### How to migrate a repo
 
 1. Move every section of the existing `CLAUDE.md` into `AGENTS.md` (merge with any existing content, dedupe, prefer linking to `docs/*.md` for deep dives).
