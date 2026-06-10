@@ -108,7 +108,7 @@ The architecture explicitly does NOT centralise everything. Hooks with low cover
 - Don't duplicate shared lint config files (`.markdownlint`, `.tflint.hcl`, `.ansible-lint`, `.yamllint`). Pull them via the Nix path (`fetch-shared-configs`) or copy at scaffold from `dryvist/.github` (non-Nix path).
 - A clean migration PR adds `flake.nix` + `flake.lock`, modifies `.envrc`, deletes `.pre-commit-config.yaml`, and deletes the duplicated lint config files that the canonical now covers.
 
-See [`agentsmd/rules/pre-commit.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/pre-commit.md) for the auto-loaded rule that codifies these decisions for AI agents.
+For AI agents, these decisions are codified in the on-demand [`pre-commit-architecture` skill](https://github.com/dryvist/claude-code-plugins/blob/main/git-workflows/skills/pre-commit-architecture/SKILL.md) (claude-code-plugins, `git-workflows` plugin), which loads when an agent edits pre-commit config or scaffolds hooks.
 
 ## Known limitations
 
@@ -120,6 +120,6 @@ See [`agentsmd/rules/pre-commit.md`](https://github.com/dryvist/ai-assistant-ins
 
 - [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) — Nix-path canonical
 - [`dryvist/.github` `precommit/README.md`](https://github.com/dryvist/.github/blob/main/precommit/README.md) — non-Nix-path canonical + architecture rationale
-- [`dryvist/ai-assistant-instructions` `agentsmd/rules/pre-commit.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/pre-commit.md) — auto-loaded rule for AI agents
+- [`dryvist/claude-code-plugins` `pre-commit-architecture` skill](https://github.com/dryvist/claude-code-plugins/blob/main/git-workflows/skills/pre-commit-architecture/SKILL.md) — on-demand rule for AI agents
 - [cachix/git-hooks.nix](https://github.com/cachix/git-hooks.nix) — upstream hook framework
 - [flake-parts](https://flake.parts) — Nix flake composition framework

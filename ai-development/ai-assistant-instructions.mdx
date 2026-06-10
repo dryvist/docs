@@ -17,10 +17,12 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Defines the canonical `CLAUDE.md` and `AGENTS.md` files used by every project
 - Owns the **model-routing policy** — when to reach for Claude vs Gemini vs Copilot vs local MLX
 - Owns the **tool-use rules** — Read over `cat`, Edit over `sed`, Bash for shell-only
-- Owns AI-runtime concerns: skill execution semantics, subagent typing, Nix tool policy, Bifrost-routing details
+- Owns AI-runtime concerns: skill execution semantics, subagent typing, Bifrost-routing details
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
 
 Cross-repo writing standards that humans also need to read — commit conventions, no-scripts, diagramming, CI/CD policy, OpenTofu check placement, Nix package placement, scrubbed values — live on this docs site. See [Conventions](/conventions/overview) for the full set.
+
+Situational agent guidance that once lived here as always-loaded rules — pre-commit architecture, the Nix tool policy, shared-workflow org references — now ships as on-demand skills in [claude-code-plugins](/ai-development/claude-code-plugins), keeping the per-session footprint to the three rules every task needs (voice, tool use, skill-execution integrity).
 
 ## The `CLAUDE.md` → `@AGENTS.md` convention
 
