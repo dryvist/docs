@@ -1,0 +1,125 @@
+---
+title: "Terraform on AWS"
+description: "Per-project IAM role, GitHub OIDC for CI, S3 native locking, SSE-S3 encryption, aws-vault + MFA for local dev. The standard for any new AWS-backed Terraform/OpenTofu/Terragrunt repo."
+tier: 2
+---
+
+{/* TIER-GUARD: reference page — the isolation model, naming, encryption policy, and tagging belong together. */}
+
+> One IAM role per repo. Humans and CI both `AssumeRole`; nothing holds direct AWS resource access. State lives in a project-scoped S3 bucket; locks live in the same bucket via S3 conditional writes.
+
+The pattern below is the single supported shape for any new AWS-backed Terraform / OpenTofu / Terragrunt repo. The [bootstrap snippet](/infrastructure/terraform/aws-bootstrap) provisions every resource named here in one `terraform apply`; the [consuming-repo page](/infrastructure/terraform/consuming-repo) shows what the new repo itself needs to drop in.
+
+## The isolation model
+
+The per-project IAM role is the security boundary. Its trust policy lists exactly two principal types: GitHub OIDC for the matching repo, and named IAM users with MFA. Its permissions policy grants S3 access to exactly one bucket — its own.
+
+Humans authenticate as themselves with a base IAM user whose long-lived access key lives in the [aws-vault](/security/tools/aws-vault) macOS keychain. The base user holds one permission only: `sts:AssumeRole` on roles named `tf-*`. Every Terraform command runs through `aws-vault exec tf-<project> -- ...`, which mints a short-lived STS session for the per-project role and injects it into the subprocess.
+
+CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS credentials directly via the role's trust policy. There is no `AWS_ACCESS_KEY_ID` secret in any repo. The same role that a human assumes is the role CI assumes — one trust policy, one permissions policy, audited the same way.
+
+{/* Shape: parallel convergence (two source chains join at the per-project role, continue to bucket). Ranks: 2x2x1x1. Boundary crossings: 0. Aspect: ~2:1 LR. Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Op([Operator])
+  Vault([aws-vault MFA])
+  CI([GitHub Actions])
+  OIDC([OIDC token])
+  Role{tf-project}
+  Bucket[(tfstate-project)]
+
+  Op --> Vault --> Role
+  CI --> OIDC --> Role
+  Role --> Bucket
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+  classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class Op src
+  class Vault hop
+  class CI,OIDC external
+  class Role gate
+  class Bucket sink
+
+  click Role "/infrastructure/terraform/aws-bootstrap" "Bootstrap that provisions this role"
+  click Bucket "/infrastructure/terraform/consuming-repo" "How consuming repos wire to this bucket"
+
+  linkStyle 0,1 stroke:#F4EFE6,stroke-width:1.5px;
+  linkStyle 2,3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+  linkStyle 4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
+
+## Naming conventions
+
+Every project uses the same naming shape so that an account-wide audit (`aws s3 ls`, `aws iam list-roles --query "Roles[?starts_with(RoleName, \`tf-\`)]"`) is trivial.
+
+| Resource | Pattern | Example |
+| --- | --- | --- |
+| S3 state bucket | `tfstate-<project>-<account-id>` | `tfstate-proxmox-111122223333` |
+| IAM role | `tf-<project>` | `tf-proxmox` |
+| State object key | `<project>/terraform.tfstate` | `proxmox/terraform.tfstate` |
+| Bootstrap state key | `_bootstrap/terraform.tfstate` | (same key in every project's bucket) |
+
+`<project>` is a short kebab-case identifier matching the consuming repo's last path segment (e.g. `proxmox` for `terraform-proxmox`, `unifi` for `terraform-unifi`). `<account-id>` is the 12-digit AWS account number — its inclusion in the bucket name makes the name globally unique across the S3 namespace without requiring a random suffix.
+
+## Encryption — why SSE-S3, not SSE-KMS
+
+Every state bucket has bucket-default SSE-S3 (`AES256`) applied; the consuming repo's backend block sets `encrypt = true` so each PutObject carries the SSE header explicitly.
+
+SSE-KMS uses the same AES-256 cipher under the hood. The difference is who owns the key material. SSE-KMS costs about $1 per month per project key plus a KMS API call on every state read and write — a real number in pipelines that re-plan on every PR. See [AWS KMS pricing](https://aws.amazon.com/kms/pricing/). Since access to the state bucket is already gated by the per-project IAM role's trust policy (MFA-required for humans, OIDC-bound for CI), the KMS layer adds operational cost without changing who can read the state.
+
+Application-layer secrets that genuinely need MFA-gated or cross-account key control belong in [Bitwarden](/security/tools/bitwarden) for cold human secrets or [Doppler](/security/tools/doppler) for warm runtime injection — never inside the state file.
+
+## Where the long-lived AWS key actually lives
+
+The base IAM user's access key is stored in a dedicated [aws-vault](https://github.com/99designs/aws-vault) macOS keychain — a separate keychain from the login keychain, with its own password and access policy. No long-lived AWS credentials ever land in `~/.aws/credentials`, in a `.env` file, or in shell history.
+
+Every Terraform invocation runs under a one-hour STS session minted by `aws-vault exec tf-<project> -- <command>`. aws-vault prompts for an MFA token on the first invocation per cached session window and silently re-uses the cached chained session for the remainder of `session_ttl`. See [aws-vault](/security/tools/aws-vault) for the profile-management mechanics.
+
+## Tagging
+
+Every resource carries four tags, applied via the AWS provider's `default_tags` block so individual resource declarations stay clean:
+
+| Tag | Value |
+| --- | --- |
+| `Project` | `<project>` (same as in the naming table above) |
+| `ManagedBy` | `Terraform` |
+| `Repo` | `<github-org>/<github-repo>` |
+| `Environment` | `bootstrap` for the bootstrap module; per-environment (`prod`, `staging`) for the consuming repo |
+
+The `Project` tag should be activated as an AWS cost allocation tag (Billing → Cost allocation tags) so per-project spend appears in Cost Explorer.
+
+## Tool versions
+
+| Tool | Minimum version | Why |
+| --- | --- | --- |
+| Terraform | 1.10 | S3 native locking (`use_lockfile`) released in Nov 2024 |
+| OpenTofu | 1.10 | S3 native locking released in 1.10 (conditional writes via `If-None-Match`) |
+| aws-vault | 7.x | Stable keychain backend and chained session caching |
+| AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects |
+
+<Note>
+Terragrunt wraps Terraform and uses the same backend config — none of the isolation model changes. The Terragrunt-specific `remote_state {}` and `generate {}` blocks live in the [consuming-repo page](/infrastructure/terraform/consuming-repo#terragrunt-variant).
+</Note>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Bootstrap the AWS foundation" icon="hammer" href="/infrastructure/terraform/aws-bootstrap">
+    The admin-runnable Terraform that creates every per-project resource named on this page.
+  </Card>
+  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/terraform/consuming-repo">
+    What goes inside the new repo so `terraform plan` runs immediately.
+  </Card>
+  <Card title="aws-vault profile mechanics" icon="key" href="/security/tools/aws-vault">
+    How the keychain backend, MFA, and session TTLs interact in practice.
+  </Card>
+  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+    Static checks in pre-commit, credentialed ops in CI. The placement rule every repo follows.
+  </Card>
+</CardGroup>
