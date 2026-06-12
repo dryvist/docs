@@ -1,0 +1,47 @@
+---
+title: "Architecture iconography"
+description: "Static reference set, organized by component family."
+hidden: true
+---
+
+> Vector shapes for architecture and topology diagrams. 218 shapes across 12 categories.
+
+Each thumbnail links to the raw SVG. Right-click → Save, or copy the URL.
+
+export const Grid = ({cat, items}) => (
+  <>
+    <h2>{cat.replace(/-/g, " ")} ({items.length})</h2>
+    <div style={{display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "12px", margin: "12px 0 36px"}}>
+      {items.map(f => (
+        <a key={f} href={`/assets/icons/${cat}/${f}`} style={{background: "var(--vp-c-bg-soft, #fff)", padding: "10px", borderRadius: "4px", textAlign: "center", textDecoration: "none", border: "1px solid var(--vp-c-divider, #ddd)"}}>
+          <img src={`/assets/icons/${cat}/${f}`} alt={f} style={{width: "100%", height: "80px", objectFit: "contain", display: "block"}} />
+          <div style={{fontSize: "10px", marginTop: "6px", color: "var(--vp-c-text-2, #555)", wordBreak: "break-word"}}>{f.replace(".svg", "")}</div>
+        </a>
+      ))}
+    </div>
+  </>
+);
+
+<Grid cat="forwarders" items={["Forwarder.svg","Forwarder_Linux.svg","Forwarder_Mac.svg","Forwarder_Windows.svg","Forwarder_With_Router.svg","Forwarder_with_Load_Balancer.svg","Forwarders.svg","Forwarders_Linux.svg","Forwarders_Man.svg","Forwarders_Windows.svg","Forwarders_With_Load_Balancer.svg","Heavy_Forwarder.svg","Heavy_Forwarder_Linux.svg","Heavy_Forwarder_Windows.svg","Heavy_Forwarder_With_Load_Balancer.svg","Heavy_Forwarder_With_Router.svg","Heavy_Forwarder__ac.svg","Heavy_Forwarders.svg","Heavy_Forwarders_Limux.svg","Heavy_Forwarders_Mac.svg","Heavy_Forwarders_Windows.svg","Heavy_Forwarders_With_Load_Balancers.svg"]} />
+
+<Grid cat="search-heads" items={["Search.svg","Search_Head.svg","Search_Head_Cluster.svg","Search_Head_Cluster_Captain.svg","Search_Head_With_Load_Balancer.svg","Search_Heads.svg"]} />
+
+<Grid cat="indexers" items={["Indexer.svg","Indexer_With_Load_Balancer.svg","Indexer_with_Router.svg","Indexers.svg","Indexing_Queue.svg"]} />
+
+<Grid cat="infrastructure" items={["Cluster_Master.svg","Cluster_Peer.svg","Deployer.svg","Deployment_Server.svg","Distributed_Management_Console.svg","External_Nodes.svg","Firewall.svg","KV_Store.svg","KV_Store_Captain.svg","License.svg","License_Master.svg","License_Server.svg","Load_Balancer.svg","Master_Cluster_Node.svg","Router__abstract_.svg","Router__physical_.svg"]} />
+
+<Grid cat="inputs" items={["Directory_Input.svg","Directory_Input_Linux.svg","Directory_Input_Mac.svg","Directory_Input_Windows.svg","Directory_Inputs.svg","Directory_Inputs_Linux.svg","Directory_Inputs_Windows.svg","Directory_Inputs_Windows_2.svg","Event_Handler_Input.svg","File_Input.svg","File_Input_Linux.svg","File_Input_Mac.svg","File_Input_Windows.svg","File_Inputs.svg","File_Inputs_Mac.svg","File_Inputs_Windows.svg","File_Inputs_Windows_2.svg","Form_Inputs_Checkbox.svg","Form_Inputs_Link.svg","Form_Inputs_Multiselect.svg","Form_Inputs_Radio.svg","Form_Inputs_Submit.svg","Form_Inputs_Text.svg","Form_Inputs_Time.svg","HTTP_Event_Collector.svg","Network_Input.svg","Network_Input_Linux.svg","Network_Input_Mac.svg","Network_Input_Windows.svg","Scripted_Input.svg"]} />
+
+<Grid cat="data" items={["Accelerated_Data_Model.svg","Accelerated_Dataset.svg","Bucket.svg","CSV_File.svg","Configuration_File.svg","Data_Model.svg","Data_Model_Object.svg","Data_Packet.svg","Database_Datastore.svg","Database_Datastores.svg","Datastore.svg","Datastores.svg","Dimension.svg","Directories.svg","Directory.svg","Document.svg","Documents.svg","Extended_Dataset.svg","Index.svg","Indexes.svg","Log_File.svg","Lookup.svg","Lookup_Dataset.svg","Metric.svg","Metric_Index.svg","Panel_Single_Value.svg","Table_Dataset.svg","Tag.svg","Time.svg","Value.svg","Virtual_Index.svg"]} />
+
+<Grid cat="knowledge" items={["Accelerated_Report.svg","Alert.svg","Event_Types.svg","Event_Types__small_.svg","Fields.svg","Fields__small_.svg","Knowledge_Object.svg","Parsing_Queue.svg","Pipeline.svg","Pool.svg","Queue.svg","Report.svg","Reports.svg","SDK.svg","Scheduled_Report.svg","Scheduled_Search.svg","Script.svg","Settings.svg","Summaries.svg","Summary.svg"]} />
+
+<Grid cat="dashboards" items={["Custom_Visualization_CSS.svg","Custom_Visualization_HTML.svg","Custom_Visualization_JS.svg","Event_Handler_Drilldown.svg","Event_Handler_Search.svg","Event_Handler_Select.svg","Panel_Chart.svg","Panel_Events.svg","Panel_HTML.svg","Panel_Inline_Search.svg","Panel_Map.svg","Panel_Prebuilt.svg","Panel_Report.svg","Simple_XML_CSS.svg","Simple_XML_JS.svg","Text_Block__with_shadow_.svg","Text_Box.svg","Web_Interface.svg"]} />
+
+<Grid cat="apps" items={["Add_On.svg","App.svg","App_On_Server.svg","ES_Server.svg","Enterprise_Security.svg","ITSI_Server.svg","IT_Service_Intelligence.svg","Splunk_Cloud.svg","Third_Party_App.svg","UBA_Server.svg","User_Behavior_Analytics.svg"]} />
+
+<Grid cat="systems" items={["Container_1.svg","Container_x_2.svg","Container_x_3.svg","Desktop.svg","Hadoop.svg","Laptop.svg","OS_Bubble_Linux.svg","OS_Bubble_Mac.svg","OS_Bubble_Solaris.svg","OS_Bubble_Windows.svg","System.svg","System_Linux.svg","System_Mac.svg","System_Windows.svg","System_With_Container_3.svg","System_with_Container.svg","System_with_Container_2.svg","Systems.svg","Systems_Linux.svg","Systems_Mac.svg","Systems_Windows.svg"]} />
+
+<Grid cat="arrows" items={["Black_Arrow.svg","Black_Arrow_2.svg","Black_Dotted_Arrow.svg","Black_Dotted_Arrow_2.svg","Blue_Arrow.svg","Blue_Arrow_2.svg","Blue_Dotted_Arrow.svg","Blue_Dotted_Arrow_2.svg","Chartreuse_Arrow.svg","Chartreuse_Arrow_2.svg","Chartreuse_Dotted_Arrow.svg","Chartreuse_Dotted_Arrow_2.svg","Gray_Arrow.svg","Gray_Arrow_2.svg","Gray_Dotted_Arrow.svg","Gray_Dotted_Arrow_2.svg","Green_Arrow.svg","Green_Arrow_2.svg","Green_Dotted_Arrow.svg","Green_Dotted_Arrow_2.svg","Light_Blue_Arrow.svg","Light_Blue_Arrow_2.svg","Light_Blue_Dotted_Arrow.svg","Light_Blue_Dotted_Arrow_2.svg","Light_Orange_Arrow.svg","Light_Orange_Arrow_2.svg","Light_Orange_Dotted_Arrow.svg","Light_Orange_Dotted_Arrow_2.svg","Orange_Arrow.svg","Orange_Arrow_2.svg","Orange_Dotted_Arrow.svg","Orange_Dotted_Arrow_2.svg","Red_Arrow.svg","Red_Arrow_2.svg","Red_Dotted_Arrow.svg","Red_Dotted_Arrow_2.svg"]} />
+
+<Grid cat="people" items={["People.svg","Person.svg"]} />
