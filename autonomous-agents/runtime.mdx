@@ -1,0 +1,121 @@
+---
+title: "Runtime"
+description: "One Nix-built OCI image, two platforms — Apple container on the Mac, Docker on the Proxmox docker-host VM — behind an allowlisting egress proxy."
+tier: 2
+---
+
+<Note>
+Status: **planned**, image scaffold in progress (phase 1). The egress proxy and
+Proxmox dispatch land in phases 2–3. See the [roadmap](/autonomous-agents/roadmap).
+</Note>
+
+> Build the sandbox once, with Nix. Run it anywhere a container runtime exists.
+
+One OCI image, built with `dockerTools.streamLayeredImage`, is consumed by both
+platforms: Apple `container` on the MacBook for local runs, and Docker on the
+Proxmox `docker-host` VM (VM 250 — the existing ephemeral GitHub Actions runner
+host) for dispatched runs. Same image digest, same entrypoint, same guarantees.
+Multi-arch (aarch64-linux for Apple `container`, x86_64-linux for docker-host),
+published to GHCR.
+
+## The nix-agent-sandbox repo
+
+A new dryvist repo owns the whole runtime surface:
+
+| Package / artifact | What it is |
+| --- | --- |
+| `packages.agent-image` | The OCI image — `dockerTools.streamLayeredImage` |
+| `packages.egress-proxy` | Allowlisting CONNECT proxy with a Nix-defined domain list |
+| `packages.agent-cli` | `agent run\|dispatch\|shell` — replaces the `gh-claude-*` launcher zoo in [nix-darwin](/nix/nix-darwin) |
+| `agent-run.yml` | Reusable workflow for the Proxmox dispatch path |
+
+## Image contents
+
+- The three CLIs (Claude Code, Codex, Gemini), `git`, `gh`, `nix`, `cacert`,
+  `jq`, `ripgrep`.
+- The baked `autonomous` profile configs rendered by
+  [nix-ai](/nix/nix-ai)'s formatter layer — the only place these configs exist.
+- A non-root `agent` user (uid 1000), no sudo.
+- An entrypoint that refuses uid 0 or a missing `AGENT_SANDBOX=1`, then runs the
+  lifecycle: clone → `nix develop -c <agent>` → push branch → `gh pr create` → exit.
+
+Per-repo toolchains are **not** baked in. Each target repo's own flake devShell
+provides its compilers, linters, and tools via `nix develop` — the image stays
+generic and the repo stays the source of truth for its own environment.
+
+## Run lifecycle
+
+<Steps>
+  <Step title="Launch">
+    Local: `agent run <repo> <prompt>` wraps Apple `container run --rm` with a
+    tmpfs workspace and injected env. Remote: `workflow_dispatch` or an `ai:run`
+    label triggers `agent-run.yml` on a docker-host ephemeral runner.
+  </Step>
+  <Step title="Clone">
+    The entrypoint clones the target repo into the tmpfs workspace using a
+    short-lived scoped token (see [GitHub access](/autonomous-agents/github-access)).
+  </Step>
+  <Step title="Work">
+    `nix develop -c <agent>` enters the repo's own devShell and runs the agent
+    headless with the baked autonomous profile. Zero prompts by construction.
+  </Step>
+  <Step title="Ship">
+    Push a branch, `gh pr create`, exit. The container is `--rm`; nothing
+    persists. The PR is the only output, and PR review is the human gate.
+  </Step>
+</Steps>
+
+## Network boundary
+
+The portable control is an **allowlisting CONNECT proxy** — the same proxy package
+runs on both platforms. Default-deny; the allowlist is a Nix attrset:
+
+| Destination | Why |
+| --- | --- |
+| `api.anthropic.com` | Claude |
+| `api.openai.com` | Codex |
+| `generativelanguage.googleapis.com` | Gemini |
+| `github.com`, `api.github.com`, `objects.githubusercontent.com` | clone, push, PR |
+| `ghcr.io` | image and package pulls |
+| `cache.nixos.org` | `nix develop` substitutes |
+| Named internal services | per-run, explicit, never a CIDR |
+
+On **docker-host**, the boundary is physical: agent containers sit on an
+`internal: true` Docker network whose only other member is the proxy, with
+Ansible-managed nftables rules on the VM as belt-and-suspenders. Traffic that
+doesn't go through the proxy has no route at all.
+
+<Warning>
+On the **Mac**, Apple `container` cannot fully null-route a container's network
+yet. For v1, the proxy is enforced by environment (`HTTPS_PROXY` plus the baked
+configs) — policy, not physics. A misbehaving process inside the container could
+ignore the env and reach the LAN. This asymmetry is accepted deliberately: local
+Mac runs are for development convenience; **Proxmox is the high-assurance path**
+for anything sensitive or scheduled.
+</Warning>
+
+## Rejected alternatives
+
+| Alternative | Why not |
+| --- | --- |
+| LXC per agent | Containers default to root, `pct create` is slow per-run, and it forces a second build pipeline next to the Nix image. See [LXC vs Docker](/infrastructure/lxc-vs-docker) — this is the CI/automation branch of that tree. |
+| microvm.nix | No macOS support; the Mac is half the use case. |
+| NixOS containers | Neither host runs NixOS. |
+| Per-run Terraform | Provisioning latency and state churn for a container that lives minutes. |
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Overview" icon="shield" href="/autonomous-agents/overview">
+    Why the boundary inverted and what the profiles are.
+  </Card>
+  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
+    How credentials get into the container without living there.
+  </Card>
+  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
+    The decision tree this runtime slots into.
+  </Card>
+  <Card title="CI/CD policy" icon="gears" href="/infrastructure/cicd/policy">
+    The ephemeral-runner pattern agent-run.yml reuses.
+  </Card>
+</CardGroup>

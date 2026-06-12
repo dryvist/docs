@@ -1,0 +1,92 @@
+---
+title: "Roadmap"
+description: "Phases 1–7 from local Mac runs to full PAT decommission, and which repo owns each piece."
+tier: 2
+---
+
+<Note>
+Status: **phase 1 in progress**, everything else planned. Each phase is a
+separate session with its own PR trail; nothing below phase 1 exists yet.
+</Note>
+
+> Seven phases, each independently shippable, each with a rollback. The boundary
+> first, the secrets second, the decommission last.
+
+## Phases
+
+<Steps>
+  <Step title="Profiles + image scaffold + local Mac runs (in progress)">
+    The three autonomy profiles land in nix-ai; the `nix-agent-sandbox` repo is
+    scaffolded with `agent-image` and `agent-cli`; first `agent run` works via
+    Apple `container` on the Mac.
+  </Step>
+  <Step title="Egress proxy on both platforms">
+    The allowlisting CONNECT proxy ships for the Mac and docker-host; nftables
+    rules land on docker-host via Ansible.
+  </Step>
+  <Step title="Proxmox dispatch">
+    `agent-run.yml` reusable workflow dispatches runs to docker-host ephemeral
+    runners via `workflow_dispatch` or the `ai:run` label.
+  </Step>
+  <Step title="OpenBao">
+    OpenBao LXC deployed; AppRole + response-wrapped bootstrap; AWS STS secrets
+    engine replaces [aws-vault](/security/tools/aws-vault); UniFi creds move to
+    OpenBao KV.
+  </Step>
+  <Step title="GitHub App + broker Tier A">
+    Self-serve down-scoped 1h tokens; the auto-readable PATs
+    (RESTRICTED/DRYVIST) are retired.
+  </Step>
+  <Step title="Broker Tier B">
+    Allowlisted org-admin verbs with Splunk audit and rate limits; remaining
+    PATs demoted to human-only break-glass.
+  </Step>
+  <Step title="Decommission">
+    ai-pool LXCs removed from tofu-proxmox; launcher zsh deleted from
+    nix-darwin; [Doppler](/security/tools/doppler) turned off; optional
+    credential-injecting proxy for static-credential backends.
+  </Step>
+</Steps>
+
+## Repo ownership map
+
+| Repo | Owns | Change |
+| --- | --- | --- |
+| [nix-claude-code](/nix/nix-claude-code) | Interactive permission data only | No autonomous configs ever rendered here |
+| [nix-ai](/nix/nix-ai) | The three profiles + posture-aware formatters | Phase 1 |
+| `nix-agent-sandbox` (new, dryvist) | Image, egress proxy, agent-cli, agent-run.yml | Phases 1–3 |
+| [tofu-proxmox](/infrastructure/repos/tofu-proxmox) | docker-host VM kept | ai-pool LXCs removed in phase 7 |
+| [ansible-proxmox-apps](/infrastructure/repos/ansible-proxmox-apps) | Docker internal network, nftables, proxy deploy, runners | Phases 2–3 |
+| [nix-darwin](/nix/nix-darwin) | Installs agent-cli | Launcher zsh deleted in phase 7 |
+
+## Pages this supersedes in part
+
+This section changes the trajectory of several existing pages without rewriting
+them yet. Until each phase lands, the existing pages describe the live system.
+
+- [aws-vault](/security/tools/aws-vault) — replaced by the OpenBao AWS STS engine
+  in phase 4.
+- [Doppler](/security/tools/doppler) — decommission was already on the roadmap;
+  phase 7 executes it, with Infisical as the replacement.
+- [OpenBao](/security/tools/openbao) — that page predates this design and
+  described OpenBao as a cluster-local Infisical-alternative; this design assigns
+  OpenBao the dynamic-credential role instead. The two converge in phase 4.
+- [SOPS in repos](/infrastructure/secrets-sops) — unchanged in role; stays the
+  layer for committed deployment config.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Overview" icon="shield" href="/autonomous-agents/overview">
+    The boundary-inversion principle the phases build toward.
+  </Card>
+  <Card title="Runtime" icon="box" href="/autonomous-agents/runtime">
+    What phases 1–3 actually construct.
+  </Card>
+  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
+    What phase 4 migrates, class by class.
+  </Card>
+  <Card title="GitHub access" icon="github" href="/autonomous-agents/github-access">
+    What phases 5–6 replace.
+  </Card>
+</CardGroup>

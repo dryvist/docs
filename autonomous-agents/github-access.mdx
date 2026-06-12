@@ -1,0 +1,96 @@
+---
+title: "GitHub Access"
+description: "A GitHub App plus a broker service replaces the 5-tier PAT system — self-serve down-scoped tokens for routine work, audited allowlisted verbs for admin."
+tier: 2
+---
+
+<Note>
+Status: **planned** (phases 5–6). The 5-tier PAT system described in the
+workspace docs remains the live mechanism until the broker ships.
+</Note>
+
+> No agent ever holds an admin token. Routine access is minted scoped and dies in
+> an hour; admin actions are verbs the broker performs on your behalf.
+
+The current model is five PAT tiers in the macOS keychain, switched by shell
+functions, with the dangerous tiers gated behind an interactive password. That
+design assumes a human at the keyboard. The replacement is one GitHub App
+(`dryvist-agent`) installed on the dryvist org and JacobPEvans-personal, fronted
+by a small broker service in its own LXC.
+
+The App's private key lives only in OpenBao, readable solely by the broker's
+identity. Nothing else — no agent, no runner, no laptop — can mint App tokens.
+
+## Tier A: self-serve down-scoped tokens
+
+For everything that used to be RESTRICTED / PRIVATE / DRYVIST:
+
+```text
+POST /token  {repos: [...], permissions: {...}}
+```
+
+The broker checks the request against a per-identity policy (which caller may ask
+for which repos and permissions), then mints a **down-scoped installation token**
+valid for one hour. A Nix-managed `gh-token <context>` shim replaces the
+`gh-token-switching.zsh` launcher functions. Agents request exactly the repos
+they were dispatched against — a token scoped to one repo cannot push to another,
+regardless of what the agent decides to do.
+
+## Tier B: allowlisted org-admin verbs
+
+For everything that used to be ADMIN / ORG_ADMIN, the broker exposes a **verb
+catalog**, not tokens. `create-repo` is the first verb. For each call the broker:
+
+1. Validates parameters against the verb's schema (name pattern, visibility,
+   org).
+2. Mints a JIT admin-scoped token, performs the API call **itself**, and discards
+   the token. The caller never sees it.
+3. Writes an audit event to Splunk via the existing HEC path.
+4. Enforces rate limits — e.g. 3 repo-creations per hour.
+
+Destructive verbs — `delete-repo`, `remove-member` — are permanently excluded
+from the catalog. Not rate-limited, not approval-gated: absent. An agent that
+needs them is a design error, per
+[Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action).
+
+## Tier mapping
+
+| Old PAT tier | Keychain | New mechanism |
+| --- | --- | --- |
+| `RESTRICTED` | auto-readable | Tier A token scoped to public repos |
+| `DRYVIST` | auto-readable | Tier A token scoped to requested dryvist repos |
+| `PRIVATE` | password-gated | Tier A token scoped to requested personal repos |
+| `ADMIN` | password-gated | Tier B verbs; human-only break-glass PAT stays in the password-gated keychain |
+| `ORG_ADMIN` | password-gated | Tier B verbs; human-only break-glass PAT stays in the password-gated keychain |
+
+Break-glass means exactly that: a human typing a keychain password for an
+operation the catalog deliberately cannot perform. It is never injected into any
+automated path.
+
+## Residual risk, honestly
+
+The broker is the new high-value target. It holds the only path to the App's
+private key and the only path to admin verbs — compromising it is strictly more
+valuable than compromising any single old PAT. Confidence comes from the
+narrowness of the catalog (a handful of validated verbs, destructive ones
+structurally absent), the audit trail (every mint and every verb call lands in
+Splunk), and the rate limits (a compromised caller creates three repos an hour,
+not three hundred) — not from any belief that the broker itself is unbreachable.
+It is a small, boring, auditable service on purpose.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
+    Where the App private key lives and how the broker authenticates to OpenBao.
+  </Card>
+  <Card title="Roadmap" icon="map" href="/autonomous-agents/roadmap">
+    Tier A lands in phase 5, Tier B in phase 6.
+  </Card>
+  <Card title="Golden laws" icon="scale-balanced" href="/security/golden-laws">
+    The human-approval law that keeps destructive verbs out of the catalog.
+  </Card>
+  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
+    The SSH/HTTPS split the token tiers currently gate.
+  </Card>
+</CardGroup>
