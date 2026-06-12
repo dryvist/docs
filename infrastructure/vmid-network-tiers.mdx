@@ -15,11 +15,11 @@ The page below is the high-level design rationale. The exhaustive, digit-by-digi
 A VMID is six digits, each position carrying meaning. Read left to right, the digits go from coarsest grouping to finest:
 
 ```text
-[Tier][Sub-tier][Crit][OS][Instance][Env]
-   │      │        │    │      │       │
-   │      │        │    │      │       └─ environment (prod / stg / test / dev / sbx)
-   │      │        │    │      └───────── instance number within the group
-   │      │        │    └──────────────── OS family (0 = LXC, the common case)
+[Tier][Sub-tier][Crit][Instance][OS][Env]
+   │      │        │      │       │    │
+   │      │        │      │       │    └─ environment (0 prod · 1 stg · 2 test · 3 dev · 4 sbx)
+   │      │        │      │       └────── OS family (4 = LXC, the common case)
+   │      │        │      └────────────── instance number within the group
    │      │        └───────────────────── criticality, rolling 0–9 (lower = more critical)
    │      └────────────────────────────── sub-tier (0 user-facing, 1 mgmt, 2 download)
    └───────────────────────────────────── trust tier (1–9)
@@ -31,12 +31,12 @@ Because the most significant digit is the tier and the next is the sub-tier, a p
 | --- | --- | --- |
 | Tier | Trust tier, `1`–`9` | Most-trusted (`1`) to least-trusted (`9`). Equals VLAN ÷ 10. |
 | Sub-tier | Role within the tier | `0` user-facing, `1` management (present in **every** tier), `2` download/ingest |
-| Criticality | Rolling `0`–`9` | Lower is more critical; `5` is the default middle |
-| OS | OS family | `0` = LXC (most guests), other digits for VM OS families |
-| Instance | Instance counter | Distinguishes replicas within the same group |
-| Env | Environment | prod / stg / test / dev / sbx, repeating across `0–4` / `5–9` |
+| Criticality | Rolling `0`–`9` | Lower is more critical; `0` restore-first, `5` the default middle, `9` expendable |
+| Instance | Instance counter | Distinguishes siblings within the same group |
+| OS | OS family | `1` macOS · `2` Windows · `3` Docker · `4` LXC (most guests) · `5` Debian · `6` Ubuntu · `7` Fedora · `9` RHEL |
+| Env | Environment | `0` prod · `1` staging · `2` test · `3` dev · `4` sandbox |
 
-A worked example — Plex, the media library's user-facing service — decodes as `702000`: tier `7` (media) · sub-tier `0` (user-facing) · criticality `2` (more critical than the default `5`) · OS `0` (LXC) · instance `0` · env `0` (prod). Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
+A worked example — Plex, the media library's user-facing service — decodes as `703040`: tier `7` (media) · sub-tier `0` (user-facing) · criticality `3` (more critical than the default `5`) · instance `0` · OS `4` (LXC) · env `0` (prod). Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
 
 ## Trust-ordered tiers map to VLANs
 
@@ -78,6 +78,17 @@ The one requirement that makes this work: **every guest must have a defined host
 | What does IaC reference? | `{hostname}.{subdomain}` — never a raw IP |
 | When are static IPs used? | The exception only: core network gear and servers that must be reachable before DNS is up |
 | What must every guest have? | A hostname — the requirement the whole model rests on |
+
+### Deterministic MACs pin the reservations
+
+"DHCP-first" does not mean "random address." A guest can still get a **stable** address — the trick is to make the MAC deterministic and let a DHCP reservation do the pinning:
+
+1. The guest is declared `dhcp: true`; its identity is its FQDN, never an octet.
+2. Its MAC is **derived from the hostname**: the locally-administered prefix `02:` followed by digits of the hostname's MD5 digest. Same hostname → same MAC, on every rebuild, with no MAC ever stored by hand.
+3. A DHCP reservation in the network controller maps that MAC to a reserved host octet, so the lease the guest receives is always the same address.
+4. The DNS A record points at the reserved address — and only the DNS record holds it.
+
+The derived `{mac, reserved_ip}` pair flows from the provisioning layer to the configuration layer through the IaC inventory contract, so no downstream repo ever hand-types either value. Rebuild the guest from scratch and it comes back with the same MAC, the same lease, and the same name — identity fully reconstructed from the hostname alone.
 
 Migration to this model is **incremental**, not a flag day. New guests adopt the convention immediately; existing guests move over as windows allow.
 

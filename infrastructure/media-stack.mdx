@@ -10,6 +10,10 @@ The homelab runs a self-hosted Netflix: a media library served from LXCs on a de
 
 LXC, not Docker — consistent with the [LXC vs Docker](/infrastructure/lxc-vs-docker) decision tree. Native packages where they exist; Ansible manages config.
 
+## Storage layout
+
+The whole stack shares **one ZFS dataset** bind-mounted at `/data` into every container — the [single-filesystem hardlink layout](/infrastructure/media-storage-hardlinks). Downloads and the library are subtrees of the same filesystem, so imports are atomic hardlinks, seeding costs zero extra disk, and one quota bounds the whole footprint.
+
 ## Personal backup on the same footprint
 
 The same self-hosted footprint replaces two cloud subscriptions with services that keep the data at home:
@@ -22,6 +26,9 @@ These are backup *targets*, and they are themselves protected: their datasets ri
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Media storage hardlinks" icon="link" href="/infrastructure/media-storage-hardlinks">
+    The single-filesystem layout under the stack.
+  </Card>
   <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
     Why the decision tree lands on LXC for this stack.
   </Card>

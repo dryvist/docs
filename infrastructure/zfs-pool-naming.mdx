@@ -1,0 +1,59 @@
+---
+title: "ZFS pool naming: tiers, not nodes"
+description: "Pool names encode the storage tier (boot / bulk / fast) and nothing else — never the node, the RAID level, or the drive count — so dataset paths are identical on every node and replicas line up by construction."
+tier: 2
+---
+
+> A pool name is an API. Services, replication jobs, and inventory all address storage through it — so it must only encode things that never change. The performance tier never changes. Everything else does.
+
+## The convention
+
+Three names, used identically on **every** node that has that tier of storage:
+
+| Pool | Tier | Backing |
+| --- | --- | --- |
+| `rpool` | Boot / system | The OS disk — Proxmox's ZFS-on-root install-time default, kept as-is |
+| `bulk` | Bulk capacity | Spinning-disk raidz — large, slow, cheap |
+| `fast` | Low-latency | Flash (SSD / NVMe) that is not the boot disk |
+
+A node only creates the pools it has hardware for. A `proxmox-2`-style node with an HDD array gets `bulk`; a node with spare flash gets `fast`; every ZFS-boot node already has `rpool`.
+
+## What a pool name must never encode
+
+The test for a candidate name: **does this fact survive a hardware change?**
+
+| Anti-pattern | Example | Why it rots |
+| --- | --- | --- |
+| Node-named | `hdd2`, `pool-node3` | Breaks the moment a dataset or service migrates; the path stops being portable |
+| RAID-named | `raidz2pool`, `mirrorpool` | Becomes a lie after a rebuild to a different layout |
+| Count/size-named | `3x6tb` | Becomes a lie after the first expansion or drive swap |
+| Pet-named | `tank`, `dozer` | Carries zero information; every lookup needs tribal knowledge |
+
+Tier names survive all of those events. The name tells you the speed class; the dataset path below it tells you the purpose.
+
+## The payoff: identical paths everywhere
+
+Because the pool name is the same on every node, a dataset's full path is **node-agnostic**:
+
+- `bulk/data` means "the bulk media dataset" on whichever node currently holds it. Moving the service to another node changes zero mount configuration.
+- Replication targets line up by construction — `bulk/data` on the source replicates to `bulk/replica/<source>/data` on the destination, and a restored replica is **byte-identical at the same path** it had at home.
+- Inventory and IaC reference one path per dataset, not one per node × dataset.
+
+Any node can stand in for another, because storage addressing was never node-specific to begin with.
+
+## What this connects to
+
+<CardGroup cols={2}>
+  <Card title="ZFS backup & replication" icon="clone" href="/infrastructure/zfs-backup-replication">
+    The snapshot and replication layers that ride on these pools.
+  </Card>
+  <Card title="Media storage hardlinks" icon="link" href="/infrastructure/media-storage-hardlinks">
+    The single-filesystem layout that lives at bulk/data.
+  </Card>
+  <Card title="VMID & network tier model" icon="hashtag" href="/infrastructure/vmid-network-tiers">
+    The same encode-only-what-never-changes philosophy, applied to guest identity.
+  </Card>
+  <Card title="Homelab" icon="server" href="/about/homelab">
+    The hardware behind the pools.
+  </Card>
+</CardGroup>
