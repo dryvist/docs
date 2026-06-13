@@ -168,6 +168,16 @@
             ]
           },
           {
+            "group": "Autonomous Agents",
+            "pages": [
+              "autonomous-agents/overview",
+              "autonomous-agents/runtime",
+              "autonomous-agents/secrets",
+              "autonomous-agents/github-access",
+              "autonomous-agents/roadmap"
+            ]
+          },
+          {
             "group": "Automation",
             "pages": [
               "automation/overview",
