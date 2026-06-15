@@ -85,7 +85,9 @@ Distributed automatically by [`secrets-sync`](/security/secrets-sync) when a rep
 
 | Secret / variable | Source | Purpose |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` (secret) | `_all_repos` | Auth for `claude-code-action` to call the Anthropic API directly |
+| `AI_TOKEN` (secret) | `_all_repos` | Provider credential for `claude-code-action`; defaults to Claude OAuth when `AI_PROVIDER` is unset |
+| `AI_PROVIDER` (variable) | `_all_repos` | Optional provider route; set `openrouter` or `anthropic_api` to switch without code changes |
+| `AI_BASE_URL` (variable or secret) | `_all_repos` | Optional Anthropic-compatible router URL |
 | `GH_APP_CLAUDE_BOT_PRIVATE_KEY` (secret) | `_github_app_repos` | Mints App tokens for signed commits attributed to `JacobPEvans-claude[bot]` |
 | `GH_APP_CLAUDE_BOT_ID` (variable) | `_github_app_repos` | App identifier |
 
@@ -115,7 +117,7 @@ For the local iteration loop on a PR you're editing yourself, see [`/ship` and `
 
 <CardGroup cols={2}>
   <Card title="ai-workflows" icon="github" href="/automation/cloud-pipelines/ai-workflows">
-    The full catalog of 16 reusable workflows, event-triggered + scheduled.
+    Reusable workflows, GH-AW imports, event-triggered and scheduled.
   </Card>
   <Card title="claude-code-routines" icon="clock" href="/automation/scheduled-routines/claude-code-routines">
     The cron half — six routines that scan the org and pick up loose ends.
@@ -124,6 +126,6 @@ For the local iteration loop on a PR you're editing yourself, see [`/ship` and `
     Caller templates and the live workflow catalog.
   </Card>
   <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    Why direct Anthropic API, not OAuth tokens; cost controls; fallback providers.
+    `AI_TOKEN`, provider routing, model variables, and GH-AW engine caveats.
   </Card>
 </CardGroup>

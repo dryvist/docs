@@ -8,7 +8,7 @@ tier: 2
 
 ## What goes in Doppler
 
-- AI provider keys: `OPENROUTER_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`, `COPILOT_GITHUB_TOKEN`, `HF_TOKEN`.
+- AI provider keys: `AI_TOKEN`, `COPILOT_GITHUB_TOKEN`, `HF_TOKEN`, plus provider-specific keys when a tool cannot use the shared `AI_TOKEN` convention.
 - GitHub App credentials: `GH_APP_CLAUDE_BOT_*`, the SSH signing key for Actions-signed commits.
 - Slack webhooks (broadcast and per-channel).
 - Infrastructure runtime config: database passwords, RunsOn license, Qdrant credentials.

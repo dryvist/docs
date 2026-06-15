@@ -34,23 +34,19 @@ Expect `verified: true`, `reason: "valid"`, and the `login` from the table above
 Every reusable AI workflow in `JacobPEvans/ai-workflows` mints a `JacobPEvans-claude` installation token immediately before calling `anthropics/claude-code-action@v1`, then hands the token in as `github_token`. The action's `use_commit_signing: true` sends edits through the Contents API, which web-flow-signs every commit and attributes it to whichever bot owns the token.
 
 ```yaml
-- name: Mint JacobPEvans-claude installation token
-  id: app-token
-  uses: actions/create-github-app-token@v2
+- name: Run Claude Code with bot attribution
+  uses: dryvist/ai-workflows/.github/actions/run-claude-code@main
   with:
-    app-id: ${{ vars.GH_APP_CLAUDE_BOT_ID }}
-    private-key: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
-    owner: ${{ github.repository_owner }}
-    repositories: ${{ github.event.repository.name }}
-
-- name: Run Claude Code
-  uses: anthropics/claude-code-action@v1
-  with:
-    github_token: ${{ steps.app-token.outputs.token }}
-    anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    ai_provider: ${{ vars.AI_PROVIDER || 'claude_oauth' }}
+    ai_token: ${{ secrets.AI_TOKEN }}
+    ai_base_url: ${{ vars.AI_BASE_URL || secrets.AI_BASE_URL || '' }}
     allowed_bots: "github-actions"
     use_commit_signing: "true"
     prompt: ${{ steps.prompt.outputs.content }}
+    allowed_tools: "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git diff:*)"
+    model: ${{ vars.AI_MODEL_CODE || vars.AI_MODEL || 'sonnet' }}
+    app_id: ${{ vars.GH_APP_CLAUDE_BOT_ID }}
+    app_private_key: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
 ```
 
 Consumers do not import the App credentials themselves. [`secrets-sync`](/security/secrets-sync) distributes `vars.GH_APP_CLAUDE_BOT_ID` and `secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY` to every repo in the `*github_app_repos` set. To add a new consumer repo: append it to that anchor in `JacobPEvans/secrets-sync/secrets-config.yml` and re-run the distribution workflow.

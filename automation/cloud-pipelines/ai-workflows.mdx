@@ -1,12 +1,12 @@
 ---
 title: "ai-workflows"
-description: "Sixteen reusable GitHub Actions workflows that turn issues into draft PRs, fix CI failures automatically, and gate merges. Consumer repos wire thin callers."
+description: "Reusable GitHub Actions workflows and GH-AW imports that turn issues into draft PRs, fix CI failures automatically, gate merges, and keep docs current."
 tier: 2
 ---
 
-> One repo of reusable workflows. Every consumer repo writes ten-line callers and inherits the entire pipeline.
+> One repo of reusable workflows and imported agentic workflows. Consumer repos write thin callers; GH-AW wrappers compile to locked workflows.
 
-[`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows) ships 16 reusable GitHub Actions workflows (`on: workflow_call:`) that consumer repos invoke with `uses:` references. The AI orchestration, prompts, and rate guards live in the upstream workflow; the consumer caller declares the trigger and inherits secrets.
+[`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`) and GitHub Agentic Workflow wrappers (`.md` source compiled to `.lock.yml`). The AI orchestration, prompts, provider routing, and rate guards live upstream; consumers declare triggers and inherit secrets.
 
 ## Event-triggered workflows
 
@@ -37,6 +37,7 @@ These run on cron — typically called with `schedule:` and a manual `workflow_d
 | `issue-hygiene.yml` | Weekly Mon 07:00 UTC | Detects duplicates, links merged PRs, flags stale issues |
 | `label-sync.yml` | Weekly Sun 05:00 UTC | Syncs canonical labels from the `.github` repo to consumers |
 | `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
+| `public-docs-updater.md` / `.lock.yml` | Daily | GH-AW import of GitHubNext `doc-updater.md`; scans `dryvist` public PR activity and updates this docs repo |
 
 ## What's deprecated or disabled
 
@@ -47,9 +48,9 @@ These run on cron — typically called with `schedule:` and a manual `workflow_d
 
 Wiring a caller for a deprecated workflow is a no-op — the consumer caller runs, the upstream silently skips. Don't.
 
-## How a caller looks
+## How a reusable caller looks
 
-A consumer caller is the smallest YAML that declares a trigger, sets permissions, and forwards to the upstream:
+A reusable-workflow caller is the smallest YAML that declares a trigger, sets permissions, and forwards to the upstream:
 
 ```yaml
 name: Issue Triage
@@ -68,21 +69,43 @@ jobs:
 
 Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
 
+## How a GH-AW import looks
+
+GitHub Agentic Workflows are authored as Markdown and compiled:
+
+```yaml
+---
+engine: copilot
+imports:
+  - githubnext/agentics/workflows/doc-updater.md@main
+on:
+  schedule: daily
+  workflow_dispatch:
+---
+```
+
+`public-docs-updater.md` imports the GitHubNext doc updater, then adds local rules: scan `dryvist` public repos, include merged plus open/draft PR titles and descriptions, treat open work as in-progress only, and create one PR against `docs`.
+
 ## Versioning
 
 Per the [CI/CD policy](/infrastructure/cicd/policy#dependency-versioning), JacobPEvans self-references use `@main` or a major tag like `@v0` — never minor/patch pins. The full SemVer tags exist (`@v0.15.1`) and are tracked by Renovate, but consumers should ride a moving ref so upstream improvements land without a Renovate PR per repo.
 
 ## Authentication
 
-Every reusable workflow uses [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action), authenticated directly against the Anthropic API:
+Reusable `.yml` workflows call [`anthropics/claude-code-action@v1`](https://github.com/anthropics/claude-code-action) through a shared wrapper action. The runtime contract is AI-agnostic:
 
-- `secrets.ANTHROPIC_API_KEY` — Anthropic API key. Spend draws from the included monthly automation credits on the Claude subscription that backs these workflows.
+- `secrets.AI_TOKEN` — provider credential
+- `vars.AI_PROVIDER` — defaults to `claude_oauth`
+- `vars.AI_BASE_URL` or `secrets.AI_BASE_URL` — required only for OpenRouter or another Anthropic-compatible router
+- `vars.AI_MODEL*` — defaults to Claude `sonnet`
 
-OAuth tokens from a Claude Code subscription session are **explicitly forbidden** in unattended CI — they violate the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms). OpenRouter is supported as a fallback provider (set `secrets.OPENROUTER_API_KEY` and `secrets.OPENROUTER_BASE_URL`) but is no longer the default. The provider matrix lives in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+OpenRouter is still supported, but it is not hardcoded: set `AI_PROVIDER=openrouter`, put the key in `AI_TOKEN`, set `AI_BASE_URL`, and choose the model with `AI_MODEL`.
+
+GH-AW imports are different. The current `public-docs-updater` wrapper uses the Copilot engine because GH-AW Claude does not support Claude OAuth tokens on the pinned compiler path. The provider matrix and GH-AW caveats live in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
 
 ## Commit signing
 
-Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token immediately before calling the action, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot. The App credentials (`GH_APP_CLAUDE_BOT_PRIVATE_KEY`, `GH_APP_CLAUDE_BOT_ID`) are distributed by `secrets-sync` to every repo in the `_github_app_repos` anchor.
+Every PR-writing reusable workflow mints a `JacobPEvans-claude` GitHub App installation token immediately before calling the action, then hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and attributed to the bot. The App credentials (`GH_APP_CLAUDE_BOT_PRIVATE_KEY`, `GH_APP_CLAUDE_BOT_ID`) are distributed by `secrets-sync` to every repo in the `_github_app_repos` anchor.
 
 ## Where to go next
 
@@ -94,7 +117,7 @@ Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token imm
     The post-merge dispatch pattern, bot guards, and other recurring shapes.
   </Card>
   <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    Anthropic API key setup, cost controls, fallback providers, why not OAuth.
+    `AI_TOKEN`, provider routing, model variables, and GH-AW engine caveats.
   </Card>
   <Card title="Verification" icon="check-double" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/VERIFICATION.md">
     The e2e runbook for checking a freshly-wired repo end to end.
@@ -103,6 +126,6 @@ Every AI workflow mints a `JacobPEvans-claude` GitHub App installation token imm
     Exactly which six callers are wired on `JacobPEvans/docs` and why.
   </Card>
   <Card title="Secret distribution" icon="lock" href="/security/secrets-sync">
-    How ANTHROPIC_API_KEY and the App credentials land on each consumer repo.
+    How `AI_TOKEN` and the App credentials land on each consumer repo.
   </Card>
 </CardGroup>

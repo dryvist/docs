@@ -18,12 +18,12 @@ This site is the single public source of truth for the secrets-management story.
 
 | Tool | Use it for | Deep dive |
 | --- | --- | --- |
-| **Doppler** | AI provider keys (Claude, Gemini, OpenRouter, HuggingFace); GitHub Actions secrets distributed via `secrets-sync`; dryvist org-level Doppler integration | [doppler](/security/tools/doppler) |
+| **Doppler** | AI provider keys (`AI_TOKEN`, Copilot, HuggingFace, provider-specific fallbacks); GitHub Actions secrets distributed via `secrets-sync`; dryvist org-level Doppler integration | [doppler](/security/tools/doppler) |
 | **macOS Keychain** | Tiered GitHub PATs (`RESTRICTED`, `PRIVATE`, `ADMIN`); BWS access token; Claude Code OAuth credential | [macos-keychain](/security/tools/macos-keychain) |
 | **AWS Vault** | AWS credentials per OpenTofu root (one profile per root) | [aws-vault](/security/tools/aws-vault) |
 | **Mozilla SOPS** | Encrypted OpenTofu / Ansible vars committed to git; initial-bootstrap passwords; internal topology | [sops](/security/tools/sops) |
 | **Bitwarden vault** | SSH keys, recovery codes, age-key escrow, account passwords — AI tools never reach this | [bitwarden](/security/tools/bitwarden) |
-| **BWS** | Programmatic AI tokens (e.g. `CLAUDE_CODE_OAUTH_TOKEN`) fetched via the Python bridge | [bws](/security/tools/bws) |
+| **BWS** | Programmatic AI tokens that cannot use the shared `AI_TOKEN` convention, fetched via the Python bridge | [bws](/security/tools/bws) |
 | **OpenBao** *(planned)* | Self-hosted homelab service-to-service auth | [openbao](/security/tools/openbao) |
 
 ## What this section covers
