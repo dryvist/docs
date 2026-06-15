@@ -15,6 +15,8 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## What it does
 
 - Defines the canonical `CLAUDE.md` and `AGENTS.md` files used by every project
+- Sets the **autonomous orchestration defaults** — proceed on low-risk ambiguity, delegate context-heavy work, verify the
+  result, and keep user output compact
 - Owns the **model-routing policy** — when to reach for Claude vs Gemini vs Copilot vs local MLX
 - Owns the **tool-use rules** — Read over `cat`, Edit over `sed`, Bash for shell-only
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, Bifrost-routing details
@@ -22,7 +24,15 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 Cross-repo writing standards that humans also need to read — commit conventions, no-scripts, diagramming, CI/CD policy, OpenTofu check placement, Nix package placement, scrubbed values — live on this docs site. See [Conventions](/conventions/overview) for the full set.
 
-Situational agent guidance that once lived here as always-loaded rules — pre-commit architecture, the Nix tool policy, shared-workflow org references — now ships as on-demand skills in [claude-code-plugins](/ai-development/claude-code-plugins), keeping the per-session footprint to the three rules every task needs (voice, tool use, skill-execution integrity).
+Situational agent guidance that once lived here as always-loaded rules — pre-commit architecture, the Nix tool policy,
+shared-workflow org references — now ships as on-demand skills in
+[claude-code-plugins](/ai-development/claude-code-plugins), keeping the per-session footprint focused on voice, tool
+use, skill-execution integrity, and repository-local routing.
+
+The [default development loop](/architecture/ai-pipeline) is intentionally lightweight: gather enough context, choose the
+simplest verifiable path, implement the smallest correct change, and report only the result plus verification. PRD-heavy,
+test-first gating remains available for high-risk or explicitly gated work, but it is no longer the default for routine
+tasks.
 
 ## The `CLAUDE.md` → `@AGENTS.md` convention
 
