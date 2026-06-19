@@ -12,9 +12,9 @@ This formalizes what the [introduction](/introduction) already says — *per-rep
 
 ## Required shape
 
-Use these sections, in this order. Omit one only if it genuinely doesn't apply to the repo; never reorder.
+Use these sections, in this order. Omit one only if it genuinely doesn't apply to the repo; never reorder, never rename.
 
-The two **non-negotiable** rules are the [standalone rule](#the-standalone-rule) and the [footer](#the-footer--one-link-routed-by-visibility). Section *names* are fit-for-purpose: an app or tool uses **Installation**; a library or Nix module may name its getting-started section for its nature (e.g. **What it manages**, **What's in this flake**) — as long as both a getting-started section and a **Usage** section exist. A repo's `.readme-validator.yaml` is the per-repo enforcement of exactly which headings it requires; repos without one fall back to the default (`Installation`, `Usage`).
+The **Installation** and **Usage** headings are used verbatim in every repo — uniform names so the whole portfolio reads the same, even for libraries and Nix modules (there, "Installation" is how you add it as a dependency and "Usage" is how you consume it). A repo's `.readme-validator.yaml`, if present, enforces exactly this set; legacy configs that required other headings are deleted or updated to match.
 
 | Section | Content |
 | --- | --- |
