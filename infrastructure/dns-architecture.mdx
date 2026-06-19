@@ -59,7 +59,7 @@ at the same encrypted upstreams — Cloudflare and Google over DNS-over-HTTPS.
 Technitium is **authoritative for the internal subdomain only** — a child zone
 that holds every infrastructure A-record and service alias. A query for a name
 under that subdomain is answered locally and never leaves the network. That is
-what makes the [DNS-first addressing model](/infrastructure/vmid-network-tiers)
+what makes the [DNS-first addressing model](/infrastructure/vmid-network-tiers#dhcp-and-dns-first-addressing)
 work: guests are referenced by `{hostname}.{subdomain}` and DNS owns the actual
 DHCP-leased address.
 
@@ -76,7 +76,7 @@ External forwarding is hardened along two axes:
   forwarded queries are not sent in plaintext. The upstreams are Cloudflare
   (`1.1.1.1`) and Google (`8.8.8.8`), matching what the UniFi gateway already
   uses for its own Encrypted-DNS path. Each DoH endpoint carries a bootstrap IP
-  so the resolver dials it directly instead of resolving the DoH hostname
+  so the resolver connects to it directly instead of resolving the DoH hostname
   through itself, while still validating the TLS certificate against the
   hostname.
 - **Client subnet withheld.** EDNS Client Subnet is disabled, so the resolver
