@@ -1,0 +1,89 @@
+---
+title: "Repository catalog"
+description: "Every public repo at a glance, grouped by the six surfaces. The single index of what exists — so a README never has to list its neighbors."
+---
+
+> The map of every repo, in one place. This is what a README's footer points back to instead of carrying its own "related repos" list.
+
+Each repo's own `README.md` covers install and usage for that repo alone (see [README conventions](/conventions/readme-conventions)). This page is the index that holds the relationships — what exists, which surface it belongs to, and where to read more. For the dependency flow between surfaces, see [how it fits together](/how-it-fits-together).
+
+## Infrastructure
+
+OpenTofu / Terraform / Ansible that builds and configures the homelab.
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [terraform-proxmox](https://github.com/dryvist/terraform-proxmox) | Proxmox VM/LXC provisioning; the deployment + constants source of truth | [hub](/infrastructure/repos/tofu-proxmox) |
+| [ansible-proxmox](https://github.com/dryvist/ansible-proxmox) | Host tuning, ZFS pools, replication, monitoring | [hub](/infrastructure/repos/ansible-proxmox) |
+| [ansible-proxmox-apps](https://github.com/dryvist/ansible-proxmox-apps) | App roles — Cribl, HAProxy, and the rest | [hub](/infrastructure/repos/ansible-proxmox-apps) |
+| [tofu-unifi](https://github.com/dryvist/tofu-unifi) | UniFi network-as-code — VLANs, firewall, WLANs, VPN | [hub](/infrastructure/repos/tofu-unifi) |
+| [orbstack-kubernetes](https://github.com/dryvist/orbstack-kubernetes) | Local K8s monitoring stack (OTEL, Cribl) | [hub](/infrastructure/repos/orbstack-kubernetes) |
+| [terraform-runs-on](https://github.com/dryvist/terraform-runs-on) | Self-hosted GitHub Actions runners on AWS spot | [hub](/infrastructure/cicd/tofu-runs-on) |
+| [tofu-aws-templates](https://github.com/dryvist/tofu-aws-templates) | Per-project AWS state-backend bootstrap template | [Terraform on AWS](/infrastructure/terraform/overview) |
+| [terraform-github](https://github.com/dryvist/terraform-github) | Declarative GitHub org governance — rulesets, settings | — |
+| [nix-pxe-bootstrap](https://github.com/dryvist/nix-pxe-bootstrap) | NixOS-on-Pi netboot + Proxmox auto-installer | — |
+
+## Observability
+
+The telemetry spine — capture, route, index, visualize.
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [ansible-splunk](https://github.com/dryvist/ansible-splunk) | Splunk Enterprise deploy + config | [hub](/observability/repos/ansible-splunk) |
+| [tf-splunk-aws](https://github.com/dryvist/tf-splunk-aws) | Cost-optimized Splunk on AWS for DR | [hub](/observability/repos/tf-splunk-aws) |
+| [cc-edge-the-mac-pack-io](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io) | macOS health monitoring via Cribl Edge | [hub](/observability/repos/cc-edge-the-mac-pack) |
+| [cc-edge-claude-code-io](https://github.com/dryvist/cc-edge-claude-code-io) | Claude Code telemetry via Cribl Edge → Stream | — |
+| [cc-edge-copilot-otel](https://github.com/JacobPEvans/cc-edge-copilot-otel) | GitHub Copilot Chat OTel receiver | — |
+| [cc-edge-vscode-io](https://github.com/JacobPEvans/cc-edge-vscode-io) | VS Code + Copilot extension logs | — |
+| [cc-edge-gemini-antigravity-io](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini CLI + Antigravity log collector | — |
+| [cc-stream-github-copilot-rest-io](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics via REST | — |
+| [cc-edge-pack-template](https://github.com/dryvist/cc-edge-pack-template) | Scaffold for new Cribl Edge packs | — |
+| [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Splunk dashboards for AI-tool observability | — |
+| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Splunk add-on — field aliases, CIM mappings | — |
+
+## Nix Ecosystem
+
+Declarative macOS host, dev environment, AI tooling, and dev shells.
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [nix-darwin](https://github.com/dryvist/nix-darwin) | macOS system config + home-manager orchestration | [hub](/nix/nix-darwin) |
+| [nix-home](https://github.com/dryvist/nix-home) | Cross-platform user dev environment | [hub](/nix/nix-home) |
+| [nix-ai](https://github.com/dryvist/nix-ai) | AI coding toolkit — Claude, Gemini, Copilot, MCP | [hub](/nix/nix-ai) |
+| [nix-devenv](https://github.com/dryvist/nix-devenv) | Reusable dev shells (Terraform, Ansible, K8s, AI/ML) | [hub](/nix/nix-devenv) |
+| [nix-claude-code](https://github.com/dryvist/nix-claude-code) | Declarative Claude Code config in Nix | [hub](/nix/nix-claude-code) |
+| [nix-ai-server](https://github.com/dryvist/nix-ai-server) | NixOS bare-metal config for the AI host | — |
+
+## AI Development
+
+The vendor-agnostic instructions, plugins, and workflows that run the AI dev pipeline.
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions) | Vendor-agnostic AI workflow instructions | [hub](/ai-development/ai-assistant-instructions) |
+| [claude-code-plugins](https://github.com/dryvist/claude-code-plugins) | Custom Claude Code plugins | [hub](/ai-development/claude-code-plugins) |
+| [ai-workflows](https://github.com/dryvist/ai-workflows) | Scheduled Claude Code routines (PR triage, polish) | [hub](/automation/cloud-pipelines/ai-workflows) |
+| [claude-code-routines](https://github.com/dryvist/claude-code-routines) | Scheduled portfolio-management routines | [hub](/automation/scheduled-routines/claude-code-routines) |
+| [claude-code-best-practice](https://github.com/dryvist/claude-code-best-practice) | Vibe-coding → agentic-engineering practice | — |
+
+## Dev Tools
+
+Templates and standalone tools.
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [mlx-benchmarks](https://github.com/dryvist/mlx-benchmarks) | MLX + local LLMs on Apple Silicon | [hub](/tools/mlx-benchmarks) |
+| [python-template](https://github.com/dryvist/python-template) | Python project template (pytest, Ruff, MyPy) | — |
+| [raycast-smart-issue](https://github.com/dryvist/raycast-smart-issue) | Raycast extension — AI GitHub issue generation | — |
+
+## Docs & org
+
+| Repo | Does | More |
+| --- | --- | --- |
+| [docs](https://github.com/dryvist/docs) | This site — the public architecture map | — |
+| [docs-starlight](https://github.com/dryvist/docs-starlight) | Private homelab companion (gated) | [docs.dryvist.com](https://docs.dryvist.com) |
+| [.github](https://github.com/dryvist/.github) | Org community-health files + the README template | — |
+
+<Note>
+  Private repos (the live homelab, real network config, schemas) are catalogued on the gated [dryvist site](https://docs.dryvist.com), not here.
+</Note>

@@ -1,0 +1,64 @@
+---
+title: "README conventions"
+description: "Every repo ships a standalone README in one consistent shape — what the repo does and how to run it, nothing about its neighbors. The cross-repo story lives on this site, linked once from a footer."
+tier: 1
+---
+
+> A README describes one repo. How the repos connect lives here — not duplicated across fifty READMEs that drift.
+
+A repo's `README.md` is its front door: install and usage for **that repo alone**. The ecosystem story — which repo feeds which, what depends on what — lives on this site, maintained in one place. A README that re-explains its neighbors copies that story dozens of times, and every copy rots the moment a sibling changes. So the rule is simple: **READMEs are standalone; one footer link points back here.**
+
+This formalizes what the [introduction](/introduction) already says — *per-repo READMEs cover install; this site covers how it all fits together.*
+
+## Required shape
+
+Use these sections, in this order. Omit one only if it genuinely doesn't apply to the repo; never reorder, never rename.
+
+| Section | Content |
+| --- | --- |
+| **Title + one-liner** | Repo name as the H1, then a single sentence: what it is and who it's for. |
+| **Badges** | A standard row — CI status and license at minimum. Release/language badges optional. |
+| **Quick start / Install** | The shortest path to running it: prerequisites, then commands. |
+| **Usage** | The common operations, with copy-pasteable examples. |
+| **Repo-specific** | Configuration · Layout · Testing · Roles · whatever this repo needs. As many as it warrants. |
+| **Contributing** | A link to `CONTRIBUTING.md` or the [public conventions](/conventions/overview) — don't restate them. |
+| **License** | SPDX identifier and a link. |
+| **Footer** | The single ecosystem link (below). Nothing else cross-repo. |
+
+## The standalone rule
+
+A README names exactly one repo: this one. Concretely:
+
+- **No "Related Repos" table, no sibling list, no repo-relationship diagram.** That map lives on [how it fits together](/how-it-fits-together) and in the [repository catalog](/repositories), maintained once.
+- **Don't describe what another repo does.** If you must reference a sibling, link to its hub page or GitHub — don't summarize it. The summary drifts the instant the sibling changes.
+- **Dependencies are contracts, not names.** When this repo consumes another's output, describe the *shape* it expects — "reads an inventory matching `<schema>`", "expects `NETWORK_CIDR_*` in the environment" — not "run the provisioning repo first." The contract is what you actually depend on, and it's stable; the sibling that satisfies it today might be replaced tomorrow. Pin the contract; link the map.
+
+## The footer — one link, routed by visibility
+
+End every README with exactly one ecosystem pointer, chosen by the repo's **visibility**:
+
+**Public repo:**
+
+```markdown
+---
+
+> Part of a [larger ecosystem of ~40 repos](https://docs.jacobpevans.com) — see how it all fits together.
+```
+
+**Private repo:**
+
+```markdown
+---
+
+> Part of the [dryvist homelab](https://docs.dryvist.com) — how the private repos and infrastructure connect (gated).
+```
+
+A public README never points readers at the gated site — that's a login wall for outsiders. A private README points at the gated hub, which is allowed to describe the private picture. That one line is the only cross-cutting reference a README carries.
+
+## Template
+
+Scaffolding a repo? Copy [`README.template.md`](https://github.com/dryvist/.github/blob/main/README.template.md) from the org `.github` repo — it ships the shape above with the footer pre-filled for a public repo.
+
+## Why it lives here
+
+This site **is** the architecture map: how things connect, why decisions were made, what to read next. It **isn't** the install walkthrough — that's each repo's README. Keeping the connective tissue here, and only here, is what lets every README stay short, current, and about one thing.

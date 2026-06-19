@@ -61,7 +61,8 @@
             "group": "Start here",
             "pages": [
               "introduction",
-              "how-it-fits-together"
+              "how-it-fits-together",
+              "repositories"
             ]
           },
           {
@@ -213,6 +214,7 @@
               "conventions/commit-conventions",
               "conventions/branch-conventions",
               "conventions/pr-conventions",
+              "conventions/readme-conventions",
               "conventions/git-transport",
               "conventions/no-scripts",
               "conventions/diagramming",
