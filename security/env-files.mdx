@@ -35,13 +35,13 @@ Local `.env` files carry several risks and friction points:
 2. **Stale Data**: They drift out of sync when team members or infrastructure changes a secret upstream.
 3. **Scattered State**: Keeping track of `.env` files across 20+ repositories becomes an operational nightmare.
 
-## The `nix devenv` Replacement
+## The `nix-devenv` Replacement
 
-Instead of static files on disk, we rely on dynamic injection using `nix devenv` and `direnv`.
+Instead of static files on disk, we rely on dynamic injection using `nix-devenv` and `direnv`.
 
 When you change directories (`cd`) into a project, `direnv` automatically hooks into your shell and reads the `.envrc` file. This file activates the project's Nix development shell.
 
-The dev shell is responsible for dynamically fetching and injecting the necessary environment variables directly into your active terminal session. This happens behind the scenes, using our authoritative secret stores (like [Doppler](/security/tools/doppler) for Tier 1 secrets or [SOPS](/security/tools/sops) for repo-local config).
+The dev shell is responsible for dynamically fetching and injecting the necessary environment variables directly into your active terminal session. This happens behind the scenes, using our authoritative secret stores (like [Doppler](/security/tools/doppler) for Tier 1 secrets) or repo-local encrypted files (via [SOPS](/security/tools/sops)).
 
 When you `cd` out of the directory, `direnv` cleanly unloads the environment. 
 
