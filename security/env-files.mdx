@@ -1,0 +1,62 @@
+---
+title: "Environment Files (.env)"
+description: "The purpose of .env.example for documentation, and the avoidance of actual .env files for execution."
+tier: 2
+---
+
+> The `.env.example` file is the industry standard for documenting configuration requirements. The actual `.env` file is a security risk avoided entirely through dynamic injection.
+
+## The `.env.example` Standard
+
+Committing an `.env.example` file is the standard way to show required secrets and configuration for a repository. Every application or service repository should include one.
+
+The `.env.example` file must contain **obviously fake but realistic-looking values** for all optional and required secrets. This serves as immediate, discoverable documentation for developers or AI agents stepping into the repository. 
+
+For example:
+
+```bash
+# .env.example
+# Required
+OPENAI_API_KEY=sk-proj-obviously-fake-key-12345
+DATABASE_URL=postgres://user:password@localhost:5432/db
+
+# Optional
+DEBUG_MODE=false
+```
+
+If an upstream service requires a specific format (e.g. base64 encoded strings, or specific prefixes like `sk-ant-api`), use a dummy value matching that format so validation steps don't fail confusingly during setup.
+
+## The Avoidance of `.env` Files
+
+While `.env.example` is committed as documentation, local `.env` files are never used for execution.
+
+Local `.env` files carry several risks and friction points:
+1. **Accidental Commits**: Easily committed by mistake if `.gitignore` is misconfigured.
+2. **Stale Data**: Drift out of sync when infrastructure changes a secret upstream.
+3. **Scattered State**: Tracking `.env` files across 20+ repositories becomes an operational nightmare.
+
+## The `nix-devenv` Replacement
+
+Instead of static files on disk, dynamic injection is handled via `nix-devenv` and `direnv`.
+
+Changing directories (`cd`) into a project prompts `direnv` to automatically hook into the shell and read the `.envrc` file. This file activates the project's Nix development shell.
+
+The dev shell is responsible for dynamically fetching and injecting necessary environment variables directly into the active terminal session. This happens behind the scenes, using authoritative secret stores (like [Doppler](/security/tools/doppler) for Tier 1 secrets) or repo-local encrypted files (via [SOPS](/security/tools/sops)).
+
+Navigating out of the directory prompts `direnv` to cleanly unload the environment. 
+
+This architecture guarantees that:
+- Environments are always populated with correct, fresh secrets.
+- Plaintext secrets are never left sitting in `.env` files on disk.
+- Setup is instant and zero-touch.
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Dev shells (nix-devenv)" icon="terminal" href="/nix/nix-devenv">
+    How the per-project Nix development shells are structured.
+  </Card>
+  <Card title="Doppler" icon="rotate" href="/security/tools/doppler">
+    The upstream source of truth for dynamic runtime secrets.
+  </Card>
+</CardGroup>
