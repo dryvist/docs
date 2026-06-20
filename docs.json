@@ -96,7 +96,6 @@
               "infrastructure/zfs-pool-naming",
               "infrastructure/zfs-backup-replication",
               "infrastructure/legacy-bmc-tactics",
-              "infrastructure/secrets-sops",
               "infrastructure/tofu-check-placement",
               {
                 "group": "CI/CD",
@@ -129,11 +128,19 @@
               "security/overview",
               "security/golden-laws",
               "security/how-it-fits-together",
-              "security/secrets-sync",
               "security/local-ai-isolation",
-              "security/scrubbed-values",
+              "security/scrubbed-values"
+            ]
+          },
+          {
+            "group": "Secrets Management",
+            "pages": [
+              "security/env-files",
+              "security/secrets-sync",
+              "infrastructure/secrets-sops",
+              "autonomous-agents/secrets",
               {
-                "group": "Secrets tools",
+                "group": "Tools",
                 "pages": [
                   "security/tools/doppler",
                   "security/tools/macos-keychain",
@@ -180,7 +187,6 @@
             "pages": [
               "autonomous-agents/overview",
               "autonomous-agents/runtime",
-              "autonomous-agents/secrets",
               "autonomous-agents/github-access",
               "autonomous-agents/roadmap"
             ]
