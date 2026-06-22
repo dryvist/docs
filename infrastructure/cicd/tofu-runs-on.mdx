@@ -45,7 +45,7 @@ After the first apply finishes and the GitHub App is registered through the ingr
     `git clone https://github.com/JacobPEvans/terraform-runs-on.git && cd terraform-runs-on && direnv allow`
   </Step>
   <Step title="Supply credentials via aws-vault + Doppler">
-    Profile is `tf-runs-on`; Doppler config is inherited from `iac-conf-mgmt/prd`. `RUNSON_LICENSE_KEY` is mapped into `license_key` via `terragrunt.hcl`.
+    Profile is `tf-runs-on`; Doppler config is inherited from the infrastructure project's `prd` config. `RUNSON_LICENSE_KEY` is mapped into `license_key` via `terragrunt.hcl`.
   </Step>
   <Step title="Bootstrap">
     `aws-vault exec tf-runs-on -- doppler run -- terragrunt init && terragrunt apply`. The bootstrap creates its own S3 state + DynamoDB lock table on first run.
