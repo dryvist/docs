@@ -67,7 +67,7 @@ portable to a smaller machine without re-measuring.
 | Generation cap | bounded | A default ceiling on output tokens so a runaway or oversized request can't dominate the queue for minutes. |
 | `ProcessType` | `Interactive` | **Not** `Background`. Background QoS clamps Metal throughput by roughly an order of magnitude — the worker runs, just many times slower. This one line is the difference between "usable" and "why is it so slow." |
 | Frequency / presence penalty | small, non-zero | Greedy decoding on long inputs can fall into token-repetition loops; a light penalty breaks the cycle without hurting quality. |
-| Tool-call parser | model-appropriate (e.g. `hermes` for Qwen) | The parser must match the model's chat template or tool calls silently break. See [Backends & tool calling](/local-llm/backends). |
+| Tool-call parser | matches the resident model's tool-call format — this stack's Qwen-family models use the `hermes` parser, which reads their `<tool_call>` XML | A mismatched parser makes tool calls silently break. See [Backends & tool calling](/local-llm/backends). |
 
 <Note>
   The **resident model id is not a tuning knob** — it lives in the AI-stack

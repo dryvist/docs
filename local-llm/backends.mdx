@@ -56,7 +56,7 @@ doesn't parse. Two things cause most of it:
 - **Parser mismatch.** The server's tool-call parser has to match the model's
   chat template. The wrong parser produces correct-looking JSON that the server
   mangles, or silently drops the call. This stack defaults to the `hermes`
-  parser, which fits the Qwen/Hermes format; a different model family needs its
+  parser, which in vllm-mlx reads the `<tool_call>` XML its resident Qwen-family models emit; a different model family needs its
   own parser.
 - **Quantization drift under long loops.** A 4-bit model can format tool calls
   perfectly for the first several turns and then start emitting subtly invalid

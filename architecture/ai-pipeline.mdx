@@ -65,23 +65,11 @@ Tools resolve task classes (Research, Coding, Review, Pre-commit) to a current m
 
 See [Bifrost](/tools/bifrost) for routing conventions, local-only mode details, and provider capabilities.
 
-### PAL MCP
-
-PAL MCP is the multi-model coordination layer on top of Bifrost. Two tools matter:
-
-| Tool | Purpose |
-| --- | --- |
-| `clink` | Multi-model parallel calls — research and exploration |
-| `consensus` | Multi-model agreement — critical decisions |
-
-Every other PAL tool has a native Claude Code equivalent; for single-model calls, use Bifrost directly.
-
 ### Priority order
 
 1. **Anthropic official** — Claude Code plugins, skills, patterns
 2. **Bifrost AI gateway** — multi-provider routing at `localhost:30080`
-3. **PAL MCP** — only for `clink` and `consensus`
-4. **Personal or custom** — only when no alternative exists
+3. **Personal or custom** — only when no alternative exists
 
 ## Repos that power this pipeline
 

@@ -20,16 +20,17 @@ is a property of one chip; it can't be extended across a cable. What two Macs ca
 do is **shard a model** — each holds part of it — and exchange activations over a
 fast interconnect. "Combined capacity" is real; "combined unified memory" is not.
 
-The fast interconnect is the real, recent enabler: **RDMA (remote direct memory
-access) over Thunderbolt 5**, exposed to MLX through Apple's `mlx.distributed`
-communication backends. "Direct memory access between the machines" is exactly
-the right description of the *link* — it just moves bytes between two separate
-pools, it doesn't fuse them.
+The fast interconnect is the real, recent enabler. `mlx.distributed` moves data
+between the Macs over Thunderbolt 5 two ways: the original **TCP ring** backend,
+and a newer low-latency **RDMA backend (JACCL)** merged into MLX in late 2025
+([ml-explore/mlx#2808](https://github.com/ml-explore/mlx/pull/2808)). Either way
+the link moves bytes between two separate memory pools — it does not fuse them
+into one.
 
 | Path | Rough bandwidth | vs on-chip |
 | --- | --- | --- |
 | One M4 Max, unified memory (on-chip) | hundreds of GB/s | 1× |
-| RDMA over Thunderbolt 5 (real, measured) | a few GB/s | ~1/100–1/150 |
+| Thunderbolt 5 interconnect (RDMA/JACCL, measured) | a few GB/s | ~1/100–1/150 |
 
 That ratio is the whole story. The link between the machines is two orders of
 magnitude slower than memory inside one. Sharding pays its way only when the
@@ -89,8 +90,9 @@ machine, done by morning, is a capability you otherwise don't have.
 Cross-machine inference is newer and more fragile than the single-Mac path. The
 real risks for an overnight, unattended job:
 
-- RDMA needs explicit one-time enablement, and the Thunderbolt bridge can reset
-  across reboots and OS updates — a job that ran last week may need re-enabling.
+- The Thunderbolt interconnect needs explicit one-time setup, and the bridge can
+  reset across reboots and OS updates — a job that ran last week may need
+  re-enabling.
 - Long many-iteration runs have hit transport-resource exhaustion and GPU
   command-buffer timeouts in the wild.
 
@@ -101,7 +103,8 @@ it.** That proof is a measurement task, not an assumption.
 
 This is a near-term direction, not shipped fact. Before it becomes a documented
 production capability it has to clear a measurement spike: confirm the
-Thunderbolt RDMA path works on *this* hardware, baseline a single Mac, compare
+Thunderbolt distributed path (RDMA/JACCL) works on *this* M4 Max hardware (the
+public benchmarks are all higher-end Macs), baseline a single Mac, compare
 two-independent-workers against a sharded run on a real overnight workload, and
 find the break-even model size. The numbers — and the decision — come from that,
 tracked in the roadmap, not from this page.
