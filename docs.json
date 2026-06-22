@@ -222,6 +222,7 @@
               "conventions/branch-conventions",
               "conventions/pr-conventions",
               "conventions/readme-conventions",
+              "conventions/org-gitignore",
               "conventions/git-transport",
               "conventions/no-scripts",
               "conventions/diagramming",

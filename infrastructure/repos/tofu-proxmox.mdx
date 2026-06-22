@@ -20,6 +20,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Declares per-node ZFS storage (`node_storage`) that Ansible provisions — OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
+- Provisions the **object-storage** module: RustFS LXC (S3-compatible, active) alongside MinIO (being migrated from); both run concurrently during the transition
 
 ## How it fits
 
@@ -31,6 +32,15 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 <RepoFit>
 Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmox` or `ansible-proxmox-apps`.
 </RepoFit>
+
+## Object storage migration
+
+The homelab is migrating from **MinIO** to **RustFS** for S3-compatible object storage. Both LXCs are declared in the `object_storage` module and run in parallel during the migration:
+
+- **RustFS** — the target; Splunkbase sync and new data flows write here
+- **MinIO** — the source; decommissioned once all consumers have cut over
+
+`ansible-proxmox` backs up the RustFS data volume via `sanoid`/`syncoid`. `ansible-splunk` repoints Splunkbase app sync to the RustFS endpoint. After all consumers migrate, the MinIO LXC will be removed from the module.
 
 ## Getting started
 
