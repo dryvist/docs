@@ -30,6 +30,27 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 Anything that's "an AI tool I want everywhere" belongs here. Single-project AI experiments go in a project-local `nix-devenv`-style flake.
 </RepoFit>
 
+## Configuration surface
+
+`nix-ai` ships as a reusable flake module with a single knob surface — `modules/maintainer-profile.nix`. This is the one file a consumer touches to adapt the stack:
+
+- **Identity** fields (`user.fullName`, `user.trustedOrgs`) have maintainer defaults so derived values (e.g. Claude auto-mode trusted-org list) stay internally consistent; override them for your own identity.
+- **Infrastructure** fields (`homelab.*`, `telemetry.*`, `trustedProjectDirs`) default to clean/off/empty, so the module evaluates to a neutral config with zero consumer input — no personal context ships in the flake.
+
+Modules read `userConfig` via `_module.args` so nothing outside `maintainer-profile.nix` needs to import it directly. A consumer overrides values either in their own `nix-darwin` config (via `extraSpecialArgs`) or by importing the module and setting options.
+
+### Secrets and injection
+
+Runtime secrets (API keys, tokens, Doppler credentials) are never stored in Nix store paths or committed files. Three injection patterns are in use:
+
+| Pattern | Used by | Mechanism |
+| --- | --- | --- |
+| Doppler subprocess wrapper | Google Workspace MCP, Splunk MCP | `doppler run -p <project> -c prd -- <binary>` |
+| macOS Keychain via shell init | HuggingFace token, GitHub PAT | `security find-generic-password` exported in `~/.zshrc` |
+| Kubernetes Doppler Operator | Bifrost, Cribl pods | In-cluster operator syncs Doppler → K8s Secrets |
+
+The variable catalog (required vs optional, purpose, source) lives in `.env.example` at the repo root; a real `.env` is an opt-in convenience — direct injection is preferred. The local injection runbook is `AGENTS.local.md` (gitignored).
+
 ## Getting started
 
 <Steps>
@@ -41,6 +62,9 @@ Anything that's "an AI tool I want everywhere" belongs here. Single-project AI e
   </Step>
   <Step title="Import into nix-darwin">
     Add `nix-ai` as a flake input, then include `nix-ai.overlays.default` in your nixpkgs config. The README has the boilerplate.
+  </Step>
+  <Step title="Override the maintainer profile">
+    Set `userConfig.user.fullName` and any `homelab.*` / `telemetry.*` options in your own config to adapt the stack to your environment.
   </Step>
 </Steps>
 
