@@ -1,0 +1,87 @@
+---
+title: "Backends & tool calling"
+description: "Why the Apple Silicon stack runs vllm-mlx, how the other MLX and GGUF servers compare, and why tool-calling reliability — not raw tokens-per-second — is the metric that actually matters for agents."
+tier: 2
+---
+
+> The fast server isn't the one with the biggest tok/s number. It's the one that
+> still emits a valid tool call on the fortieth turn of an agent loop.
+
+Any OpenAI-compatible server can answer a chat request. The ones that matter for
+agentic work are the ones that hold up under sustained, structured,
+multi-turn pressure — continuous batching, a paged KV cache, and a tool-call
+parser that doesn't drift. That's why this stack runs `vllm-mlx`.
+
+## The landscape
+
+| Backend | What it's for | Notes for this stack |
+| --- | --- | --- |
+| **vllm-mlx** *(chosen)* | Production-shaped serving on Apple Silicon | Continuous batching, paged + prefix KV cache, OpenAI tool calling. The most server-shaped MLX runtime — what [`nix-ai`](/nix/nix-ai) packages and runs. |
+| **mlx-lm server** | The reference implementation | The baseline everyone benchmarks against; single-stream, explicitly not meant for production serving. |
+| **Ollama (MLX backend)** | Easiest setup | Mature tool calling; convenient, but a thinner serving layer than vllm-mlx for batched agentic load. |
+| **LM Studio** | GUI-first local serving | Great for interactive use; less suited to headless, automated serving. |
+| **llama.cpp (Metal)** | Maximum portability + GGUF | The most portable option and the home of vision/mmproj and exotic quants; generally slower than MLX on equivalent Apple hardware. |
+| **Rapid-MLX** | A hardened `vllm-mlx` derivative | Worth a scoped look — see below. |
+
+## Why vllm-mlx
+
+Three properties decide it:
+
+1. **Prefix + paged KV cache.** Multi-turn and tool-loop workloads re-send a
+   growing, mostly-unchanged context. Reusing the already-prefilled prefix
+   instead of re-running it is the biggest real-world speedup there is — and it's
+   what makes a local model tolerable as an agent backend.
+2. **Continuous batching.** Concurrent callers fold into one GPU forward pass
+   instead of serializing.
+3. **OpenAI-shaped tool calling.** Every caller on the workstation already speaks
+   the OpenAI API, so the model is a drop-in for the cloud providers in the same
+   router.
+
+## Rapid-MLX: evaluate, don't switch on hype
+
+[Rapid-MLX](https://github.com/raullenchai/Rapid-MLX) is real, actively
+developed, and — importantly — a *hardened derivative of `vllm-mlx`*, not a rival
+engine. Its headline speed multipliers are author-reported and should be
+discounted. Its genuinely interesting feature is **tool-call auto-repair**: it
+detects malformed tool output and reshapes it back into a valid `tool_calls`
+structure, plus a prompt cache. Because it shares DNA with the current backend,
+the right move is a **scoped A/B on tool-calling reliability under multi-round
+load** — not a swap chasing a tokens-per-second headline.
+
+## Tool calling is the real failure mode
+
+The number-one way a local agent breaks isn't speed — it's a tool call that
+doesn't parse. Two things cause most of it:
+
+- **Parser mismatch.** The server's tool-call parser has to match the model's
+  chat template. The wrong parser produces correct-looking JSON that the server
+  mangles, or silently drops the call. This stack defaults to the `hermes`
+  parser, which fits the Qwen/Hermes format; a different model family needs its
+  own parser.
+- **Quantization drift under long loops.** A 4-bit model can format tool calls
+  perfectly for the first several turns and then start emitting subtly invalid
+  structure deep into an agentic trace. This is where auto-repair earns its keep.
+
+<Note>
+  **Test the tool path before trusting any backend.** Send a real
+  tool-calling request to `/v1/chat/completions` and confirm a clean
+  `tool_calls` response — across several turns, not one. A backend that passes a
+  single-shot chat can still fail an agent loop.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
+    The `llama-swap` + `vllm-mlx` stack these backends slot into.
+  </Card>
+  <Card title="Models & quantization" icon="layer-group" href="/local-llm/models-and-quantization">
+    The quants whose tool formatting the parser has to keep up with.
+  </Card>
+  <Card title="AI development pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
+    How local serving is routed alongside the cloud providers.
+  </Card>
+  <Card title="Benchmarking" icon="gauge-high" href="/tools/mlx-benchmarks">
+    Where backend claims get measured instead of believed.
+  </Card>
+</CardGroup>

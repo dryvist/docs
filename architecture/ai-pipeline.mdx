@@ -53,7 +53,7 @@ Every model has a sweet spot:
 - **Claude** — best at multi-file refactors, deep reasoning, agentic loops. The default for non-trivial implementation work.
 - **Gemini** — great for second opinions, code review, broad context understanding.
 - **GitHub Copilot** — fastest for line-level completions inside the editor. Cheap for high-volume routine work.
-- **Local MLX** — Apple Silicon native inference for typo fixes, quick edits, and "I don't want to burn cloud tokens on this" tasks.
+- **Local MLX** — Apple Silicon native inference for typo fixes, quick edits, and "I don't want to burn cloud tokens on this" tasks. The serving stack, tuning, and model strategy live under [Local LLM](/local-llm/overview).
 
 The routing is opinionated, not magic: clear rules in `~/CLAUDE.md` and `AGENTS.md` say *which* model to use *when*.
 
