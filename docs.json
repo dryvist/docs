@@ -7,7 +7,8 @@
     { "source": "/infrastructure/repos/terraform-proxmox", "destination": "/infrastructure/repos/tofu-proxmox" },
     { "source": "/infrastructure/repos/terraform-unifi", "destination": "/infrastructure/repos/tofu-unifi" },
     { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
-    { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" }
+    { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
+    { "source": "/infrastructure/local-llm", "destination": "/local-llm/homelab-gpu" }
   ],
   "colors": {
     "primary": "#4FB3A9",
@@ -94,7 +95,6 @@
               "infrastructure/lxc-vs-docker",
               "infrastructure/media-stack",
               "infrastructure/media-storage-hardlinks",
-              "infrastructure/local-llm",
               "infrastructure/zfs-pool-naming",
               "infrastructure/zfs-backup-replication",
               "infrastructure/legacy-bmc-tactics",
@@ -116,6 +116,17 @@
                   "infrastructure/terraform/consuming-repo"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Local LLM",
+            "pages": [
+              "local-llm/overview",
+              "local-llm/apple-silicon",
+              "local-llm/models-and-quantization",
+              "local-llm/backends",
+              "local-llm/distributed",
+              "local-llm/homelab-gpu"
             ]
           },
           {

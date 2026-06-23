@@ -27,7 +27,7 @@ Three Doppler projects, three delivery modes — each lands in a different consu
 | Doppler project | Delivery mode | Consumer |
 | --- | --- | --- |
 | `secrets-sync` | Auto-sync → GitHub Actions secrets on the `secrets-sync` repo | [`secrets-sync`](/security/secrets-sync) workflow fans out (Tier 1) |
-| `iac-conf-mgmt/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2 — values never sit in GitHub) |
+| `infra-project/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2 — values never sit in GitHub) |
 | `ai-ci-automation/prd` | `doppler run --` wrapper at subprocess launch | Local dev + the [`doppler-mcp`](/security/local-ai-isolation) bridge |
 
 ## Runtime fetch via GitHub Actions
@@ -37,11 +37,11 @@ For Tier 2 secrets that must never sit in GitHub Actions stores:
 ```yaml
 - uses: dopplerhq/secrets-fetch-action@v1
   with:
-    doppler-token: ${{ secrets.GH_ACTION_DOPPLER_IAC_CONF_MGMT }}
+    doppler-token: ${{ secrets.DOPPLER_TOKEN }}
     inject-env-vars: true
 ```
 
-The service token `GH_ACTION_DOPPLER_IAC_CONF_MGMT` is itself a Tier 1 secret distributed by `secrets-sync` to the two `_infra_repos`: `ansible-proxmox-apps` and `tofu-runs-on`.
+That `DOPPLER_TOKEN` service token is itself a Tier 1 secret distributed by `secrets-sync` to the two `_infra_repos`: `ansible-proxmox-apps` and `tofu-runs-on`.
 
 ## Local-dev chain
 
