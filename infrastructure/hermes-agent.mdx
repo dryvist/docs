@@ -1,0 +1,53 @@
+---
+title: "Self-hosted AI agent"
+description: "Running the NousResearch Hermes Agent autonomously in the homelab — a self-improving agent with persistent memory, driven by a local GPU model. Distinct from the chat-only Self-hosted ChatGPT stack."
+tier: 2
+---
+
+The homelab runs the **[NousResearch Hermes Agent](https://github.com/nousresearch/hermes-agent)**
+as a standing, autonomous service: a self-improving agent that creates skills from
+experience, keeps persistent memory across sessions, and runs scheduled work on its own.
+
+This is **not** the [Self-hosted ChatGPT](/infrastructure/local-llm/) serving stack — that
+serves a model for chat. This *is* an agent, and it *uses* a local model as its brain.
+
+## How it runs
+
+A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
+(`Restart=on-failure`). The gateway drives the built-in **cron** scheduler and the
+**Kanban** task board, so the agent keeps working unattended — no laptop, no cloud.
+
+- **Brain:** an always-on local GPU model (OpenAI-compatible), so the agent never
+  depends on an external API or a sleeping laptop.
+- **Memory:** the built-in `MEMORY.md` / `USER.md` plus the local **Hindsight**
+  provider (knowledge-graph recall, fully self-hosted). Everything lives under
+  `$HERMES_HOME` on a dedicated volume that is snapshotted and replicated off-node.
+- **Containment:** the LXC is the blast-radius boundary — Hermes *profiles* isolate
+  agent state, not OS access — with deliberately narrow egress.
+
+## Reaching it
+
+Headless: SSH in and run `hermes` for the terminal UI, or drive it through its gateway.
+A messaging gateway (Telegram, Discord, …) and multi-agent *profiles* + *Kanban* teams
+can be layered on later — the agent home is already provisioned for them.
+
+## Configuring it
+
+Everything is in `$HERMES_HOME/config.yaml` (secrets in `.env`), set non-interactively
+with `hermes config set <key> <value>`:
+
+```yaml
+model:
+  provider: custom            # OpenAI-compatible local endpoint
+  default: <model>
+  base_url: 'http://<gpu-host>:11434/v1'
+  api_mode: chat_completions
+memory:
+  provider: hindsight         # local, no external service
+agent:
+  max_turns: 90               # budget — caps a runaway loop
+```
+
+Switch models anytime with `hermes model`; check memory with `hermes memory status`.
+Deployment is fully IaC — a Terraform-managed container plus an Ansible `hermes_agent`
+role install and configure it, and the daemon owns its own updates thereafter.
