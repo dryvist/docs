@@ -16,7 +16,6 @@ The baseline targets two categories of files that must never reach git history:
 - `.env`, `.env.*` (except `.env.example`) — never commit real env files
 - `*.pem`, `*.key`, `*.p12`, `*.pfx` — private keys
 - `terraform.tfvars` (unencrypted), `credentials.json`, `secrets.yaml` (unencrypted)
-- `doppler.yaml` (local Doppler state)
 
 **AI-assistant local / machine state**
 - `.claude/mcp_settings.json` — MCP server list (can contain tokens)

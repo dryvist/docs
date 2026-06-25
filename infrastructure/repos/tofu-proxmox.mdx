@@ -20,7 +20,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Declares per-node ZFS storage (`node_storage`) that Ansible provisions — OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
-- Provisions the **object-storage** module: RustFS LXC (S3-compatible, active) alongside MinIO (being migrated from); both run concurrently during the transition
+- Provisions the **object_storage** module: RustFS LXC (S3-compatible, active) alongside MinIO (being migrated from); both run concurrently during the transition
 
 ## How it fits
 
