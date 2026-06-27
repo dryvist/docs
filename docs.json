@@ -182,6 +182,7 @@
             "group": "AI Development",
             "pages": [
               "ai-development/overview",
+              "ai-development/ai-orchestration-stack",
               "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
               "ai-development/claude-code-plugins",
@@ -243,6 +244,7 @@
             "group": "Observability",
             "pages": [
               "observability/overview",
+              "observability/llm-observability",
               {
                 "group": "Repos",
                 "pages": [

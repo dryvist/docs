@@ -1,0 +1,105 @@
+---
+title: "LLM observability"
+description: "Every LLM call from the orchestration stack emits OpenTelemetry, routes through Cribl, and lands in both Langfuse (trace UX) and Splunk (archival + SIEM)."
+tier: 1
+---
+
+> If a model was called, there's a trace — and you can see what it cost.
+
+The [AI-coding-tool pipeline](/observability/overview) traces the IDEs. This is
+its sibling for the [AI orchestration stack](/ai-development/ai-orchestration-stack):
+n8n, Dify, LangFlow, and the agent code emit OpenTelemetry for every LLM call,
+and the same Cribl tier routes it — this time to two sinks.
+
+## Emitting traces — OpenLLMetry + OTEL GenAI
+
+Apps are instrumented with [OpenLLMetry](https://github.com/traceloop/openllmetry)
+(the Traceloop SDK), which wraps LLM providers, vector stores, and frameworks
+(LangChain, CrewAI) and emits spans following OpenTelemetry's
+[GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/).
+Those conventions matured in 2026, so framework-native spans and SDK-emitted
+spans now line up on the same schema — prompt, completion, model, token counts,
+latency, cost.
+
+The spans leave the app over OTLP (gRPC `4317` / HTTP `4318`) pointed at the
+collector, **not** at any one backend. Keeping the emit target on the pipeline —
+not the trace store — is what lets the same telemetry reach more than one place.
+
+## Cribl is the hub
+
+A single collector tier owns ingest and fan-out. Cribl Edge runs **native
+OpenTelemetry sources**, one per signal type on its own port, so it can route by
+type without parsing payloads. From there it forks:
+
+{/* Shape: fan-out. Apps -> Cribl -> two sinks. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Apps([Orchestration stack<br/>OpenLLMetry])
+  Cribl([Cribl Edge<br/>native OTEL sources])
+  LF([Langfuse<br/>trace · cost · eval])
+  SP[(Splunk<br/>archival · SIEM)]
+
+  Apps -->|OTLP per type| Cribl
+  Cribl -->|traces| LF
+  Cribl -->|all signals| SP
+
+  classDef app  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hub  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+
+  class Apps app
+  class Cribl hub
+  class LF,SP sink
+
+  linkStyle 0 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 1,2 stroke:#4FB3A9,stroke-width:2px;
+```
+
+- **Langfuse** gets the traces. It is the LLM-native view: trace waterfalls per
+  request, token cost, prompt and completion inspection, plus datasets, evals,
+  and prompt versioning.
+- **Splunk** gets everything, for archival and correlation with the rest of the
+  homelab's telemetry — the same indexer the AI-coding pipeline already feeds.
+
+Apps never talk to a trace store directly, and they never reach across into the
+monitoring tier — they emit to the collector, and the collector decides where it
+goes. One ingest point, two sinks, no second collector to run.
+
+## Why Langfuse
+
+| Criterion | Langfuse |
+| --- | --- |
+| License | MIT — self-host with no feature gates |
+| Ingestion | Native OTLP, GenAI-convention aware |
+| Built for | LLM apps — traces, cost, evals, prompt management |
+| Footprint | Web + worker + Postgres + ClickHouse + Redis + object storage |
+
+[Laminar](https://laminar.sh/) (Apache-2.0) is the runner-up — lighter, tilted
+toward long-running agent debugging. Arize Phoenix is capable but ships under the
+Elastic License, which gates self-host use.
+
+<Note>
+Langfuse keeps its trace-of-record (relational + analytical) on durable local
+storage; its blob store points at the homelab object store. Backend choices like
+the vector store and model provider are made **per tool, per that tool's own
+standard** — never by forcing a shared backend across unrelated stacks.
+</Note>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="AI orchestration stack" icon="diagram-project" href="/ai-development/ai-orchestration-stack">
+    The tools whose calls this pipeline traces.
+  </Card>
+  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
+    The AI-coding-tool side of the same Cribl → Splunk spine.
+  </Card>
+  <Card title="ansible-proxmox-apps" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox-apps">
+    Deploys Langfuse and the Cribl OTEL sources.
+  </Card>
+  <Card title="Local LLM" icon="microchip" href="/infrastructure/local-llm">
+    The models being traced.
+  </Card>
+</CardGroup>

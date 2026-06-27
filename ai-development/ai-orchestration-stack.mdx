@@ -1,0 +1,111 @@
+---
+title: "AI orchestration stack"
+description: "Five self-hosted tools for building and running LLM workflows — n8n, Dify, LangFlow, CrewAI, and LangChain — and the blunt rule for which one to reach for."
+tier: 2
+---
+
+> Three of these draw boxes and arrows. Two are Python libraries. Knowing which
+> is which is most of the decision.
+
+The homelab runs a self-hosted layer for building LLM workflows and agents on top
+of its [private model serving](/infrastructure/local-llm). Five tools cover the
+range from "connect an LLM to 400 other apps" to "write a multi-agent crew in
+Python." They overlap on purpose at the edges; the trick is not deploying all
+five and using none of them.
+
+## The five, at a glance
+
+| Tool | What it is | Shape | Reach for it when |
+| --- | --- | --- | --- |
+| **n8n** | General workflow automation, 400+ integrations | Visual builder (service) | You need to wire an LLM into other systems — email, calendars, webhooks, databases, SaaS APIs |
+| **Dify** | Full LLMOps platform — RAG, prompts, evals, agents, model routing | Visual builder (service) | You want a production AI app with retrieval, prompt versioning, and evaluation, low-code |
+| **LangFlow** | Visual node editor for LangChain graphs | Visual builder (service) | You want to prototype a chain by dragging nodes, then export it to Python |
+| **LangChain** | Library of composable LLM building blocks | Python library | You're writing code and want chains, tools, memory, and retrievers as primitives |
+| **CrewAI** | Framework for role-playing multi-agent "crews" | Python library | You're writing code and want agents with roles collaborating on a task |
+
+## Services vs libraries
+
+The single most useful distinction:
+
+- **n8n, Dify, and LangFlow are services.** They run as containers, expose a web
+  UI, and you build inside them. They are deployed and have an HTTPS front door.
+- **LangChain and CrewAI are libraries.** You do not "deploy" them — you `pip
+  install` them into application code. In this homelab they live together in one
+  Python execution box that runs the agent code people write against them.
+
+A common misread is treating LangChain/CrewAI as servers to stand up, or treating
+the three visual builders as interchangeable. They are not.
+
+## How they fit together
+
+{/* Shape: layered. Builders + libs sit on serving, all trace to observability. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart TB
+  subgraph build [Build & run]
+    N8N([n8n])
+    DIFY([Dify])
+    LF([LangFlow])
+    AX([agent code<br/>LangChain · CrewAI])
+  end
+  MODELS([Model providers<br/>local Ollama · external APIs])
+  OBS([Observability<br/>OTEL traces])
+
+  N8N --> MODELS
+  DIFY --> MODELS
+  LF --> MODELS
+  AX --> MODELS
+  N8N -.-> OBS
+  DIFY -.-> OBS
+  LF -.-> OBS
+  AX -.-> OBS
+
+  classDef svc fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef core fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef obs fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+
+  class N8N,DIFY,LF,AX svc
+  class MODELS core
+  class OBS obs
+
+  linkStyle 4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+```
+
+Solid edges are model calls; coral dashed edges are telemetry. Every tool is
+configured to its **own** model provider per its standard install — the local
+OpenAI-compatible endpoint, an external API, or both — never forced onto a shared
+backend that belongs to another stack. Each tool's call is instrumented, and the
+traces fan out to the [LLM observability](/observability/llm-observability)
+pipeline.
+
+## Picking one — the blunt version
+
+- One tool only, and it has to be one → **Dify**. It covers RAG, prompts, evals,
+  and agents without a separate automation tool.
+- Already automating with workflows → keep **n8n** and add **Dify** as the AI
+  layer beside it.
+- Want to sketch a chain visually and walk away with Python → **LangFlow**.
+- Writing application code → **LangChain** for primitives, **CrewAI** for
+  role-based agent teams. Both are imports, not installs-as-a-service.
+
+LangFlow overlaps Dify's visual builder; it earns its place only for
+lightweight, Python-export prototyping. If that workflow isn't yours, you can run
+the other four and never miss it.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Local LLM" icon="microchip" href="/infrastructure/local-llm">
+    The private GPU model serving these tools call.
+  </Card>
+  <Card title="LLM observability" icon="chart-line" href="/observability/llm-observability">
+    How every LLM call gets traced, costed, and evaluated.
+  </Card>
+  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
+    Why the compose-based tools run as Docker-in-LXC.
+  </Card>
+  <Card title="ansible-proxmox-apps" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox-apps">
+    The configuration tier that deploys these app payloads.
+  </Card>
+</CardGroup>
