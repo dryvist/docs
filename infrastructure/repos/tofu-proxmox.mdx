@@ -14,6 +14,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
+- Reads its desired-state from the [`deployment.json` contract](/infrastructure/deployment-state-contract) — one versioned S3 object, fetched fail-loud, single-writer via the state lock
 - Defines compute, network, and storage for every homelab guest
 - Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
 - Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)

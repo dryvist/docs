@@ -78,6 +78,7 @@
             "pages": [
               "infrastructure/overview",
               "infrastructure/iac-tooling",
+              "infrastructure/deployment-state-contract",
               "infrastructure/dns-architecture",
               {
                 "group": "Repos",
