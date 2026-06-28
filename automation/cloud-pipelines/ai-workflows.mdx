@@ -88,7 +88,7 @@ on:
 
 ## Versioning
 
-Per the [CI/CD policy](/infrastructure/cicd/policy#dependency-versioning), JacobPEvans self-references use `@main` or a major tag like `@v0` — never minor/patch pins. The full SemVer tags exist (`@v0.15.1`) and are tracked by Renovate, but consumers should ride a moving ref so upstream improvements land without a Renovate PR per repo.
+Per the [CI/CD policy](/infrastructure/cicd/policy#dependency-versioning), consumers pin `ai-workflows` — and every `dryvist/*` reusable workflow — at `@main`, never a SHA or version pin. The SemVer tags still exist (`@v0.15.1`) and release-please keeps bumping them for the changelog and the per-run resolved-SHA audit trail, but callers ride `@main` so upstream fixes land immediately with no per-repo Renovate PR. Every org scanner is configured to allow `@main` — see [scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 
 ## Authentication
 
