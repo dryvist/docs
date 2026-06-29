@@ -40,13 +40,13 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 | Action source | How to pin |
 | --- | --- |
-| Self-references (`dryvist/*`, `JacobPEvans/*`) | `@main` — never a SHA or version tag. The scanners allow this; see [scanner posture](#scanner-posture-for-self-references) below |
+| Self-references (`dryvist/*`, `JacobPEvans/*`) | `@main` — never a SHA or version tag. Scanner overrides currently target `dryvist/*` action sources (see [posture](#scanner-posture-for-self-references)); `JacobPEvans/*` follows the same convention. |
 | Trusted external actions | Version tags (major like `@v6` or full SemVer like `@v2.3.5`). Trusted orgs are listed in [`JacobPEvans/.github/renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json) |
 | Untrusted external actions | SHA commit hashes only — for orgs not on the trusted list. SHA pinning is the exception, not the default |
 
 ### Scanner posture for self-references
 
-`@main` on a self-owned workflow is deliberate — consumers ride upstream fixes the moment they land, with no per-repo Renovate PR. SemVer tags still exist and release-please keeps bumping them for the changelog and the per-run resolved-SHA audit trail, but callers ride `@main`. Every org scanner is configured to allow it:
+`@main` on a self-owned workflow is deliberate — consumers ride upstream fixes the moment they land, with no per-repo Renovate PR. SemVer tags still exist and release-please keeps bumping them for the changelog and the per-run resolved-SHA audit trail, but callers ride `@main`. Every org scanner is configured to allow it for `dryvist/*` action sources:
 
 - **Renovate** — `pinDigests: false` for `dryvist/**` overrides the global digest-pinning, so `@main` is never rewritten to a SHA.
 - **zizmor** — `unpinned-uses` policy `dryvist/*: ref-pin`.
