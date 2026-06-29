@@ -50,7 +50,7 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 - **Renovate** — `pinDigests: false` for `dryvist/**` overrides the global digest-pinning, so `@main` is never rewritten to a SHA.
 - **zizmor** — `unpinned-uses` policy `dryvist/*: ref-pin`.
-- **CodeQL** — native code scanning via the org Security Configuration (public repos only — free; private repos excluded to avoid the paid Code Security charge). No committed config: default setup ignores query-filters, and same-org `@main` false positives ([github/codeql#18316](https://github.com/github/codeql/issues/18316)) are dismissed in the code scanning UI.
+- **CodeQL** — code scanning default setup on public repos only (free; private repos excluded to avoid the paid Code Security charge), managed as IaC in [`dryvist/tofu-github`](https://github.com/dryvist/tofu-github) (per-repo, pending the provider resource). No committed query-filter config; same-org `@main` false positives ([github/codeql#18316](https://github.com/github/codeql/issues/18316)) are dismissed in the code scanning UI.
 - **OSV-Scanner** — reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
 
 Untrusted/external actions are unaffected and keep their SHA digests. The full per-scanner posture lives in [`dryvist/.github` → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
