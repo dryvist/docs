@@ -17,7 +17,6 @@ These run on GitHub events. Wire one caller per workflow you want.
 | `issue-triage.yml` | `issues: [opened]` | Categorizes, deduplicates, labels new issues |
 | `issue-resolver.yml` | `issues: [opened]` | Creates a draft PR when the issue is well-scoped and not excluded by labels |
 | `ci-fix.yml` | `workflow_run` of your CI workflow, `conclusion: failure` | Reads the failed log, pushes a fix commit |
-| `final-pr-review.yml` | `pull_request_review: [submitted]` | Final merge-readiness gate before human merge |
 | `project-router.yml` | `issues/pull_request: [opened, labeled]` | Routes items to GitHub Projects with smart field assignment |
 | `post-merge-docs-review.yml` | `push: [main]` → dispatch | After merge, audits docs touched by the commit, creates fix PRs |
 | `post-merge-tests.yml` | `push: [main]` → dispatch | After merge, analyzes the code changes and drafts targeted tests |

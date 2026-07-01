@@ -16,10 +16,9 @@ The pipeline on this repo, [`JacobPEvans/docs`](https://github.com/JacobPEvans/d
 | 2 | `issues: [opened]` | `issue-resolver.yml` | `ai-workflows/.github/workflows/issue-resolver.yml@main` | Creates a **draft PR** if the issue is well-scoped and not on the excluded-labels list |
 | 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller — handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
 | 4 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | `ai-workflows/.github/workflows/ci-fix.yml@main` | Reads the failed CI log, pushes a fix commit (up to 2 attempts per PR, 5 per day) |
-| 5 | `pull_request_review: [submitted]` | `final-pr-review.yml` | `ai-workflows/.github/workflows/final-pr-review.yml@main` | Final merge-readiness gate — checks TODOs, debugger artifacts, CI rollup |
-| 6 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `ai-workflows/.github/workflows/project-router.yml@main` | Routes the item to the right GitHub Project with smart field assignment |
-| 7 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
-| 8 | Human clicks **Merge** | n/a | n/a | The only manual step |
+| 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `ai-workflows/.github/workflows/project-router.yml@main` | Routes the item to the right GitHub Project with smart field assignment |
+| 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
+| 7 | Human clicks **Merge** | n/a | n/a | The only manual step |
 
 The deprecated `claude-review.yml` (removed 2026-04-04 in favor of Gemini + Copilot reviews) and the disabled-auto-trigger `pr-issue-linker.yml` are not wired. See [ai-workflows](/automation/cloud-pipelines/ai-workflows) for the full catalog and what's not active.
 
@@ -38,10 +37,9 @@ flowchart LR
     A([issue-triage])
     B([issue-resolver])
     C([ci-fix])
-    D([final-pr-review])
     E([project-router])
     F([post-merge-docs-review])
-    A ~~~ B ~~~ C ~~~ D ~~~ E ~~~ F
+    A ~~~ B ~~~ C ~~~ E ~~~ F
   end
 
   R --> A
@@ -50,7 +48,7 @@ flowchart LR
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
 
   class R host
-  class A,B,C,D,E,F ai
+  class A,B,C,E,F ai
 ```
 
 The hub is the consumer repo; each caller is a one-shot wrapper around an upstream reusable workflow. They run independently when their trigger fires.
@@ -99,7 +97,6 @@ The reusable workflows enforce conservative defaults so a runaway loop can't bur
 
 - **`issue-resolver.yml`** — `max_attempts: 1` per issue, `daily_limit: 5` per repo, `excluded_labels: "type:security,type:feature,type:breaking,size:l,size:xl"` won't touch
 - **`ci-fix.yml`** — `daily_run_limit: 5` per repo, max 2 fix attempts per PR
-- **`final-pr-review.yml`** — `daily_run_limit: 5`
 - **All workflows** — fork PRs blocked by `if:` guards, branch protection enforces the final merge gate
 
 ## The pieces this doesn't include
