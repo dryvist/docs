@@ -38,7 +38,7 @@ Terragrunt is used in most repos, but in this environment it is mostly a *config
 - decrypts SOPS files through the `sops_decrypt_file` data source,
 - merges a three-layer input model — the [`deployment.json` desired-state](/infrastructure/deployment-state-contract) fetched fail-loud from S3, SOPS-encrypted config, and Doppler environment variables,
 - resolves IP addressing in `locals` with `cidrhost()`,
-- and runs an `after_hook` that syncs OpenTofu output into the downstream Ansible inventory.
+- and runs an `after_hook` that validates the published inventory against the downstream schema and warms each consumer's local cache — the inventory itself is written natively as a versioned `aws_s3_object`, so the hook handles only what OpenTofu can't.
 
 OpenTofu has no native `after_hook`, and SOPS decryption needs a provider rather than a built-in function. Until those two patterns have a native replacement (a SOPS provider plus a CI step), Terragrunt stays in these two repos.
 
