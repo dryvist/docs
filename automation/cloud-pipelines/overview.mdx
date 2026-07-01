@@ -16,7 +16,7 @@ The cron-driven sibling — work that runs on a schedule rather than in response
 | --- | --- | --- |
 | `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Draft PR implementing the issue |
 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | Fix commit pushed back to the failing PR |
-| `pull_request` opened or `synchronize` | `code-simplifier.yml`, `final-pr-review.yml` | Review comments + an auto-merge nudge when ready |
+| `pull_request` opened or `synchronize` | `code-simplifier.yml` | Review comments when ready |
 | `gh-aw` action SHA stale (Mon/Thu schedule) | `gh-aw-pin-refresh.yml` | PR refreshing pinned action SHAs |
 
 The full caller catalog and the post-merge dispatch chain live on the [ai-workflows page](/automation/cloud-pipelines/ai-workflows).
