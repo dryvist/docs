@@ -1,23 +1,27 @@
 ---
 title: "Local LLM"
-description: "Two local-inference stacks, one strategy: fast MLX models on the Apple Silicon workstation, a bigger always-on model on the homelab GPU, and a path to overnight 256 GB-class batch across two Macs."
+description: "One strategy for local inference: a fast resident model on each client laptop, and an always-on desktop-class Apple Silicon host serving the large tier to the whole LAN — one resident model per box, laptops as clients."
 tier: 1
 ---
 
 > Run the model where it makes sense. Fast and resident on the laptop, big and
-> shared in the basement, and — soon — sharded across two Macs overnight.
+> always-on for the LAN — served from a desktop-class Apple Silicon host the
+> laptops call as clients.
 
 "Local LLM" here means two distinct stacks that answer to the same OpenAI-shaped
 API, plus the strategy that decides which one runs what. Neither is an agent.
 Both are *just the model plus a serving stack* — the agent layer (Claude Code,
 Gemini, the routines) lives above them and calls in over HTTP.
 
-- **The Apple Silicon stack** — `vllm-mlx` workers behind `llama-swap` on the
-  M4 Max, one resident model, tuned to coexist with a working desktop. This is
-  the workstation's own private model for delegated edits, drafts, and
+- **The client laptops** — `vllm-mlx` workers behind `llama-swap` on a
+  laptop-class M4 Max, one resident model, tuned to coexist with a working
+  desktop. This is a laptop's own private model for delegated edits, drafts, and
   "don't burn cloud tokens on this" tasks.
-- **The homelab GPU stack** — a bigger model on a dedicated GPU, always on,
-  reachable from the whole LAN. See [Homelab GPU](/local-llm/homelab-gpu).
+- **The always-on large tier** — a desktop-class Apple Silicon host, always on
+  and reachable across the LAN, holds the big resident model the laptops call as
+  clients. One place serves the large tier; everything else is a client of it.
+  This supersedes the earlier dedicated-GPU approach — see
+  [Homelab GPU](/local-llm/homelab-gpu) for the path it replaces.
 
 The cloud frontier models still win on the hardest reasoning. The point of local
 isn't to beat them — it's to own the routine, private, and high-volume work

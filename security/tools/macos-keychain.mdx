@@ -6,6 +6,17 @@ tier: 2
 
 > Two databases, three GitHub-token tiers. Unlock posture decides who can read what.
 
+<Note>
+**Automated reads are retiring to the runtime manager.** A headless, always-on
+agent cannot answer a GUI unlock prompt — the `elevate-access` posture that makes
+this keychain safe is exactly what a machine flow cannot satisfy. So the *machine*
+path moves to [OpenBao](/security/tools/openbao) (T2), where an agent reads a
+token file or authenticates via AppRole with zero interactive prompts. The
+keychain keeps its **interactive-convenience** role for the human at this laptop;
+it stops being load-bearing for any automated path. See the
+[four-tier model](/security/comparison).
+</Note>
+
 ## Two databases, one rule
 
 The split is the entire access-control model: anything an AI can read non-interactively lives in `automation`; anything that requires a human at the keyboard lives in `elevate-access`.

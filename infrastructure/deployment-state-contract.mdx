@@ -125,13 +125,28 @@ Keep container entries compact — the module supplies the defaults:
 
 ## Single-writer locking — the direction
 
-The lock that gives isolation is the **OpenTofu state lock**, and the canonical mechanism is S3-native `use_lockfile` (conditional writes via `If-None-Match`, OpenTofu ≥ 1.10). It needs no separate lock service. This is the modern default: Terraform has deprecated the `dynamodb_table` argument, and OpenTofu recommends native S3 locking for new backends.
+Two locks work together. The **state lock** protects one tofu backend from concurrent writes; a **global flow lease** protects the whole homelab from two mutating flows running at once. They are separate mechanisms with separate scopes.
 
-`tofu-proxmox` currently holds **both** `use_lockfile` and a legacy DynamoDB lock table — the "run both, then drop DynamoDB" baking period OpenTofu documents for migrating off DynamoDB. Dropping the DynamoDB leg forces a backend re-init, so it is sequenced as its own change (tracked in `tofu-proxmox#353`). The target end-state is `use_lockfile` only. `tofu-unifi` has already completed this migration and runs lockfile-only.
+### The state lock — S3-native conditional writes
+
+The canonical mechanism is S3-native `use_lockfile` (OpenTofu ≥ 1.10), which acquires the lock with a **conditional write**: a `PUT` guarded by `If-None-Match: *` that succeeds only if the lock object does not already exist. No separate lock service is needed. This is the modern default — Terraform has deprecated the `dynamodb_table` argument (removed in OpenTofu 1.11), and OpenTofu recommends native S3 locking for new backends.
+
+The requirement this pushes onto the object store is exact: **it must implement `If-None-Match` conditional writes.** Not every S3-compatible implementation does.
+
+- **AWS S3** and **MinIO** support conditional writes and can hold a `use_lockfile` lock.
+- **RustFS** (alpha) does **not** yet honor `If-None-Match` correctly ([rustfs#1458](https://github.com/rustfs/rustfs/issues/1458)), so it silently fails to serialize writers and **cannot** be used as a lock-bearing backend until fixed.
+
+Migrating off a legacy DynamoDB lock table follows the "run both, then drop DynamoDB" burn-in OpenTofu documents: hold `use_lockfile` and the DynamoDB table together for a period, then drop the DynamoDB leg (a backend re-init, sequenced as its own change). The target end-state is `use_lockfile` only; `tofu-unifi` already runs lockfile-only.
 
 <Note>
 Lock *waiting* is separate from the lock *mechanism*. `-lock-timeout=10m` (set on every locking command) is what turns "Error acquiring the state lock" into a clean queue when two sessions apply at once — keep it regardless of which lock backend is active.
 </Note>
+
+### The global flow lease — one mutating flow at a time
+
+The state lock only serializes writers of *one* backend. A homelab change often spans more than that — a tofu apply followed by an ansible run, or an agent editing infrastructure while a scheduled job also fires. A single **global flow lease** gates all of it: a lease held in the T2 runtime manager's KV store, taken via **compare-and-set** so two claimants cannot both win.
+
+The lease is coupled to credentials — **credential gating: no lease, no creds.** A flow that cannot take the lease cannot obtain the short-lived credentials it would need to mutate anything, so serialization is enforced at the point where secrets are issued, not merely by convention. See the [tools comparison](/security/comparison#the-runtime-manager-is-also-the-lock-authority) for how the runtime manager plays this dual role.
 
 ## Variant: tofu-unifi
 

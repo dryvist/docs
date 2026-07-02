@@ -1,64 +1,78 @@
 ---
 title: "OpenBao"
-description: "Planned self-hosted secrets layer for homelab service-to-service auth — privileged LXC + per-LXC agents rendering ephemeral env files."
+description: "The self-hosted T2 runtime manager — the primary AI/machine credential interface, the SSH certificate authority for automation, and the global flow-lease authority. AppRole auth, native leases, Raft-snapshot DR."
 tier: 2
 ---
 
 <Note>
-Status: **planned**, not in production. Architecture sketch only. The Ansible roles
-exist as scaffolding; no LXC is running OpenBao today.
+Status: **committed direction, in bring-up.** OpenBao is the chosen T2 runtime
+manager; the Ansible role and bring-up sequence exist and are being deployed. It
+is not yet the live source of truth for every consumer — migration proceeds tier
+by tier. This page describes the target design.
 </Note>
 
-> The day the homelab needs more than per-host SOPS, this is what catches it.
+> The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
 
-## Why a self-hosted layer
+## Its job in the four-tier model
 
-Doppler handles AI keys and broadly-shared CI secrets. SOPS handles encrypted-in-repo config. The Bitwarden vault holds the human-only material. Between these three, the homelab is covered for the *static* secrets it needs — but service-to-service auth inside the cluster (one LXC reading from another's API) is currently handled by per-host env files and shared-secret config baked at apply time.
+OpenBao is **T2** in the [four-tier secrets model](/security/comparison): the self-hosted source of truth for live machine credentials, and the **primary AI/machine interface**. An always-on agent authenticates to it as itself and gets scoped, expiring credentials with **zero interactive prompts** — the property the macOS keychain can never offer a headless process. It does three jobs:
 
-That works at small scale. It scales poorly. OpenBao — the MPL-licensed fork of HashiCorp Vault 1.14.x, the last release before HashiCorp's BSL transition in 1.15 — is the planned answer: a single source of truth for cluster-local secrets, with leases, audit, and per-service auth methods.
+- **Credential broker.** AppRole (and, for the most sensitive services, TLS cert) auth methods issue short-lived, per-service credentials from a KV v2 engine and dynamic secrets engines.
+- **SSH certificate authority.** It signs short-TTL SSH certificates for automation principals (`ai-agent`, `ansible`, `ci`) — a hybrid model where machines carry expiring certs and humans keep their static keys. No long-lived automation key sits on disk waiting to be stolen.
+- **Global flow-lease authority.** A single lease in its KV store, taken via compare-and-set so two writers cannot both win, gates every mutating flow (a tofu apply, an ansible run, an infra-changing agent). The rule is credential-gating: **no lease, no credentials** — an agent that cannot take the lease cannot obtain the creds it would need to mutate anything, so serialization is enforced where secrets are issued.
 
-## Planned architecture
+It is the MPL-licensed fork of HashiCorp Vault 1.14.x — the last release before HashiCorp's BSL transition in 1.15.
 
-A single OpenBao LXC holds the truth; one lightweight agent per consumer LXC renews leases and renders the secrets it needs into a tmpfs file.
+## Architecture
+
+A single OpenBao service holds the truth; one lightweight agent per consumer renews leases and renders the secrets it needs into a memory-only file.
 
 | Layer | What lives here | Why |
 | --- | --- | --- |
-| OpenBao LXC (privileged) | Raft storage encrypted at rest, AppRole/cert auth methods, KV v2 engine | Privileged is acceptable for the vault host; mlock and memlock need it |
-| Consumer LXC: agent | Holds the consumer's own AppRole role-id + secret-id | Each consumer authenticates as itself; the server never pushes |
-| Consumer LXC: `/run/openbao/*.env` (tmpfs) | Rendered secrets used by the service binary | tmpfs is memory-only — destroyed on reboot, never persists to disk |
+| OpenBao host (privileged) | Raft storage encrypted at rest, AppRole / cert auth methods, KV v2 + dynamic engines, SSH CA | Privileged is acceptable for the vault host; `mlock`/`memlock` need it |
+| Consumer: agent | Holds the consumer's own AppRole role-id + secret-id | Each consumer authenticates as itself; the server never pushes |
+| Consumer: `/run/openbao/*.env` (tmpfs) | Rendered secrets used by the service binary | tmpfs is memory-only — destroyed on reboot, never persists to disk |
 
-## Auth model (planned)
+## Auth model
 
-- **AppRole per service.** Each consumer LXC has a role ID (durable) and a secret ID (rotating). The Ansible role distributes role IDs in cleartext but obtains secret IDs from OpenBao at consumer-LXC provision time.
+- **AppRole per service.** Each consumer has a role ID (durable) and a secret ID (rotating). The Ansible role distributes role IDs in cleartext but obtains secret IDs from OpenBao — ideally as a **response-wrapped, single-use, short-TTL token** at provision time, so an intercepted bootstrap is self-evident.
+- **SSH CA for automation.** Automation principals present a public key and receive a short-TTL signed certificate; the target host trusts the CA, not a pile of `authorized_keys`.
 - **Periodic tokens** for long-running services where re-authentication would be operationally heavy.
-- **TLS cert-based auth** considered for the most sensitive services as a defense-in-depth posture later.
+- **TLS cert-based auth** for the most sensitive services as a defense-in-depth layer.
 
-## Boundary with the existing tools
+## Secret-zero — what bootstraps the bootstrapper
 
-- Doppler: continues as the source of truth for **CI secrets** and **AI provider keys**. OpenBao is for **cluster-local** secrets only.
-- SOPS: continues as the source of truth for **at-rest in-repo config**. OpenBao is for **runtime-resolved** secrets where lease/renew matters.
-- Bitwarden: continues as **human-only cold storage**. OpenBao seed material (initial root token, recovery shares) is escrowed in Bitwarden.
+OpenBao cannot start sealed-and-empty on its own. Two pieces of *secret-zero* live one tier up, in the [Doppler strict cloud tier](/security/tools/doppler) (T3): the **static seal key** that auto-unseals the service, and the **AppRole `secret_id`** that agents present to authenticate. T3 is small and only AI-reachable under explicit human approval precisely because it holds these. The human-only **recovery shares** live in the [Bitwarden vault](/security/tools/bitwarden) (T4) as the break-glass path if both T2 and T3 are lost.
 
-The four layers compose; OpenBao does not replace any existing layer.
+## Boundary with the other tiers
+
+- **SOPS + age (T1):** stays the source of truth for at-rest, in-repo config. OpenBao is for runtime-resolved secrets where lease/renew/rotation matters.
+- **Doppler (T3):** holds secret-zero and the rare keys-to-the-kingdom values; OpenBao holds the day-to-day machine credentials that agents actually consume.
+- **Bitwarden (T4):** human-only cold storage and OpenBao's recovery shares.
+
+The tiers compose; OpenBao is the primary machine path, not a replacement for the layers around it.
 
 ## Roadmap
 
-1. **Phase 0 (current).** Ansible role skeleton in [`dryvist/ansible-server-apps`](https://github.com/dryvist/ansible-server-apps). No production deploy.
-2. **Phase 1.** Stand up a single OpenBao LXC; recovery-shamir initialization; root-token escrow in Bitwarden; baseline KV engine for non-production secrets only.
-3. **Phase 2.** Migrate first consumer (likely Cribl Edge auth tokens). Validate lease renewal, audit log to Splunk, behavior under reboot.
-4. **Phase 3.** Migrate remaining services. Begin rotating production secrets out of `/etc/<svc>/env` files into agent-rendered tmpfs files.
-5. **Phase 4.** HA: second OpenBao node with Raft replication.
+1. **Phase 0.** Ansible role and bring-up sequence in [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps).
+2. **Phase 1.** Stand up the OpenBao host; recovery-shamir initialization; recovery-share escrow in Bitwarden; secret-zero (seal key + first AppRole secret_id) into Doppler; baseline KV engine.
+3. **Phase 2.** Migrate the first consumer. Validate lease renewal, audit log to Splunk, and behavior under reboot.
+4. **Phase 3.** Adopt the SSH CA for automation principals and the global flow-lease as the gate on mutating flows.
+5. **Phase 4.** Migrate remaining services out of per-host env files into agent-rendered tmpfs files.
+6. **Phase 5.** HA: a second node with Raft replication.
 
-Each phase has its own rollback. Phase 1 specifically does not block: if Phase 2 reveals a problem we can leave Phase 1 idle and continue using the existing per-host pattern.
+Each phase has its own rollback. Phase 1 does not block: if a later phase reveals a problem, Phase 1 can idle while the existing per-host pattern continues.
 
-## Sealed posture, audit trail, and the human-in-the-loop rule
+## Sealed posture, audit trail, and recovery
 
-- **Sealed at rest.** OpenBao restarts in a sealed state requiring N-of-M unseal shares. Shares live in Bitwarden — recovering them is a [Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action) human-in-the-loop event.
+- **Sealed at rest.** OpenBao restarts sealed. Routine restarts auto-unseal from the Doppler-held seal key; a full recovery from N-of-M shares is a [Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action) human-in-the-loop event.
 - **Audit log to Splunk.** Every read, write, and policy change appears in Splunk via the standard OpenBao audit-device → file → Cribl Edge path.
-- **Recovery is rehearsed.** Annual unseal-from-shares drill on a non-production OpenBao instance ([Golden law #15](/security/golden-laws#15-backup-the-vault-itself-and-test-recovery)).
+- **Raft-snapshot DR.** The Raft store is snapshotted on a schedule and shipped to an encrypted off-box location. Recovery is: restore the snapshot onto a fresh node, auto-unseal from secret-zero, and let the leases re-issue. Rehearsed with an annual drill on a non-production instance ([Golden law #15](/security/golden-laws#15-backup-the-vault-itself-and-test-recovery)).
 
 ## See also
 
-- [Golden laws](/security/golden-laws) — every planned posture above maps to a law.
-- [`dryvist/ansible-server-apps`](https://github.com/dryvist/ansible-server-apps) — current scaffolding.
-- [`docs.dryvist.com`](https://docs.dryvist.com) — when this lands, dryvist-internal specifics (cluster topology, lease policies) live there.
+- [Tools comparison](/security/comparison) — where T2 sits, and the bootstrap / read-path / DR flows drawn out.
+- [Agent secrets](/autonomous-agents/secrets) — the headless read path that makes OpenBao the primary interface.
+- [Golden laws](/security/golden-laws) — every posture above maps to a law.
+- [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps) — the bring-up role.
+- [`docs.dryvist.com`](https://docs.dryvist.com) — dryvist-internal specifics (topology, policy paths, lease TTLs) live there once this lands.
