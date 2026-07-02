@@ -8,11 +8,24 @@ tier: 1
 
 This site is the single public source of truth for the secrets-management story. Each repo's `README.md` keeps only the literal commands its workflow needs; the narrative lives here.
 
+## The four-tier model
+
+Every secret lives in exactly one of four tiers, and the tier — not the tool — decides who can read it and how. This is the organizing frame for everything below; the [tools comparison](/security/comparison) has the full matrix and the bootstrap, read-path, and DR flows.
+
+| Tier | Role | Tool | Who reads it |
+| --- | --- | --- | --- |
+| **T1 — Repo-local** | Encrypted-at-rest config that travels with the code | SOPS + age | AI and machines, via a path-gated local age key |
+| **T2 — Runtime manager** | Self-hosted source of truth for live machine credentials; the **primary AI/machine interface** and the global flow-lease authority | OpenBao | AI and machines, via AppRole / signed SSH cert — no human in the loop |
+| **T3 — Strict cloud** | Cloud keys-to-the-kingdom; holds *secret-zero* that bootstraps T2 | Doppler | Machines for a narrow set; AI only under explicit, per-use human approval |
+| **T4 — Never-AI human** | Break-glass and crown jewels | Bitwarden | Humans only, at a keyboard, with a second factor |
+
+The default automation path is T2: an always-on agent authenticates as itself and gets scoped, expiring credentials with zero interactive prompts. `aws-vault` and automated `macOS Keychain` reads are interactive-convenience paths whose machine side folds into T2; Infisical, briefly a static-secrets backbone, is being migrated out with its role split across T2 and T3.
+
 ## The boundary that matters
 
-| AI-readable (CI + dev) | Human-only | Planned |
-| --- | --- | --- |
-| Doppler, `automation` keychain, AWS Vault session, SOPS in-repo, BWS via bridge | Bitwarden vault, `elevate-access` keychain | OpenBao |
+| AI-readable (CI + dev) | Human-only |
+| --- | --- |
+| OpenBao (T2, primary), Doppler (T3, human-approved), `automation` keychain, AWS Vault session, SOPS in-repo, BWS via bridge | Bitwarden vault (T4), `elevate-access` keychain |
 
 ## Which tool for which secret
 
@@ -24,11 +37,14 @@ This site is the single public source of truth for the secrets-management story.
 | **Mozilla SOPS** | Encrypted OpenTofu / Ansible vars committed to git; initial-bootstrap passwords; internal topology | [sops](/security/tools/sops) |
 | **Bitwarden vault** | SSH keys, recovery codes, age-key escrow, account passwords — AI tools never reach this | [bitwarden](/security/tools/bitwarden) |
 | **BWS** | Programmatic AI tokens that cannot use the shared `AI_TOKEN` convention, fetched via the Python bridge | [bws](/security/tools/bws) |
-| **OpenBao** *(planned)* | Self-hosted homelab service-to-service auth | [openbao](/security/tools/openbao) |
+| **OpenBao** | The T2 runtime manager (in bring-up): the primary AI/machine credential interface, SSH CA for automation, and the global flow-lease authority | [openbao](/security/tools/openbao) |
 
 ## What this section covers
 
 <CardGroup cols={2}>
+  <Card title="Tools comparison" icon="table-cells" href="/security/comparison">
+    The four-tier model in full — the tool matrix and the bootstrap, read-path, and DR flows.
+  </Card>
   <Card title="Golden laws" icon="scale-balanced" href="/security/golden-laws">
     The fifteen non-negotiables. Every other page is just an implementation of one of these.
   </Card>

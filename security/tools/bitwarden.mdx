@@ -6,6 +6,10 @@ tier: 2
 
 > Anything an AI must never see lives here, and only here.
 
+## Its job in the four-tier model
+
+Bitwarden is **T4**, the **never-AI human tier** of the [four-tier secrets model](/security/comparison) — break-glass and crown jewels. It is the one tier with *no* programmatic bridge by design: no CLI integration, no MCP server, no agent path. Everything here is reached by a human at a keyboard with a second factor. It holds the material that can rebuild the other tiers if they are lost — including the [OpenBao](/security/tools/openbao) recovery shares that are the last-resort unseal path when both T2 and the T3 secret-zero are gone.
+
 ## What goes in the Bitwarden vault
 
 - SSH private keys (full plaintext, not just shapes).
@@ -14,6 +18,7 @@ tier: 2
 - Account passwords for services without OIDC integration.
 - TOTP seeds for MFA-protected accounts.
 - Encrypted backup exports of every other secrets store.
+- OpenBao recovery shares — the N-of-M unseal material for the T2 runtime manager.
 
 ## What does not go here
 
@@ -71,6 +76,8 @@ Vaultwarden (the self-hosted alternative) is on the homelab roadmap. Until then,
 
 ## See also
 
+- [Tools comparison](/security/comparison) — the four-tier model and why T4 has no programmatic path.
+- [OpenBao](/security/tools/openbao) — the T2 runtime manager whose recovery shares are escrowed here.
 - [BWS](/security/tools/bws) — the Bitwarden product an AI bridge does interact with.
 - [SOPS](/security/tools/sops) — the consumer of age-keys escrowed here.
 - [Local AI isolation](/security/local-ai-isolation) — the path-deny list that blocks SSH-key file reads even after a manual export.

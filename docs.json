@@ -140,6 +140,7 @@
             "group": "Security",
             "pages": [
               "security/overview",
+              "security/comparison",
               "security/golden-laws",
               "security/how-it-fits-together",
               "security/local-ai-isolation",
