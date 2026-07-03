@@ -89,7 +89,7 @@ pre-commit install
 
 ## Why one canonical home per artifact
 
-- **Single update propagates everywhere.** `nix flake update` in the consumer (or in nix-devenv for cross-org propagation) pulls every hook to a new pinned version. No per-repo `rev:` bumps.
+- **Single update propagates everywhere.** `nix flake update` in the consumer (or in nix-devenv for cross-org propagation) pulls every hook to a new pinned version. No per-repo `rev:` bumps. (Non-Nix consumers instead get Renovate `rev:` bumps, scheduled and auto-merged by trust tier — see [Dependency automation](/infrastructure/cicd/dependency-automation).)
 - **Drift dies.** Before consolidation the inventory found `pre-commit-terraform` pinned at six different revs across the workspace and `markdownlint-cli` at four. Canonical pinning eliminates that.
 - **New repo onboarding is one line.** `nix flake init -t github:dryvist/nix-devenv#with-hooks` plus picking a profile, no copy-paste of 30 lines of YAML.
 

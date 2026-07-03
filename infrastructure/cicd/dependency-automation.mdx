@@ -1,0 +1,70 @@
+---
+title: "Dependency automation"
+description: "Renovate scheduling, trust-tier automerge, and version-pinning policy across every dryvist repo."
+tier: 2
+---
+
+> Never ship a stale version, never auto-merge a stranger's major. Renovate runs on a weekly untrusted default; each trust tier earns a faster cadence and a looser gate from there.
+
+Every dryvist and JacobPEvans repo inherits one Renovate policy from [`dryvist/.github` → `renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json) — the master preset that extends nothing external. The model is a single global weekly `schedule` (the untrusted cadence) with per-tier overrides layered on top. [SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md) carries the same table from the security angle.
+
+## The four tiers
+
+| Tier | Scope | Cadence | Min age | Auto-merge |
+| --- | --- | --- | --- | --- |
+| **First-party** | `dryvist/**`, `JacobPEvans/**`, `JacobPEvans-personal/**` | immediate (`at any time`) | 0 days | every update type, including major |
+| **Trusted** | curated ~50-org allowlist in `renovate-presets.json` | twice-weekly (Mon & Thu) | 3 days | minor/patch only; **major → review PR** (`dep:review`), never auto-merged |
+| **Untrusted** | everything else | weekly (Mon) | 3 days | AI-gated — only the `risk:low` subset auto-merges; the rest escalates |
+| **Security / CVE** | any vulnerability alert | immediate (bypasses the schedule via `vulnerabilityAlerts`) | 0 days | auto-merge, overrides every tier above |
+
+## Why these tiers
+
+**Freshness first.** The default is to move, not to freeze. Stale dependencies accrete their own risk — unpatched CVEs, drifting APIs, harder upgrades later. Every tier auto-merges *something*; the tier only decides how fast and how much review.
+
+**A trusted publisher is not a compatible API.** Trusted orgs earn minor/patch auto-merge because their releases are reliably non-breaking at those levels. A *major* from the same org is a deliberate break — so it opens a `dep:review` PR for a human and never auto-merges. Trust buys cadence, not a pass on breaking changes.
+
+**The 3-day buffer is a supply-chain tripwire.** `minimumReleaseAge: 3 days` on every external dependency is the compromise-detection window. The xz backdoor was caught within ~3 days of the malicious release; npm allows unpublish under 72 hours. Waiting three days lets a poisoned release get pulled before we adopt it — and under twice-weekly batching the wait is effectively free. First-party and CVE fixes skip it (0 days): our own code needs no soak, and a known-exploited CVE is more dangerous than an unvetted release.
+
+## First-party propagates immediately
+
+Inside the org, release-please cuts and auto-merges every release in the *source* repo the moment its checks pass. Consumers then pick it up with zero delay: either the first-party tier (0-day, auto-merge all update types) bumps the pinned version, or the consumer rides an `@main` reference and gets the change on its next run. No human sits in the propagation path for our own code.
+
+## The untrusted AI reviewer
+
+Untrusted updates that are not `risk:low` route through [`dryvist/ai-workflows` → `_dependency-review.yml`](https://github.com/dryvist/ai-workflows). It runs **only** on Renovate/Dependabot PRs — the inverse of the usual "skip dependency bots" rule — and it is defense in depth, not the gate of record:
+
+- A native `actions/dependency-review-action` step is **authoritative**. It fails closed on vulnerable or disallowed transitive dependencies, and the AI cannot override it.
+- Claude then reviews the diff and changelog with an injection-resistant prompt — read-only, no secrets — and applies a `risk:low` / `risk:medium` / `risk:high` label.
+- Auto-merge is **opt-in (default off)**. When enabled it fires only on `risk:low` **and** a green native gate **and** a non-major bump. Anything else escalates to a human.
+
+## Grouping and scheduling
+
+Related updates batch into ecosystem groups (Terraform, AWS SDK, HuggingFace, OpenTelemetry, pytest, ESLint/TypeScript) plus a `.nix` version-pins group, so one review covers a coherent set instead of a PR per package. All trusted updates land in the same Monday/Thursday window — the same day and time across every repo. Renovate coordinates *schedules*, not cross-repo transactions: it cannot emit one PR spanning multiple repos, so each repo still gets its own PR in that shared window.
+
+## Version pinning
+
+| Source | Pin |
+| --- | --- |
+| dryvist self-references | `@main` — ride upstream, never a SHA or tag |
+| Trusted GitHub Actions | SemVer tags (`@v6`) |
+| Untrusted / external actions | SHA commit digests |
+
+`platformAutomerge` stays **false**: GitHub's merge queue has a known bug where a PR passes every check but the merge never executes, stalling for days. Renovate merges via its own API path with retry instead. The per-scanner rationale for the `@main` self-reference allowance lives in [CI/CD policy → scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
+
+## Known residuals
+
+This model is not fully realized yet — two honest gaps:
+
+- **Untrusted Python and pre-commit minor/patch still blanket auto-merge** today, a pre-existing carve-out that predates the AI gate. Tightening it to route through the reviewer is tracked as a follow-up.
+- **`owner/**` trust matching does not cover an org's npm or PyPI packages** — only its GitHub Actions and repos. Those packages currently route to the untrusted tier (safe, just slower) pending a `matchSourceUrls` audit.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
+    Marketplace actions, release-please conventions, the scanner posture for `@main` self-references, the runner-label catalog.
+  </Card>
+  <Card title="ai-workflows" icon="robot" href="/automation/cloud-pipelines/ai-workflows">
+    The reusable workflows behind the untrusted AI reviewer and the App-token signing they use.
+  </Card>
+</CardGroup>
