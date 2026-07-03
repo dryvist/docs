@@ -8,7 +8,8 @@
     { "source": "/infrastructure/repos/terraform-unifi", "destination": "/infrastructure/repos/tofu-unifi" },
     { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
     { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
-    { "source": "/infrastructure/local-llm", "destination": "/local-llm/homelab-gpu" }
+    { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
+    { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
   "colors": {
     "primary": "#4FB3A9",
@@ -95,7 +96,6 @@
               "infrastructure/kubernetes-overview",
               "infrastructure/lxc-vs-docker",
               "infrastructure/media-stack",
-              "infrastructure/media-storage-hardlinks",
               "infrastructure/zfs-pool-naming",
               "infrastructure/zfs-backup-replication",
               "infrastructure/legacy-bmc-tactics",
@@ -186,6 +186,7 @@
             "pages": [
               "ai-development/overview",
               "ai-development/ai-orchestration-stack",
+              "infrastructure/hermes-agent",
               "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
               "ai-development/claude-code-plugins",

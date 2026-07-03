@@ -4,6 +4,12 @@ description: "A private GPU LLM on the homelab — Hermes-4 on a Radeon RX 6800,
 tier: 2
 ---
 
+<Warning>
+This page describes the previous single-GPU serving stack. It is being
+superseded by a routed, multi-tier serving design; treat the specifics here as
+the earlier architecture rather than the current target.
+</Warning>
+
 The homelab runs its own ChatGPT: a 14-billion-parameter model on a dedicated
 GPU, reachable from anywhere on the LAN. No tokens, no metering, no prompt ever
 leaving the network.
