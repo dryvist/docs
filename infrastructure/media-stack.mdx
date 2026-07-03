@@ -12,7 +12,7 @@ LXC, not Docker — consistent with the [LXC vs Docker](/infrastructure/lxc-vs-d
 
 ## Storage layout
 
-The whole stack shares **one ZFS dataset** bind-mounted at `/data` into every container — the [single-filesystem hardlink layout](/infrastructure/media-storage-hardlinks). Downloads and the library are subtrees of the same filesystem, so imports are atomic hardlinks, seeding costs zero extra disk, and one quota bounds the whole footprint.
+The whole stack shares **one ZFS dataset** bind-mounted at `/data` into every container, so a single quota bounds the whole footprint and every service sees the library at the same path. The dataset uses `recordsize=1M`, which suits the large sequential files a media server streams.
 
 ## Personal backup on the same footprint
 
@@ -26,9 +26,6 @@ These are backup *targets*, and they are themselves protected: their datasets ri
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Media storage hardlinks" icon="link" href="/infrastructure/media-storage-hardlinks">
-    The single-filesystem layout under the stack.
-  </Card>
   <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
     Why the decision tree lands on LXC for this stack.
   </Card>
