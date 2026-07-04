@@ -31,7 +31,7 @@ Inside the org, release-please cuts and auto-merges every release in the *source
 
 ## The untrusted AI reviewer
 
-Untrusted updates that are not `risk:low` route through [`dryvist/ai-workflows` → `_dependency-review.yml`](https://github.com/dryvist/ai-workflows). It runs **only** on Renovate/Dependabot PRs — the inverse of the usual "skip dependency bots" rule — and it is defense in depth, not the gate of record:
+Untrusted updates that are not `risk:low` route through [`dryvist/ai-workflows` → `cc-dep-review.yml`](https://github.com/dryvist/ai-workflows). It runs **only** on Renovate/Dependabot PRs — the inverse of the usual "skip dependency bots" rule — and it is defense in depth, not the gate of record:
 
 - A native `actions/dependency-review-action` step is **authoritative**. It fails closed on vulnerable or disallowed transitive dependencies, and the AI cannot override it.
 - Claude then reviews the diff and changelog with an injection-resistant prompt — read-only, no secrets — and applies a `risk:low` / `risk:medium` / `risk:high` label.
