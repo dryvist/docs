@@ -5,10 +5,11 @@ tier: 2
 ---
 
 <Note>
-Status: **committed direction, in bring-up.** OpenBao is the chosen T2 runtime
-manager; the Ansible role and bring-up sequence exist and are being deployed. It
-is not yet the live source of truth for every consumer — migration proceeds tier
-by tier. This page describes the target design.
+Status: **live, migrating consumers in.** A 2-node Raft cluster (OpenBao 2.5.5,
+on-prem static-key auto-unseal) is running; the Ansible role provisions the KV
+hierarchy, the domain-split RBAC, and the snapshot daemon. It is not yet the live
+source of truth for *every* consumer — migration proceeds tier by tier. A 3rd
+Raft voter is planned.
 </Note>
 
 > The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
@@ -40,9 +41,39 @@ A single OpenBao service holds the truth; one lightweight agent per consumer ren
 - **Periodic tokens** for long-running services where re-authentication would be operationally heavy.
 - **TLS cert-based auth** for the most sensitive services as a defense-in-depth layer.
 
+## RBAC — split by resource domain
+
+Access is split into one least-privilege AppRole **per resource domain**, so a
+compromise of any single credential is scoped to that domain's secrets. The
+sharpest boundary is between the two IaC identities: `terraform-apply`
+(human-triggered, writes `secret/infra/*`) and `terrakube-plan`, which runs
+VCS-driven — potentially untrusted — plans and is therefore read-only and
+confined to `secret/platform/terrakube`, **never** `secret/infra/*`, so a
+malicious plan cannot rewrite secrets Ansible later trusts.
+
+| Identity | Reads | Writes |
+| --- | --- | --- |
+| `terraform-apply` | `secret/infra/*`, `secret/platform/{dns,traefik}` | same |
+| `terrakube-plan` | `secret/platform/terrakube` only | — |
+| `ansible-converge` | `secret/platform/*`, `secret/apps/*` | — |
+| `observability` | `secret/platform/{splunk,cribl}` | — |
+| `local-cloud` | `secret/platform/{object-storage,compute}` | — |
+| `monitoring` / `media` | `secret/apps/{monitoring,media}` | — |
+| `local-llm` | `secret/ai/*` (LLM serving stack) | — |
+| `ai-readonly` / `ai-elevated` | `secret/ai/*`, `secret/apps/*` (+ `platform/*` for elevated) | — |
+| `snapshot` | `sys/storage/raft/snapshot` only | — |
+| `public` | `secret/public/*` (non-exploitable facts, ambient creds) | — |
+
+Each AppRole carries a `secret_id_bound_cidrs` scoped to its consumer's subnet.
+AI **agents** (`ai-readonly` / `ai-elevated`) are read-only and walled off from
+the infra kernel; the LLM **serving** stack is the separate `local-llm`
+identity, not an agent identity.
+
 ## Secret-zero — what bootstraps the bootstrapper
 
 OpenBao cannot start sealed-and-empty on its own. Two pieces of *secret-zero* live one tier up, in the [Doppler strict cloud tier](/security/tools/doppler) (T3): the **static seal key** that auto-unseals the service, and the **AppRole `secret_id`** that agents present to authenticate. T3 is small and only AI-reachable under explicit human approval precisely because it holds these. The human-only **recovery shares** live in the [Bitwarden vault](/security/tools/bitwarden) (T4) as the break-glass path if both T2 and T3 are lost.
+
+On an **always-on Mac agent host**, each domain's AppRole `role_id`/`secret_id` is delivered as its own item in a **dedicated, auto-locking [keychain](/security/tools/macos-keychain)** (72-hour auto-lock). The keychain's **lock state is the access boundary**: a human unlocks once every ~3 days, and between unlocks a user-domain LaunchAgent reads each credential and publishes it into the session environment, so an agent's read is promptless — the "zero prompts at 3 a.m." property holds because the unlock is a periodic action, not a per-read one.
 
 ## Boundary with the other tiers
 
@@ -54,20 +85,19 @@ The tiers compose; OpenBao is the primary machine path, not a replacement for th
 
 ## Roadmap
 
-1. **Phase 0.** Ansible role and bring-up sequence in [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps).
-2. **Phase 1.** Stand up the OpenBao host; recovery-shamir initialization; recovery-share escrow in Bitwarden; secret-zero (seal key + first AppRole secret_id) into Doppler; baseline KV engine.
-3. **Phase 2.** Migrate the first consumer. Validate lease renewal, audit log to Splunk, and behavior under reboot.
-4. **Phase 3.** Adopt the SSH CA for automation principals and the global flow-lease as the gate on mutating flows.
-5. **Phase 4.** Migrate remaining services out of per-host env files into agent-rendered tmpfs files.
-6. **Phase 5.** HA: a second node with Raft replication.
+1. **Phase 0 — done.** Ansible role and bring-up sequence in [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps).
+2. **Phase 1 — done.** OpenBao host stood up; recovery-shamir initialization; recovery-share escrow in Bitwarden; secret-zero (seal key + AppRole secret_id) into Doppler; baseline KV engine.
+3. **HA — done.** A 2-node Raft cluster is live with static-key auto-unseal; a 3rd voter is planned.
+4. **In progress.** Domain-split RBAC, per-domain keychain-delivered fetch, and the on-box snapshot daemon (this page) land the design; consumers migrate tier by tier.
+5. **Next.** Adopt the SSH CA for automation principals and the global flow-lease as the gate on mutating flows; migrate remaining consumers off per-host env files; add the off-box S3 snapshot copy + restore drill.
 
-Each phase has its own rollback. Phase 1 does not block: if a later phase reveals a problem, Phase 1 can idle while the existing per-host pattern continues.
+Each phase has its own rollback and does not block the others: if a later phase reveals a problem, the existing per-host pattern continues underneath.
 
 ## Sealed posture, audit trail, and recovery
 
 - **Sealed at rest.** OpenBao restarts sealed. Routine restarts auto-unseal from the Doppler-held seal key; a full recovery from N-of-M shares is a [Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action) human-in-the-loop event.
 - **Audit log to Splunk.** Every read, write, and policy change appears in Splunk via the standard OpenBao audit-device → file → Cribl Edge path.
-- **Raft-snapshot DR.** The Raft store is snapshotted on a schedule and shipped to an encrypted off-box location. Recovery is: restore the snapshot onto a fresh node, auto-unseal from secret-zero, and let the leases re-issue. Rehearsed with an annual drill on a non-production instance ([Golden law #15](/security/golden-laws#15-backup-the-vault-itself-and-test-recovery)).
+- **Raft-snapshot DR.** An on-box systemd timer snapshots the active node on a schedule (leader-gated at runtime, authenticated with the least-privilege `snapshot` AppRole), integrity-checks each snapshot, and keeps them on a ZFS/PBS-backed volume that replicates off-box; a second copy to an encrypted S3 bucket is a tracked follow-up. Recovery is: restore the snapshot onto a fresh node, auto-unseal from secret-zero, and let the leases re-issue. Rehearsed with a drill on a non-production instance ([Golden law #15](/security/golden-laws#15-backup-the-vault-itself-and-test-recovery)).
 
 ## See also
 

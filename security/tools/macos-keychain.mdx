@@ -7,13 +7,16 @@ tier: 2
 > Two databases, three GitHub-token tiers. Unlock posture decides who can read what.
 
 <Note>
-**Automated reads are retiring to the runtime manager.** A headless, always-on
-agent cannot answer a GUI unlock prompt — the `elevate-access` posture that makes
-this keychain safe is exactly what a machine flow cannot satisfy. So the *machine*
-path moves to [OpenBao](/security/tools/openbao) (T2), where an agent reads a
-token file or authenticates via AppRole with zero interactive prompts. The
-keychain keeps its **interactive-convenience** role for the human at this laptop;
-it stops being load-bearing for any automated path. See the
+**Per-secret automated reads are moving to the runtime manager — but one
+dedicated keychain becomes OpenBao's secret-zero store.** A headless flow cannot
+answer the `elevate-access` GUI prompt, so the day-to-day *machine* path moves to
+[OpenBao](/security/tools/openbao) (T2), where an agent authenticates via AppRole
+with zero interactive prompts. What stays on the keychain is narrower and
+different: a separate **`openbao.keychain-db`** (72-hour auto-lock) holds only the
+per-domain OpenBao AppRole `role_id`/`secret_id`. Its **lock state is the access
+boundary** — a human unlocks once every ~3 days and a user-domain LaunchAgent
+republishes the creds ambiently, so the keychain moves from holding *every* secret
+to holding just the secret-zero that fetches the rest. See the
 [four-tier model](/security/comparison).
 </Note>
 
@@ -25,6 +28,11 @@ The split is the entire access-control model: anything an AI can read non-intera
 | --- | --- | --- | --- |
 | `automation.keychain-db` | Unlocked at login | `GH_PAT_RESTRICTED`, `HF_TOKEN`, `BWS_ACCESS_TOKEN`, Claude Code credentials | Yes — via the launcher subshell |
 | `elevate-access.keychain-db` | Locked, GUI unlock prompt | `GH_PAT_PRIVATE`, `GH_PAT_ADMIN`, `GH_PAT_ORG_ADMIN` | No — the prompt blocks any non-interactive read |
+| `openbao.keychain-db` | 72-hour auto-lock (unlock every ~3 days) | Per-domain OpenBao AppRole `role_id`/`secret_id` (secret-zero for T2) | Yes while unlocked — a user LaunchAgent republishes into the session env |
+
+The third database is Nix-managed (its own unlock password is sops-managed) and
+is deliberately narrow: it holds only the secret-zero that fetches everything else
+from [OpenBao](/security/tools/openbao), never application secrets directly.
 
 ## GitHub PAT tiers
 
