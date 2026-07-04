@@ -59,6 +59,10 @@ provider/controller version gaps, not configuration mistakes:
   parked (disabled) for now. Firewall *groups* are unaffected.
 - **No zone-based firewall resources yet.** Network 9's zone-based firewall has no
   provider resource; that policy stays UI-managed.
+- **No IPS / threat-management / suppression resource.** Source-direction IDS/IPS
+  suppression — e.g. exempting a known-opaque VPN tunnel's source host from
+  inspection, see [VPN-locked egress reliability](/infrastructure/vpn-egress-failover)
+  — has no OpenTofu resource either; it stays a live-console setting.
 - **Failover-only WAN.** A failover-only uplink stores a sentinel priority the provider's
   validation rejects — omit the priority and let the load-balance type imply it.
 - **No static-WAN-IP attribute.** A static WAN's address is read-only from the provider's
@@ -116,6 +120,9 @@ Solid green edges are physical / network. WireGuard tunnels traverse the Interne
   </Card>
   <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
     Why most workloads on these VLANs are LXC, not Docker.
+  </Card>
+  <Card title="VPN-locked egress reliability" icon="shield-halved" href="/infrastructure/vpn-egress-failover">
+    Sticky VPN-endpoint failover, and an IDS/IPS false-positive lesson.
   </Card>
   <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tofu-unifi">
     Provider config, networks, port profiles, firewall rules.

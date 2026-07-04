@@ -23,6 +23,10 @@ The same self-hosted footprint replaces two cloud subscriptions with services th
 
 These are backup *targets*, and they are themselves protected: their datasets ride the [ZFS snapshot + replication layers](/infrastructure/zfs-backup-replication) like everything else — a backup that isn't backed up is a single point of failure.
 
+## VPN-locked egress
+
+One workload in this stack keeps its traffic off the local network entirely: its egress is locked to a WireGuard tunnel to a VPN provider, enforced by a fail-closed killswitch — no tunnel, no route out, no silent fallback to the LAN. That path recently gained sticky automatic failover between two upstream VPN endpoints, plus a hard-won lesson on a gateway IDS/IPS false-positive against encrypted VPN traffic — see [VPN-locked egress reliability](/infrastructure/vpn-egress-failover).
+
 ## Related
 
 <CardGroup cols={2}>
@@ -31,6 +35,9 @@ These are backup *targets*, and they are themselves protected: their datasets ri
   </Card>
   <Card title="UniFi networking" icon="network-wired" href="/infrastructure/repos/tofu-unifi">
     Where the media VLAN itself is defined.
+  </Card>
+  <Card title="VPN-locked egress reliability" icon="shield-halved" href="/infrastructure/vpn-egress-failover">
+    Sticky VPN-endpoint failover, and an IDS/IPS false-positive lesson.
   </Card>
   <Card title="Homelab" icon="house" href="/about/homelab">
     What the full cluster looks like.
