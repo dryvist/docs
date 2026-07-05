@@ -1,33 +1,33 @@
 ---
 title: "Splunk on AWS"
-description: "OpenTofu/Terragrunt for a cost-optimized Splunk deployment on AWS. VPC, encryption, IAM, indexers — ready for DR or workload split."
+description: "Plain OpenTofu (no Terragrunt) for an on-demand Splunk and/or Cribl environment on AWS. Both workloads are independently optional, the whole stack auto-stops on a schedule, and it starts and stops again through a credential-less GitHub Actions \"summon\" workflow."
 tier: 2
 ---
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> Splunk on AWS without the enterprise sticker shock. Smaller indexer tier, same data shape.
+> Splunk on AWS without the enterprise sticker shock — and without it running when nobody's using it.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/tf-splunk-aws" />
 
-`tf-splunk-aws` provisions a complete Splunk Enterprise footprint on AWS: VPC, subnets, security groups, KMS keys, IAM roles, EBS volumes, EC2 instances ready for the [`ansible-splunk`](/observability/repos/ansible-splunk) role to land on. The shape is intentional — smaller, cost-optimized indexer tier suitable for DR or workload offload.
+`tf-splunk-aws` provisions an on-demand data-ingest environment on AWS: a VPC with a cost-optimized NAT instance, and two independently-toggleable workloads — Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It is plain OpenTofu; there is no Terragrunt layer.
 
 ## What it does
 
-- Builds an isolated VPC with public/private subnets, NAT, and VPC endpoints
-- Provisions KMS-encrypted EBS volumes for hot, warm, and cold indexer tiers
-- Defines IAM roles with least-privilege access for Splunk components
-- Outputs an inventory that `ansible-splunk` consumes directly
-- Wraps the [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest) with Terragrunt for per-env DRY-ing
+- Builds an isolated VPC with public/private subnets and a t4g.nano NAT instance in place of a managed NAT Gateway
+- Deploys Splunk Enterprise and/or Cribl Stream/Edge, each behind its own `enable_*` toggle so a run can bring up either, both, or neither
+- Stops every tagged instance on a nightly schedule via an EventBridge Scheduler invoking AWS's built-in stop runbook — no custom Lambda
+- Starts or stops the whole environment on demand through a GitHub Actions "summon" workflow, authenticated by OIDC — no AWS credentials held by the operator
+- State locking uses S3's native conditional-write lockfile; there is no DynamoDB table
 
 ## How it fits
 
 | Provisions | Hands off to |
 | --- | --- |
-| AWS VPC, EC2 indexers + search heads, KMS-encrypted EBS, IAM | [Splunk install (Ansible)](/observability/repos/ansible-splunk) configures Splunk on top |
+| AWS VPC, NAT instance, Splunk and/or Cribl EC2 instances, IAM, SSM-stored secrets | [Splunk install (Ansible)](/observability/repos/ansible-splunk) configures Splunk further where applicable |
 
 <RepoFit>
-The AWS infrastructure side of Splunk. Pair with `ansible-splunk` to actually run Splunk on what this provisions.
+The AWS infrastructure side of Splunk and Cribl, sized to run only when it's needed. Pair with `ansible-splunk` for deeper Splunk configuration.
 </RepoFit>
 
 ## Getting started
@@ -37,13 +37,13 @@ The AWS infrastructure side of Splunk. Pair with `ansible-splunk` to actually ru
     `git clone https://github.com/JacobPEvans/tf-splunk-aws && cd tf-splunk-aws && nix develop`
   </Step>
   <Step title="Provide AWS credentials">
-    Doppler resolves `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and an explicit region per env. Never commit these.
+    Any standard AWS credential source (env vars, SSO, aws-vault) works for the initial `tofu apply`.
   </Step>
   <Step title="Apply">
-    `terragrunt run-all apply` from the chosen env folder. Review the plan; resources are tagged for cost tracking.
+    `tofu init -backend-config=envs/dev.s3.tfbackend && tofu apply -var-file=envs/dev.tfvars`. Toggle `enable_splunk` / `enable_cribl` to choose which workload(s) come up.
   </Step>
-  <Step title="Hand off to Ansible">
-    Outputs go to the inventory `ansible-splunk` reads. Configuration takes over from there.
+  <Step title="Summon it later without credentials">
+    Once `enable_github_summon = true` is applied, start or stop the whole environment from the repo's Actions tab — no AWS credentials needed for that step.
   </Step>
 </Steps>
 

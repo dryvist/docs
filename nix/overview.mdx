@@ -8,6 +8,8 @@ tier: 1
 
 The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and orchestrates the macOS system. `nix-home` defines the user environment via home-manager. `nix-ai` packages every AI coding tool — Claude, Gemini, Copilot, MLX, MCP servers. `nix-devenv` provides reusable project-level dev shells.
 
+Every flake in the ecosystem pins the same `nixpkgs` / `nix-darwin` / `home-manager` release channel, kept in lockstep across repos so one machine never mixes generations.
+
 ## Ecosystem
 
 {/* Shape: hierarchy. nix-darwin parent imports nix-home + nix-ai; nix-devenv parallel. */}

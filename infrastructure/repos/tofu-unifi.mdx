@@ -47,6 +47,20 @@ rules ship disabled and are flipped on one at a time in later changes.
 
 The homelab uses VLAN-as-service-tier: a guest's VLAN encodes what kind of workload it is, and therefore which policies apply to it. That keeps the inventory comprehensible at a glance and lets firewall policy attach to a tier rather than to individual hosts.
 
+## Two enforcement layers, one default-deny model
+
+Firewall policy for inter-VLAN traffic is enforced at two layers, both built to
+the same default-deny model: deny everything, then explicitly allow the service
+flows that need to cross a VLAN boundary (plus DNS, NTP, and management
+baselines). The **guest-level layer** — each Proxmox VM/LXC's own firewall,
+provisioned by `tofu-proxmox` — is live today: every guest's default input and
+output policy is deny, with per-service allow rules opened only for the ports
+that guest actually needs. The **network-level layer** — the UniFi inter-VLAN
+`LAN_IN` rules described above — is written to the same model but not yet
+enforced; it activates once the provider/controller rule-index gap closes.
+
+## Provider notes (UniFi Network 9)
+
 ## Provider notes (UniFi Network 9)
 
 The `ubiquiti-community/unifi` provider is current and capable, but it lags UniFi

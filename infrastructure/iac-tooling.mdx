@@ -78,11 +78,29 @@ Everywhere else, Terragrunt only generates a backend and a provider block. OpenT
 | Repo | Engine | Terragrunt today | Direction |
 | --- | --- | --- | --- |
 | `tofu-proxmox` / `tofu-unifi` | tofu | SOPS + 3-layer merge + `after_hook` | Keep — earns its place |
-| `tofu-github` / `tofu-runs-on` / `tofu-aws` (basic) | tofu | Backend + provider generation only | Phase out → native OpenTofu config |
-| `tf-splunk-aws` | tofu | Multi-env `include` (dev/stg/prod) | Re-evaluate → native per-env `tfvars` |
+| `tofu-runs-on` / `tofu-aws` (basic) | tofu | Backend + provider generation only | Phase out → native OpenTofu config |
+| `tofu-github` | tofu | None — removed | Already native; remote state and execution run on [Terrakube](#remote-planapply-terrakube) |
+| `tf-splunk-aws` | tofu | None — removed | Already native; plain OpenTofu with per-env `tfvars` |
 | `.github-tofu` | tofu | None | Already native — the target shape |
 
 We lose nothing we actually use: no repo uses `dependency` / `dependencies` cross-module wiring, `run-all`, stacks, or multi-account fan-out. The orchestration features that justify Terragrunt at scale ([terragrunt.com](https://terragrunt.com/), [terramate comparison](https://terramate.io/rethinking-iac/terramate-vs-terragrunt-a-2026-comparison/)) simply aren't in play. The removals themselves are tracked in each affected repo, not here — this page records the *why*, not the migration steps.
+
+## Remote plan/apply: Terrakube
+
+A self-hosted [Terrakube](https://terrakube.io) instance is the remote execution
+backend for IaC repos that opt in. A repo points its `cloud {}` block at the
+Terrakube API instead of an S3 backend; `tofu plan` / `tofu apply` then run **on
+the platform's own executor**, not on the operator's machine or in CI, and
+state, locking, and workspace definitions all live on that platform. Workspace
+onboarding is itself code — one resource per workspace in the platform repo.
+
+`tofu-github` is the first consumer: it carries an intentionally empty `cloud {}`
+block (no internal hostname, organization, or workspace name committed to the
+public repo), authenticates once per machine with `tofu login`, and every
+plan/apply after that runs remotely — the org-admin GitHub credential the
+provider needs is a workspace variable on the platform, never a local or CI
+secret. The platform node is not a 24/7 service by design; it powers on for IaC
+work and is otherwise off.
 
 ## See also
 
