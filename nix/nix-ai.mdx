@@ -12,6 +12,11 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 `nix-ai` is the package and config layer for everything AI-coding-related. It packages CLIs that don't yet have first-party Nix derivations, pins MCP server versions, and exports overlays the rest of the Nix stack consumes.
 
+Host-specific provider wiring is intentionally outside `nix-ai`. If a tool needs
+to point at a private local LLM gateway, package the tool here, then keep the
+endpoint and token-source module in the consuming workstation flake. That keeps
+reusable packaging public and environment topology private.
+
 ## What it does
 
 - Packages Claude Code, Gemini CLI, GitHub Copilot CLI, and assorted AI tooling
