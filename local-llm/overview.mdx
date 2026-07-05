@@ -27,30 +27,33 @@ The cloud frontier models still win on the hardest reasoning. The point of local
 isn't to beat them — it's to own the routine, private, and high-volume work
 without metering, and to keep a credible offline fallback.
 
-## Where it's heading
+## Current shape, and what's still gated
 
 {/* Shape: linear chain. 3 nodes, one timeline. Aspect ~3:1 LR. Role via classDef. */}
 
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  Now([Now<br/>1× M4 Max · one resident model])
-  Soon([Soon<br/>+ Mac Studio · overnight batch])
-  Later([Later<br/>always-on inference server])
+  Laptop([Laptop<br/>1× M4 Max · one resident model])
+  Large([Large tier · live<br/>always-on host · 2 models concurrent])
+  Shard([Gated<br/>shard one model across both])
 
-  Now --> Soon --> Later
+  Laptop --> Large --> Shard
 
   classDef ai fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  class Now,Soon,Later ai
+  class Laptop,Large,Shard ai
 
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-A second 128 GB Mac arrives next. It does **not** turn two machines into one
-256 GB pool — Apple Silicon unified memory can't be merged across a cable. What
-it *does* unlock is **combined capacity by sharding**: a model too big for one
-128 GB box, run across both over a fast link, unattended, by morning. That's a
-capacity win, not a speed win — covered honestly in
+The second 128 GB Mac has arrived, and it is the always-on large-tier host —
+live, serving two models resident concurrently with measured throughput (see
+[Homelab GPU](/local-llm/homelab-gpu)). It does **not** turn two machines into
+one 256 GB pool — Apple Silicon unified memory can't be merged across a cable.
+The separate, still-gated direction is **combined capacity by sharding**: a
+model too big for either machine alone, run across both over a fast
+interconnect, unattended, by morning. That's a capacity win, not a speed win,
+and it remains measurement-gated — covered honestly in
 [Distributed & multi-Mac](/local-llm/distributed).
 
 ## The principles that hold across both stacks

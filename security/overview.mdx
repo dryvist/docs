@@ -37,7 +37,7 @@ The default automation path is T2: an always-on agent authenticates as itself an
 | **Mozilla SOPS** | Encrypted OpenTofu / Ansible vars committed to git; initial-bootstrap passwords; internal topology | [sops](/security/tools/sops) |
 | **Bitwarden vault** | SSH keys, recovery codes, age-key escrow, account passwords — AI tools never reach this | [bitwarden](/security/tools/bitwarden) |
 | **BWS** | Programmatic AI tokens that cannot use the shared `AI_TOKEN` convention, fetched via the Python bridge | [bws](/security/tools/bws) |
-| **OpenBao** | The T2 runtime manager (in bring-up): the primary AI/machine credential interface, SSH CA for automation, and the global flow-lease authority | [openbao](/security/tools/openbao) |
+| **OpenBao** | The T2 runtime manager (live, 2-node): the primary AI/machine credential interface, SSH CA for automation, and the global flow-lease authority | [openbao](/security/tools/openbao) |
 
 ## What this section covers
 

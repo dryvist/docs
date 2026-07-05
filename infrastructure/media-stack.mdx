@@ -23,6 +23,13 @@ The same self-hosted footprint replaces two cloud subscriptions with services th
 
 These are backup *targets*, and they are themselves protected: their datasets ride the [ZFS snapshot + replication layers](/infrastructure/zfs-backup-replication) like everything else — a backup that isn't backed up is a single point of failure.
 
+## Insights dashboard
+
+A dashboard service reads the `*arr` stack's own APIs and surfaces cross-app
+health and activity in one view — no separate data store, no ingest pipeline of
+its own. It rides the same VLAN, the same Ansible-managed LXC pattern, and the
+same persistent-appdata layout as the rest of the stack.
+
 ## VPN-locked egress
 
 One workload in this stack keeps its traffic off the local network entirely: its egress is locked to a WireGuard tunnel to a VPN provider, enforced by a fail-closed killswitch — no tunnel, no route out, no silent fallback to the LAN. That path recently gained sticky automatic failover between two upstream VPN endpoints, plus a hard-won lesson on a gateway IDS/IPS false-positive against encrypted VPN traffic — see [VPN-locked egress reliability](/infrastructure/vpn-egress-failover).
