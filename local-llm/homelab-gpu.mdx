@@ -24,11 +24,11 @@ and fan requests out by tier:
   most of the day; cold capacity if the GPU host is out.
 
 <Note>
-  **Current state:** the fast tier's GPU serving is disabled in configuration
-  and the routers carry only the CPU standby for the small-model aliases — the
-  degradation path above is what serves today. The endpoint, model list, and
-  client usage below are unaffected; the GPU deployments return by flipping the
-  same configuration gates.
+  **Current state:** the fast tier's GPU serving is disabled in the
+  configuration and the routers carry only the CPU standby for the small-model
+  aliases — the degradation path above is what serves today. The endpoint,
+  model list, and client usage below are unaffected; the GPU deployments can
+  be restored by flipping the same configuration gates.
 </Note>
 
 ## How you reach it
