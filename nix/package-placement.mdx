@@ -18,6 +18,7 @@ Across the four Nix repos and the ephemeral options on top, every tool has exact
 | GUI apps unavailable in nixpkgs | **nix-darwin** | `homebrew.casks` |
 | CLI tools unavailable in nixpkgs or version-pinned | **nix-darwin** | `homebrew.brews` |
 | AI tools, MCP servers, speech / audio stack | **nix-ai** | `home.packages` |
+| Host-specific AI provider adapters | consumer-specific flake | Home Manager module |
 | User dev tools, shell config, linters, credentials | **nix-home** | `home.packages` |
 | Pre-commit hook tools (must be on PATH globally) | **nix-home** | `home.packages` |
 | Project-specific toolchains | **nix-devenv** | importable module |
@@ -33,6 +34,12 @@ Across the four Nix repos and the ephemeral options on top, every tool has exact
 **Pre-commit hooks with `language: system`** require the tool on PATH. If a tool is used as a `language: system` pre-commit hook, it must stay in `nix-home`'s `home.packages` even if it feels project-specific (`lychee`, for example).
 
 **IDE linters stay global.** Tools like `pyright` that IDEs invoke as background processes must be in `home.packages` (always on PATH). Moving them to a project devenv shell breaks editor integration because IDEs activate the system environment, not a project shell.
+
+**Provider adapters follow the endpoint.** If an AI CLI is generally useful, package
+the CLI in `nix-ai`. If the config bakes in a private gateway URL, model aliases,
+or token source, put that adapter module in the consuming host or workstation
+flake instead. The public package stays reusable; the private topology stays out
+of shared package docs.
 
 ## On-demand patterns
 
