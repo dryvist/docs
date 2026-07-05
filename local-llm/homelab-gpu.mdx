@@ -23,6 +23,14 @@ and fan requests out by tier:
 - **CPU standby** — the same llama.cpp lineup, CPU-only, on a node that sleeps
   most of the day; cold capacity if the GPU host is out.
 
+<Note>
+  **Current state:** the fast tier's GPU serving is disabled in the
+  configuration and the routers carry only the CPU standby for the small-model
+  aliases — the degradation path above is what serves today. The endpoint,
+  model list, and client usage below are unaffected; the GPU deployments can
+  be restored by flipping the same configuration gates.
+</Note>
+
 ## How you reach it
 
 {/* Shape: fan-in then fan-out. Router pool is the waist. Aspect ~3:1 LR. */}
