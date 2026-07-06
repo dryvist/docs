@@ -27,6 +27,14 @@ The cloud frontier models still win on the hardest reasoning. The point of local
 isn't to beat them — it's to own the routine, private, and high-volume work
 without metering, and to keep a credible offline fallback.
 
+## One gateway, one endpoint
+
+A single self-hosted, OpenAI-compatible LLM gateway unifies both stacks — the
+local models and the always-on workstation-hosted models — behind one endpoint.
+Every client speaks the same OpenAI API to one URL and one key; the gateway
+routes to whichever model answers. The homelab's self-hosted autonomous agents
+connect to that same endpoint.
+
 ## Current shape, and what's still gated
 
 {/* Shape: linear chain. 3 nodes, one timeline. Aspect ~3:1 LR. Role via classDef. */}
