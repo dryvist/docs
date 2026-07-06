@@ -68,6 +68,17 @@ upstream**. Technitium is not authoritative for those names; it caches and
 relays them. DNS sits on its own dedicated network (VLAN 53), so resolution is
 isolated from the trust-ordered service tiers it serves.
 
+## Public DNS carries no internal addressing
+
+The public DNS zone never publishes an internal host's private address. Names
+under the internal subdomain resolve on the LAN only, through Technitium; the
+public zone holds no matching A records for them. Publicly-trusted TLS
+certificates for internal services are still issued normally — via a
+Let's-Encrypt DNS-01 challenge that only ever needs to write a public
+`_acme-challenge` TXT record, never the service's actual address. The
+separate public-facing sites (the apex/`www` site and this docs site) are
+unrelated to the internal zone and unaffected by any of this.
+
 ## Encrypted upstream forwarding
 
 External forwarding is hardened along two axes:
