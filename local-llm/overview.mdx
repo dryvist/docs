@@ -32,10 +32,12 @@ without metering, and to keep a credible offline fallback.
 A single self-hosted, OpenAI-compatible LLM gateway unifies both stacks — the
 local models and the always-on workstation-hosted models — behind one endpoint.
 Every client speaks the same OpenAI API to one URL and one key; the gateway
-routes to whichever model answers. Model serving spans a workstation-class
-machine for larger models and a dedicated GPU host for smaller ones, with the
-gateway selecting between them automatically — no client needs to know which
-one served the request.
+routes to whichever model answers. Model serving spans the always-on
+workstation-class host for larger models and a separate GPU host for a
+smaller, faster tier, with the gateway selecting between them automatically —
+no client needs to know which one served the request. This GPU host is
+distinct from the older dedicated-GPU approach for large models noted above,
+which the second workstation superseded.
 
 The homelab's self-hosted autonomous agents run continuously and connect to
 that same endpoint as their model backend.
