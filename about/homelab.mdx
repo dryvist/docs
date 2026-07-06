@@ -38,6 +38,13 @@ Most workloads run as LXC on the Proxmox cluster — HAProxy, Cribl Edge, Home A
 
 [`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) builds VMs and LXCs. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The macOS counterpart that runs the monitoring stack as Kubernetes is [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
 
+## High availability
+
+Core infrastructure services (DNS, secrets, ingress) run as redundant pairs
+across separate Proxmox nodes, managed by Proxmox HA: a node failure triggers
+automatic restart of the affected service elsewhere in the cluster, no manual
+intervention required.
+
 ## DR plan
 
 [`tofu-aws`](https://github.com/JacobPEvans/terraform-aws) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change. Details: [tf-splunk-aws](/observability/repos/tf-splunk-aws).
