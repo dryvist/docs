@@ -52,3 +52,27 @@ agent:
 Switch models anytime with `hermes model`; check memory with `hermes memory status`.
 Deployment is fully IaC — a Terraform-managed container plus an Ansible `hermes_agent`
 role install and configure it, with updates managed declaratively through Ansible to prevent configuration drift.
+
+## LLM knowledge base (second brain)
+
+The Hermes agent runs the bundled `llm-wiki` skill to build and maintain an interlinked Markdown knowledge base from raw sources. It ingests URLs, PDFs, and notes into an immutable `raw/` layer, then synthesizes curated `entities`, `concepts`, `comparisons`, and `queries` pages. These pages use YAML frontmatter, `[[wikilinks]]`, and a tag taxonomy for structure.
+
+The system keeps an `index.md` catalog and an append-only `log.md`, and lints for orphans, broken links, stale content, and source drift (tracked via SHA256 hashes). The wiki lives on the agent's persistent, snapshotted storage, with a nightly job running lint and health checks. "Compile knowledge once, reuse often" — providing inspectable Markdown instead of opaque memory.
+
+```mermaid
+flowchart LR
+    Sources[Read sources] --> Raw[raw/ layer<br>immutable]
+    Raw --> Curate[Curate wiki pages<br>wikilinks & tags]
+    Curate --> Index[index.md & log.md]
+    Index --> Lint[Lint]
+    Lint --> PR[Open signed draft PR]
+    PR --> Review[Human review & merge]
+```
+
+## Autonomous documentation contributor
+
+The agent can read public repositories and open documentation pull requests on its own as a dedicated GitHub App bot identity. Key properties of this workflow include:
+
+- Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
+- PRs are opened as **drafts** and the bot has **no merge authority**. A human always reviews and merges; organization rulesets block the bot from self-merging.
+- **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so sensitive material never lands in a public PR.
