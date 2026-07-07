@@ -252,6 +252,7 @@
             "pages": [
               "observability/overview",
               "observability/llm-observability",
+              "observability/pipeline-flows",
               {
                 "group": "Repos",
                 "pages": [
