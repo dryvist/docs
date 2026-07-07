@@ -7,9 +7,11 @@ tier: 1
 > If a model was called, there's a trace — and you can see what it cost.
 
 The [AI-coding-tool pipeline](/observability/overview) traces the IDEs. This is
-its sibling for the [AI orchestration stack](/ai-development/ai-orchestration-stack):
-n8n, Dify, LangFlow, and the agent code emit OpenTelemetry for every LLM call,
-and the same Cribl tier routes it — this time to two sinks.
+its sibling for the AI component tier: every component — including `dify`,
+`langflow`, `agent-exec`, `hermes-agent`, and `open-webui` — now emits
+OpenTelemetry for every LLM call, and the same Cribl Edge OTLP receiver routes
+the spans. Cribl handles all fan-out to Langfuse and Splunk, leaving zero
+direct-to-Splunk/Langfuse paths.
 
 ## Emitting traces — OpenLLMetry + OTEL GenAI
 

@@ -61,10 +61,19 @@ flowchart LR
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-The second 128 GB Mac has arrived, and it is the always-on large-tier host —
-live, serving two models resident concurrently with measured throughput (see
-[Homelab GPU](/local-llm/homelab-gpu)). It does **not** turn two machines into
-one 256 GB pool — Apple Silicon unified memory can't be merged across a cable.
+The always-on large-tier host (Mac Studio) is live, tuned, and benchmarked,
+serving two models resident concurrently (see [Homelab GPU](/local-llm/homelab-gpu)).
+Under the tuned stack, gpt-oss-120b achieves 28.6 tok/s decode (up from
+13.6 tok/s), Qwen3-Coder achieves 128 tok/s decode (up from 64 tok/s),
+and the 8-way concurrency aggregate throughput is 55.5 tok/s. A boot warmup
+LaunchAgent (`mlx-warmup`) is deployed to fault model weights into memory
+at boot and eliminate the 112s cold start (pending one host rebuild).
+`Qwen3.6-35B-A3B-4bit` and `Qwen3.6-27B-A3B-4bit` are added as `ttl=900`
+swap-tier models. The full report is documented in `nix-darwin`
+[MACOS-LLM-PERFORMANCE-TUNING-REPORT.md](https://github.com/dryvist/nix-darwin/blob/main/docs/MACOS-LLM-PERFORMANCE-TUNING-REPORT.md).
+
+Note that this does **not** turn two machines into one 256 GB pool — Apple
+Silicon unified memory can't be merged across a cable.
 The separate, still-gated direction is **combined capacity by sharding**: a
 model too big for either machine alone, run across both over a fast
 interconnect, unattended, by morning. That's a capacity win, not a speed win,
