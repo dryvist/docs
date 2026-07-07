@@ -1,6 +1,6 @@
 ---
 title: "AI orchestration stack"
-description: "Five self-hosted tools for building and running LLM workflows — n8n, Dify, LangFlow, CrewAI, and LangChain — and the blunt rule for which one to reach for."
+description: "Six self-hosted tools for building and running LLM workflows — n8n, Dify, LangFlow, LangGraph, CrewAI, and LangChain — and the blunt rule for which one to reach for."
 tier: 2
 ---
 
@@ -8,18 +8,19 @@ tier: 2
 > is which is most of the decision.
 
 The homelab runs a self-hosted layer for building LLM workflows and agents on top
-of its [private model serving](/local-llm/overview). Five tools cover the
+of its [private model serving](/local-llm/overview). Six tools cover the
 range from "connect an LLM to 400 other apps" to "write a multi-agent crew in
 Python." They overlap on purpose at the edges; the trick is not deploying all
-five and using none of them.
+six and using none of them.
 
-## The five, at a glance
+## The six, at a glance
 
 | Tool | What it is | Shape | Reach for it when |
 | --- | --- | --- | --- |
 | **n8n** | General workflow automation, 400+ integrations | Visual builder (service) | You need to wire an LLM into other systems — email, calendars, webhooks, databases, SaaS APIs |
 | **Dify** | Full LLMOps platform — RAG, prompts, evals, agents, model routing | Visual builder (service) | You want a production AI app with retrieval, prompt versioning, and evaluation, low-code |
 | **LangFlow** | Visual node editor for LangChain graphs | Visual builder (service) | You want to prototype a chain by dragging nodes, then export it to Python |
+| **LangGraph** | Stateful, graph-structured agents; self-hosted here as a server + chat UI | Python library (+ self-hosted server) | You're building a durable, multi-step agent as a graph and want to run it behind a UI — with no cloud (LangSmith-free) |
 | **LangChain** | Library of composable LLM building blocks | Python library | You're writing code and want chains, tools, memory, and retrievers as primitives |
 | **CrewAI** | Framework for role-playing multi-agent "crews" | Python library | You're writing code and want agents with roles collaborating on a task |
 
@@ -32,9 +33,15 @@ The single most useful distinction:
 - **LangChain and CrewAI are libraries.** You do not "deploy" them — you `pip
   install` them into application code. In this homelab they live together in one
   Python execution box that runs the agent code people write against them.
+- **LangGraph is a library too — but it straddles the line.** You write graphs in
+  Python against it, yet the homelab also runs its open-source server
+  (`langgraph dev`, in-memory) with a self-hosted chat UI, so it gets an HTTPS
+  front door like the visual builders. Crucially, **no LangSmith cloud account is
+  required** — the server is fully self-hosted and traces to the homelab pipeline.
 
 A common misread is treating LangChain/CrewAI as servers to stand up, or treating
-the three visual builders as interchangeable. They are not.
+the visual builders as interchangeable. They are not. LangGraph is the deliberate
+exception: a library the homelab has chosen to also run as a service.
 
 ## How they fit together
 
@@ -47,6 +54,7 @@ flowchart TB
     N8N([n8n])
     DIFY([Dify])
     LF([LangFlow])
+    LG([LangGraph<br/>server + chat UI])
     AX([agent code<br/>LangChain · CrewAI])
   end
   MODELS([Model providers<br/>fabric router · external APIs])
@@ -55,21 +63,23 @@ flowchart TB
   N8N --> MODELS
   DIFY --> MODELS
   LF --> MODELS
+  LG --> MODELS
   AX --> MODELS
   N8N -.-> OBS
   DIFY -.-> OBS
   LF -.-> OBS
+  LG -.-> OBS
   AX -.-> OBS
 
   classDef svc fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef core fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef obs fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 
-  class N8N,DIFY,LF,AX svc
+  class N8N,DIFY,LF,LG,AX svc
   class MODELS core
   class OBS obs
 
-  linkStyle 4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 5,6,7,8,9 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
 Solid edges are model calls; coral dashed edges are telemetry. Every tool is
@@ -86,6 +96,9 @@ pipeline.
 - Already automating with workflows → keep **n8n** and add **Dify** as the AI
   layer beside it.
 - Want to sketch a chain visually and walk away with Python → **LangFlow**.
+- Building a durable, stateful agent as a graph and want it self-hosted behind a
+  UI with no cloud → **LangGraph** (its open-source server plus a self-hosted chat
+  UI; no LangSmith account, in-memory state — a playground, not durable storage).
 - Writing application code → **LangChain** for primitives, **CrewAI** for
   role-based agent teams. Both are imports, not installs-as-a-service.
 
