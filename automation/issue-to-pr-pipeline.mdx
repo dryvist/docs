@@ -20,8 +20,6 @@ The pipeline on this repo, [`JacobPEvans/docs`](https://github.com/JacobPEvans/d
 | 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
 | 7 | Human clicks **Merge** | n/a | n/a | The only manual step |
 
-The deprecated `claude-review.yml` (removed 2026-04-04 in favor of Gemini + Copilot reviews) and the disabled-auto-trigger `pr-issue-linker.yml` are not wired. See [ai-workflows](/automation/cloud-pipelines/ai-workflows) for the full catalog and what's not active.
-
 ## How the six callers connect
 
 {/* Shape: hub-and-spokes. 1 hub, 6 leaves stacked via invisible links. */}
