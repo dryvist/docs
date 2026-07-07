@@ -1,0 +1,51 @@
+---
+title: "Mac Studio serving"
+description: "The always-on, LAN-shared large-tier model serving host: models, use cases, and headline performance outcomes."
+tier: 2
+---
+
+> A stationary desktop-class Apple Silicon host serves the large-tier models to the entire LAN, allowing client laptops to delegate heavy or structured reasoning workloads without draining local battery or memory.
+
+The Mac Studio `jevans-ms` (M4 Max, 128 GB Unified Memory) acts as the always-on `llm-large` serving host. It runs a multi-model stack that holds two models resident in memory concurrently to eliminate the overhead of swapping multi-gigabyte weights. A swap-tier allows loading larger fallbacks on demand.
+
+## Model Registry & Verdicts
+
+The homelab runs a curated set of local models on the Mac Studio. Through systematic dogfooding and structured evaluations, each model has been assigned specific roles and capability boundaries:
+
+| Model | Size & Config | Role | Verdict / Best Used For |
+| --- | --- | --- | --- |
+| **`gpt-oss-120b-MXFP4-Q8`** | 63.3 GB (Resident) | Resident Default | **Best for constrained prose and SPL query authoring.** Highly capable on complex reasoning, but weak at code review (prone to confident false positives). Requires high `max_tokens` for JSON to avoid truncation. Runs with `reasoning_effort=low` by default to avoid burning the output token cap. |
+| **`Qwen3.6-35B-A3B-4bit`** | 20.4 GB (Swap tier) | Structured & Agent Default | **The structured-output (JSON) champion.** The only model to fully pass strict JSON port allocation tests. Recommended default for agentic work and schema generation. Maps to the router alias `claude-sonnet-5`. Runs with thinking turned off by default. |
+| **`Qwen3-Coder-30B-A3B-4bit`** | 17.1 GB (Resident) | Resident Coding | **Best for boilerplate and Terraform/HCL generation.** Extremely strong at syntax, but carries a precision liability (e.g. minor query typos or dropping keys). Route templated codegen only. |
+| **`Qwen3.6-27B-4bit`** | 16.1 GB | Retired (2026-07-07) | **Retired after evals.** Decoded at 23–27 tok/s (4× slower than the 35B MoE), produced low-effort code reviews, and filled no unique capability niche. Removed from the swap tier. |
+
+### Evaluation Methodology
+These verdicts were established using a rigorous 5-task battery testing:
+*   **t1 SPL Authoring**: Splunk Search Processing Language creation under strict constraints.
+*   **t2 HCL Firewall**: Terraform firewall configuration idiomatic reproduction.
+*   **t3 Code Review**: Evaluating a noisy diff for real and phantom bugs.
+*   **t4 Strict JSON**: Schema validation and port allocation under overlapping constraint rules.
+*   **t5 Factual Prose**: Word-limited, fact-constrained summary generation.
+
+---
+
+## Headline Performance & Tuning Outcomes
+
+The serving stack is fully tuned and optimized in code (merged and active on the host), delivering significant speedups over the baseline stack:
+
+*   **gpt-oss-120b Decode Speed**: Tuned from 13.6 tok/s to **26.6–28.6 tok/s** (TTFT: 0.632s).
+*   **Qwen3-Coder-30B Decode Speed**: Tuned from 64.2 tok/s to **128.0 tok/s** (TTFT: 0.186s).
+*   **Warmup and Preloads**: A dedicated warmup LaunchAgent (`mlx-warmup`) faults model weights into memory on boot, eliminating the 112-second cold-start penalty for the resident pair.
+*   **Extended Context Window**: The output cap has been raised from 8,192 to **32,768** tokens for the agent-brain coder model to support long multi-turn tool-calling loops without truncation.
+*   **Active Parsers**: Native reasoning and tool-call parsers are active per model to separate thinking processes from content streams.
+
+---
+
+## Observability Status
+
+A live audit of the logging and metrics pipeline conducted on 2026-07-07 highlights the program of record:
+
+*   **Active Ingestion**: Core network and host syslogs are streaming at volume (UniFi syslog ~14.6M events/7d; Linux syslog ~1.2M/7d).
+*   **Silent Pipelines**: Telemetries for local LLM runs (`claude-code` logs) were found silent, and six declared Splunk indexes (`llm`, `otel`, `openai`, `vscode`, `mac_perf`, `ai`) were empty. NetFlow export was also determined to be dead upstream due to untracked drift in the controller configuration.
+*   **Root Cause**: The observability pipeline routing tier (HAProxy + Cribl Edge/Stream pair) was left on a decommissioned VLAN during the recent estate network renumbering, rendering it unreachable from the client/AI VLANs.
+*   **Remediation**: The firewall rules and port routing fixes are tracked in `terraform-proxmox` under **Issue #579** (PR #578), which restores traffic via dedicated ports and logging rules.
