@@ -1,10 +1,10 @@
 ---
 title: "Doppler"
-description: "The T3 strict cloud tier — cloud-shared keys-to-the-kingdom under human approval, and the holder of secret-zero that bootstraps the T2 runtime manager. Routine machine secrets migrate down to T2."
+description: "The T3 strict cloud tier — cloud-shared keys-to-the-kingdom under human approval, and the holder of secret-zero that bootstraps the T2 runtime manager."
 tier: 2
 ---
 
-> Doppler holds the values that must be shared across the cloud — and secret-zero. Everything routine is moving to the runtime manager.
+> Doppler holds the values that must be shared across the cloud — and secret-zero.
 
 ## Its job in the four-tier model
 
@@ -13,7 +13,7 @@ Doppler is **T3**, the strict cloud tier of the [four-tier secrets model](/secur
 - **Cloud-shared keys-to-the-kingdom.** Secrets that genuinely need a hosted, cross-environment source of truth (GitHub Actions distribution, CI-shared provider keys). These are the rare high-blast-radius values — an AI agent reaches them only under **explicit, per-use human approval**, never as part of a routine flow.
 - **Secret-zero for T2.** Doppler holds the material that bootstraps the [OpenBao runtime manager](/security/tools/openbao): its static seal key (for auto-unseal) and the first AppRole `secret_id` an agent presents to authenticate. This is why T3 is kept small and tightly scoped.
 
-Everything an always-on machine consumes *routinely* is migrating **down to T2**, where credentials are self-hosted, short-lived, and readable with zero interactive prompts. Doppler stops being the day-to-day machine path; it becomes the small, human-gated cloud tier plus the bootstrap root.
+Everything an always-on machine consumes routinely resides in T2, where credentials are self-hosted, short-lived, and readable with zero interactive prompts. Doppler serves as the small, human-gated cloud tier plus the bootstrap root.
 
 ## What goes in Doppler
 
@@ -78,7 +78,7 @@ doppler run --name-transformer tf-var -- terragrunt plan
 ## See also
 
 - [Tools comparison](/security/comparison) — the four-tier model and where T3 sits.
-- [OpenBao](/security/tools/openbao) — the T2 runtime manager Doppler bootstraps and routine secrets migrate to.
+- [OpenBao](/security/tools/openbao) — the T2 runtime manager Doppler bootstraps.
 - [secrets-sync](/security/secrets-sync) — Tier 1 distribution.
 - [aws-vault](/security/tools/aws-vault) — the wrapping layer for the local-dev chain.
 - [BWS](/security/tools/bws) — alternative for AI-specific OAuth tokens where Doppler is not yet wired up.

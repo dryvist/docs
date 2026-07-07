@@ -19,7 +19,7 @@ Every secret lives in exactly one of four tiers, and the tier — not the tool �
 | **T3 — Strict cloud** | Cloud keys-to-the-kingdom; holds *secret-zero* that bootstraps T2 | Doppler | Machines for a narrow set; AI only under explicit, per-use human approval |
 | **T4 — Never-AI human** | Break-glass and crown jewels | Bitwarden | Humans only, at a keyboard, with a second factor |
 
-The default automation path is T2: an always-on agent authenticates as itself and gets scoped, expiring credentials with zero interactive prompts. `aws-vault` and automated `macOS Keychain` reads are interactive-convenience paths whose machine side folds into T2; Infisical, briefly a static-secrets backbone, is being migrated out with its role split across T2 and T3.
+The default automation path is T2: an always-on agent authenticates as itself and gets scoped, expiring credentials with zero interactive prompts. `aws-vault` and automated `macOS Keychain` reads are interactive-convenience paths whose machine side folds into T2.
 
 ## The boundary that matters
 

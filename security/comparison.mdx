@@ -35,9 +35,8 @@ Every tool this section documents, scored on the axes that decide its tier. "AI 
 | **macOS Keychain** | Yes — local, OS-backed | Yes | None — GUI / login unlock | Two DBs by unlock posture | Manual | Interactive convenience; automated reads retire to T2 | Free (OS) |
 | **aws-vault** | Yes — local, keychain-backed | Yes — cached STS | MFA session | Per AWS profile | STS auto-expiry | Interactive convenience; automated STS retires to T2 | Free (OSS) |
 | **BWS** | No — SaaS (Bitwarden Secrets Manager) | No | Access token | Per project | Manual | Programmatic AI tokens; folds into T2 / T3 | Free / paid |
-| **Infisical** | Was self-hosted | — | Universal Auth (TTL, IP-bound) | Project / env | TTL on identities | **Decommissioning** — role splits into T2 (runtime) + T3 (cloud) | — |
 
-Two rows are on their way out. **Infisical** was briefly the static-app-secrets backbone; that role collapses into T2 (runtime credentials) and T3 (cloud-shared keys), so it is being migrated out and decommissioned. **aws-vault** and the automated use of **macOS Keychain** are interactive-convenience tools whose *machine* paths move to T2's AWS secrets engine and token-file reads — the human at a laptop keeps them, headless agents do not.
+**aws-vault** and the automated use of **macOS Keychain** are interactive-convenience tools whose *machine* paths move to T2's AWS secrets engine and token-file reads — the human at a laptop keeps them, headless agents do not.
 
 ## How the tiers bootstrap — root of trust to runtime creds
 

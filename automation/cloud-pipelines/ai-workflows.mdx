@@ -38,14 +38,6 @@ These run on cron — typically called with `schedule:` and a manual `workflow_d
 | `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
 | `public-docs-updater.md` / `.lock.yml` | Daily | GH-AW import of GitHubNext `doc-updater.md`; scans `dryvist` public PR activity and updates this docs repo |
 
-## What's deprecated or disabled
-
-| Workflow | Status | Replacement |
-| --- | --- | --- |
-| `claude-review.yml` | DEPRECATED 2026-04-04. All jobs gated `if: false`. | External Gemini + Copilot PR reviews |
-| `pr-issue-linker.yml` | Auto-triggers explicitly disabled (`workflow_dispatch` only) | `issue-linker.yml` |
-
-Wiring a caller for a deprecated workflow is a no-op — the consumer caller runs, the upstream silently skips. Don't.
 
 ## How a reusable caller looks
 

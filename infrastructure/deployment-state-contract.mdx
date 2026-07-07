@@ -131,12 +131,7 @@ Two locks work together. The **state lock** protects one tofu backend from concu
 
 The canonical mechanism is S3-native `use_lockfile` (OpenTofu ≥ 1.10), which acquires the lock with a **conditional write**: a `PUT` guarded by `If-None-Match: *` that succeeds only if the lock object does not already exist. No separate lock service is needed. This is the modern default — Terraform has deprecated the `dynamodb_table` argument (removed in OpenTofu 1.11), and OpenTofu recommends native S3 locking for new backends.
 
-The requirement this pushes onto the object store is exact: **it must implement `If-None-Match` conditional writes.** Not every S3-compatible implementation does.
-
-- **AWS S3** and **MinIO** support conditional writes and can hold a `use_lockfile` lock.
-- **RustFS** (alpha) does **not** yet honor `If-None-Match` correctly ([rustfs#1458](https://github.com/rustfs/rustfs/issues/1458)), so it silently fails to serialize writers and **cannot** be used as a lock-bearing backend until fixed.
-
-Migrating off a legacy DynamoDB lock table follows the "run both, then drop DynamoDB" burn-in OpenTofu documents: hold `use_lockfile` and the DynamoDB table together for a period, then drop the DynamoDB leg (a backend re-init, sequenced as its own change). The target end-state is `use_lockfile` only; `tofu-unifi` already runs lockfile-only.
+The requirement this pushes onto the object store is exact: **it must implement `If-None-Match` conditional writes.** Both AWS S3 and RustFS support conditional writes and hold the `use_lockfile` lock.
 
 <Note>
 Lock *waiting* is separate from the lock *mechanism*. `-lock-timeout=10m` (set on every locking command) is what turns "Error acquiring the state lock" into a clean queue when two sessions apply at once — keep it regardless of which lock backend is active.

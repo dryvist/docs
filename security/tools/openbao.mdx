@@ -5,11 +5,7 @@ tier: 2
 ---
 
 <Note>
-Status: **live, migrating consumers in.** A 2-node Raft cluster (OpenBao 2.5.5,
-on-prem static-key auto-unseal) is running; the Ansible role provisions the KV
-hierarchy, the domain-split RBAC, and the snapshot daemon. It is not yet the live
-source of truth for *every* consumer — migration proceeds tier by tier. A 3rd
-Raft voter is planned.
+Status: **live.** A 2-node Raft cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) is running; the Ansible role provisions the KV hierarchy, the domain-split RBAC, and the snapshot daemon. A 3rd Raft voter is planned.
 </Note>
 
 > The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
@@ -83,15 +79,7 @@ On an **always-on Mac agent host**, each domain's AppRole `role_id`/`secret_id` 
 
 The tiers compose; OpenBao is the primary machine path, not a replacement for the layers around it.
 
-## Roadmap
 
-1. **Phase 0 — done.** Ansible role and bring-up sequence in [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps).
-2. **Phase 1 — done.** OpenBao host stood up; recovery-shamir initialization; recovery-share escrow in Bitwarden; secret-zero (seal key + AppRole secret_id) into Doppler; baseline KV engine.
-3. **HA — done.** A 2-node Raft cluster is live with static-key auto-unseal; a 3rd voter is planned.
-4. **In progress.** Domain-split RBAC, per-domain keychain-delivered fetch, and the on-box snapshot daemon (this page) land the design; consumers migrate tier by tier.
-5. **Next.** Adopt the SSH CA for automation principals and the global flow-lease as the gate on mutating flows; migrate remaining consumers off per-host env files; add the off-box S3 snapshot copy + restore drill.
-
-Each phase has its own rollback and does not block the others: if a later phase reveals a problem, the existing per-host pattern continues underneath.
 
 ## Sealed posture, audit trail, and recovery
 
