@@ -16,7 +16,7 @@ and fan requests out by tier:
 - **Large tier** — the biggest models (`gpt-oss-120b`, `qwen3-coder`) run on an
   Apple-Silicon machine behind an authenticated TLS gate; the router holds the
   bearer token, consumers never see it.
-- **Fast tier** — small, quick models (`hermes-4-14b`, `qwen3-4b`, and the
+- **Fast tier** — small, quick models (`qwen3-4b` and the
   `embeddings` model) on a Radeon RX 6800 in a privileged LXC, served by
   [llama-swap](https://github.com/mostlygeek/llama-swap) fronting llama.cpp's
   `llama-server` (ROCm build, models co-resident).
@@ -115,7 +115,7 @@ Any OpenAI client works — change the base URL and send the key:
 curl https://llm.example.net/v1/chat/completions \
   -H "Authorization: Bearer $LLM_ROUTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"hermes-4-14b","messages":[{"role":"user","content":"hello"}]}'
+  -d '{"model":"qwen3-4b","messages":[{"role":"user","content":"hello"}]}'
 ```
 
 ```python
@@ -123,7 +123,7 @@ from openai import OpenAI
 
 client = OpenAI(base_url="https://llm.example.net/v1", api_key=llm_router_key)
 resp = client.chat.completions.create(
-    model="gpt-oss-120b",  # or hermes-4-14b, qwen3-4b, embeddings…
+    model="gpt-oss-120b",  # or qwen3-coder, qwen3-4b, embeddings…
     messages=[{"role": "user", "content": "hello"}],
 )
 print(resp.choices[0].message.content)
