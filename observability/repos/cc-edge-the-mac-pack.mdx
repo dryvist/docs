@@ -14,11 +14,11 @@ This page is the homelab-integration view of [`cc-edge-the-mac-pack-io`](https:/
 
 ## Where it runs
 
-The pack targets a **native macOS Cribl Edge install**, managed declaratively via the host's Nix configuration. Three install constraints from this homelab's posture:
+The pack targets a **native macOS Cribl Edge install**, managed declaratively by nix-darwin. Three install constraints from this homelab's posture:
 
 - The Edge install must be native to the Mac — exec inputs in the pack invoke macOS-only binaries (`pmset`, `ioreg`, `powermetrics`) and will not work from a Linux container.
 - The Mac runs Cribl Edge directly, not through OrbStack — the K8s cluster runs unrelated Cribl Edge instances for different workloads, and this pack does not target them.
-- A single Cribl Leader (the homelab one) controls the Edge fleet; pack updates propagate from the Leader, not from a developer laptop.
+- Each Mac's Edge runs **standalone** — no Cribl Leader manages it, and enrolling Macs into a Cloud-managed fleet is **explicitly forbidden** in this posture. Configuration is GitOps: the pack version is pinned in the nix-darwin host config, and updates land by bumping the pin and rebuilding — never by a Leader or Cloud push.
 
 ## What it sends
 
@@ -35,10 +35,10 @@ Per-use-case filtering — security event extraction, performance triage, alerti
 
 A new Mac joins the telemetry fleet by:
 
-1. Bringing up the Nix-managed Cribl Edge install (handled by the macOS host config — not Mintlify's concern).
-2. The Leader pushes the pack on first heartbeat. No per-host install command.
+1. Bringing up the standalone Cribl Edge install via nix-darwin (handled by the macOS host config — not Mintlify's concern).
+2. The same nix-darwin activation installs the **pinned pack version** from the repo's release artifact. No Leader, no heartbeat push, no per-host install command — the host config is the whole deployment.
 
-For one-off testing on a Mac outside the managed fleet, the pack ships a `.crbl` artifact installable via Cribl's REST API; see the [repo README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#install) for that path. Production installs go through the Leader.
+Upgrades are GitOps: bump the pinned pack version in the nix-darwin config, rebuild, done. For one-off testing outside the Nix-managed path, the pack ships a `.crbl` artifact installable via Cribl's REST API; see the [repo README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#install) for that path.
 
 <RepoFit>
 This page documents how the Mac Pack is deployed in this homelab. The pack itself — Sources, predicates, anomaly-detection rules, override patterns — is documented in its own repo.
