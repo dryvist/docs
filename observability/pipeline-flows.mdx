@@ -255,7 +255,7 @@ flowchart LR
 
 ## HEC fan-in
 
-Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-<index>` in a shared private namespace — Cribl and Splunk compute the same token independently, and the namespace UUID is the only secret.
+Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-\<index\>` in a shared private namespace — Cribl and Splunk compute the same token independently, and the namespace UUID is the only secret.
 
 {/* Shape: hub and spokes (leaves chained with invisible links). Boundary crossings: 1 per real edge. */}
 {/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass. */}
@@ -321,7 +321,7 @@ Every syslog family and every AI log port, in one table. Syslog rides the HAProx
 
 ## The network underneath
 
-The pipeline rides the trust-ordered VLAN tier model: VLAN tag = tier × 10, subnets follow the `192.168.<vlan-tag>.0/24` placeholder pattern (real subnets are injected at runtime, never committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk; every other tier is a log source.
+The pipeline rides the trust-ordered VLAN tier model: VLAN tag = tier × 10, subnets follow the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are injected at runtime, never committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk; every other tier is a log source.
 
 {/* Shape: hub and spokes (tiers chained with invisible links). Boundary crossings: 1 per real edge. */}
 {/* Subgraphs: 5 + 4 nodes (≤5 each). Total nodes: 10 (≤12). Aspect: ~2:1 LR. Pass. */}
