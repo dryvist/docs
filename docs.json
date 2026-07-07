@@ -126,6 +126,7 @@
             "pages": [
               "local-llm/overview",
               "local-llm/apple-silicon",
+              "local-llm/mac-studio",
               "local-llm/models-and-quantization",
               "local-llm/backends",
               "local-llm/distributed",
