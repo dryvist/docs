@@ -57,7 +57,7 @@ Every Edge feeds a Stream; only Stream reaches Splunk; the AWS tier is one routi
 | --- | --- | --- | --- |
 | `cribl-edge` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
 | `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, ingest reduction, routing | Splunk HEC ([`ansible-splunk`](/observability/repos/ansible-splunk)) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge install (Nix-managed) | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack) | Stream (downstream of pack) |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone** — nix-darwin GitOps, no Leader, no Cloud fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI CLI / LLM stack / OpenBao audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
 | `cribl-edge-standalone` (OrbStack) | StatefulSet in [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) `monitoring` namespace | AI tool telemetry — Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
 | `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl Cloud | Cribl Cloud |
 | `cribl-stream-standalone` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
@@ -65,7 +65,12 @@ Every Edge feeds a Stream; only Stream reaches Splunk; the AWS tier is one routi
 
 ## The Edge → Stream → Splunk invariant
 
-Across every tier, the architectural rule is the same: Edge collects, Stream routes, Splunk indexes. Edge does not talk directly to Splunk anywhere on this stack. Stream is the only component with Splunk egress. On the OrbStack cluster this is enforced by network policies that lock Edge egress to Stream on HEC port 8088 only; on the homelab Proxmox side the rule is operational (single Stream tier, well-known HEC endpoint), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
+Across every tier, the architectural rule is the same: Edge collects, Stream routes, Splunk indexes. Edge does not talk directly to Splunk anywhere on this stack. Stream is the only component with Splunk egress. On the OrbStack cluster this is enforced by network policies that lock Edge egress to Stream on HEC port 8088 only; on the homelab Proxmox side the rule is operational (single Stream tier), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
+
+Two as-built details of that egress:
+
+- **Edge → Stream rides Cribl S2S** as tcpjson on the dedicated `cribl_s2s` service port (a pipeline constant from the infrastructure repo, never hardcoded).
+- **Stream → Splunk is one HEC output per index**, each with its own token. Tokens are *derived*, not distributed: UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl and Splunk compute the same value independently. The namespace UUID is the only secret, and a leaked token scopes to one index. See the [full family/port/index map](/observability/overview#syslog-ingest-families).
 
 ## Per-tool Cribl Edge packs
 
@@ -110,6 +115,8 @@ Four [healthchecks.io](https://healthchecks.io) CronJobs run in the OrbStack `mo
 | `heartbeat-otel` | OTel collector receives a test span |
 
 A missed ping is the first signal of a broken pipeline — every other failure mode tends to be silent.
+
+Heartbeats prove the pipeline is up; **per-index silence detectors** prove the data is flowing. Every Splunk index carries an alert that fires when the index receives no events within its expected cadence, so a dead sender, port, or token surfaces as "index went quiet" rather than a gap discovered at search time.
 
 ## Forwarding to AWS DR
 

@@ -58,6 +58,43 @@ flowchart LR
 
 Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated — a Copilot schema change doesn't break the Claude pipeline.
 
+## Syslog ingest families
+
+Syslog ingest is **one port per source family**, fronted by the ingress load balancers (HAProxy for TCP, nginx for UDP). Each family routes to its own Splunk index with a family sourcetype, so a misbehaving sender is isolated at the port and visible at the index.
+
+| Family | Standard port | High port | Index | Sourcetype |
+| --- | --- | --- | --- | --- |
+| `unifi` | 514 | 1514 | `unifi` | `unifi` |
+| `palo_alto` | 515 | — | `firewall` | `palo_alto` |
+| `cisco_asa` | 516 | — | `firewall` | `cisco_asa` |
+| `linux` | 517 | — | `os` | `linux` |
+| `windows` | 518 | — | `os` | `windows` |
+| `honeypot` | 519 | — | `honeypot` | `honeypot` |
+| `unifi_fw` | 520 | — | `firewall` | `unifi_fw` |
+| `macos` | 521 | — | `os` | `macos` |
+| `dns_query` | 522 | — | `dns` | `dns_query` |
+| `proxy` | 523 | — | `proxy` | `proxy` |
+
+Port numbers are pipeline constants defined once in the infrastructure repo and surfaced to every consumer through the published inventory — no repo hardcodes them.
+
+## AI log ports (tcpjson)
+
+AI-side logs skip syslog entirely: Cribl Edge tails the local log files and ships them as **tcpjson** over Cribl S2S to Cribl Stream, one port per source.
+
+| Port range | Source |
+| --- | --- |
+| 10311–10315 | AI CLI logs (one port per CLI — Claude Code and friends) |
+| 10321–10323 | Local LLM stack logs (gate, router, workers) |
+| 10331 | OpenBao audit log |
+
+Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cribl_s2s` service port from the same pipeline constants.
+
+## Per-index HEC outputs and derived tokens
+
+Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per index**, each with its own token. Tokens are never distributed: both sides derive the same value as a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a single index.
+
+Each index also has a **silence detector** — a per-index alert that fires when the index stops receiving events within its expected cadence. A broken port, token, or sender surfaces as "index went quiet" instead of a silent gap discovered weeks later.
+
 ## Splunk apps
 
 The AI-observability apps and TAs live under a separate organization at

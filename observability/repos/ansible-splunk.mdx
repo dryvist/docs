@@ -15,10 +15,15 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## What it does
 
 - Installs Splunk Enterprise and applies a license
-- Configures **indexes**, **HEC tokens**, and **storage tiering** (hot/warm/cold)
-- Sets up indexer clustering and search head distribution where applicable
+- Configures **per-index HEC inputs** — one token per index, matching Cribl Stream's per-index outputs
+- Configures **indexes** (`unifi`, `firewall`, `os`, `honeypot`, `dns`, `proxy`, the AI-log indexes, and more) and **storage tiering** (hot/warm/cold)
+- Deploys **per-index silence detectors** — an alert per index that fires when the index stops receiving events within its expected cadence
 - Wires in conf bundles from the AI-observability Splunk apps and TAs
 - Runs idempotently — safe to re-run as a drift-correction tool
+
+## HEC tokens are derived, not distributed
+
+Each index's HEC token is a **UUIDv5 of `splunk-hec-<index>` in a shared private namespace**. Cribl Stream (the only Splunk egress) and this repo's HEC input config derive the same token independently from that formula, so no token list ever needs syncing between repos. The namespace UUID is the only secret — injected at run time via Doppler, never committed — and a leaked token scopes to a single index. The family → port → index map lives on the [observability overview](/observability/overview#syslog-ingest-families).
 
 ## How it fits
 
