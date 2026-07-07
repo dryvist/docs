@@ -18,7 +18,7 @@ One generic module per resource type covers the controller's data plane:
 
 - Infrastructure VLANs / networks, WLANs, and per-role port profiles
 - MAC-pinned fixed-IP reservations
-- Firewall groups (the port/address sets); firewall *rules* are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
+- Firewall groups (the port/address sets); firewall *rules* (42 rules total, including a generic established/related stateful-return rule) are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
 - WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
 - Subnet values stay in the secret store and are consumed by both `tofu-unifi` and `tofu-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
 
@@ -55,9 +55,7 @@ flows that need to cross a VLAN boundary (plus DNS, NTP, and management
 baselines). The **guest-level layer** — each Proxmox VM/LXC's own firewall,
 provisioned by `tofu-proxmox` — is live today: every guest's default input and
 output policy is deny, with per-service allow rules opened only for the ports
-that guest actually needs. The **network-level layer** — the UniFi inter-VLAN
-`LAN_IN` rules described above — is written to the same model but not yet
-enforced; it activates once the provider/controller rule-index gap closes.
+that guest actually needs. The **network-level layer** — the 42 deferred UniFi inter-VLAN and local rules described above — is written to the same model but not yet enforced; it activates once the provider/controller rule-index gap closes.
 
 ## Provider notes (UniFi Network 9)
 
