@@ -76,3 +76,22 @@ The agent can read public repositories and open documentation pull requests on i
 - Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
 - PRs are opened as **drafts** and the bot has **no merge authority**. A human always reviews and merges; organization rulesets block the bot from self-merging.
 - **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so sensitive material never lands in a public PR.
+
+## Tool integrations (MCP + skills)
+
+The agent connects to external tools and services to extend its capabilities, bridging the gap between local execution and the broader environment. These are integrated via the Model Context Protocol (MCP) and bundled skills.
+
+```mermaid
+flowchart LR
+    Brain[LLM router brain]
+    
+    Brain --> LLMWiki[llm-wiki]
+    Brain --> SplunkMCP[Splunk MCP]
+    Brain --> Context7[Context7 MCP]
+    Brain --> DocsPRs[GitHub App docs-PRs]
+    Brain --> IssuesPAT[GitHub issues/projects PAT]
+```
+
+- **Splunk MCP (LIVE):** The agent connects to the Splunk MCP Server app (Splunkbase 7931) at the management base URL plus the `/services/mcp` path (e.g., `https://splunk.example.com/services/mcp`). It authenticates using a dedicated token minted by the app's `GET /services/mcp_token` endpoint with a +90d expiry (RSA-encrypted, audience `mcp`). This token is managed securely and delivered via the shared secrets engine.
+- **Context7 MCP (LIVE):** A keyless hosted MCP integration at `https://mcp.context7.com/mcp`.
+- **GitHub issues and projects:** Enabled by a shared secrets engine-delivered Personal Access Token (PAT), the agent has read/write access to issues across all repositories and read/write access to organization projects. A bundled `github-issues` skill drives this integration, utilizing REST for issues and GraphQL for Projects v2, backed by strict operational guardrails.
