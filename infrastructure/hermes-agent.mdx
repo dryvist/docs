@@ -18,7 +18,12 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 **Kanban** task board, so the agent keeps working unattended — no laptop, no cloud.
 
 - **Brain:** an always-on local GPU model (OpenAI-compatible), so the agent never
-  depends on an external API or a sleeping laptop.
+  depends on an external API or a sleeping laptop. The brain is a **router alias**
+  so the physical model can change without reconfiguring the agent; it currently
+  resolves to a mixed-precision 4-bit Qwen3.6-35B-A3B (OptiQ) selected by the
+  [agentic tool-calling benchmark](/tools/mlx-benchmarks) as the top multi-turn
+  tool-caller. **Thinking stays ON** for this brain — with reasoning disabled the
+  same model degrades to plain-text pseudo tool-calls after a handful of turns.
 - **Memory:** the built-in `MEMORY.md` / `USER.md` plus the local **Hindsight**
   provider (knowledge-graph recall, fully self-hosted). Everything lives under
   `$HERMES_HOME` on a dedicated volume that is snapshotted and replicated off-node.
@@ -52,6 +57,27 @@ agent:
 Switch models anytime with `hermes model`; check memory with `hermes memory status`.
 Deployment is fully IaC — a Terraform-managed container plus an Ansible `hermes_agent`
 role install and configure it, with updates managed declaratively through Ansible to prevent configuration drift.
+
+## Reliability: long-generation timeouts
+
+Agentic tool calls can generate for many minutes. A timeout anywhere in the
+request path that fires *before* the model finishes kills the stream mid-tool-call,
+and the truncated response surfaces as an "invalid tool call" with empty content —
+a transport failure that masquerades as a model bug. The fix is a **nested timeout
+chain where the client is the sole decider**: each outer layer is configured to
+outlive the inner one, so only the innermost (the agent client) ever decides to
+give up.
+
+```text
+serving-model timeout  >  router per-attempt timeout  >  agent client stream timeout
+        (largest)                                              (smallest — decides)
+```
+
+The design principle: guards exist to reap *genuinely orphaned* work — a
+disconnected client, a wedged request — never to cap legitimate long generations.
+If a server- or router-side guard is the shortest link, it will abort real work.
+Set the serving disconnect/idle guard generously and let the client own the
+deadline.
 
 ## LLM knowledge base (second brain)
 
@@ -88,9 +114,11 @@ flowchart LR
     Brain --> Context7[Context7 MCP]
     Brain --> GitHubApp[GitHub App docs-PRs]
     Brain --> GitHubPAT[GitHub issues PAT]
+    Brain --> Codex[Codex escalation]
 ```
 
 - **Splunk MCP**: The `mcp_servers.splunk` entry connects to the Splunk MCP Server app (Splunkbase 7931) at `${SPLUNK_MCP_URL}` (which MUST be the management base plus the `/services/mcp` path) using `Authorization: Bearer ${SPLUNK_MCP_TOKEN}`. Tokens are not generic Splunk JWTs; the app strictly accepts tokens minted by its own `GET /services/mcp_token?username=<user>&expires_on=+90d` endpoint. These minted tokens have an `mcp` audience, are RSA-encrypted, and enforce encryption by default (`require_encrypted_token`). The dedicated service user's token is minted automatically and delivered to the agent via the shared secrets engine.
-- **Context7 MCP**: A keyless hosted MCP connection at `https://mcp.context7.com/mcp` (an API key only raises rate limits; the header is only rendered when a key is set).
+- **Context7 MCP**: A hosted MCP connection at `https://mcp.context7.com/mcp` for up-to-date library/framework documentation. An API key (raising rate limits) is now supplied from the shared secrets engine on the generic AI credential path, so every harness that reads that path gets the same keyed access; the auth header is only rendered when a key is present.
 - **GitHub issues/projects**: The agent interacts with GitHub via a custom skill (REST for issues, GraphQL for Projects v2, with guardrails). This is powered by a scoped Personal Access Token granting read/write access to issues across all repos and read/write access to projects, delivered securely via the shared secrets engine.
+- **Codex escalation**: For tasks beyond the local brain's reach, the agent can escalate to an external frontier coding model (Codex). Its credential is bootstrapped once from the shared secrets engine into the agent home on first converge (create-only — an existing session is never overwritten), so the capability materializes without hand-placing secrets on the host.
 

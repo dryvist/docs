@@ -49,7 +49,7 @@ Weights are stored at reduced precision to fit memory. The strategy:
 | Approach | What it is | When |
 | --- | --- | --- |
 | Uniform 4-bit | Every layer at the same low precision | Safe default; broadly supported; the baseline everything else is measured against. |
-| Sensitivity-aware mixed (e.g. OptiQ) | Measures each layer's sensitivity and spends 8 bits where it matters, 4 where it doesn't, at a similar overall size | An **upgrade to evaluate**, not adopt on faith — published accuracy gains are vendor-reported. It loads in a stock MLX runtime, so it's cheap to A/B. |
+| Sensitivity-aware mixed (e.g. OptiQ) | Measures each layer's sensitivity and spends 8 bits where it matters, 4 where it doesn't, at a similar overall size | An **upgrade to evaluate**, not adopt on faith — published accuracy gains are vendor-reported. It loads in a stock MLX runtime, so it's cheap to A/B. After A/B, an OptiQ 35B-A3B became the resident agentic tool-calling brain — it held multi-turn tool calling clean where the uniform-4bit build degraded. |
 | Distillation-aware (e.g. DWQ) | Quantized with a calibration/distillation pass | Another measured-upgrade lane, especially for small models. |
 | Microscaling FP4 (mxfp4) | 4-bit microscaling format | Use with care on Apple Metal — some MoE matmuls are dramatically slower because dequant overhead dominates ([MLX #3402](https://github.com/ml-explore/mlx/issues/3402)). Verify throughput before standardizing on it, and avoid it for sharded/distributed runs. |
 
