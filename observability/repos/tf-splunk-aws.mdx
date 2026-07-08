@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Splunk on AWS without the enterprise sticker shock — and without it running when nobody's using it.
 
-<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/tf-splunk-aws" />
+<RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tf-splunk-aws" />
 
 `tf-splunk-aws` provisions an on-demand data-ingest environment on AWS: a VPC with a cost-optimized NAT instance, and two independently-toggleable workloads — Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It is plain OpenTofu; there is no Terragrunt layer.
 
@@ -34,7 +34,7 @@ The AWS infrastructure side of Splunk and Cribl, sized to run only when it's nee
 
 <Steps>
   <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/JacobPEvans/tf-splunk-aws && cd tf-splunk-aws && nix develop`
+    `git clone https://github.com/dryvist/tf-splunk-aws && cd tf-splunk-aws && nix develop`
   </Step>
   <Step title="Provide AWS credentials">
     Any standard AWS credential source (env vars, SSO, aws-vault) works for the initial `tofu apply`.
@@ -59,7 +59,7 @@ The AWS infrastructure side of Splunk and Cribl, sized to run only when it's nee
   <Card title="tofu-aws" icon="aws" href="https://github.com/JacobPEvans/terraform-aws">
     The broader AWS DR footprint repo this complements.
   </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/tf-splunk-aws">
+  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tf-splunk-aws">
     Modules, env folders, full README.
   </Card>
 </CardGroup>
