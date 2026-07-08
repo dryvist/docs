@@ -15,14 +15,14 @@ The page below is the high-level design rationale. The exhaustive, digit-by-digi
 A VMID is six digits, each position carrying meaning. Read left to right, the digits go from coarsest grouping to finest:
 
 ```text
-[Tier][Sub-tier][Crit][Instance][OS][Env]
-   │      │        │      │       │    │
-   │      │        │      │       │    └─ environment (0 prod · 1 stg · 2 test · 3 dev · 4 sbx)
-   │      │        │      │       └────── OS family (4 = LXC, the common case)
-   │      │        │      └────────────── instance number within the group
-   │      │        └───────────────────── criticality, rolling 0–9 (lower = more critical)
-   │      └────────────────────────────── sub-tier (0 user-facing, 1 mgmt, 2 ingest)
-   └───────────────────────────────────── trust tier (1–9)
+[Tier][Sub-tier][Crit][OS][Instance][Env]
+   │      │        │    │      │      │
+   │      │        │    │      │      └─ environment (0 prod · 1 stg · 2 test · 3 dev · 4 sbx)
+   │      │        │    │      └──────── instance number within the group
+   │      │        │    └─────────────── OS family (0 = LXC, the common case)
+   │      │        └──────────────────── criticality, rolling 0–9 (lower = more critical)
+   │      └───────────────────────────── sub-tier (0 user-facing, 1 mgmt, 2 ingest)
+   └──────────────────────────────────── trust tier (1–9)
 ```
 
 Because the most significant digit is the tier and the next is the sub-tier, a plain numeric sort groups guests **by tier, then sub-tier, then criticality** — no tags, no naming convention to enforce, just arithmetic.
@@ -32,11 +32,13 @@ Because the most significant digit is the tier and the next is the sub-tier, a p
 | Tier | Trust tier, `1`–`9` | Most-trusted (`1`) to least-trusted (`9`). Equals VLAN ÷ 10. |
 | Sub-tier | Role within the tier | `0` user-facing, `1` management (present in **every** tier), `2` ingest |
 | Criticality | Rolling `0`–`9` | Lower is more critical; `0` restore-first, `5` the default middle, `9` expendable |
+| OS | OS family | `0` LXC (most guests); other values reserved for non-LXC platforms |
 | Instance | Instance counter | Distinguishes siblings within the same group |
-| OS | OS family | `1` macOS · `2` Windows · `3` Docker · `4` LXC (most guests) · `5` Debian · `6` Ubuntu · `7` Fedora · `9` RHEL |
 | Env | Environment | `0` prod · `1` staging · `2` test · `3` dev · `4` sandbox |
 
-A worked example — Plex, the media library's user-facing service — decodes as `703040`: tier `7` (media) · sub-tier `0` (user-facing) · criticality `3` (more critical than the default `5`) · instance `0` · OS `4` (LXC) · env `0` (prod). Its tier digit is `7`, so it lives on VLAN `70`. Identity read off, network derived — same number.
+A worked example — the observability tier's load balancer — decodes as `421000`: tier `4` (observability & security) · sub-tier `2` (ingest) · criticality `1` (restore early) · OS `0` (LXC) · instance `0` · env `0` (prod). Its tier digit is `4`, so it lives on VLAN `40`. Identity read off, network derived — same number.
+
+Some early allocations (the media wave and a few management guests) predate this ordering and transpose the OS and instance digits; they decode under the older convention and are migrated opportunistically, not renumbered for their own sake.
 
 ## Trust-ordered tiers map to VLANs
 
