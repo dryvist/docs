@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Splunk Enterprise, deployed the same way every time. Indexers, search heads, license, done.
 
-<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-splunk" />
+<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ansible-splunk" />
 
 `ansible-splunk` is the configuration tier for Splunk Enterprise. It deploys and configures a Splunk install onto hosts that `tf-splunk-aws` provisioned (or onto homelab hardware that `ansible-proxmox` configured), then maintains the install through ongoing playbook runs.
 
@@ -42,7 +42,7 @@ The configuration tier for Splunk. Provisioning lives elsewhere; this owns every
     Run `tf-splunk-aws` (cloud) or `ansible-proxmox` (homelab) first. Hosts need OS, storage, and network in place.
   </Step>
   <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/JacobPEvans/ansible-splunk && cd ansible-splunk && nix develop`
+    `git clone https://github.com/dryvist/ansible-splunk && cd ansible-splunk && nix develop`
   </Step>
   <Step title="Provide Splunk license and HEC tokens via Doppler">
     `DOPPLER_TOKEN` resolves the Splunk license file and any pre-shared HEC tokens at run time. No secrets in git.
@@ -64,7 +64,7 @@ The configuration tier for Splunk. Provisioning lives elsewhere; this owns every
   <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
     The traffic this Splunk install actually receives.
   </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/ansible-splunk">
+  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/ansible-splunk">
     Roles, inventory examples, full README.
   </Card>
 </CardGroup>
