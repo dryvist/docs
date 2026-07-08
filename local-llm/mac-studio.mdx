@@ -14,9 +14,10 @@ The homelab runs a curated set of local models on the Mac Studio. Through system
 
 | Model | Size & Config | Role | Verdict / Best Used For |
 | --- | --- | --- | --- |
-| **`gpt-oss-120b-MXFP4-Q8`** | 63.3 GB (Resident) | Resident Default | **Best for constrained prose and SPL query authoring.** Highly capable on complex reasoning, but weak at code review (prone to confident false positives). Requires high `max_tokens` for JSON to avoid truncation. Runs with `reasoning_effort=low` by default to avoid burning the output token cap. |
-| **`Qwen3.6-35B-A3B-4bit`** | 20.4 GB (Swap tier) | Structured & Agent Default | **The structured-output (JSON) champion.** The only model to fully pass strict JSON port allocation tests. Recommended default for agentic work and schema generation. Maps to the router alias `claude-sonnet-5`. Runs with thinking turned off by default. |
+| **`Qwen3.6-35B-A3B-OptiQ-4bit`** | ~20 GB (Resident) | Resident Tool-Calling Brain | **The agentic tool-calling brain.** Selected by the agentic tool-calling benchmark: 100% valid tool calls and a clean 20-round multi-turn track. **Runs with thinking ON** — required, since the same weights degrade to plain-text pseudo tool-calls around round 6 with thinking off. Serves the Hermes agent behind its router alias. |
 | **`Qwen3-Coder-30B-A3B-4bit`** | 17.1 GB (Resident) | Resident Coding | **Best for boilerplate and Terraform/HCL generation.** Extremely strong at syntax, but carries a precision liability (e.g. minor query typos or dropping keys). Route templated codegen only. |
+| **`gpt-oss-120b-MXFP4-Q8`** | 63.3 GB (On-demand) | On-demand Reasoning | **Best for constrained prose and SPL query authoring.** Loaded on demand and idle-unloaded after 900s rather than held resident. Highly capable on complex reasoning, but weak at code review (confident false positives) and unfit as an agent brain (0% valid structured tool calls in the agentic benchmark). Requires high `max_tokens` for JSON. `reasoning_effort=low` by default. |
+| **`Qwen3.6-35B-A3B-4bit`** | 20.4 GB (Swap tier) | Swap-tier structured fallback | **The uniform-4bit structured-output baseline.** Passes strict JSON port-allocation tests but was superseded as the agent default by the OptiQ build above (uniform 4-bit degrades multi-turn tool calling earlier). Runs with thinking off by default. |
 | **`Qwen3.6-27B-4bit`** | 16.1 GB | Retired (2026-07-07) | **Retired after evals.** Decoded at 23–27 tok/s (4× slower than the 35B MoE), produced low-effort code reviews, and filled no unique capability niche. Removed from the swap tier. |
 
 ### Evaluation Methodology
@@ -36,8 +37,9 @@ The serving stack is fully tuned and optimized in code (merged and active on the
 *   **gpt-oss-120b Decode Speed**: Tuned from 13.6 tok/s to **26.6–28.6 tok/s** (TTFT: 0.632s).
 *   **Qwen3-Coder-30B Decode Speed**: Tuned from 64.2 tok/s to **128.0 tok/s** (TTFT: 0.186s).
 *   **Warmup and Preloads**: A dedicated warmup LaunchAgent (`mlx-warmup`) faults model weights into memory on boot, eliminating the 112-second cold-start penalty for the resident pair.
-*   **Extended Context Window**: The output cap has been raised from 8,192 to **32,768** tokens for the agent-brain coder model to support long multi-turn tool-calling loops without truncation.
-*   **Active Parsers**: Native reasoning and tool-call parsers are active per model to separate thinking processes from content streams.
+*   **Extended Context Window**: The resident tool-calling brain runs with a raised request budget (**65,536** tokens) and a dedicated KV cache (`cache-memory-mb 16384`, `max-num-seqs 8`) to sustain long multi-turn tool-calling loops without truncation.
+*   **Long-generation timeout guard**: The server `--timeout` was raised to **3,600s**. A stock disconnect guard (300s) was aborting legitimate long agentic generations mid-stream (observed: a 6,320-token request aborted at 301.2s), which surfaced downstream as an "invalid tool call" with empty content. The guard now reaps only genuinely orphaned work; the client owns the real deadline (see [Self-hosted AI agent → Reliability](/infrastructure/hermes-agent)).
+*   **Active Parsers**: Native reasoning and tool-call parsers are active per model to separate thinking processes from content streams. The tool-calling brain uses the `hermes` tool-call parser with the `qwen3` reasoning parser — the `qwen3_coder` parser must not be used on a general (non-Coder) Qwen3.6, where it produces empty `function.name` calls.
 
 ---
 
