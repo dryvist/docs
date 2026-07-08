@@ -79,15 +79,43 @@ Syslog ingest is **one port per source family**, fronted by the ingress load bal
 
 Port numbers are pipeline constants defined once in the infrastructure repo and surfaced to every consumer through the published inventory — no repo hardcodes them.
 
+Two family notes:
+
+- **Hypervisor firewall drops** ride the `linux` family: the node firewall
+  logs every default-policy DROP to a file (never the journal), so each node's
+  rsyslog tails that file with `imfile` and forwards it alongside the journal
+  stream. Searchable as `index=os process=pve-firewall`.
+- **The `macos` family (521) is intentionally unused.** BSD syslogd emits
+  RFC3164 (no year, no timezone) and workstations deliberately keep local
+  time, so a syslogd remote-forward can never be skew-safe. Macs ship through
+  their local Cribl Edge instead (see below), whose sources carry absolute,
+  TZ-qualified timestamps.
+
+## Timestamps: UTC at the source
+
+Every host except the workstation Macs runs **and logs** UTC — enforced by
+configuration management, not assumed. This is doctrine, not preference: the
+pipeline's config normalizer strips per-source timezone overrides on restart,
+so a source that stamps local time cannot be corrected downstream. A skewed
+source is fixed at the source. Skew is measured with index-time
+(`eval skew=_indextime-_time`), because event-time windows silently miss
+mis-stamped events instead of surfacing them.
+
 ## AI log ports (tcpjson)
 
 AI-side logs skip syslog entirely: Cribl Edge tails the local log files and ships them as **tcpjson** over Cribl S2S to Cribl Stream, one port per source.
 
 | Port range | Source |
 | --- | --- |
+| 10300 | Shared S2S — sources that stamp their index locally (Mac firewall unified-log, host metrics) |
 | 10311–10315 | AI CLI logs (one port per CLI — Claude Code and friends) |
 | 10321–10323 | Local LLM stack logs (gate, router, workers) |
 | 10331 | OpenBao audit log |
+
+The Mac firewall leg tails the unified log (application firewall, network
+extension, packet filter subsystems) as ndjson via a launch daemon, and the
+local Edge ships it with `index=firewall` stamped at the source — unified-log
+timestamps carry a UTC offset, so a local-time workstation stays skew-safe.
 
 Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cribl_s2s` service port from the same pipeline constants.
 
@@ -95,7 +123,7 @@ Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cr
 
 Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per index**, each with its own token. Tokens are never distributed: both sides derive the same value as a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a single index.
 
-Each index also has a **silence detector** — a per-index alert that fires when the index stops receiving events within its expected cadence. A broken port, token, or sender surfaces as "index went quiet" instead of a silent gap discovered weeks later.
+Each index also has a **silence detector** — a per-index alert that fires when the index stops receiving events within its expected cadence. A broken port, token, or sender surfaces as "index went quiet" instead of a silent gap discovered weeks later. Detectors on structurally-empty indexes ship disabled (currently `netflow`, whose gateway never exports despite the receive chain being armed) — an alert that fires on every cycle only trains fatigue.
 
 ## Splunk apps
 

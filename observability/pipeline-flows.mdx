@@ -105,11 +105,13 @@ flowchart LR
   linkStyle 5,6 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-The full family → port → index → sourcetype table lives on the [observability overview](/observability/overview#syslog-ingest-families).
+The full family → port → index → sourcetype table lives on the [observability overview](/observability/overview#syslog-ingest-families). Hypervisor firewall drops ride the `linux` family: the node firewall logs to a file rather than the journal, so each node's rsyslog tails it with `imfile` and forwards it on the same port — searchable as `index=os process=pve-firewall`.
 
 ## AI-CLI log shipping
 
 AI CLI logs never touch syslog. Each CLI writes local JSONL log files; the MacBook's standalone Cribl Edge tails them with file inputs and ships them as tcpjson (one port per CLI, 10311–10315) straight to Cribl Stream, which lands them in per-index HEC outputs.
+
+The same Edge also ships the **Mac firewall unified-log**: a launch daemon tails the firewall subsystems (application firewall, network extension, packet filter) as ndjson into a rotated file, and a file input forwards it over the shared S2S port with `index=firewall` stamped at the source. This replaced the retired BSD-syslogd remote forward, which could never be skew-safe (RFC3164 carries no year and no timezone, and workstations deliberately keep local time).
 
 {/* Shape: linear chain. Boundary crossings: 1 (Edge -> Stream). */}
 {/* Ranks: ≤3 in subgraph. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass. */}
@@ -221,9 +223,9 @@ flowchart LR
   linkStyle 2 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-## NetFlow *(planned — being revived)*
+## NetFlow *(gateway export gap — parked)*
 
-Flow records from the gateway and switches take the UDP side of the ingress tier. The whole path is **planned / being revived** — amber dotted end to end until it ships again.
+Flow records from the gateway and switches would take the UDP side of the ingress tier — and the whole receive chain (UDP LB, Edge NetFlow pipeline, dedicated index) is built, armed, and idle. The gateway shows NetFlow enabled in its console but **emits zero IPFIX packets**, a gateway-side export gap. The path stays documented and dotted; the index's silence detector ships disabled so a structurally-empty index doesn't alert on every cycle. Desired state (including the export settings the console claims) is version-controlled in the network IaC repo.
 
 {/* Shape: linear chain. Boundary crossings: 0. */}
 {/* Ranks: 1 per column. Total nodes: 4 (≤12). Aspect: ~4:1 LR (short chain). Pass. */}
@@ -236,7 +238,7 @@ flowchart LR
   Edge([Cribl Edge<br/>NetFlow pipeline])
   SP[(Splunk)]
 
-  Gear -.planned.-> NGX
+  Gear -."no export (gateway gap)".-> NGX
   NGX -.-> Edge
   Edge -.-> SP
 
