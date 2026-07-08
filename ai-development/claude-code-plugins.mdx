@@ -16,6 +16,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 - Ships plugins for git workflows (`ship`, `finalize-pr`, `wrap-up`), retrospectives, CodeQL resolution, and more
 - Houses **skills** that progressively load only when their triggers fire — minimal token cost when idle
+- Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
 - Houses **hooks** that enforce conventions automatically (style, permissions, no-skip patterns)
 - Composes with [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) for the rules layer
@@ -25,7 +26,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 | Component | Examples |
 | --- | --- |
 | **Commands** | `/ship`, `/finalize-pr`, `/wrap-up`, `/retrospecting` |
-| **Skills** | `receiving-code-review`, `resolve-pr-threads`, `finalize-pr` |
+| **Skills** | `premium-agent-orchestration`, `delegate-to-ai`, `finalize-pr` |
 | **Agents** | Explore, Plan, code-reviewer |
 | **Hooks** | Style guards, permission gates |
 
