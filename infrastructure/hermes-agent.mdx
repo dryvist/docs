@@ -76,3 +76,21 @@ The agent can read public repositories and open documentation pull requests on i
 - Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
 - PRs are opened as **drafts** and the bot has **no merge authority**. A human always reviews and merges; organization rulesets block the bot from self-merging.
 - **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so sensitive material never lands in a public PR.
+
+## Tool integrations (MCP + skills)
+
+The Hermes agent fan-out connects its LLM routing brain to multiple internal and external capabilities:
+
+```mermaid
+flowchart LR
+    Brain[LLM Router Brain] --> LLMWiki[llm-wiki]
+    Brain --> SplunkMCP[Splunk MCP]
+    Brain --> Context7[Context7 MCP]
+    Brain --> GitHubApp[GitHub App docs-PRs]
+    Brain --> GitHubPAT[GitHub issues PAT]
+```
+
+- **Splunk MCP**: The `mcp_servers.splunk` entry connects to the Splunk MCP Server app (Splunkbase 7931) at `${SPLUNK_MCP_URL}` (which MUST be the management base plus the `/services/mcp` path) using `Authorization: Bearer ${SPLUNK_MCP_TOKEN}`. Tokens are not generic Splunk JWTs; the app strictly accepts tokens minted by its own `GET /services/mcp_token?username=<user>&expires_on=+90d` endpoint. These minted tokens have an `mcp` audience, are RSA-encrypted, and enforce encryption by default (`require_encrypted_token`). The dedicated service user's token is minted automatically and delivered to the agent via the shared secrets engine.
+- **Context7 MCP**: A keyless hosted MCP connection at `https://mcp.context7.com/mcp` (an API key only raises rate limits; the header is only rendered when a key is set).
+- **GitHub issues/projects**: The agent interacts with GitHub via a custom skill (REST for issues, GraphQL for Projects v2, with guardrails). This is powered by a scoped Personal Access Token granting read/write access to issues across all repos and read/write access to projects, delivered securely via the shared secrets engine.
+
