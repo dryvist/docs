@@ -38,6 +38,29 @@ Brand voice (header tagline):
 - One idea per sentence
 - Diagrams over prose where structure matters
 
+## Technical writing
+
+Follow [Google technical-writing style](https://developers.google.com/tech-writing/one),
+aimed at an 8th-grade reading level. Short sentences, one idea each. Plain words
+over Latinate ones. Active voice. Keep terms of art, but define each one the
+first time you use it.
+
+Rewrite big words and long sentences into plain, direct ones:
+
+| Instead of | Write |
+| --- | --- |
+| "utilize the configuration to facilitate deployment" | "use the config to deploy" |
+| "In order to authenticate, it is necessary that you provide a token" | "To authenticate, provide a token" |
+| "The build was terminated by the runner due to a timeout" | "The runner stopped the build after a timeout" |
+| "Prior to commencing, ensure the prerequisites are satisfied" | "Before you start, check the prerequisites" |
+
+Never cut a sentence to fit a character limit. If a line runs long, restructure
+it — split the sentence, use a bullet, or make a table — rather than reflowing
+the text to a fixed width.
+
+When your runtime has Claude Code skill support, invoke the `elements-of-style`
+plugin's `writing-clearly-and-concisely` skill before writing prose.
+
 ## Content boundaries — PUBLIC information only
 
 - No real internal IP addresses (use placeholders)
