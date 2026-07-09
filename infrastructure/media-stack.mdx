@@ -1,7 +1,7 @@
 ---
-title: "Self-hosted Netflix & personal backup"
+title: "Self-hosted Netflix and personal backup"
 description: "A self-hosted media library plus the personal-backup services that ride the same footprint — Immich for photos, Time Machine for Macs — on dedicated VLANs of the homelab cluster."
-tier: 2
+page_type: explanation
 ---
 
 The homelab runs a self-hosted Netflix: a media library served from LXCs on a dedicated VLAN, managed by Ansible, provisioned by `tofu-proxmox`. The VLAN is defined in `tofu-unifi` alongside every other service tier, and follows the same per-service segmentation pattern.

@@ -1,7 +1,7 @@
 ---
 title: "Deployment state contract"
 description: "deployment.json is the desired-state input for tofu-proxmox. One versioned object in a private S3 store, fetched fail-loud at every plan/apply, single-writer via the state lock. The ACID contract every tofu and ansible session reads from one place."
-tier: 1
+page_type: decision
 ---
 
 > `deployment.json` is the single desired-state input for `tofu-proxmox`. It lives as one versioned object in a private S3 store, is fetched fail-loud at every plan/apply, and is mutated by exactly one session at a time. This page is the one place that contract is defined — everything else links here.

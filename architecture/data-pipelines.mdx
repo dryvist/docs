@@ -1,6 +1,7 @@
 ---
 title: "Data pipelines"
 description: "Log and NetFlow ingest paths: UniFi gear and network devices to Splunk indexers, via HAProxy and Cribl Edge."
+page_type: explanation
 ---
 
 Two pipelines move data from the homelab edge to Splunk. The architecture is intentional: HAProxy load-balances toward Cribl Edge, which routes, transforms, and reduces volume before forwarding to Splunk over HEC.

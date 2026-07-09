@@ -1,7 +1,7 @@
 ---
 title: "ZFS pool naming: tiers, not nodes"
 description: "Pool names encode the storage tier (boot / bulk / fast) and nothing else — never the node, the RAID level, or the drive count — so dataset paths are identical on every node and replicas line up by construction."
-tier: 2
+page_type: decision
 ---
 
 > A pool name is an API. Services, replication jobs, and inventory all address storage through it — so it must only encode things that never change. The performance tier never changes. Everything else does.
