@@ -207,7 +207,7 @@ include "root" {
 }
 ```
 
-Local invocation pairs aws-vault with [Doppler](/security/tools/doppler) for runtime secret injection — the canonical chain from the [check-placement page](/infrastructure/tofu-check-placement):
+Local invocation pairs aws-vault with [Doppler](/security/tools/doppler) for runtime secret injection — the canonical chain from the [OpenTofu check-placement page](/infrastructure/tofu-check-placement):
 
 ```bash
 aws-vault exec tf-<project> -- doppler run -- terragrunt plan
@@ -258,7 +258,7 @@ flowchart LR
   <Card title="AWS bootstrap" icon="hammer" href="/infrastructure/terraform/aws-bootstrap">
     The admin-side module that created the bucket and role this repo points at.
   </Card>
-  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
+  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Static checks in pre-commit, credentialed plan/apply in CI only.
   </Card>
   <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
