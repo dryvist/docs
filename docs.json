@@ -15,6 +15,7 @@
     { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
     { "source": "/configuration/overview", "destination": "/infrastructure/configuration/overview" },
     { "source": "/automation/cloud-pipelines/ai-workflows", "destination": "/automation/repos/ai-workflows" },
+    { "source": "/automation/scheduled-routines/claude-code-routines", "destination": "/automation/repos/claude-code-routines" },
     { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
     { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
@@ -185,14 +186,14 @@
               {
                 "group": "Scheduled routines",
                 "pages": [
-                  "automation/scheduled-routines/overview",
-                  "automation/scheduled-routines/claude-code-routines"
+                  "automation/scheduled-routines/overview"
                 ]
               },
               {
                 "group": "Repos",
                 "pages": [
-                  "automation/repos/ai-workflows"
+                  "automation/repos/ai-workflows",
+                  "automation/repos/claude-code-routines"
                 ]
               }
             ]
