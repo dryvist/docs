@@ -1,10 +1,50 @@
 ---
 title: "Branch conventions"
-description: "Conventional Branch — short-form types only. `feat/<name>`, never `feature/<name>`. Lowercase, kebab-case names."
+description: "git-flow-next branch types (`feature/<issue>-slug`, `release/*`, `hotfix/*`) on `develop`-based repos; Conventional Branch short types (`feat/<name>`, never `feature/<name>`) on trunk-flow repos."
 page_type: reference
 ---
 
-> One branch shape across every repo. Read the type and the scope from the branch name alone — no `git log` required.
+> Read the type and the scope from the branch name alone — no `git log` required.
+
+## Which model applies
+
+Every repo runs one of two branch models. Check the repo's default branch (`git remote show origin` or the GitHub settings page) — never guess it from whatever branch happens to be checked out locally:
+
+- Default branch `develop` → the repo is on git-flow. Read [git-flow branch types](#git-flow-branch-types-repos-with-develop) below.
+- Default branch `main` → the repo uses trunk flow. Read [trunk-flow branch types](#trunk-flow-branch-types-conventional-branch) below.
+
+## git-flow branch types (repos with `develop`)
+
+git-flow repos follow the model implemented by [git-flow-next](https://github.com/gittower/git-flow-next). The `git flow` CLI is installed and configured globally (nix-managed `gitflow.*` git config).
+
+| Branch | Role | Gets changes by |
+| --- | --- | --- |
+| `main` | Production. Protected; no direct pushes. | **Merge commits only** — squash and rebase into `main` are banned, no exceptions. |
+| `develop` | Default integration branch. Protected but direct pushes allowed. | Squash-merged feature PRs (the default); merge commits for back-merges and stacked work. |
+| `feature/<issue>-<slug>` | One change's work | Branched from fresh `develop`. |
+| `release/<version>` | Optional final stabilization | Branched from `develop`; merge-committed to `main`; back-merged to `develop`. |
+| `hotfix/<slug>` | Urgent production fix | Branched from `main`; PR to `main`, merge commit; back-merged to `develop`. |
+
+Every merge into `main` produces a release: release-please watches `main`, opens the release PR against it, and tags on merge. The release PR merge-commits like any other `main` PR — it is not a squash exception. See [PR conventions](/conventions/pr-conventions) for the full merge-strategy breakdown.
+
+### Working a change
+
+1. Create or switch to a fresh worktree based on `origin/develop`.
+2. Start the branch there: `git flow feature start <name>` — `git-flow-next` prepends the `feature/` prefix itself, so `<name>` is the slug only. `git flow feature start 123-fix-inventory-loader` produces `feature/123-fix-inventory-loader`; passing the prefix yourself doubles it. Include the GitHub issue number when one exists. Never invent an issue number; use a short descriptive slug for issue-less maintenance.
+3. Commit atomically — one fix, one feature, or one coherent section of updates per commit. Follow [Commit conventions](/conventions/commit-conventions) and reference the issue (`#123`), using a closing keyword (`fixes #123`) when the change closes it.
+4. Open the PR against `develop`. Squash-merge ordinary feature PRs. Use a merge commit into `develop` only where preserving multiple atomic commits matters — stacked work, coordinated multi-commit changes, and release or hotfix back-merges.
+5. `hotfix/*` is the one exception to PR targeting: it branches from `main`, its PR targets `main` directly with a merge commit (never squash), and `main` is immediately back-merged into `develop` afterward.
+6. Small direct pushes to `develop` are fine; open a PR for anything reviewable.
+
+### git-flow-next usage
+
+- `git flow feature start <name>` / `git flow release start <version>` / `git flow hotfix start <name>` create correctly-based branches.
+- `git flow finish` detects the branch type from any topic branch. Prefer finishing through the PR flow above; use `finish` directly only where a PR is overkill (e.g. local-only cleanup) and the branch target allows direct pushes.
+- Config keys live in git config (`gitflow.branch.*`), set globally via Nix — don't override them per-repo without a recorded reason.
+
+## Trunk-flow branch types (Conventional Branch)
+
+Repos without a `develop` branch use trunk-based flow: no `feature/*`, `release/*`, or `hotfix/*` git-flow types, and PRs squash-merge straight into `main` (see [PR conventions](/conventions/pr-conventions)).
 
 Branch names follow [Conventional Branch](https://conventional-branch.github.io): a short type prefix, a `/`, and a kebab-case description. The type matches the [commit conventions](/conventions/commit-conventions) prefix that the eventual squash commit will use, so the branch name predicts the changelog entry.
 
@@ -47,11 +87,11 @@ These match the [Conventional Commits](/conventions/commit-conventions) prefixes
 
 If two types fit, pick the one that produces the right version bump. `feat:` → minor, `fix:` → patch, everything else → no version bump (per [release-please](https://github.com/googleapis/release-please) defaults).
 
-## Why short forms
+## Why short forms, on trunk-flow repos
 
-The aliases the long forms suggest (`feature`, `bugfix`) don't appear in any Conventional Commits / Conventional Branch spec. Mixing both creates two parallel taxonomies that release tooling, branch protection rules, and CODEOWNERS regexes have to match independently. One canonical set keeps everything (CI, automation, AI agents, humans skimming `git branch`) on the same page.
+On a trunk-flow repo, the long forms (`feature`, `bugfix`) don't appear in any Conventional Commits / Conventional Branch spec. Mixing both creates two parallel taxonomies that release tooling, branch protection rules, and CODEOWNERS regexes have to match independently. One canonical set keeps everything (CI, automation, AI agents, humans skimming `git branch`) on the same page.
 
-The full Conventional Branch spec, including the `release/` and `hotfix/` types this org does not use, lives at [conventional-branch.github.io](https://conventional-branch.github.io). The commitlint config that enforces the matching commit prefixes is [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional).
+The full Conventional Branch spec lives at [conventional-branch.github.io](https://conventional-branch.github.io); the commitlint config that enforces the matching commit prefixes is [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional). Its own `release/` and `hotfix/` types are distinct from git-flow-next's identically-named branch categories above — trunk-flow repos use neither; git-flow repos use git-flow-next's.
 
 ## What this connects to
 
