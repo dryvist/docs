@@ -1,12 +1,12 @@
 ---
 title: "Pull request conventions"
-description: "PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge default; no merge commits."
+description: "PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge into develop (or main on trunk-flow repos); merge-commit only for develop → main promotion."
 page_type: reference
 ---
 
 > The PR title becomes a commit subject the moment it merges. Write it like a commit, because it is one.
 
-Pull requests are the unit of change that lands on `main`. The title, the description, and the merge strategy together decide what the changelog says and how easily someone six months from now can answer "why did this happen?".
+Pull requests are the unit of change that lands on the repo's integration branch — `develop` on git-flow repos, `main` on trunk-flow repos. See [Branch conventions → Which model applies](/conventions/branch-conventions#which-model-applies) to check which one a given repo uses. The title, the description, and the merge strategy together decide what the changelog says and how easily someone six months from now can answer "why did this happen?".
 
 ## Title
 
@@ -28,10 +28,19 @@ Lead with the *why*. The diff already shows the *what*. PR descriptions that jus
 
 ## Merge strategy
 
+### Trunk-flow repos (no `develop`)
+
 - **Squash-merge is the default.** One PR = one commit on `main`. The PR title becomes the commit subject; the PR description becomes the commit body. `release-please` walks this linear history to compute version bumps.
-- **No merge commits** on `main`. The Settings → "Allow merge commits" toggle stays off org-wide.
+- **No merge commits** on `main`. The Settings → "Allow merge commits" toggle stays off.
 - **Rebase-merge is allowed** for stacked PRs where each constituent commit is itself a clean conventional-commit and worth preserving separately. Rare. Default to squash.
 - **No force-push to `main`.** Force-push to your own feature branch is fine while the PR is open.
+
+### git-flow repos (has `develop`)
+
+- **PRs target `develop` by default.** Squash-merge is the default there too — one PR, one commit on `develop`. Use a merge commit into `develop` only for stacked work or a release/hotfix back-merge.
+- **`develop` → `main` promotion is merge-commit only.** Squash and rebase into `main` are banned, no exceptions — that includes the `release-please` release PR, which merge-commits like every other `main` PR.
+- **`hotfix/*` is the one exception to PR targeting.** It branches from `main`, its PR targets `main` directly with a merge commit (never squash), and `main` is immediately back-merged into `develop` afterward.
+- **No force-push to `main` or `develop`.** Force-push to your own feature branch is fine while the PR is open.
 
 ## Review
 

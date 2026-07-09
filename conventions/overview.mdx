@@ -17,10 +17,10 @@ These conventions are the human-readable form of policies that AI assistants enf
     No emoji in commit subjects, Conventional Commits, the autonomy rules that decide when to ship vs ask.
   </Card>
   <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
-    Conventional Branch — short-form types only. `feat/<name>`, never `feature/<name>`.
+    git-flow-next types (`feature/<issue>-slug`, `release/*`, `hotfix/*`) on `develop`-based repos; Conventional Branch short types (`feat/<name>`) on trunk-flow repos.
   </Card>
   <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
-    PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge default.
+    PR title = the squash commit subject. Squash-merge into `develop` (or `main` on trunk-flow repos); `develop` → `main` promotion is merge-commit only.
   </Card>
   <Card title="Git transport" icon="lock" href="/conventions/git-transport">
     SSH for public repos, HTTPS for private repos. Visibility decides — not owner, not org.
