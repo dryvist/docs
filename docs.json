@@ -13,6 +13,7 @@
     { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
     { "source": "/infrastructure/hermes-agent", "destination": "/autonomous-agents/hermes-agent" },
     { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
+    { "source": "/configuration/overview", "destination": "/infrastructure/configuration/overview" },
     { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
     { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
@@ -101,7 +102,7 @@
               "infrastructure/overview",
               "infrastructure/iac-tooling",
               "infrastructure/deployment-state-contract",
-              "configuration/overview",
+              "infrastructure/configuration/overview",
               {
                 "group": "Compute and networking",
                 "pages": [
