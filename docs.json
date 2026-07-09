@@ -97,7 +97,25 @@
               "infrastructure/iac-tooling",
               "infrastructure/deployment-state-contract",
               "configuration/overview",
-              "infrastructure/dns-architecture",
+              {
+                "group": "Compute and networking",
+                "pages": [
+                  "infrastructure/dns-architecture",
+                  "infrastructure/vmid-network-tiers",
+                  "infrastructure/kubernetes-overview",
+                  "infrastructure/lxc-vs-docker",
+                  "infrastructure/vpn-egress-failover",
+                  "infrastructure/legacy-bmc-tactics"
+                ]
+              },
+              {
+                "group": "Storage and media",
+                "pages": [
+                  "infrastructure/zfs-pool-naming",
+                  "infrastructure/zfs-backup-replication",
+                  "infrastructure/media-stack"
+                ]
+              },
               {
                 "group": "Repos",
                 "pages": [
@@ -108,15 +126,6 @@
                   "infrastructure/repos/orbstack-kubernetes"
                 ]
               },
-              "infrastructure/vmid-network-tiers",
-              "infrastructure/kubernetes-overview",
-              "infrastructure/lxc-vs-docker",
-              "infrastructure/media-stack",
-              "infrastructure/vpn-egress-failover",
-              "infrastructure/zfs-pool-naming",
-              "infrastructure/zfs-backup-replication",
-              "infrastructure/legacy-bmc-tactics",
-              "infrastructure/tofu-check-placement",
               {
                 "group": "CI/CD",
                 "pages": [
@@ -124,7 +133,8 @@
                   "infrastructure/cicd/policy",
                   "infrastructure/cicd/dependency-automation",
                   "infrastructure/cicd/git-signing",
-                  "infrastructure/cicd/tofu-runs-on"
+                  "infrastructure/cicd/tofu-runs-on",
+                  "infrastructure/tofu-check-placement"
                 ]
               },
               {
@@ -296,15 +306,30 @@
             "group": "Conventions",
             "pages": [
               "conventions/overview",
-              "conventions/commit-conventions",
-              "conventions/branch-conventions",
-              "conventions/pr-conventions",
-              "conventions/readme-conventions",
-              "conventions/org-gitignore",
-              "conventions/git-transport",
-              "conventions/no-scripts",
-              "conventions/diagramming",
-              "conventions/pre-commit"
+              {
+                "group": "Git and GitHub",
+                "pages": [
+                  "conventions/commit-conventions",
+                  "conventions/branch-conventions",
+                  "conventions/pr-conventions",
+                  "conventions/git-transport",
+                  "conventions/pre-commit"
+                ]
+              },
+              {
+                "group": "Repository standards",
+                "pages": [
+                  "conventions/readme-conventions",
+                  "conventions/org-gitignore",
+                  "conventions/no-scripts"
+                ]
+              },
+              {
+                "group": "Documentation standards",
+                "pages": [
+                  "conventions/diagramming"
+                ]
+              }
             ]
           }
         ]
