@@ -38,6 +38,11 @@ Brand voice (header tagline):
 - One idea per sentence
 - Diagrams over prose where structure matters
 
+The canonical, reader-facing standard — information architecture, page naming,
+frontmatter (`page_type`), navigation density, and cited sources — is the published
+page [`conventions/documentation-standards`](conventions/documentation-standards.mdx).
+Author new pages to it by default.
+
 ## Technical writing
 
 Follow [Google technical-writing style](https://developers.google.com/tech-writing/one),

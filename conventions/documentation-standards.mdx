@@ -1,0 +1,94 @@
+---
+title: "Documentation standards"
+description: "How this site is organized and written — information architecture, page naming, frontmatter, and the sources these rules derive from."
+page_type: reference
+---
+
+> The rules every page on this site follows. Author to these by default; when a
+> rule and a page disagree, fix the page.
+
+This page is the canonical standard for `docs.jacobpevans.com`. It exists so new
+pages land consistently no matter who — human or model — writes them.
+
+## Information architecture
+
+The site is organized by **domain**, not by document type. The left sidebar has a
+small set of top-level dropdowns (Overview, Homelab infrastructure, Platform and
+tooling, AI and agents, Security and secrets, Reference). A reader picks a domain
+first, then narrows.
+
+Document type (the [Diátaxis](https://diataxis.fr/) idea of tutorial, how-to,
+reference, explanation) is captured as page metadata — the `page_type` field below
+— **not** as navigation groups. Nesting docs under "How-to" / "Reference" headings
+suits a product with large workflows; this site is an ecosystem map for one reader,
+so domain-first navigation scans faster.
+
+## Page naming
+
+| Surface | Rule |
+| --- | --- |
+| Filename | Lowercase `kebab-case`. It **is** the URL slug — they never differ. |
+| `overview.mdx` | Only for a group's landing page. |
+| Title | Sentence case: capitalize the first word and proper nouns only. Never a raw slug. |
+| Ampersand | Use **"and"** in titles and labels. Keep `&` only inside an official product name. |
+
+Preserve these tokens exactly, wherever they appear in a title:
+
+`AI · AWS · BMC · CI/CD · DNS · GitHub · GPU · IaC · LLM · LXC · macOS · MLX ·
+Nix · OIDC · OpenBao · OpenTofu · PR · README · SOPS · UniFi · VMID · VPN · ZFS ·
+Cribl · Docker · Splunk · Bitwarden · Doppler`
+
+Renaming a file changes its slug. When you rename or move a page, add a
+`redirects` entry in `docs.json` (old → new) **and** update every inbound link so
+none rely on the redirect.
+
+## Frontmatter
+
+Every content page starts with:
+
+```yaml
+---
+title: "Sentence case, acronyms preserved"
+description: "One sentence: what the page helps you do or understand."
+page_type: overview | how-to | explanation | reference | decision | repo
+---
+```
+
+`page_type` records what the page is trying to do. Pick one:
+
+| `page_type` | Use for |
+| --- | --- |
+| `overview` | A group's landing page: mental model and route map. |
+| `explanation` | How something works and why — architecture, rationale. |
+| `how-to` | Step-by-step setup or operation. |
+| `reference` | Canonical tables, policies, naming rules, per-tool detail. |
+| `decision` | "Why this way" — the tradeoff behind a choice. |
+| `repo` | A single public repo explainer with source links and contracts. |
+
+## Navigation density
+
+Keep the sidebar scannable:
+
+- A dropdown shows **at most ~3 group headers** at once.
+- A group with more than ~6 pages splits into collapsible subgroups.
+- Nest **at most two levels** deep below a dropdown.
+
+## Writing style
+
+Follow the [Google developer documentation style guide](https://developers.google.com/style):
+short sentences, one idea each, active voice, second person ("you"), sentence-case
+headings. Keep terms of art, but define each the first time you use it. The full
+voice-and-tone rules live in the repo's `AGENTS.md`.
+
+## Sources
+
+These standards derive from established documentation practice:
+
+| Source | What it informs |
+| --- | --- |
+| [Diátaxis](https://diataxis.fr/) | The four document types, captured here as `page_type`. |
+| [Divio — The documentation system](https://docs.divio.com/documentation-system/) | The same four-type model, applied to structure. |
+| [Google developer documentation style guide](https://developers.google.com/style) | Sentence case, active voice, plain language. |
+| [Write the Docs — Documentation Guide](https://www.writethedocs.org/guide/) | General authoring and maintenance practice. |
+| [Nielsen Norman Group — menu configurations](https://www.nngroup.com/articles/menu-configurations/) | Navigation density and scannability. |
+| [Mintlify navigation](https://mintlify.com/docs/organize/navigation) | Dropdowns, groups, and how this site's sidebar renders. |
