@@ -43,7 +43,7 @@ The `main` branch on every trunk-flow IaC repo (default branch `main`, no `devel
 - Squash or rebase merge methods only (no merge-commit option)
 - Copilot Code Review auto-requested on every PR (review-on-open, not review-on-push)
 
-An IaC repo on git-flow (default branch `develop`) instead follows [Branch conventions](/conventions/branch-conventions#git-flow-branch-types-repos-with-develop): `main` requires merge commits from `develop` (squash and rebase banned there), and the rules above apply to `develop` as its protected integration branch.
+An IaC repo on git-flow (default branch `develop`) instead follows [Branch conventions](/conventions/branch-conventions#git-flow-branch-types-repos-with-develop): `main` requires merge commits from `develop` (squash and rebase banned there). The rules above apply to `develop` as its protected integration branch, except that `develop` allows merge commits for back-merges and stacked work — the "no merge commits" / "squash or rebase only" rules stay `main`-only.
 
 There is intentionally **no required approving review count** on solo-maintained personal repos — the gates that matter are the ruleset checks and the OIDC scope of the apply role. Multi-maintainer org repos under `dryvist` set the count in their own rulesets.
 

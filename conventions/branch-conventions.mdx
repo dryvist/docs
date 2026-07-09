@@ -30,7 +30,7 @@ Every merge into `main` produces a release: release-please watches `main`, opens
 ### Working a change
 
 1. Create or switch to a fresh worktree based on `origin/develop`.
-2. Start the branch there: `git flow feature start <name>`. Include the GitHub issue number when one exists — `feature/123-fix-inventory-loader`. Never invent an issue number; use a short descriptive slug for issue-less maintenance.
+2. Start the branch there: `git flow feature start <name>` — `git-flow-next` prepends the `feature/` prefix itself, so `<name>` is the slug only. `git flow feature start 123-fix-inventory-loader` produces `feature/123-fix-inventory-loader`; passing the prefix yourself doubles it. Include the GitHub issue number when one exists. Never invent an issue number; use a short descriptive slug for issue-less maintenance.
 3. Commit atomically — one fix, one feature, or one coherent section of updates per commit. Follow [Commit conventions](/conventions/commit-conventions) and reference the issue (`#123`), using a closing keyword (`fixes #123`) when the change closes it.
 4. Open the PR against `develop`. Squash-merge ordinary feature PRs. Use a merge commit into `develop` only where preserving multiple atomic commits matters — stacked work, coordinated multi-commit changes, and release or hotfix back-merges.
 5. `hotfix/*` is the one exception to PR targeting: it branches from `main`, its PR targets `main` directly with a merge commit (never squash), and `main` is immediately back-merged into `develop` afterward.
