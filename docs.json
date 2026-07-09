@@ -87,7 +87,7 @@
         ]
       },
       {
-        "dropdown": "Homelab Infrastructure",
+        "dropdown": "Homelab infrastructure",
         "icon": "server",
         "groups": [
           {
@@ -188,11 +188,11 @@
         ]
       },
       {
-        "dropdown": "Platform & Tooling",
+        "dropdown": "Platform and tooling",
         "icon": "screwdriver-wrench",
         "groups": [
           {
-            "group": "Nix Ecosystem",
+            "group": "Nix ecosystem",
             "pages": [
               "nix/overview",
               "nix/nix-darwin",
@@ -215,11 +215,11 @@
         ]
       },
       {
-        "dropdown": "AI & Agents",
+        "dropdown": "AI and agents",
         "icon": "robot",
         "groups": [
           {
-            "group": "AI Development",
+            "group": "AI development",
             "pages": [
               "ai-development/overview",
               "ai-development/ai-orchestration-stack",
@@ -238,7 +238,7 @@
             ]
           },
           {
-            "group": "Autonomous Agents",
+            "group": "Autonomous agents",
             "pages": [
               "autonomous-agents/overview",
               "autonomous-agents/runtime",
@@ -261,7 +261,7 @@
         ]
       },
       {
-        "dropdown": "Security & Secrets",
+        "dropdown": "Security and secrets",
         "icon": "shield-halved",
         "groups": [
           {
@@ -276,7 +276,7 @@
             ]
           },
           {
-            "group": "Secrets Management",
+            "group": "Secrets management",
             "pages": [
               "security/env-files",
               "security/secrets-sync",
