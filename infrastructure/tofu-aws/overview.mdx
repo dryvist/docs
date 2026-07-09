@@ -1,5 +1,5 @@
 ---
-title: "Terraform on AWS"
+title: "OpenTofu on AWS"
 description: "Per-project IAM role, GitHub OIDC for CI, S3 native locking, SSE-S3 encryption, aws-vault + MFA for local dev. The standard for any new AWS-backed Terraform/OpenTofu/Terragrunt repo."
 page_type: overview
 ---
@@ -8,7 +8,7 @@ page_type: overview
 
 > One IAM role per repo. Humans and CI both `AssumeRole`; nothing holds direct AWS resource access. State lives in a project-scoped S3 bucket; locks live in the same bucket via S3 conditional writes.
 
-The pattern below is the single supported shape for any new AWS-backed Terraform / OpenTofu / Terragrunt repo. The [bootstrap snippet](/infrastructure/terraform/aws-bootstrap) provisions every resource named here in one `terraform apply`; the [consuming-repo page](/infrastructure/terraform/consuming-repo) shows what the new repo itself needs to drop in.
+The pattern below is the single supported shape for any new AWS-backed Terraform / OpenTofu / Terragrunt repo. The [bootstrap snippet](/infrastructure/tofu-aws/aws-bootstrap) provisions every resource named here in one `terraform apply`; the [consuming-repo page](/infrastructure/tofu-aws/consuming-repo) shows what the new repo itself needs to drop in.
 
 ## The isolation model
 
@@ -46,8 +46,8 @@ flowchart LR
   class Role gate
   class Bucket sink
 
-  click Role "/infrastructure/terraform/aws-bootstrap" "Bootstrap that provisions this role"
-  click Bucket "/infrastructure/terraform/consuming-repo" "How consuming repos wire to this bucket"
+  click Role "/infrastructure/tofu-aws/aws-bootstrap" "Bootstrap that provisions this role"
+  click Bucket "/infrastructure/tofu-aws/consuming-repo" "How consuming repos wire to this bucket"
 
   linkStyle 0,1 stroke:#F4EFE6,stroke-width:1.5px;
   linkStyle 2,3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
@@ -104,16 +104,16 @@ The `Project` tag should be activated as an AWS cost allocation tag (Billing →
 | AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects |
 
 <Note>
-Terragrunt wraps Terraform and uses the same backend config — none of the isolation model changes. The Terragrunt-specific `remote_state {}` and `generate {}` blocks live in the [consuming-repo page](/infrastructure/terraform/consuming-repo#terragrunt-variant).
+Terragrunt wraps Terraform and uses the same backend config — none of the isolation model changes. The Terragrunt-specific `remote_state {}` and `generate {}` blocks live in the [consuming-repo page](/infrastructure/tofu-aws/consuming-repo#terragrunt-variant).
 </Note>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Bootstrap the AWS foundation" icon="hammer" href="/infrastructure/terraform/aws-bootstrap">
+  <Card title="Bootstrap the AWS foundation" icon="hammer" href="/infrastructure/tofu-aws/aws-bootstrap">
     The admin-runnable Terraform that creates every per-project resource named on this page.
   </Card>
-  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/terraform/consuming-repo">
+  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/tofu-aws/consuming-repo">
     What goes inside the new repo so `terraform plan` runs immediately.
   </Card>
   <Card title="aws-vault profile mechanics" icon="key" href="/security/tools/aws-vault">

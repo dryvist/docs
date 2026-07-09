@@ -72,7 +72,7 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
 ## Cross-cutting topics
 
 <CardGroup cols={2}>
-  <Card title="Terraform on AWS" icon="diagram-project" href="/infrastructure/terraform/overview">
+  <Card title="OpenTofu on AWS" icon="diagram-project" href="/infrastructure/tofu-aws/overview">
     Per-project IAM role, GitHub OIDC, S3 native locking, SSE-S3 — the standard for any new AWS-backed Terraform repo.
   </Card>
   <Card title="Kubernetes overview" icon="cube" href="/infrastructure/kubernetes-overview">
@@ -81,7 +81,7 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
   <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
     The four-question decision tree for every new workload.
   </Card>
-  <Card title="SOPS for IaC" icon="key" href="/infrastructure/secrets-sops">
+  <Card title="SOPS for IaC" icon="key" href="/security/sops-for-iac">
     Encrypted-at-rest secrets across OpenTofu and Ansible repos.
   </Card>
   <Card title="Self-hosted Netflix" icon="film" href="/infrastructure/media-stack">
@@ -110,4 +110,4 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
 LXC is the default for production homelab services. Native packages where possible. Docker only when a vendor ships Docker-only images and there's no native path — and only on a dedicated `docker-host` VM so high-volume network traffic never crosses Docker's virtualized network stack.
 </Tip>
 
-For configuration of provisioned hosts, see [Configuration](/configuration/overview).
+For configuration of provisioned hosts, see [Configuration](/infrastructure/configuration/overview).

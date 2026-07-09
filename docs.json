@@ -4,10 +4,18 @@
   "name": "Jacob P Evans",
   "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
   "redirects": [
+    { "source": "/infrastructure/terraform/overview", "destination": "/infrastructure/tofu-aws/overview" },
+    { "source": "/infrastructure/terraform/aws-bootstrap", "destination": "/infrastructure/tofu-aws/aws-bootstrap" },
+    { "source": "/infrastructure/terraform/consuming-repo", "destination": "/infrastructure/tofu-aws/consuming-repo" },
     { "source": "/infrastructure/repos/terraform-proxmox", "destination": "/infrastructure/repos/tofu-proxmox" },
     { "source": "/infrastructure/repos/terraform-unifi", "destination": "/infrastructure/repos/tofu-unifi" },
     { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
     { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
+    { "source": "/infrastructure/hermes-agent", "destination": "/autonomous-agents/hermes-agent" },
+    { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
+    { "source": "/configuration/overview", "destination": "/infrastructure/configuration/overview" },
+    { "source": "/automation/cloud-pipelines/ai-workflows", "destination": "/automation/repos/ai-workflows" },
+    { "source": "/automation/scheduled-routines/claude-code-routines", "destination": "/automation/repos/claude-code-routines" },
     { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
     { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
@@ -96,7 +104,7 @@
               "infrastructure/overview",
               "infrastructure/iac-tooling",
               "infrastructure/deployment-state-contract",
-              "configuration/overview",
+              "infrastructure/configuration/overview",
               {
                 "group": "Compute and networking",
                 "pages": [
@@ -138,11 +146,11 @@
                 ]
               },
               {
-                "group": "Terraform on AWS",
+                "group": "OpenTofu on AWS",
                 "pages": [
-                  "infrastructure/terraform/overview",
-                  "infrastructure/terraform/aws-bootstrap",
-                  "infrastructure/terraform/consuming-repo"
+                  "infrastructure/tofu-aws/overview",
+                  "infrastructure/tofu-aws/aws-bootstrap",
+                  "infrastructure/tofu-aws/consuming-repo"
                 ]
               }
             ]
@@ -172,15 +180,20 @@
               {
                 "group": "Cloud pipelines",
                 "pages": [
-                  "automation/cloud-pipelines/overview",
-                  "automation/cloud-pipelines/ai-workflows"
+                  "automation/cloud-pipelines/overview"
                 ]
               },
               {
                 "group": "Scheduled routines",
                 "pages": [
-                  "automation/scheduled-routines/overview",
-                  "automation/scheduled-routines/claude-code-routines"
+                  "automation/scheduled-routines/overview"
+                ]
+              },
+              {
+                "group": "Repos",
+                "pages": [
+                  "automation/repos/ai-workflows",
+                  "automation/repos/claude-code-routines"
                 ]
               }
             ]
@@ -223,7 +236,7 @@
             "pages": [
               "ai-development/overview",
               "ai-development/ai-orchestration-stack",
-              "infrastructure/hermes-agent",
+              "autonomous-agents/hermes-agent",
               "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
               "ai-development/claude-code-plugins",
@@ -280,7 +293,7 @@
             "pages": [
               "security/env-files",
               "security/secrets-sync",
-              "infrastructure/secrets-sops",
+              "security/sops-for-iac",
               "autonomous-agents/secrets",
               {
                 "group": "Tools",
