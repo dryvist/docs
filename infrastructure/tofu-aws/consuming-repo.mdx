@@ -1,12 +1,12 @@
 ---
-title: "Consuming-repo setup"
+title: "Consuming repo setup"
 description: "backend.tf, providers.tf, the operator's ~/.aws/config profile, and the GitHub Actions OIDC workflow that lets a new Terraform repo run plan and apply against the per-project role."
 page_type: how-to
 ---
 
 {/* TIER-GUARD: reference page — file layout, backend config, local dev, and CI workflow belong together. */}
 
-> Drop these files into the new repo. The role and bucket from the [AWS bootstrap](/infrastructure/terraform/aws-bootstrap) supply everything the backend block needs.
+> Drop these files into the new repo. The role and bucket from the [AWS bootstrap](/infrastructure/tofu-aws/aws-bootstrap) supply everything the backend block needs.
 
 The four outputs from the bootstrap (`state_bucket`, `tf_role_arn`, `aws_region`, `state_key_prefix`) feed straight into this page. Once the files below are in place, the repo's first `terraform plan` runs in under a minute — locally and in CI — with no static credentials anywhere.
 
@@ -252,10 +252,10 @@ flowchart LR
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Terraform on AWS overview" icon="diagram-project" href="/infrastructure/terraform/overview">
+  <Card title="OpenTofu on AWS overview" icon="diagram-project" href="/infrastructure/tofu-aws/overview">
     The isolation model and naming conventions this repo implements.
   </Card>
-  <Card title="AWS bootstrap" icon="hammer" href="/infrastructure/terraform/aws-bootstrap">
+  <Card title="AWS bootstrap" icon="hammer" href="/infrastructure/tofu-aws/aws-bootstrap">
     The admin-side module that created the bucket and role this repo points at.
   </Card>
   <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">

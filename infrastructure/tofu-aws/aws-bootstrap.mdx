@@ -167,7 +167,7 @@ aws iam get-role --role-name tf-<project>
 terraform output -json
 ```
 
-If all three succeed, the consuming repo can immediately set up its [backend.tf](/infrastructure/terraform/consuming-repo) and run its first `terraform plan`.
+If all three succeed, the consuming repo can immediately set up its [backend.tf](/infrastructure/tofu-aws/consuming-repo) and run its first `terraform plan`.
 
 {/* Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~5:1 LR. Pass. */}
 
@@ -196,10 +196,10 @@ flowchart LR
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Terraform on AWS overview" icon="diagram-project" href="/infrastructure/terraform/overview">
+  <Card title="OpenTofu on AWS overview" icon="diagram-project" href="/infrastructure/tofu-aws/overview">
     The isolation model and naming conventions this bootstrap implements.
   </Card>
-  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/terraform/consuming-repo">
+  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/tofu-aws/consuming-repo">
     What the new repo drops in next to use the outputs above.
   </Card>
   <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
