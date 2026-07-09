@@ -50,8 +50,9 @@ Related updates batch into ecosystem groups (Terraform, AWS SDK, HuggingFace, Op
 | Source | Pin |
 | --- | --- |
 | dryvist self-references | `@main` — ride upstream, never a SHA or tag |
-| Trusted GitHub Actions | SemVer tags (`@v6`) |
-| Untrusted / external actions | SHA commit digests |
+| Third-party GitHub Actions (trusted or untrusted) | Full commit SHA, with the released version tag as a trailing comment — `uses: actions/checkout@<sha> # v4.2.2` |
+
+A `uses:` pin resolves its version tag automatically for Renovate and for anyone reading the diff. A non-`uses:` pin (a container digest, a downloaded binary, anything Renovate can't infer the source of) needs an explicit hint comment instead: `# renovate: datasource=... depName=... versioning=...`.
 
 `platformAutomerge` stays **false**: GitHub's merge queue has a known bug where a PR passes every check but the merge never executes, stalling for days. Renovate merges via its own API path with retry instead. The per-scanner rationale for the `@main` self-reference allowance lives in [CI/CD policy → scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 

@@ -38,7 +38,7 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 ## Dependency versioning
 
-See [Dependency automation](/infrastructure/cicd/dependency-automation) for the full trust-tier, scheduling, automerge, and version-pinning policy — including which action sources ride `@main`, which take SemVer tags, and which are SHA-pinned.
+See [Dependency automation](/infrastructure/cicd/dependency-automation) for the full trust-tier, scheduling, automerge, and version-pinning policy — including which action sources ride `@main` and which are SHA-pinned.
 
 ### Scanner posture for self-references
 
@@ -49,7 +49,7 @@ See [Dependency automation](/infrastructure/cicd/dependency-automation) for the 
 - **CodeQL** — code scanning default setup on public repos only (free; private repos excluded to avoid the paid Code Security charge), managed as IaC in [`dryvist/tofu-github`](https://github.com/dryvist/tofu-github) (per-repo, pending the provider resource). No committed query-filter config; same-org `@main` false positives ([github/codeql#18316](https://github.com/github/codeql/issues/18316)) are dismissed in the code scanning UI.
 - **OSV-Scanner** — reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
 
-Untrusted/external actions are unaffected and keep their SHA digests. The full per-scanner posture lives in [`dryvist/.github` → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
+Third-party actions — trusted or untrusted — are unaffected and stay SHA-pinned, each with its released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github` → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
 
 ## Reusable workflow ownership
 
