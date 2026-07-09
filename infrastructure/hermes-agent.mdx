@@ -18,12 +18,15 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 **Kanban** task board, so the agent keeps working unattended — no laptop, no cloud.
 
 - **Brain:** an always-on local GPU model (OpenAI-compatible), so the agent never
-  depends on an external API or a sleeping laptop. The brain is a **router alias**
-  so the physical model can change without reconfiguring the agent; it currently
-  resolves to a mixed-precision 4-bit Qwen3.6-35B-A3B (OptiQ) selected by the
-  [agentic tool-calling benchmark](/tools/mlx-benchmarks) as the top multi-turn
-  tool-caller. **Thinking stays ON** for this brain — with reasoning disabled the
-  same model degrades to plain-text pseudo tool-calls after a handful of turns.
+  depends on an external API or a sleeping laptop. The brain is a **stable router
+  alias** (`ai-default`) whose backing model **rotates daily** on a fixed UTC
+  schedule — a larger reasoning model at 00:00 UTC and a benchmark-selected
+  optimized tool-calling model at 12:00 UTC — so the agent and the chat box always
+  share one default that alternates twice a day. Only the router's alias-to-model
+  mapping flips (via systemd timers); the agent never restarts. Both phases run
+  with **thinking ON**, and both carry sampling guardrails for quantized brains.
+  See the mechanism doc,
+  [`docs/BRAIN_ROTATION.md`](https://github.com/dryvist/ansible-proxmox-apps/blob/main/docs/BRAIN_ROTATION.md).
 - **Memory:** the built-in `MEMORY.md` / `USER.md` plus the local **Hindsight**
   provider (knowledge-graph recall, fully self-hosted). Everything lives under
   `$HERMES_HOME` on a dedicated volume that is snapshotted and replicated off-node.
