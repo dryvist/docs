@@ -12,6 +12,7 @@
     { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
     { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
     { "source": "/infrastructure/hermes-agent", "destination": "/autonomous-agents/hermes-agent" },
+    { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
     { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
     { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
@@ -284,7 +285,7 @@
             "pages": [
               "security/env-files",
               "security/secrets-sync",
-              "infrastructure/secrets-sops",
+              "security/sops-for-iac",
               "autonomous-agents/secrets",
               {
                 "group": "Tools",
