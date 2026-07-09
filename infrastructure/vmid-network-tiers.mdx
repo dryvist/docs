@@ -1,7 +1,7 @@
 ---
-title: "VMID & network tier model"
+title: "VMID and network tier model"
 description: "A structured 6-digit VMID and a trust-ordered set of VLAN tiers, designed so that a guest's identity and its network line up by construction — first digit of the VMID equals the VLAN tag ÷ 10."
-tier: 2
+page_type: decision
 ---
 
 > Every guest gets a 6-digit identity number, every network is a trust-ordered tier, and the two are wired together: a guest's VMID announces which tier it belongs to, and that tier *is* its VLAN. Identity and placement stop being two facts to keep in sync — they become one fact, encoded once.
