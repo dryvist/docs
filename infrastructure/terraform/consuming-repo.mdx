@@ -170,7 +170,7 @@ The `environment: prod` line ties the apply job to a GitHub Environment with req
 The same `tf-<project>` role used locally is the role CI assumes. The OIDC trust statements in the bootstrap (`refs/heads/<branch_pattern>` for push, `pull_request` for PR runs) gate which workflow events are allowed.
 
 <Note>
-For the [self-hosted RunsOn-on-AWS-spot](/infrastructure/cicd/terraform-runs-on) runner alternative, the workflow shape is identical — `runs-on: ubuntu-latest` swaps for a self-hosted runner label, and everything else stays the same. OIDC works the same way on self-hosted runners.
+For the [self-hosted RunsOn-on-AWS-spot](/infrastructure/cicd/tofu-runs-on) runner alternative, the workflow shape is identical — `runs-on: ubuntu-latest` swaps for a self-hosted runner label, and everything else stays the same. OIDC works the same way on self-hosted runners.
 </Note>
 
 ## Terragrunt variant
@@ -207,7 +207,7 @@ include "root" {
 }
 ```
 
-Local invocation pairs aws-vault with [Doppler](/security/tools/doppler) for runtime secret injection — the canonical chain from the [check-placement page](/infrastructure/terraform-check-placement):
+Local invocation pairs aws-vault with [Doppler](/security/tools/doppler) for runtime secret injection — the canonical chain from the [OpenTofu check-placement page](/infrastructure/tofu-check-placement):
 
 ```bash
 aws-vault exec tf-<project> -- doppler run -- terragrunt plan
@@ -258,7 +258,7 @@ flowchart LR
   <Card title="AWS bootstrap" icon="hammer" href="/infrastructure/terraform/aws-bootstrap">
     The admin-side module that created the bucket and role this repo points at.
   </Card>
-  <Card title="Terraform check placement" icon="list-check" href="/infrastructure/terraform-check-placement">
+  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Static checks in pre-commit, credentialed plan/apply in CI only.
   </Card>
   <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">

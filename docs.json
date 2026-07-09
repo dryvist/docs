@@ -55,9 +55,10 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "dropdowns": [
       {
-        "tab": "Documentation",
+        "dropdown": "Overview",
+        "icon": "compass",
         "groups": [
           {
             "group": "Start here",
@@ -76,11 +77,26 @@
             ]
           },
           {
+            "group": "About",
+            "pages": [
+              "about/jacob",
+              "about/homelab",
+              "about/reef"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "Homelab Infrastructure",
+        "icon": "server",
+        "groups": [
+          {
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
               "infrastructure/iac-tooling",
               "infrastructure/deployment-state-contract",
+              "configuration/overview",
               "infrastructure/dns-architecture",
               {
                 "group": "Repos",
@@ -122,6 +138,105 @@
             ]
           },
           {
+            "group": "Observability",
+            "pages": [
+              "observability/overview",
+              "observability/llm-observability",
+              "observability/pipeline-flows",
+              {
+                "group": "Repos",
+                "pages": [
+                  "observability/repos/ansible-splunk",
+                  "observability/repos/tf-splunk-aws",
+                  "observability/repos/cc-edge-the-mac-pack"
+                ]
+              },
+              "observability/monitoring-agents"
+            ]
+          },
+          {
+            "group": "Automation",
+            "pages": [
+              "automation/overview",
+              "automation/issue-to-pr-pipeline",
+              {
+                "group": "Cloud pipelines",
+                "pages": [
+                  "automation/cloud-pipelines/overview",
+                  "automation/cloud-pipelines/ai-workflows"
+                ]
+              },
+              {
+                "group": "Scheduled routines",
+                "pages": [
+                  "automation/scheduled-routines/overview",
+                  "automation/scheduled-routines/claude-code-routines"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "Platform & Tooling",
+        "icon": "screwdriver-wrench",
+        "groups": [
+          {
+            "group": "Nix Ecosystem",
+            "pages": [
+              "nix/overview",
+              "nix/nix-darwin",
+              "nix/nix-home",
+              "nix/nix-ai",
+              "nix/nix-devenv",
+              "nix/nix-claude-code",
+              "nix/package-placement"
+            ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "tools/overview",
+              "tools/mlx-benchmarks",
+              "tools/automation",
+              "tools/bifrost"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "AI & Agents",
+        "icon": "robot",
+        "groups": [
+          {
+            "group": "AI Development",
+            "pages": [
+              "ai-development/overview",
+              "ai-development/ai-orchestration-stack",
+              "infrastructure/hermes-agent",
+              "ai-development/repo-boundaries",
+              "ai-development/ai-assistant-instructions",
+              "ai-development/claude-code-plugins",
+              {
+                "group": "Skills",
+                "pages": [
+                  "ai-development/skills/overview",
+                  "ai-development/skills/ship-and-finalize",
+                  "ai-development/skills/codeql-resolution"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Autonomous Agents",
+            "pages": [
+              "autonomous-agents/overview",
+              "autonomous-agents/runtime",
+              "autonomous-agents/github-access",
+              "autonomous-agents/roadmap"
+            ]
+          },
+          {
             "group": "Local LLM",
             "pages": [
               "local-llm/overview",
@@ -132,13 +247,13 @@
               "local-llm/distributed",
               "local-llm/homelab-gpu"
             ]
-          },
-          {
-            "group": "Configuration",
-            "pages": [
-              "configuration/overview"
-            ]
-          },
+          }
+        ]
+      },
+      {
+        "dropdown": "Security & Secrets",
+        "icon": "shield-halved",
+        "groups": [
           {
             "group": "Security",
             "pages": [
@@ -170,68 +285,13 @@
                 ]
               }
             ]
-          },
-          {
-            "group": "Nix Ecosystem",
-            "pages": [
-              "nix/overview",
-              "nix/nix-darwin",
-              "nix/nix-home",
-              "nix/nix-ai",
-              "nix/nix-devenv",
-              "nix/nix-claude-code",
-              "nix/package-placement"
-            ]
-          },
-          {
-            "group": "AI Development",
-            "pages": [
-              "ai-development/overview",
-              "ai-development/ai-orchestration-stack",
-              "infrastructure/hermes-agent",
-              "ai-development/repo-boundaries",
-              "ai-development/ai-assistant-instructions",
-              "ai-development/claude-code-plugins",
-              {
-                "group": "Skills",
-                "pages": [
-                  "ai-development/skills/overview",
-                  "ai-development/skills/ship-and-finalize",
-                  "ai-development/skills/codeql-resolution"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Autonomous Agents",
-            "pages": [
-              "autonomous-agents/overview",
-              "autonomous-agents/runtime",
-              "autonomous-agents/github-access",
-              "autonomous-agents/roadmap"
-            ]
-          },
-          {
-            "group": "Automation",
-            "pages": [
-              "automation/overview",
-              "automation/issue-to-pr-pipeline",
-              {
-                "group": "Cloud pipelines",
-                "pages": [
-                  "automation/cloud-pipelines/overview",
-                  "automation/cloud-pipelines/ai-workflows"
-                ]
-              },
-              {
-                "group": "Scheduled routines",
-                "pages": [
-                  "automation/scheduled-routines/overview",
-                  "automation/scheduled-routines/claude-code-routines"
-                ]
-              }
-            ]
-          },
+          }
+        ]
+      },
+      {
+        "dropdown": "Reference",
+        "icon": "book",
+        "groups": [
           {
             "group": "Conventions",
             "pages": [
@@ -245,40 +305,6 @@
               "conventions/no-scripts",
               "conventions/diagramming",
               "conventions/pre-commit"
-            ]
-          },
-          {
-            "group": "Observability",
-            "pages": [
-              "observability/overview",
-              "observability/llm-observability",
-              "observability/pipeline-flows",
-              {
-                "group": "Repos",
-                "pages": [
-                  "observability/repos/ansible-splunk",
-                  "observability/repos/tf-splunk-aws",
-                  "observability/repos/cc-edge-the-mac-pack"
-                ]
-              },
-              "observability/monitoring-agents"
-            ]
-          },
-          {
-            "group": "Tools",
-            "pages": [
-              "tools/overview",
-              "tools/mlx-benchmarks",
-              "tools/automation",
-              "tools/bifrost"
-            ]
-          },
-          {
-            "group": "About",
-            "pages": [
-              "about/jacob",
-              "about/homelab",
-              "about/reef"
             ]
           }
         ]
