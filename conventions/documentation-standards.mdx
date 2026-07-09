@@ -34,9 +34,12 @@ so domain-first navigation scans faster.
 
 Preserve these tokens exactly, wherever they appear in a title:
 
-`AI · AWS · BMC · CI/CD · DNS · GitHub · GPU · IaC · LLM · LXC · macOS · MLX ·
-Nix · OIDC · OpenBao · OpenTofu · PR · README · SOPS · UniFi · VMID · VPN · ZFS ·
-Cribl · Docker · Splunk · Bitwarden · Doppler`
+`AI · API · AWS · BMC · CI/CD · DNS · GPU · HEC · IAM · IaC · IDS · IPS · K8s ·
+LLM · LXC · macOS · MCP · MFA · MLX · MoE · Nix · OIDC · OTEL · OTLP · PR ·
+README · SIEM · SOPS · TTL · UniFi · VLAN · VMID · VPN · YAML · ZFS` — plus proper
+nouns kept in their own casing: `Apple · Bifrost · Bitwarden · ChatGPT · Cribl ·
+Docker · Doppler · GitHub · Keychain · Kubernetes · Mac · OpenBao · OpenTofu ·
+OrbStack · Proxmox · Splunk`
 
 Renaming a file changes its slug. When you rename or move a page, add a
 `redirects` entry in `docs.json` (old → new) **and** update every inbound link so
@@ -50,7 +53,7 @@ Every content page starts with:
 ---
 title: "Sentence case, acronyms preserved"
 description: "One sentence: what the page helps you do or understand."
-page_type: overview | how-to | explanation | reference | decision | repo
+page_type: "reference" # one of: overview, how-to, explanation, reference, decision, repo
 ---
 ```
 
