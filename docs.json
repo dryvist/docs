@@ -14,6 +14,7 @@
     { "source": "/infrastructure/hermes-agent", "destination": "/autonomous-agents/hermes-agent" },
     { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
     { "source": "/configuration/overview", "destination": "/infrastructure/configuration/overview" },
+    { "source": "/automation/cloud-pipelines/ai-workflows", "destination": "/automation/repos/ai-workflows" },
     { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
     { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
   ],
@@ -178,8 +179,7 @@
               {
                 "group": "Cloud pipelines",
                 "pages": [
-                  "automation/cloud-pipelines/overview",
-                  "automation/cloud-pipelines/ai-workflows"
+                  "automation/cloud-pipelines/overview"
                 ]
               },
               {
@@ -187,6 +187,12 @@
                 "pages": [
                   "automation/scheduled-routines/overview",
                   "automation/scheduled-routines/claude-code-routines"
+                ]
+              },
+              {
+                "group": "Repos",
+                "pages": [
+                  "automation/repos/ai-workflows"
                 ]
               }
             ]
