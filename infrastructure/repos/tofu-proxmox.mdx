@@ -38,12 +38,6 @@ Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmo
 
 The homelab uses **RustFS** for S3-compatible object storage. The `object_storage` module declares the RustFS LXC, which serves data flows and Splunkbase sync. `ansible-proxmox` backs up the RustFS data volume via `sanoid`/`syncoid`.
 
-## Environments
-
-`tofu-proxmox` drives two independent environments from two separate desired-state inputs: production and develop. Each has its own versioned input object, its own state, and its own guests, so develop can plan and apply real infrastructure without contending with production.
-
-Which one a run targets is chosen **explicitly** by exporting `S3_INVENTORY_KEY` before Terragrunt — there is no inference from the git branch. Unset, it defaults to the production input. The object's `environment` field then derives the state, mirror, and published-inventory keys; production keys are pinned to their existing values so adding develop changes nothing production touches. The full rules live in the [deployment state contract](/infrastructure/deployment-state-contract#per-environment-inputs).
-
 ## Getting started
 
 <Steps>
