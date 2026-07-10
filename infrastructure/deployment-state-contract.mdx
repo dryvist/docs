@@ -70,6 +70,7 @@ The canonical source is the `iac-inventory` object, fetched fresh on every plan/
 
 - **Never trust or hand-edit a local `deployment.json`.** Any file on disk is a transient fetch artifact, not the source of truth. Delete stale local copies.
 - `DEPLOYMENT_JSON_PATH` exists only for offline or bootstrap work; it points Terragrunt at a local file instead of S3. Do not use it as a normal workflow.
+- **`S3_INVENTORY_KEY` selects which environment's input to read** (see [Per-environment inputs](#per-environment-inputs)). It is set explicitly per run; unset it defaults to the production object.
 - **Ansible consumers never read `deployment.json` directly.** They read the published inventory that `tofu-proxmox` renders, validates, and distributes after each apply.
 
 ## Writing the input
@@ -83,7 +84,7 @@ All infrastructure changes — containers, VMs, pools, sizing — are edits to t
 
 Two hard prohibitions:
 
-- **Never `git add deployment.json`.** The repo keeps only `deployment.json.example` as a shape reference; the live file is gitignored by design.
+- **Never `git add deployment.json`.** The repo keeps only `deployment.json.example` as a shape reference; the live file is gitignored by design. The develop-environment object follows the same rule — repo keeps only `deployment.develop.json.example`.
 - **Never create `terraform.tfvars`.** It silently overrides `deployment.json` through Terraform variable precedence and is gitignored, so it does not travel between worktrees — the exact drift this contract removes. If one appears in a worktree, delete it.
 
 ## The schema
@@ -142,6 +143,26 @@ Lock *waiting* is separate from the lock *mechanism*. `-lock-timeout=10m` (set o
 The state lock only serializes writers of *one* backend. A homelab change often spans more than that — a tofu apply followed by an ansible run, or an agent editing infrastructure while a scheduled job also fires. A single **global flow lease** gates all of it: a lease held in the T2 runtime manager's KV store, taken via **compare-and-set** so two claimants cannot both win.
 
 The lease is coupled to credentials — **credential gating: no lease, no creds.** A flow that cannot take the lease cannot obtain the short-lived credentials it would need to mutate anything, so serialization is enforced at the point where secrets are issued, not merely by convention. See the [tools comparison](/security/comparison#the-runtime-manager-is-also-the-lock-authority) for how the runtime manager plays this dual role.
+
+## Per-environment inputs
+
+The ACID contract above holds **per environment**. `tofu-proxmox` now has two independent inputs — a production object and a develop object — so a `develop` branch can plan and apply real infrastructure without contending with production over one state. Each is a separate versioned object with its own tfstate, and each obeys the whole contract independently.
+
+**Selection is explicit.** An operator or CI job sets `S3_INVENTORY_KEY` to choose which object a run reads — there is no inference from the git branch name. Unset, it defaults to the production object. The fetched object then declares its own identity in an `environment` field, and Terragrunt derives three keys from it:
+
+| Derived key | Production (`homelab`) | Develop (`develop`) |
+| --- | --- | --- |
+| tfstate | *(current literal — unchanged)* | nested under a `develop/` prefix |
+| input mirror (DR fallback) | *(current literal — unchanged)* | nested under a `develop/` prefix |
+| published inventory | *(current literal — unchanged)* | nested under a `develop/` prefix |
+
+Three properties make this safe:
+
+- **Production paths are pinned.** The production branch of each derivation is the exact pre-existing literal, so adding the develop environment changes nothing a production plan touches — no state migration, no re-published inventory. This is the load-bearing invariant: any drift in a production key would make the next production plan initialise a fresh empty state and propose a full destroy.
+- **Isolation by construction.** Separate tfstate keys mean separate state locks (the lock id is per-key), so the two environments never collide in state. Guests are separated on the cluster by an environment digit in their id and a dedicated non-production network segment.
+- **One writer across both.** The environments share one physical cluster, so the [global flow lease](#the-global-flow-lease--one-mutating-flow-at-a-time) still serializes mutating flows across environments — one apply at a time, regardless of which environment it targets.
+
+An unknown `environment` value fails loud before any plan, the same way a missing input does — the allowlist is part of the contract, not a convenience.
 
 ## Variant: tofu-unifi
 
