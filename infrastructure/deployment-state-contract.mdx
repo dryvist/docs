@@ -70,7 +70,7 @@ The canonical source is the `iac-inventory` object, fetched fresh on every plan/
 
 - **Never trust or hand-edit a local `deployment.json`.** Any file on disk is a transient fetch artifact, not the source of truth. Delete stale local copies.
 - `DEPLOYMENT_JSON_PATH` exists only for offline or bootstrap work; it points Terragrunt at a local file instead of S3. Do not use it as a normal workflow.
-- **`S3_INVENTORY_KEY` selects which environment's input to read** (see [Per-environment inputs](#per-environment-inputs)). It is set explicitly per run; unset it defaults to the production object.
+- **`S3_INVENTORY_KEY` selects which environment's input to read** (see [Per-environment inputs](#per-environment-inputs)). It is set explicitly per run; if unset, it defaults to the production object.
 - **Ansible consumers never read `deployment.json` directly.** They read the published inventory that `tofu-proxmox` renders, validates, and distributes after each apply.
 
 ## Writing the input
@@ -84,7 +84,7 @@ All infrastructure changes — containers, VMs, pools, sizing — are edits to t
 
 Two hard prohibitions:
 
-- **Never `git add deployment.json`.** The repo keeps only `deployment.json.example` as a shape reference; the live file is gitignored by design. The develop-environment object follows the same rule — repo keeps only `deployment.develop.json.example`.
+- **Never `git add deployment.json`.** The repo keeps only `deployment.json.example` as a shape reference; the live file is gitignored by design. The develop-environment object follows the same rule — the repo keeps only `deployment.develop.json.example`.
 - **Never create `terraform.tfvars`.** It silently overrides `deployment.json` through Terraform variable precedence and is gitignored, so it does not travel between worktrees — the exact drift this contract removes. If one appears in a worktree, delete it.
 
 ## The schema
@@ -158,7 +158,7 @@ The ACID contract above holds **per environment**. `tofu-proxmox` now has two in
 
 Three properties make this safe:
 
-- **Production paths are pinned.** The production branch of each derivation is the exact pre-existing literal, so adding the develop environment changes nothing a production plan touches — no state migration, no re-published inventory. This is the load-bearing invariant: any drift in a production key would make the next production plan initialise a fresh empty state and propose a full destroy.
+- **Production paths are pinned.** The production branch of each derivation is the exact pre-existing literal, so adding the develop environment changes nothing a production plan touches — no state migration, no re-published inventory. This is the load-bearing invariant: any drift in a production key would make the next production plan initialize a fresh empty state and propose a full destroy.
 - **Isolation by construction.** Separate tfstate keys mean separate state locks (the lock id is per-key), so the two environments never collide in state. Guests are separated on the cluster by an environment digit in their id and a dedicated non-production network segment.
 - **One writer across both.** The environments share one physical cluster, so the [global flow lease](#the-global-flow-lease--one-mutating-flow-at-a-time) still serializes mutating flows across environments — one apply at a time, regardless of which environment it targets.
 
