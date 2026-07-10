@@ -36,6 +36,10 @@ Every merge into `main` produces a release: release-please watches `main`, opens
 5. `hotfix/*` is the one exception to PR targeting: it branches from `main`, its PR targets `main` directly with a merge commit (never squash), and `main` is immediately back-merged into `develop` afterward.
 6. Small direct pushes to `develop` are fine; open a PR for anything reviewable.
 
+<Note>
+On `tofu-proxmox`, the `develop` branch has a live counterpart in the infrastructure itself: a separate develop environment with its own state and its own guests on a non-production segment, selected explicitly at apply time. Branching for infrastructure work does not by itself target it — see [Per-environment inputs](/infrastructure/deployment-state-contract#per-environment-inputs) for how an apply chooses production vs develop.
+</Note>
+
 ### git-flow-next usage
 
 - `git flow feature start <name>` / `git flow release start <version>` / `git flow hotfix start <name>` create correctly-based branches.
