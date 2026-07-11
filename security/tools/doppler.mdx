@@ -20,7 +20,7 @@ Everything an always-on machine consumes routinely resides in T2, where credenti
 - AI provider keys: `AI_TOKEN`, `COPILOT_GITHUB_TOKEN`, `HF_TOKEN`, plus provider-specific keys when a tool cannot use the shared `AI_TOKEN` convention.
 - GitHub App credentials: `GH_APP_CLAUDE_BOT_*`, the SSH signing key for Actions-signed commits.
 - Slack webhooks (broadcast and per-channel).
-- Infrastructure runtime config: database passwords, RunsOn license, Qdrant credentials.
+- Cloud/SaaS licensing that genuinely needs a hosted source of truth (e.g. the RunsOn license). Self-hosted app-service credentials — database passwords, Qdrant, and the like — live in OpenBao (T2), **not** here.
 
 ## What does not go in Doppler
 

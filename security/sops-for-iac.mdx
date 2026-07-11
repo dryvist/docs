@@ -4,7 +4,7 @@ description: "SOPS + age for low-blast-radius repo-local config: randomly genera
 page_type: explanation
 ---
 
-> SOPS is the default for sensitive-but-not-mission-critical values that live inside a single repo. Doppler holds anything an external system could weaponize. Keychain holds anything that must never touch disk.
+> OpenBao (T2) is the default runtime store — anything a service, human, or agent might ever need lives there. SOPS is the narrow exception: a value used by exactly one repo that is neither mission-critical nor a public-service credential. Doppler holds secret-zero and cloud/SaaS keys; Keychain holds anything that must never touch disk. See the [four-tier model](/security/comparison) for the canonical policy.
 
 This page is the IaC-flavored cut. For the broader posture (every tool, every tier), see [Security overview](/security/overview) and the dedicated [SOPS tool page](/security/tools/sops).
 
@@ -12,18 +12,19 @@ This page is the IaC-flavored cut. For the broader posture (every tool, every ti
 
 SOPS-encrypted files live inside a single repo and decrypt with that repo's age recipient. The question to ask before reaching for it is **blast radius**: if an AI agent (or a hostile reviewer, or a careless paste into a Slack channel) decrypted this file and posted it publicly, what would actually break?
 
-- **If the answer is "nothing meaningful"** — a randomly generated local-service password, a per-host Ansible variable that names an internal interface, an LXC root password that's already wrapped behind WireGuard plus key auth — that value is a fine fit for SOPS. Use it. Default to SOPS for as much repo-local config as possible; the encrypted-at-rest property is free once age is set up.
+- **If the answer is "nothing meaningful" AND the value is used by only this one repo** — a per-host Ansible variable that names an internal interface, structured config the same repo consumes — SOPS is a fine fit. But do **not** default to SOPS: the moment another service, a human, or an agent might need the value, it belongs in OpenBao (T2), not a repo-local file. SOPS is the exception, not the reach-for-first tool.
 - **If the answer is "an attacker can now hit AWS / Doppler / a third-party SaaS"** — API tokens, OAuth keys, HEC tokens, license keys, anything an external service treats as a bearer credential — that value does **not** belong in SOPS. It goes in Doppler.
 - **If the answer is "an attacker can now move laterally inside the homelab"** — the master Proxmox root password, an iDRAC admin credential, anything that grants control-plane access if exposed — it goes in Keychain, not committed at all.
 
 The mental model is "would a one-time public leak of this exact string be a paper cut, or would it be an incident?" SOPS is for paper cuts.
 
-## The three-way split
+## The four-tier split
 
 | Tier | Holds | Mechanism |
 | --- | --- | --- |
-| Encrypted-at-rest in git (low blast radius) | Repo-local generated passwords, per-host vars, structured config the same repo consumes | SOPS + age |
-| Rotating or cross-system credentials | External API tokens, HEC tokens, license keys, anything a third party treats as a bearer | Doppler |
+| **Runtime store (default)** | Anything a service, human, or agent might ever need: app/DB passwords, admin passwords, service tokens | **OpenBao** (per-domain AppRole RBAC) |
+| Encrypted-at-rest in git (single-repo exception) | Values used by exactly one repo that are neither mission-critical nor public-service creds: per-host vars, structured config the same repo consumes | SOPS + age |
+| Secret-zero + cloud/SaaS | External API tokens, license keys, GitHub-Actions distribution, the AppRole secret-zero that bootstraps OpenBao | Doppler |
 | Local-only material (control-plane / never-on-disk) | macOS-side AI tool secrets, master/admin credentials, anything that must never reach a shell history | macOS Keychain |
 
 ## Cross-repo: SOPS is for one repo, not many
