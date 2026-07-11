@@ -22,14 +22,14 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Owns the git-flow branching/merge model and `git-flow-next` tool usage — [`agentsmd/rules/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/git-flow.md); the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and [PR conventions](/conventions/pr-conventions)
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, Bifrost-routing details
 - Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs —
-  [`subagent-resilience`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/subagent-resilience.md)
+  [`agentsmd/rules/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/subagent-resilience.md)
   (probe before fan-out, bounded concurrency, mandatory solo fallback),
-  [`loop-cadence`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/loop-cadence.md)
+  [`agentsmd/rules/loop-cadence.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/loop-cadence.md)
   (every recurring loop gates itself on a durable min-interval marker), and
-  [`delegation-trust`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/delegation-trust.md)
+  [`agentsmd/rules/delegation-trust.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/delegation-trust.md)
   (a denial binds to the action, not the requester — no permission laundering across agent hops)
 - Owns the **shared behavioral base (soul)** for every agent surface —
-  [`soul.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/soul.md)
+  [`agentsmd/rules/soul.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/soul.md)
   (ground truth before claims, verify before done, reversibility gates autonomy) and its
   copy-paste rendering for non-Claude agents,
   [`agentsmd/prompts/autonomous-base.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/prompts/autonomous-base.md)
