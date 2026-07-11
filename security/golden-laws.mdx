@@ -14,7 +14,7 @@ These are not aspirations. They are pre-conditions. A PR that violates one of th
 
 ### 1. No secret at rest in plaintext outside an authorized store
 
-The only legitimate homes for a secret value are: Doppler, Bitwarden, BWS, macOS Keychain, an SOPS-encrypted file, or an aws-vault-backed session. Everything else — `.env` files, shell history, screenshot pastes, "temporary" test fixtures — is a leak waiting to happen.
+The only legitimate homes for a secret value are: OpenBao (the default runtime store), Doppler, Bitwarden, BWS, macOS Keychain, an SOPS-encrypted file, or an aws-vault-backed session. Everything else — `.env` files, shell history, screenshot pastes, "temporary" test fixtures — is a leak waiting to happen.
 
 **How we enforce it.** CI grep gates on every PR scan for secret-shaped strings (AWS key prefixes, GitHub PAT prefixes, JWT shapes, IP/account-ID patterns). [Scrubbed values](/security/scrubbed-values) codifies the placeholder table and runtime injection paths. `.gitignore` blocks `.env*` repo-wide.
 
@@ -38,7 +38,7 @@ No AWS API call leaves the workstation without an MFA-derived session token. No 
 
 ### 5. One source of truth per secret
 
-A secret value lives in exactly one store. Doppler for AI provider keys and CI distribution. Keychain for macOS GitHub PATs. Bitwarden for human-only material. SOPS for at-rest-in-repo config. Duplicating a secret across stores creates drift; drift creates the question "which copy is current?"; the answer is always "the one you didn't check."
+A secret value lives in exactly one store. OpenBao is the default home for anything a service, human, or agent might ever need at runtime. Doppler holds secret-zero and cloud/SaaS keys. Keychain holds macOS GitHub PATs. Bitwarden holds human-only material. SOPS is the rare exception — only a value used by exactly one repo, that is neither mission-critical nor a public-service credential. Duplicating a secret across stores creates drift; drift creates the question "which copy is current?"; the answer is always "the one you didn't check."
 
 **How we enforce it.** The decision tree in [overview](/security/overview) maps every secret type to exactly one tool. `secrets-sync` is a distribution layer, not a store — it writes from Doppler / repo-secrets to target repos and never the other way.
 
