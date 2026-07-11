@@ -1,0 +1,179 @@
+---
+title: "How an agent instruction stack works"
+description: "The layered instruction, memory, and prompt model behind a multi-agent engineering setup — and the behavioral principles it encodes."
+page_type: explanation
+---
+
+> Contains no infrastructure topology by design — see [Scope and sources](#scope-and-sources).
+
+When you run more than one AI agent — a coding assistant, an unattended operations
+agent, a chat surface — each one needs to know how to behave. Copy the same rules into
+every agent and they drift apart the first time you edit one. This page describes the
+alternative: a single layered instruction stack that every agent reads from, and the
+small set of behavioral principles worth putting in it.
+
+The model here is not novel research. It is the pattern Anthropic documents for Claude
+and Claude Code, applied to a mixed fleet that includes open-weight local models. The
+[sources](#scope-and-sources) are all public.
+
+## The layers
+
+Think of an agent's instructions as a stack, loaded from most general to most specific.
+Each layer answers a different question.
+
+| Layer | Answers | Changes |
+| --- | --- | --- |
+| **Global rules** | How should *any* agent here behave? | Rarely |
+| **Workspace conventions** | How is *this workspace* laid out and operated? | Occasionally |
+| **Scoped rules** | What extra rules apply *when touching this kind of file*? | Per domain |
+| **Skills** | How do I perform *this specific procedure*? | Per task |
+| **Memory** | What did we establish *in past sessions*? | Continuously |
+| **Session state** | What is true *right now* (mode, permissions, tools)? | Per turn |
+
+Two properties make the stack work:
+
+- **One canonical home per fact.** A rule lives in exactly one layer. Higher layers
+  point to it; they never restate it. Duplication is how instruction sets rot — two
+  copies of a rule become two *different* rules the moment one is edited.
+- **A pointer file, not a copy.** The entry point each agent reads (`CLAUDE.md`,
+  `AGENTS.md`, `GEMINI.md`) is a thin pointer to the canonical rules, so every agent —
+  not just one vendor's — resolves to the same source of truth.
+
+## Progressive disclosure beats one big prompt
+
+The instinct is to write one large system prompt with every rule in it. Production
+harnesses do the opposite. Claude Code, for example, assembles each session's prompt
+from a library of roughly 500 fragments — agent definitions, reference templates,
+behavioral components — and loads a fragment only when it is relevant to the current
+session (Piebald-AI's extraction tracks this across 233+ releases).
+
+This is **just-in-time context**, and Anthropic's context-engineering guidance argues
+for it directly: context is a finite attention budget, and the goal is "the smallest
+possible set of high-signal tokens that maximize the likelihood of some desired
+outcome." A rule that isn't relevant to the current task is not neutral — it spends
+budget and dilutes the signal of the rules that *are* relevant.
+
+Practically, that means:
+
+- **Load reference material on demand.** API references, error tables, and procedure
+  docs load when the task touches them, not on every turn.
+- **Scope rules by path.** A rule about shell conventions loads when the agent edits a
+  shell script, not while it writes documentation.
+- **Push state as it changes.** Current mode, tool availability, and permission tier are
+  injected when they change, not carried as static boilerplate every turn.
+
+## Typed memory, with an index
+
+Memory that persists across sessions works best when it is *typed* rather than kept as
+one undifferentiated blob:
+
+- **User** — who the person is: role, preferences, expertise.
+- **Feedback** — corrections and confirmed approaches, each with the reason it was given.
+- **Project** — ongoing work and constraints not derivable from the code or git history.
+- **Reference** — pointers to external resources.
+
+One fact per file, each with a one-line description used to judge relevance on recall,
+and a single index file loaded each session that carries one line per memory. The index
+is the always-loaded layer; the individual memories load only when relevant — the same
+just-in-time principle applied to what the agent remembers.
+
+Two disciplines keep memory honest:
+
+- **Don't store what the repository already records.** Code structure, past fixes, and
+  git history are already durable. Memory is for what is true but *not* written down.
+- **Recalled memory is background, not instruction.** A memory reflects what was true
+  when it was written. If it names a file or flag, the agent verifies that still exists
+  before acting on it.
+
+## How the agent is told to think
+
+The layers above are architecture. The content that matters most is a short set of
+behavioral principles — and the governing finding is that **shorter wins**. When Cline
+tuned their system prompt for the open-weight GLM-4.6 model, cutting it 57% (56,499 →
+24,111 characters) *improved* task success, latency, and cost at once. What they removed
+was generic advice the model already followed by default; what they added was explicit
+scope for where it went wrong. The rule that falls out: **every line must change
+behavior. If deleting a line wouldn't change what the model does, delete it.**
+
+With that constraint, the principles worth encoding — each drawn from Anthropic's
+prompting and context-engineering docs, the Qwen and GLM model documentation, and real
+integrations — are these:
+
+- **Ground truth before claims.** Never assert something about a file, config, or system
+  state you have not read or run this session. If a claim is checkable with a tool, run
+  the check first.
+- **Explore, then plan, then act.** For any change touching more than one file or an
+  unfamiliar area, read first, state a short plan, then implement. Cline arrived at this
+  same `explore → summarize → implement` shape independently for GLM-4.6.
+- **Verify before "done."** Run the check that proves a task complete — the test, the
+  build, the diff — and state what you ran and what it returned. "Looks done" is not
+  evidence.
+- **Tools: explicit scope, no guessing.** Call a tool only when its preconditions hold.
+  Never invent a parameter value to fill a required field. Issue independent calls
+  together; issue dependent calls one at a time. Tightening tool *scope* — not removing
+  tools — is what fixed hallucinated tool calls in practice.
+- **Reversibility gates autonomy.** Reversible, local actions (read, edit, test) proceed
+  without asking. Destructive or externally-visible actions (delete, force-push, drop
+  data, post to a shared system) require confirmation. Never route around a blocker with
+  a destructive shortcut — fix what the check caught; never disable the check.
+- **Minimum sufficient complexity.** Change only what was asked. No abstraction or error
+  handling for a case that can't occur. Fix a bug at the shared call site, not at every
+  caller. Solve the general case, not the one test case — and if a test looks wrong, say
+  so rather than coding around it.
+- **Reasoning has a budget, not just a floor.** Use extended reasoning for genuinely
+  multi-step problems; answer directly otherwise. If reasoning loops without converging,
+  stop and give the best current answer with the uncertainty flagged. Output that
+  degrades into repetition is a decoding or context problem — stop generating and flag
+  it; don't think harder through it. Qwen documents this failure mode explicitly and
+  fixes it with non-greedy sampling, not more reasoning.
+- **Persist state outside your context.** For long or resumable work, keep
+  machine-checkable status in a structured file and narrative progress in a plain note,
+  and use commits as checkpoints. On resume, reconstruct state from those files and the
+  git log — not from assumed memory.
+- **Honest uncertainty over confident fabrication.** If you are not certain, say so and
+  name what would resolve it. A wrong guess costs more than the question.
+
+The meta-decision behind the list: it encodes *behavior*, not *identity or environment*.
+Who the agent is, what tools it has, and what machines it talks to change independently
+and belong in a per-surface layer on top — matching the fragment-library architecture
+above, not a monolith.
+
+## Open-weight models need serving correctness, not more prose
+
+One lesson specific to running local models (Qwen3, GLM-4.x) rather than a hosted API:
+many "prompt" failures are actually *serving-layer* failures, and no amount of prompt
+text fixes them.
+
+- **Reasoning models loop when decoded greedily.** Qwen's own fix is Temperature 0.6,
+  TopP 0.95, TopK 20 — not a prompt change.
+- **Tool-call parsing is fragile.** A serving stack's tool-call parser can silently fail
+  to emit calls for a newer chat-template variant it doesn't recognize. Verify a tool
+  call round-trips before trusting a model in an agent role.
+- **Qualify a new model in four steps:** load → plain chat → tool call → tiny agent task.
+  Don't jump to a full benchmark before confirming the stack can round-trip a tool call.
+
+The takeaway: keep the prompt about behavior, and keep decoding parameters, tool-call
+parsers, and reasoning toggles where they belong — in the serving configuration, tested
+independently.
+
+## Scope and sources
+
+This page describes an *architecture and a set of principles*. It deliberately contains
+no infrastructure topology — no hostnames, no network layout, no description of which
+internal systems exist or how they connect. That mapping, where it exists, lives outside
+this public site.
+
+Primary (official) sources:
+
+- Anthropic — Claude prompting best practices (platform docs)
+- Anthropic — Effective context engineering for AI agents
+- Anthropic — Claude Code best practices
+- Piebald-AI/claude-code-system-prompts — extraction of Claude Code's fragment library
+- Qwen official docs — chat template and function-calling guides; the Hugging Face Qwen-3
+  chat-template deep-dive
+- Z.ai — GLM-4.6 and GLM-4.7 docs
+- Cline — engineering write-up of the GLM-4.6 integration and the 57% prompt cut
+
+Secondary (analysis of unverified leaks, treated as direction only): published analyses
+of claimed Claude system prompts. Structural claims from these are consistent with the
+official docs above but are not independently confirmed.
