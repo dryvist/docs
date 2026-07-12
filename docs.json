@@ -236,6 +236,7 @@
             "pages": [
               "ai-development/overview",
               "ai-development/ai-orchestration-stack",
+              "ai-development/agent-instruction-stack",
               "autonomous-agents/hermes-agent",
               "ai-development/repo-boundaries",
               "ai-development/ai-assistant-instructions",
