@@ -50,12 +50,12 @@ flowchart TB
   Q -->|yes| Two
   Q -->|no| Shard
 
-  classDef ask  fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  class Q ask
+  class Q gate
   class Two,Shard ai
 
-  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+  linkStyle 0,1 stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
 - **Fits in 128 GB → run two independent workers.** Put the model on each Mac,
