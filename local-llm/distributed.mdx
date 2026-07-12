@@ -97,6 +97,33 @@ real risks for an overnight, unattended job:
   re-enabling.
 - Long many-iteration runs have hit transport-resource exhaustion and GPU
   command-buffer timeouts in the wild.
+- macOS Local Network privacy can silently block the rendezvous entirely — see
+  below.
+
+### macOS Local Network privacy silently blocks the rendezvous
+
+macOS 26 default-denies **non-system, ad-hoc-signed binaries** from opening
+local-subnet connections. A Python runtime installed by a package manager and
+launched as a background `launchd` job is exactly that — and a background
+process never gets to answer the Local Network permission prompt. That breaks
+distributed-ML TCP rendezvous in a maddening way:
+
+- **Symptom:** the worker's `connect()` times out (`errno 60`, `ETIMEDOUT`)
+  while the coordinator binds its port and listens forever, never seeing a
+  SYN. Once macOS records an explicit deny, the failure flips to a fast
+  `errno 65` (`EHOSTUNREACH`). Meanwhile every sanity check "passes":
+  `ping`, `curl`, `nc`, and `ssh` all work on the same link — those are
+  Apple-signed platform binaries, which are exempt from the default deny.
+- **Diagnostic:** try the same destination from an Apple binary
+  (`/usr/bin/python3`) and from your ML runtime's Python. If the Apple binary
+  connects and yours doesn't — on an up link with a populated ARP entry —
+  it's Local Network privacy, not the firewall, the cable, or the framework.
+- **Fix:** grant the runtime under System Settings → Privacy & Security →
+  **Local Network** (a recorded deny makes the binary appear in that list).
+  The grant pins to the binary's path, so upgrading the runtime silently
+  resets you to denied — re-check after version bumps. Loopback is exempt,
+  so tunnelling the rendezvous port over system `ssh -L` avoids needing the
+  grant at all.
 
 So the rule is: **prove an overnight job survives end-to-end before relying on
 it.** That proof is a measurement task, not an assumption.
