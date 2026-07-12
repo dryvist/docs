@@ -27,6 +27,16 @@ git-flow repos follow the model implemented by [git-flow-next](https://github.co
 
 Every merge into `main` produces a release: release-please watches `main`, opens the release PR against it, and tags on merge. The release PR merge-commits like any other `main` PR — it is not a squash exception. See [PR conventions](/conventions/pr-conventions) for the full merge-strategy breakdown.
 
+### Promotion is a step you take, not an event that happens
+
+Feature PRs squash into `develop` — and stop there. Nothing on `develop` reaches production until someone opens a `develop` → `main` promotion PR and lands it with a **merge commit** (never squash, never rebase). Each promotion merge is a release.
+
+This is the step that gets skipped: features pile up on `develop`, everything looks "done" in the PR list, and `main` — the branch releases cut from — quietly falls weeks behind. Treat promotion as part of finishing work, not a separate ceremony:
+
+- When a change on `develop` is worth having in production, promote. Small, frequent promotions beat batched ones — each release stays reviewable and revertable.
+- Before calling a stretch of work complete, check `git log origin/main..origin/develop`. Commits listed there are shipped-to-`develop`, **not shipped**.
+- The promotion PR needs no new content — its body is the list of squashed feature commits it carries.
+
 ### Working a change
 
 1. Create or switch to a fresh worktree based on `origin/develop`.
