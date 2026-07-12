@@ -1,0 +1,62 @@
+---
+title: "Notification pillar"
+description: "How bots, agents, and Splunk alerts reach a human — Hermes' Slack gateway and Splunk-triggered Slack alerts, and the shared rule for when to page vs. stay quiet."
+page_type: explanation
+---
+
+> One rule, two channels: a human's attention is the scarcest resource in the system, and every path that can page them competes for the same budget.
+
+Two independent paths currently reach a human via Slack. Both are real integrations, not a
+planned unification — there is no message bus between them today.
+
+| Path | Trigger | Owner |
+| --- | --- | --- |
+| Hermes Slack gateway | Direct conversation, or Hermes' own cron posting a status summary | [`ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps) |
+| Splunk-triggered Slack alert | A saved search or alert action fires in Splunk | [`ansible-splunk`](/observability/repos/ansible-splunk), via the Slack App Alert Integration TA (Splunkbase [5735](https://splunkbase.splunk.com/app/5735)) |
+
+## Hermes Slack gateway
+
+[Hermes](/autonomous-agents/hermes-agent) talks to a human over **Slack (Socket Mode)** —
+the sole chat platform in front of it today. Beyond interactive conversation, a daily cron
+job posts an AI-fabric status summary to the Slack home channel.
+
+## Splunk-triggered Slack alerts
+
+Splunk saved searches can fire a Slack alert action directly, using the Slack App Alert
+Integration TA. This lets any indexed data — including the AI-observability pipeline
+mapped in [Monitoring agents](/observability/monitoring-agents) — trigger a Slack
+notification without an intermediate service. The TA is registered like any other
+add-on in the [`ansible-splunk`](/observability/repos/ansible-splunk) add-on registry
+and tracks its latest Splunkbase release automatically.
+
+## When to notify
+
+The same rule applies regardless of which path fires:
+
+- **Page** — something broke that a human must act on now. Use the most interruptive
+  channel available for that severity.
+- **Inform** — worth knowing, not worth interrupting (a status summary, a completed
+  job). Post to a home/status channel, not a DM, and no tighter than the underlying
+  event actually changes.
+- **Log only** — routine, expected, reversible. Stays in Splunk. Most activity belongs
+  here; silence is the default.
+
+Full agent-facing version of this rule, including tone guidance: the `agent-notifications`
+rule in [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions).
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Self-hosted AI agent" icon="robot" href="/autonomous-agents/hermes-agent">
+    Hermes: how it runs, its Slack gateway, and its memory.
+  </Card>
+  <Card title="Monitoring agents" icon="chart-line" href="/observability/monitoring-agents">
+    The pipeline that feeds Splunk indexes — what can trigger an alert.
+  </Card>
+  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
+    Where the Slack alert TA and the add-on registry live.
+  </Card>
+  <Card title="ai-assistant-instructions" icon="robot" href="/ai-development/ai-assistant-instructions">
+    The `agent-notifications` rule agents follow when deciding whether to notify.
+  </Card>
+</CardGroup>
