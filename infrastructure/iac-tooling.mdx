@@ -1,120 +1,67 @@
 ---
-title: "IaC tooling: OpenTofu and Terragrunt"
-description: "OpenTofu is the canonical engine across every dryvist IaC repo. These docs use the tofu-* names ahead of the repo renames. Terragrunt stays where it does real work and is being phased out where it is a thin wrapper."
+title: "IaC tooling: OpenTofu, Terrakube, and OpenBao"
+description: "OpenTofu is the engine, Terrakube owns remote execution and state, and OpenBao supplies native short-lived credentials."
 page_type: decision
 ---
 
-> The engine is OpenTofu. These docs already use the `tofu-*` names everywhere — even where the underlying repos and module sources still carry the legacy `terraform-*` slug. The documentation rename leads the infrastructure rename on purpose.
+> One engine, one control plane, and one native runtime secret path.
 
-This page is the decision record for two questions that come up every time someone opens an IaC repo here: *are we on Terraform or OpenTofu?* and *do we actually need Terragrunt?* Short answers: OpenTofu, and only sometimes.
+## Decision
 
-## The engine is OpenTofu
+- **OpenTofu** is the only IaC engine used by active repos.
+- **Terrakube** executes plans and applies, stores state versions, and locks one
+  run per workspace.
+- **OpenBao** supplies dynamic provider credentials and ephemeral KV values
+  through native integrations.
+- **Homelab mirrors** serve OpenTofu releases, providers, modules, and images so
+  normal control-plane operation needs no public internet route.
 
-Every active IaC repo in the org already runs OpenTofu, not Terraform. This isn't aspirational — it's the current state:
+Repos carry a `cloud {}` block and use plain `tofu` commands. Static checks run
+locally and in CI with `tofu init -backend=false`. Credentialed plans and
+applies run on the Terrakube executor.
 
-- CI uses [`opentofu/setup-opentofu`](https://github.com/opentofu/setup-opentofu) and invokes `tofu fmt` / `init` / `validate` / `test`.
-- Lockfiles pin `registry.opentofu.org/*` providers, not `registry.terraform.io`.
-- The Nix dev shell ships both binaries with the intent spelled out in a comment: `opentofu # canonical binary`, `terraform # shipped for compatibility`.
-- `.envrc` files set `TERRAGRUNT_TFPATH=tofu` / `PCT_TFPATH=tofu` so every wrapper dispatches to OpenTofu.
+## Why the wrapper was removed
 
-For a homelab and personal org, OpenTofu is the no-regrets default and there is no reason to walk it back:
+The former wrapper generated backends and providers, merged input files,
+decrypted secrets, and ran post-apply hooks. Native components now own each job:
 
-- **Licensing.** OpenTofu ships under MPL 2.0 (OSI-approved) under the Linux Foundation. Terraform since 1.6 ships under BSL 1.1, which the OSI does not approve, and is now owned by IBM (the HashiCorp acquisition closed December 2024). None of the cases that justify staying on Terraform — HCP Stacks dependencies, IBM Cloud Pak environments, procurement that mandates HashiCorp as a vendor — apply here. ([scalr](https://scalr.com/learning-center/opentofu-vs-terraform), [oneuptime](https://oneuptime.com/blog/post/2026-03-20-opentofu-mpl-terraform-bsl-licensing/view))
-- **Native state encryption.** OpenTofu encrypts state (including remote state) natively, without an external KMS workflow.
-- **Dynamic config.** OpenTofu 1.8+ allows variables and locals inside `backend` and `provider` blocks — the single biggest reason teams historically reached for a wrapper. ([encore](https://encore.dev/articles/opentofu-vs-terraform-2026))
+| Former job | Native replacement |
+| --- | --- |
+| Remote state and locking | Terrakube workspace state and run queue |
+| Secret injection | Terrakube OpenBao dynamic credentials and OpenTofu ephemeral resources |
+| Desired-state fetch | OpenTofu S3-compatible data source against homelab RustFS |
+| Inventory publication | OpenTofu resource plus in-graph schema preconditions |
+| IP and input derivation | HCL locals and typed variables |
 
-## The docs use `tofu-*` ahead of the repos
+Removing the wrapper also removes generated files, hidden input precedence, a
+second command vocabulary, and shell-level credential injection.
 
-These docs name the repos `tofu-proxmox`, `tofu-unifi`, `tofu-aws`, and friends. That is the end-state, and the documentation gets there first. The engine inside every one of them is already `tofu`; the `tofu-*` display name simply stops pretending otherwise. Newer repos already broke the pattern — `.github-tofu` uses the `tofu-*` prefix natively.
+## Normal workflow
 
-**Convention going forward:** new IaC repos use `tofu-*`. The docs use `tofu-*` for every IaC repo regardless of whether the underlying git slug has been renamed yet.
-
-What the docs **do not** rewrite is anything load-bearing. The repo links still point at the real URL (`github.com/dryvist/terraform-proxmox` until that repo is actually renamed — the link text reads `tofu-proxmox`, the `href` resolves), and module `source` references (`git::https://github.com/dryvist/terraform-aws-template.git?ref=v0.1.0`), CI configuration, the `registry.opentofu.org` / `registry.terraform.io` provider URLs, pre-commit hook IDs, and the `tf-*` AWS role names are untouched. The display name leads; the identifiers follow when the repos are renamed for real. This is deliberate: the docs describe the world we are moving to, and the redirect from the old repo slug holds until the rename lands.
-
-## Where Terragrunt earns its place
-
-Terragrunt is used in most repos, but in this environment it is mostly a *configuration wrapper*, not the multi-module orchestrator it was built to be. It does real work in exactly two repos — `tofu-proxmox` and `tofu-unifi` — where it:
-
-- decrypts SOPS files through the `sops_decrypt_file` data source,
-- merges a three-layer input model — the [`deployment.json` desired-state](/infrastructure/deployment-state-contract) fetched fail-loud from S3, SOPS-encrypted config, and Doppler environment variables,
-- resolves IP addressing in `locals` with `cidrhost()`,
-- and runs an `after_hook` that validates the published inventory against the downstream schema and warms each consumer's local cache — the inventory itself is written natively as a versioned `aws_s3_object`, so the hook handles only what OpenTofu can't.
-
-OpenTofu has no native `after_hook`, and SOPS decryption needs a provider rather than a built-in function. Until those two patterns have a native replacement (a SOPS provider plus a CI step), Terragrunt stays in these two repos.
-
-{/* Shape: parallel convergence. 5 nodes. Three sources converge into the Terragrunt merge, one edge to the engine. Boundary crossings: 0. Pass. */}
-
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
-  DJ([deployment.json<br/>S3 · fail-loud])
-  SOPS([SOPS<br/>encrypted-at-rest])
-  DOP([Doppler<br/>runtime secrets])
-  TG([Terragrunt<br/>merge + IP resolution])
-  TOFU([OpenTofu<br/>apply])
-
-  DJ --> TG
-  SOPS --> TG
-  DOP --> TG
-  TG --> TOFU
-
-  classDef source fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef engine fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-
-  class DJ,SOPS,DOP,TG source
-  class TOFU engine
-
-  click DJ "/infrastructure/deployment-state-contract" "The deployment.json ACID contract"
-
-  linkStyle 0,1,2,3 stroke:#F4EFE6,stroke-width:1.5px;
+```bash
+tofu init -backend=false
+tofu validate
+tofu plan
+tofu apply
 ```
 
-This layered merge is the actual justification for Terragrunt here — not the backend block it also happens to generate.
+The last two commands submit remote work. The workspace's complete plan stays
+inside the homelab control plane and must be reviewed before apply.
 
-## What we're phasing out
+## Secrets and offline operation
 
-Everywhere else, Terragrunt only generates a backend and a provider block. OpenTofu 1.8+ does both natively now, and native state encryption removes the KMS rationale — so the wrapper buys nothing. The direction:
+Terrakube service secrets use native paths under the platform's OpenBao
+namespace. Each workspace receives a least-privilege OpenBao identity. Secret
+values are never copied into a Terrakube workspace variable, a CI secret, or a
+developer keychain for normal runs.
 
-| Repo | Engine | Terragrunt today | Direction |
-| --- | --- | --- | --- |
-| `tofu-proxmox` / `tofu-unifi` | tofu | SOPS + 3-layer merge + `after_hook` | Keep — earns its place |
-| `tofu-runs-on` / `tofu-aws` (basic) | tofu | Backend + provider generation only | Phase out → native OpenTofu config |
-| `tofu-github` | tofu | None — removed | Already native; remote state and execution run on [Terrakube](#remote-planapply-terrakube) |
-| `tf-splunk-aws` | tofu | None — removed | Already native; plain OpenTofu with per-env `tfvars` |
-| `.github-tofu` | tofu | None | Already native — the target shape |
+An offline-ready platform mirrors every artifact needed to start the stack and
+execute a pinned workspace. External providers such as AWS or GitHub still need
+their target API when a plan manages those services, but the Terrakube control
+plane itself does not need public package or image downloads.
 
-We lose nothing we actually use: no repo uses `dependency` / `dependencies` cross-module wiring, `run-all`, stacks, or multi-account fan-out. The orchestration features that justify Terragrunt at scale ([terragrunt.com](https://terragrunt.com/), [terramate comparison](https://terramate.io/rethinking-iac/terramate-vs-terragrunt-a-2026-comparison/)) simply aren't in play. The removals themselves are tracked in each affected repo, not here — this page records the *why*, not the migration steps.
+## State migration rule
 
-## Remote plan/apply: Terrakube
-
-A self-hosted [Terrakube](https://terrakube.io) instance is the remote execution
-backend for IaC repos that opt in. A repo points its `cloud {}` block at the
-Terrakube API instead of an S3 backend; `tofu plan` / `tofu apply` then run **on
-the platform's own executor**, not on the operator's machine or in CI, and
-state, locking, and workspace definitions all live on that platform. Workspace
-onboarding is itself code — one resource per workspace in the platform repo.
-
-`tofu-github` is the first consumer: it carries an intentionally empty `cloud {}`
-block (no internal hostname, organization, or workspace name committed to the
-public repo), authenticates once per machine with `tofu login`, and every
-plan/apply after that runs remotely — the org-admin GitHub credential the
-provider needs is a workspace variable on the platform, never a local or CI
-secret. The platform node is not a 24/7 service by design; it powers on for IaC
-work and is otherwise off.
-
-## See also
-
-<CardGroup cols={2}>
-  <Card title="Check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    Where IaC checks run — static in pre-commit, credentialed in CI via OIDC. Already mandates deleting Terragrunt hooks.
-  </Card>
-  <Card title="SOPS for IaC" icon="key" href="/security/sops-for-iac">
-    The encrypted-at-rest layer that keeps Terragrunt necessary in the two complex repos.
-  </Card>
-  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
-    Marketplace actions, release-please, version pinning, plan/apply via OIDC.
-  </Card>
-  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
-    The provision-then-configure chain this engine sits at the head of.
-  </Card>
-</CardGroup>
+Move existing state once with a reviewed `tofu init -migrate-state` procedure.
+Preserve a pre-migration snapshot and compare resource addresses before and
+after. Never create a second empty workspace and apply into it.

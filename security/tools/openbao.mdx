@@ -1,6 +1,6 @@
 ---
 title: "OpenBao"
-description: "The self-hosted T2 runtime manager — the primary AI/machine credential interface, the SSH certificate authority for automation, and the global flow-lease authority. AppRole auth, native leases, Raft-snapshot DR."
+description: "The self-hosted T2 runtime manager — the primary AI/machine credential interface, Terrakube dynamic provider credentials, the SSH certificate authority, and Raft-snapshot DR."
 page_type: reference
 ---
 
@@ -20,7 +20,9 @@ OpenBao is **T2** in the [four-tier secrets model](/security/comparison): the se
 
 - **Dynamic credential issuer.** AppRole (and, for the most sensitive services, TLS cert) auth methods issue short-lived, per-service credentials from a KV v2 engine and dynamic secrets engines.
 - **SSH certificate authority.** It signs short-TTL SSH certificates for automation principals (`ai-agent`, `ansible`, `ci`) — a hybrid model where machines carry expiring certs and humans keep their static keys. No long-lived automation key sits on disk waiting to be stolen.
-- **Global flow-lease authority.** A single lease in its KV store, taken via compare-and-set so two writers cannot both win, gates every mutating flow (a tofu apply, an ansible run, an infra-changing agent). The rule is credential-gating: **no lease, no credentials** — an agent that cannot take the lease cannot obtain the creds it would need to mutate anything, so serialization is enforced where secrets are issued.
+- **Terrakube dynamic credentials.** Each workspace authenticates to a scoped
+  native path and receives only the short-lived provider credentials it needs.
+  Terrakube owns per-workspace run locking; OpenBao does not duplicate it.
 
 It is the MPL-licensed fork of HashiCorp Vault 1.14.x — the last release before HashiCorp's BSL transition in 1.15.
 

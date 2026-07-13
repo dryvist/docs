@@ -15,7 +15,7 @@ Every secret lives in exactly one of four tiers, and the tier — not the tool �
 | Tier | Role | Tool | Who reads it |
 | --- | --- | --- | --- |
 | **T1 — Repo-local** | Encrypted-at-rest config that travels with the code | SOPS + age | AI and machines, via a path-gated local age key |
-| **T2 — Runtime manager** | Self-hosted source of truth for live machine credentials; the **primary AI/machine interface** and the global flow-lease authority | OpenBao | AI and machines, via AppRole / signed SSH cert — no human in the loop |
+| **T2 — Runtime manager** | Self-hosted source of truth for live machine credentials and Terrakube dynamic provider credentials | OpenBao | AI and machines, via scoped native auth / signed SSH cert — no human in the loop |
 | **T3 — Strict cloud** | Cloud keys-to-the-kingdom; holds *secret-zero* that bootstraps T2 | Doppler | Machines for a narrow set; AI only under explicit, per-use human approval |
 | **T4 — Never-AI human** | Break-glass and crown jewels | Bitwarden | Humans only, at a keyboard, with a second factor |
 
@@ -37,7 +37,7 @@ The default automation path is T2: an always-on agent authenticates as itself an
 | **Mozilla SOPS** | Encrypted OpenTofu / Ansible vars committed to git; initial-bootstrap passwords; internal topology | [sops](/security/tools/sops) |
 | **Bitwarden vault** | SSH keys, recovery codes, age-key escrow, account passwords — AI tools never reach this | [bitwarden](/security/tools/bitwarden) |
 | **BWS** | Programmatic AI tokens that cannot use the shared `AI_TOKEN` convention, fetched via the Python bridge | [bws](/security/tools/bws) |
-| **OpenBao** | The T2 runtime manager (live, 2-node): the primary AI/machine credential interface, SSH CA for automation, and the global flow-lease authority | [openbao](/security/tools/openbao) |
+| **OpenBao** | The T2 runtime manager: primary AI/machine credential interface, Terrakube dynamic credentials, and SSH CA for automation | [openbao](/security/tools/openbao) |
 
 ## What this section covers
 

@@ -52,21 +52,11 @@ For Tier 2 secrets that must never sit in GitHub Actions stores:
 
 That `DOPPLER_TOKEN` service token is itself a Tier 1 secret distributed by `secrets-sync` to the two `_infra_repos`: `ansible-proxmox-apps` and `tofu-runs-on`.
 
-## Local-dev chain
+## OpenTofu boundary
 
-The canonical chain pairs AWS Vault with Doppler so an MFA-protected AWS session wraps the Doppler injection:
-
-```bash
-aws-vault exec tf-proxmox -- doppler run -- terragrunt plan
-```
-
-Secrets injection happens at `terragrunt`'s subprocess launch — no values touch your shell history or environment.
-
-For OpenTofu variables specifically, Doppler's name-transformer flag prefixes everything as `TF_VAR_*`:
-
-```bash
-doppler run --name-transformer tf-var -- terragrunt plan
-```
+Doppler is not in the active OpenTofu plan or apply path. Terrakube uses native
+OpenBao identities, dynamic provider credentials, and ephemeral values. Do not
+copy an IaC credential from Doppler into a Terrakube workspace variable.
 
 ## Anti-patterns and best practices
 
@@ -80,6 +70,6 @@ doppler run --name-transformer tf-var -- terragrunt plan
 - [Tools comparison](/security/comparison) — the four-tier model and where T3 sits.
 - [OpenBao](/security/tools/openbao) — the T2 runtime manager Doppler bootstraps.
 - [secrets-sync](/security/secrets-sync) — Tier 1 distribution.
-- [aws-vault](/security/tools/aws-vault) — the wrapping layer for the local-dev chain.
+- [IaC tooling](/infrastructure/iac-tooling) — the Terrakube and OpenBao execution path.
 - [BWS](/security/tools/bws) — alternative for AI-specific OAuth tokens where Doppler is not yet wired up.
 - [`docs.dryvist.com`](https://docs.dryvist.com) — dryvist-internal project / config names.

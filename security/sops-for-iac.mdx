@@ -29,7 +29,7 @@ The mental model is "would a one-time public leak of this exact string be a pape
 
 ## Cross-repo: SOPS is for one repo, not many
 
-A single secret should have exactly one source of truth. SOPS works cleanly when the value is consumed only by the repo it's committed in — Ansible decrypts its own `secrets.sops.yml`, Terragrunt reads its own `.sops.json`, nothing else.
+A single secret should have exactly one source of truth. SOPS works cleanly when the value is consumed only by the repo it's committed in. Ansible may decrypt its own `secrets.sops.yml`; Terrakube workspaces obtain runtime secrets from OpenBao instead.
 
 When two repos both need the same value, do **not** SOPS-encrypt it twice. That's a DRY violation — the two copies will drift the first time one repo rotates without notifying the other, and the only signal you get is a production failure. The decision tree:
 
@@ -56,9 +56,7 @@ At runtime, `sops exec-env secrets.sops.yml -- ansible-playbook ...` decrypts in
 
 ## How it shows up in OpenTofu repos
 
-[`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) is the canonical example: a `.sops.json` under each environment folder, listed in `.sops.yaml` with the age recipient that controls it. Terragrunt consumes it through the `sops_decrypt_file` data source; resolved values land in OpenTofu state encrypted by the state backend's KMS key, not on disk.
-
-[`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on) uses the same mechanism but keeps the encrypted file smaller — it leans on Doppler for AWS creds and reserves SOPS for bootstrap config that doesn't change.
+Active OpenTofu repos do not use SOPS to inject provider credentials. Terrakube supplies workload identity, and OpenBao mints short-lived, workspace-scoped credentials. Terrakube owns remote state and workspace locking; sensitive provider values are ephemeral wherever the provider supports them.
 
 ## The `.sops.yaml` configuration
 

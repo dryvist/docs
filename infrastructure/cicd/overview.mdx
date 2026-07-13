@@ -1,12 +1,12 @@
 ---
 title: "CI/CD"
-description: "Four runner tiers (GitHub-hosted, RunsOn AWS spot, self-hosted Mac, self-hosted locked-down), the PR-plan / OIDC-apply pattern, and the branch ruleset that gates every merge."
+description: "Four CI runner tiers, Terrakube remote OpenTofu runs, and the branch ruleset that gates every merge."
 page_type: overview
 ---
 
-> Every infra change goes through PR-plan, then OIDC-authenticated apply. The runner tier follows the workload — never the other way around.
+> CI validates code. Terrakube plans, locks, and applies OpenTofu inside the homelab.
 
-The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do, not by what's cheapest in the abstract. The patterns below — plan/apply gating, OIDC trust, branch rulesets — are shared across all four tiers.
+The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do. Credentialed OpenTofu runs are a separate control-plane concern owned by Terrakube.
 
 For how secrets reach a workflow regardless of tier, read [Security](/security/overview) — this page does not duplicate that material.
 
@@ -27,11 +27,12 @@ The decision tree is workload-first: a macOS build picks the Mac tier; an IaC ap
 
 | Stage | Trigger | Where it runs | What it does |
 | --- | --- | --- | --- |
-| PR plan | `pull_request` | The tier the repo declares (typically GitHub-hosted or RunsOn) | `terragrunt plan -no-color`, posted via `tf-summarize` as a redacted structural summary — addresses + change actions only, never resolved values |
-| Manual review | human reviewer | n/a | Reads the plan summary, checks impact, approves or asks for revisions |
-| Apply | `push` to `main` after merge | The repo's apply-tier runner, OIDC into the target account | `terragrunt apply -auto-approve` gated by the `production` GitHub Environment approval |
+| Static validation | `pull_request` | The repo's CI tier | `tofu fmt -check`, `tofu init -backend=false`, `tofu validate`, and tests without live credentials |
+| Remote plan | VCS or operator trigger | Homelab Terrakube executor | Plans with short-lived provider credentials from OpenBao; keeps resolved values in the workspace log |
+| Review | Terrakube approval step or explicit saved-plan gate | Terrakube UI / operator CLI | Reviews the complete plan and blocks unexpected destroy or replacement |
+| Apply | Approved Terrakube run | Same workspace executor | Applies under the workspace's native queue and state lock |
 
-The redacted-plan rule is non-negotiable: PR plan output reveals only resource addresses and change actions. Resolved attribute values — anything an attacker reading a PR could weaponize — never appear in PR comments. See each repo's `docs/ci-plan-output-policy.md` for the rationale.
+Public PRs never receive raw resolved plans. Terrakube keeps the full plan in the homelab workspace and obtains provider credentials through native OpenBao paths.
 
 ## Branch protection and merge rules
 
@@ -63,7 +64,7 @@ There is intentionally **no required approving review count** on solo-maintained
     The RunsOn tier — the runner pool itself, OIDC trust, migration guide.
   </Card>
   <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    Static checks in pre-commit, credentialed operations in CI via OIDC.
+    Static checks in pre-commit and CI; credentialed operations in Terrakube.
   </Card>
   <Card title="Security overview" icon="lock" href="/security/overview">
     How secrets reach a workflow, across all four runner tiers.
