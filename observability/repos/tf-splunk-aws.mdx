@@ -1,6 +1,6 @@
 ---
 title: "Splunk on AWS"
-description: "Plain OpenTofu (no Terragrunt) for an on-demand Splunk and/or Cribl environment on AWS. Both workloads are independently optional, the whole stack auto-stops on a schedule, and it starts and stops again through a credential-less GitHub Actions \"summon\" workflow."
+description: "Plain OpenTofu for an on-demand Splunk and/or Cribl environment on AWS. Both workloads are independently optional, the whole stack auto-stops on a schedule, and it starts and stops again through a credential-less GitHub Actions \"summon\" workflow."
 page_type: repo
 ---
 
@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tf-splunk-aws" />
 
-`tf-splunk-aws` provisions an on-demand data-ingest environment on AWS: a VPC with a cost-optimized NAT instance, and two independently-toggleable workloads — Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It is plain OpenTofu; there is no Terragrunt layer.
+`tf-splunk-aws` provisions an on-demand data-ingest environment on AWS: a VPC with a cost-optimized NAT instance, and two independently-toggleable workloads — Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It uses plain OpenTofu.
 
 ## What it does
 

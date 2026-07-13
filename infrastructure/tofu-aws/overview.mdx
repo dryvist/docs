@@ -1,14 +1,14 @@
 ---
 title: "OpenTofu on AWS"
-description: "Per-project IAM role, GitHub OIDC for CI, S3 native locking, SSE-S3 encryption, aws-vault + MFA for local dev. The standard for any new AWS-backed Terraform/OpenTofu/Terragrunt repo."
+description: "Terrakube-managed OpenTofu for AWS, with remote state, workspace locking, and short-lived OpenBao-minted STS credentials."
 page_type: overview
 ---
 
 {/* TIER-GUARD: reference page — the isolation model, naming, encryption policy, and tagging belong together. */}
 
-> One IAM role per repo. Humans and CI both `AssumeRole`; nothing holds direct AWS resource access. State lives in a project-scoped S3 bucket; locks live in the same bucket via S3 conditional writes.
+> One IAM role per workspace. OpenBao mints short-lived STS credentials for Terrakube jobs; nothing holds direct AWS resource access. Terrakube owns remote state and workspace locking.
 
-The pattern below is the single supported shape for any new AWS-backed Terraform / OpenTofu / Terragrunt repo. The [bootstrap snippet](/infrastructure/tofu-aws/aws-bootstrap) provisions every resource named here in one `terraform apply`; the [consuming-repo page](/infrastructure/tofu-aws/consuming-repo) shows what the new repo itself needs to drop in.
+The pattern below documents the IAM isolation retained by AWS workspaces. New and migrated workloads run as Terrakube-managed OpenTofu workspaces and receive AWS credentials dynamically from OpenBao. The legacy S3 backend material remains only for migration and rollback until the Terrakube state cutover has soaked.
 
 ## The isolation model
 
