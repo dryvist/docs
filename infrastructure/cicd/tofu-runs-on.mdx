@@ -1,6 +1,6 @@
 ---
 title: "Self-hosted GitHub Actions runners"
-description: "OpenTofu/Terragrunt for RunsOn — self-hosted GitHub Actions runners on AWS EC2 spot. Cheaper, faster, observable."
+description: "OpenTofu through Terrakube for RunsOn self-hosted GitHub Actions runners on AWS EC2 spot."
 page_type: repo
 ---
 
@@ -44,11 +44,11 @@ After the first apply finishes and the GitHub App is registered through the ingr
   <Step title="Clone and let direnv activate the dev shell">
     `git clone https://github.com/JacobPEvans/terraform-runs-on.git && cd terraform-runs-on && direnv allow`
   </Step>
-  <Step title="Supply credentials via aws-vault + Doppler">
-    Profile is `tf-runs-on`; Doppler config is inherited from `infra-project/prd`. `RUNSON_LICENSE_KEY` is mapped into `license_key` via `terragrunt.hcl`.
+  <Step title="Confirm the Terrakube workspace">
+    The workspace receives short-lived AWS credentials from OpenBao's native dynamic credentials path. The RunsOn license is read ephemerally from its OpenBao path.
   </Step>
-  <Step title="Bootstrap">
-    `aws-vault exec tf-runs-on -- doppler run -- terragrunt init && terragrunt apply`. The bootstrap creates its own S3 state + DynamoDB lock table on first run.
+  <Step title="Plan and apply">
+    Run `tofu plan`, review the remote plan, then `tofu apply`. Terrakube owns state and locking.
   </Step>
   <Step title="Use a runner">
     In any workflow: `runs-on: "runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/family=c7+m7"`. The `github.run_id` segment is what RunsOn correlates back to the originating workflow.
@@ -61,7 +61,9 @@ The repo ships `docs/migration-guide.md` — the canonical per-repo playbook: wh
 
 ## CI/CD safety
 
-PR plans are posted via [`tf-summarize`](https://github.com/dineshba/tf-summarize) as a redacted structural summary — resource addresses + change actions only. Resolved attribute values never appear in PR comments. Merge to `main` triggers an OIDC-authenticated `terragrunt apply` (gated by the `production` GitHub Environment approval). See `docs/ci-plan-output-policy.md` for the full rationale.
+CI runs offline validation only. Credentialed plans and applies run in the
+Terrakube workspace, with approval and the full plan kept inside the homelab
+control plane.
 
 ## Related repos
 

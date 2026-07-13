@@ -1,6 +1,6 @@
 ---
 title: "UniFi networking"
-description: "OpenTofu/Terragrunt management of the UniFi controller — networks, WLANs, port profiles, fixed IPs, firewall groups, WAN uplinks, the WireGuard VPN, RADIUS, and dynamic DNS. Network-as-code for the homelab."
+description: "OpenTofu management of the UniFi controller through Terrakube, with native OpenBao credentials."
 page_type: repo
 ---
 
@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-unifi" />
 
-`tofu-unifi` puts the UniFi controller's data plane behind the same provisioning workflow that builds the rest of the homelab. The [`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest) provider drives the controller API; Terragrunt resolves environment-specific subnets from a single source.
+`tofu-unifi` puts the UniFi controller's data plane behind the same Terrakube provisioning workflow as the rest of the homelab. The [`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest) provider drives the controller API; typed HCL inputs and locals resolve subnets.
 
 ## What it does
 
@@ -20,13 +20,13 @@ One generic module per resource type covers the controller's data plane:
 - MAC-pinned fixed-IP reservations
 - Firewall groups (the port/address sets); firewall *rules* (42 rules total, including a generic established/related stateful-return rule) are written but deferred — see [provider notes](#provider-notes-unifi-network-9)
 - WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
-- Subnet values stay in the secret store and are consumed by both `tofu-unifi` and `tofu-proxmox` — single source, no drift. Passphrases, VPN keys, and shared secrets live in SOPS, never in plaintext config.
+- Subnet values are non-secret desired state shared by both repos. Passphrases, VPN keys, and shared secrets come ephemerally from native OpenBao paths.
 
 ## How it fits
 
 | | Upstream | Downstream |
 | --- | --- | --- |
-| Trigger | `terragrunt apply` from the operator | UniFi controller pushes config to gateway, switches, APs |
+| Trigger | Explicitly approved `tofu apply` in Terrakube | UniFi controller pushes config to gateway, switches, APs |
 | Talks to | UniFi controller API (read/write) | The L2/L3 fabric every other repo's hosts live on |
 
 <RepoFit>

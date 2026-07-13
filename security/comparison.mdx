@@ -157,7 +157,10 @@ flowchart LR
 
 ## The runtime manager is also the lock authority
 
-T2 does one more job the other tiers cannot: it is the **global flow-lease authority**. A single lease in its KV store (compare-and-set, so two writers cannot both win) gates every mutating flow — a tofu apply, an ansible run, an agent that changes infrastructure. The rule is credential-gating: **no lease, no credentials.** An agent that cannot take the lease cannot get the short-lived creds it would need to do the mutation, so serialization is enforced at the point where secrets are issued, not merely by convention. This pairs with the OpenTofu state lock described in the [deployment state contract](/infrastructure/deployment-state-contract#single-writer-locking--the-direction).
+For OpenTofu, T2 integrates directly with Terrakube. Each workspace receives a
+least-privilege OpenBao identity and short-lived provider credentials. Terrakube
+owns the run queue and state lock per workspace; OpenBao does not implement a
+second, estate-wide mutex.
 
 ## See also
 

@@ -104,7 +104,7 @@ The `Project` tag should be activated as an AWS cost allocation tag (Billing →
 | AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects |
 
 <Note>
-Terragrunt wraps Terraform and uses the same backend config — none of the isolation model changes. The Terragrunt-specific `remote_state {}` and `generate {}` blocks live in the [consuming-repo page](/infrastructure/tofu-aws/consuming-repo#terragrunt-variant).
+Active AWS workspaces run in Terrakube. OpenBao mints a short-lived, workspace-scoped STS session for the AWS provider; no local profile is part of the normal plan or apply path.
 </Note>
 
 ## Where to go next

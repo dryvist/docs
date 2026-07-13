@@ -1,90 +1,19 @@
 ---
 title: "aws-vault"
-description: "MFA-protected AWS credential sessions — one profile per OpenTofu root, paired with Doppler for runtime secret injection."
+description: "A legacy local AWS session tool. Active dryvist OpenTofu workspaces use Terrakube and OpenBao instead."
 page_type: reference
 ---
 
-> One profile per OpenTofu root. MFA on every session. Cached for a bounded TTL.
+> Active IaC workspaces do not use aws-vault.
 
-## What AWS Vault is for
+`aws-vault` can store long-lived AWS access keys in an operating-system
+keychain and mint bounded subprocess sessions. It remains useful for isolated
+manual AWS administration where no platform identity exists.
 
-`aws-vault` is the envelope around your AWS credentials. It stores long-lived access keys in the macOS keychain backend, requires MFA to mint a short-lived session, and exposes the session to subprocesses via environment variables — never to the parent shell, never to disk.
+It is not part of the dryvist OpenTofu path. Terrakube runs plans and applies;
+OpenBao mints short-lived STS credentials for each workspace through native
+dynamic credentials. Do not add aws-vault profiles, wrapper commands, or
+long-lived operator keys to an active IaC repo.
 
-## Profile model
-
-<Steps>
-  <Step title="aws-vault exec <profile>">
-    The keychain backend hands you long-lived access keys for that profile only — never to the parent shell.
-  </Step>
-  <Step title="MFA prompt (if not cached)">
-    TOTP from your authenticator mints a short-lived session token.
-  </Step>
-  <Step title="Subprocess receives env vars">
-    `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` are injected into the child process only.
-  </Step>
-  <Step title="Child process exits — session dies">
-    Cached session lives in the keychain for the configured `session_ttl`; nothing persists in your shell.
-  </Step>
-</Steps>
-
-One profile per OpenTofu root keeps blast radius small. A `tf-proxmox` session has no rights to `tf-runs-on` infrastructure even if you accidentally `exec` the wrong terragrunt root.
-
-| Profile | OpenTofu root | Doppler config |
-| --- | --- | --- |
-| `tf-proxmox` | `tofu-proxmox` | `infra-project/prd` |
-| `tf-runs-on` | `tofu-runs-on` | `infra-project/prd` |
-| `tf-splunk-aws` | `tf-splunk-aws` | (uses repo secrets directly) |
-
-Per-profile workspace/account specifics live in [`docs.dryvist.com`](https://docs.dryvist.com) (dryvist internal).
-
-## The canonical chain
-
-```bash
-aws-vault exec tf-proxmox -- doppler run -- terragrunt plan
-```
-
-Three layers, each scoped to the subprocess:
-
-1. `aws-vault exec tf-proxmox` — opens an MFA-protected session, exports AWS env vars into the child.
-2. `doppler run --` — fetches Doppler config (DB passwords, etc.), injects as env vars into the child.
-3. `terragrunt plan` — sees both layers; uses them to plan and apply.
-
-When `terragrunt` exits, all three layers tear down. The parent shell never saw any of them.
-
-## `~/.aws/config` shape (template)
-
-```ini
-[profile tf-proxmox]
-region = us-east-1
-mfa_serial = arn:aws:iam::<account-id>:mfa/<user>
-session_ttl = 1h
-```
-
-`session_ttl = 1h` is the soft limit. Short enough that an abandoned terminal re-prompts on the next exec; long enough that a real plan/apply cycle doesn't re-prompt mid-run.
-
-Real account IDs do not appear in this docs site.
-
-## Adding a new profile
-
-1. Add a `[profile <name>]` block to `~/.aws/config` with the IAM user's `mfa_serial`.
-2. Store the long-lived access key via `aws-vault add <name>`. The keychain backend stores it; `~/.aws/credentials` stays empty.
-3. Verify with `aws-vault exec <name> -- aws sts get-caller-identity`.
-4. Plumb the profile name into the OpenTofu root's docs (README) so the Terragrunt invocation has a copy-pasteable command.
-
-## Best practices
-
-- Always `aws-vault exec` — never `aws-vault env` or `aws-vault login`, which spread the session beyond the subprocess.
-- Pair with Doppler on every OpenTofu call. Naked `aws-vault exec ... -- terragrunt plan` skips runtime config injection and tempts hardcoded values in `.tfvars`.
-- Cap `session_ttl` to 1 hour. Longer sessions are convenience that fights least-privilege.
-- Enable CloudTrail. The audit trail for `aws-vault` is on the AWS side — there's no local log.
-
-## Anti-pattern we don't ship
-
-Storing long-lived AWS access keys in `~/.aws/credentials` instead of the keychain backend defeats the whole tool. `aws-vault add` uses the keychain because that is the whole point.
-
-## See also
-
-- [Doppler](/security/tools/doppler) — the runtime config layer wrapped inside `aws-vault exec`.
-- [How it fits together](/security/how-it-fits-together#local-dev-flow-aws-vault-into-doppler-into-terragrunt) — flow diagram.
-- [Consuming repo setup](/infrastructure/tofu-aws/consuming-repo) — where the `mfa-base` + `tf-<project>` profile chain plugs into a real Terraform repo.
-- [`docs.dryvist.com`](https://docs.dryvist.com) — account IDs, MFA serials, real-world profile names.
+Use [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo)
+for the current pattern.

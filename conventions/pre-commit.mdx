@@ -113,7 +113,7 @@ For AI agents, these decisions are codified in the on-demand [`pre-commit-archit
 ## Known limitations
 
 - `cachix/git-hooks.nix`'s built-in `tflint` wrapper drops args beyond `$1`, so the `terraform` profile's `--config <sharedConfigs.tflint>` plumbing doesn't reach tflint. Consumers either keep a synced copy of the canonical `.tflint.hcl` in the repo (tflint's local-config discovery finds it) or override `tflint.args` to `lib.mkForce [ ]`.
-- `terraform-validate` hooks need network access to `tofu init` external modules. `nix flake check` runs hooks in a sandboxed environment without network. Repos with external module references override `terraform-validate.enable = lib.mkForce false` for the flake-check path and rely on CI's OIDC-authenticated `terragrunt validate` to cover the check.
+- `terraform-validate` hooks need network access to `tofu init` external modules. `nix flake check` runs hooks in a sandboxed environment without network. Repos with external module references override `terraform-validate.enable = lib.mkForce false` for the flake-check path and run `tofu init -backend=false` plus `tofu validate` in CI.
 - `gitleaks` is not in `cachix/git-hooks.nix`'s built-in hook set yet. Consumers wire it as a custom hook locally; a follow-up adds it to the base profile.
 
 ## References

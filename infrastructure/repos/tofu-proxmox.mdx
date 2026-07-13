@@ -1,16 +1,16 @@
 ---
 title: "Proxmox provisioning"
-description: "OpenTofu/Terragrunt provisioning for Proxmox VMs and LXC containers. The first tier of the homelab stack."
+description: "OpenTofu provisioning for Proxmox VMs and LXC containers through Terrakube and OpenBao."
 page_type: repo
 ---
 
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> Provision VMs and LXCs from a single `terragrunt apply`. The first thing that runs.
+> Provision VMs and LXCs from one reviewed Terrakube workspace apply.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/terraform-proxmox" />
 
-`tofu-proxmox` defines every VM and LXC in the homelab as OpenTofu resources. Terragrunt provides DRY config across environments. The Proxmox provider talks to the cluster API; nothing here touches a host directly.
+`tofu-proxmox` defines every VM and LXC in the homelab as OpenTofu resources. Terrakube runs it remotely and OpenBao supplies short-lived provider credentials.
 
 ## What it does
 
@@ -19,7 +19,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
 - Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)
 - Declares per-node ZFS storage (`node_storage`) that Ansible provisions — OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
-- Uses Terragrunt to share variables across `prod`, `staging`, and one-off environments
+- Uses typed HCL inputs and locals to share values without generated configuration
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
 - Provisions the **object_storage** module: RustFS LXC (S3-compatible, active)
 
@@ -27,7 +27,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | | Upstream | Downstream |
 | --- | --- | --- |
-| Trigger | `terragrunt apply` from the operator | Outputs an Ansible-ready inventory |
+| Trigger | Reviewed `tofu apply` in Terrakube | Outputs an Ansible-ready inventory |
 | Talks to | Proxmox cluster API (read/write) | [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox), [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) |
 
 <RepoFit>
@@ -44,11 +44,11 @@ The homelab uses **RustFS** for S3-compatible object storage. The `object_storag
   <Step title="Clone and enter the dev shell">
     `git clone https://github.com/JacobPEvans/terraform-proxmox && cd terraform-proxmox && nix develop`
   </Step>
-  <Step title="Provide Proxmox API credentials">
-    Doppler resolves `PROXMOX_VE_USERNAME`, `PROXMOX_VE_PASSWORD`, and `PROXMOX_VE_ENDPOINT` at run time. The `README.md` covers the exact var names.
+  <Step title="Authenticate to Terrakube">
+    Run `tofu login` for the repo's Terrakube host. The workspace obtains Proxmox credentials from OpenBao.
   </Step>
   <Step title="Apply">
-    `terragrunt run-all apply` from the env folder. Review the plan; nothing destructive runs without confirmation.
+    Run `tofu plan`, review the remote plan, then `tofu apply`.
   </Step>
   <Step title="Hand off to Ansible">
     Outputs are written to the file Ansible reads as its inventory. Run `ansible-proxmox` next.
