@@ -66,9 +66,13 @@ Do not trust the name APIs. They report what the Mac knows about itself, not
 what it sends. Capture the DHCP request and read option 12 directly.
 
 ```bash
+# Find your Wi-Fi interface first. It is en0 on a MacBook, but often en1 or
+# en2 on a Mac Studio, where en0 is the built-in Ethernet port.
+wifi=$(networksetup -listallhardwareports | awk '/Wi-Fi/{getline; print $2}')
+
 # Capture the DHCP request while forcing a renew, then read the hostname option.
-sudo tcpdump -i en0 -v -s1500 "udp port 67 or udp port 68" > /tmp/dhcp.txt 2>&1 &
-sudo ipconfig set en0 NONE; sudo ipconfig set en0 DHCP; sleep 4
+sudo tcpdump -i "$wifi" -v -s1500 "udp port 67 or udp port 68" > /tmp/dhcp.txt 2>&1 &
+sudo ipconfig set "$wifi" NONE; sudo ipconfig set "$wifi" DHCP; sleep 4
 sudo killall tcpdump
 grep -i hostname /tmp/dhcp.txt
 ```
