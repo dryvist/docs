@@ -5,7 +5,11 @@ page_type: reference
 ---
 
 <Note>
-Status: **live.** A 2-node Raft cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) is running; the Ansible role provisions the KV hierarchy, the domain-split RBAC, and the snapshot daemon. A 3rd Raft voter is planned.
+Status: **live core, service-engine rollout in progress.** A 2-node Raft
+cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) is running. The Ansible
+role provisions the KV hierarchy, domain-split RBAC, snapshot daemon, and the
+AWS and GitHub plugin configuration. The two engines remain in rollout until
+their live issuance and revocation checks pass. A 3rd Raft voter is planned.
 </Note>
 
 > The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
@@ -14,11 +18,37 @@ Status: **live.** A 2-node Raft cluster (OpenBao 2.5.5, on-prem static-key auto-
 
 OpenBao is **T2** in the [four-tier secrets model](/security/comparison): the self-hosted source of truth for live machine credentials, and the **primary AI/machine interface**. An always-on agent authenticates to it as itself and gets scoped, expiring credentials with **zero interactive prompts** — the property the macOS keychain can never offer a headless process. It does three jobs:
 
-- **Credential broker.** AppRole (and, for the most sensitive services, TLS cert) auth methods issue short-lived, per-service credentials from a KV v2 engine and dynamic secrets engines.
+- **Dynamic credential issuer.** AppRole (and, for the most sensitive services, TLS cert) auth methods issue short-lived, per-service credentials from a KV v2 engine and dynamic secrets engines.
 - **SSH certificate authority.** It signs short-TTL SSH certificates for automation principals (`ai-agent`, `ansible`, `ci`) — a hybrid model where machines carry expiring certs and humans keep their static keys. No long-lived automation key sits on disk waiting to be stolen.
 - **Global flow-lease authority.** A single lease in its KV store, taken via compare-and-set so two writers cannot both win, gates every mutating flow (a tofu apply, an ansible run, an infra-changing agent). The rule is credential-gating: **no lease, no credentials** — an agent that cannot take the lease cannot obtain the creds it would need to mutate anything, so serialization is enforced where secrets are issued.
 
 It is the MPL-licensed fork of HashiCorp Vault 1.14.x — the last release before HashiCorp's BSL transition in 1.15.
+
+## Independent service secrets engines
+
+OpenBao hosts two separate logical engines inside one shared OpenBao security
+boundary. They are not one combined service.
+
+| Engine | Plugin | Mount | Purpose |
+| --- | --- | --- | --- |
+| AWS | [`openbao/openbao-plugins` `secrets-aws-v0.3.0`](https://github.com/openbao/openbao-plugins/releases/tag/secrets-aws-v0.3.0) | `aws/` | Assume a narrow AWS IAM role and lease short-lived STS credentials |
+| GitHub | [`martinbaillie/vault-plugin-secrets-github` v2.3.2](https://github.com/martinbaillie/vault-plugin-secrets-github/releases/tag/v2.3.2) | `github/` | Exchange a protected GitHub App private key for one-hour installation tokens |
+
+Each engine has its own catalog entry, mount, service configuration, OpenBao
+policy, consumer endpoints, and leases. Normal API access to one engine does not
+grant access to the other. Both engines still share the OpenBao root and admin
+control plane, Raft storage boundary, hosts, plugin runtime, signature-verified
+release artifacts, and outbound HTTPS. A compromise of that shared boundary can
+affect both engines.
+
+The GitHub mount exposes reviewed, named permission sets to agent identities.
+Those identities cannot call its unrestricted token endpoint or read engine
+configuration. The AWS mount exposes only the AWS roles each consumer needs.
+
+The AWS v0.3.0 release migrated to AWS SDK for Go v2. The upstream release warns
+that the large change carries extra regression risk, so production acceptance
+includes a real issuance, identity check, and revocation canary. The third-party
+GitHub plugin receives the same compatibility, issuance, and revocation gates.
 
 ## Architecture
 

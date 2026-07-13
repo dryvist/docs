@@ -5,8 +5,9 @@ page_type: explanation
 ---
 
 <Note>
-Status: **phase 1 in progress**, everything else planned. Each phase is a
-separate session with its own PR trail; nothing below phase 1 exists yet.
+Status: **in progress.** Core OpenBao is live, while the AWS and GitHub service
+engines remain in rollout. Each linked page carries the current status for its
+workstream.
 </Note>
 
 > Seven phases, each independently shippable, each with a rollback. The boundary
@@ -29,17 +30,20 @@ separate session with its own PR trail; nothing below phase 1 exists yet.
     runners via `workflow_dispatch` or the `ai:run` label.
   </Step>
   <Step title="OpenBao">
-    OpenBao LXC deployed; AppRole + response-wrapped bootstrap; AWS STS secrets
-    engine replaces [aws-vault](/security/tools/aws-vault); UniFi creds move to
-    OpenBao KV.
+    Core OpenBao is deployed. AppRole and response-wrapped bootstrap provide the
+    machine path. After live acceptance, the separate AWS STS engine will
+    replace [aws-vault](/security/tools/aws-vault) for automation; static
+    service credentials move to OpenBao KV.
   </Step>
-  <Step title="GitHub App + broker Tier A">
-    Self-serve down-scoped 1h tokens; the auto-readable PATs
-    (RESTRICTED/DRYVIST) are retired.
+  <Step title="GitHub App service engine">
+    A separate OpenBao engine issues fixed, named permission sets as one-hour
+    installation tokens. Routine automation PATs retire after live issuance,
+    use, and revocation checks pass.
   </Step>
-  <Step title="Broker Tier B">
-    Allowlisted org-admin verbs with Splunk audit and rate limits; remaining
-    PATs demoted to human-only break-glass.
+  <Step title="Consumer migration">
+    Agent launchers consume the GitHub engine. Access outside the configured
+    full-automation ceiling stays human-only; remaining privileged PATs become
+    break-glass credentials.
   </Step>
   <Step title="Decommission">
     ai-pool LXCs removed from tofu-proxmox; launcher zsh deleted from
@@ -64,8 +68,8 @@ separate session with its own PR trail; nothing below phase 1 exists yet.
 This section changes the trajectory of several existing pages without rewriting
 them yet. Until each phase lands, the existing pages describe the live system.
 
-- [aws-vault](/security/tools/aws-vault) — replaced by the OpenBao AWS STS engine
-  in phase 4.
+- [aws-vault](/security/tools/aws-vault) — will be replaced for automation by
+  the OpenBao AWS STS engine after live acceptance in phase 4.
 - [Doppler](/security/tools/doppler) — no longer decommissioned: the four-tier
   model (see the [comparison](/security/comparison)) keeps Doppler as the strict
   cloud tier holding secret-zero and rare human-approved credentials; routine
