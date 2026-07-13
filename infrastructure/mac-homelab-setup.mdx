@@ -1,0 +1,114 @@
+---
+title: "Mac homelab setup"
+description: "Why a Mac shows up as \"Mac\" on your router, and how the Private Wi-Fi Address setting masks both the MAC address and the DHCP hostname."
+page_type: explanation
+---
+
+Homelab Macs should announce their real hostname to the router. When they do,
+you find each machine by name in the DHCP lease list and reach it over the
+network without hunting for an IP. One macOS default quietly breaks that: the
+router lists the machine as `Mac`, no matter what you name it.
+
+## The symptom
+
+You set the computer name to something clear, like `mac-studio-01`. Every name
+on the Mac agrees. Yet the router's device list still shows `Mac`.
+
+The names on the Mac are not the problem. Each one is already correct:
+
+| Source | Command | Value |
+| --- | --- | --- |
+| Computer name | `scutil --get ComputerName` | `mac-studio-01` |
+| Host name | `scutil --get HostName` | `mac-studio-01` |
+| Local (Bonjour) name | `scutil --get LocalHostName` | `mac-studio-01` |
+| Kernel hostname | `hostname` | `mac-studio-01` |
+
+None of them say `Mac`. So the `Mac` the router shows comes from somewhere
+else.
+
+## The cause: Private Wi-Fi Address
+
+macOS ships a per-network privacy feature called **Private Wi-Fi Address**. It
+is on by default for each Wi-Fi network you join. When it is on, macOS does two
+things on that network:
+
+1. It sends a **randomized MAC address** instead of the hardware one.
+2. It replaces the **DHCP hostname** (DHCP option 12) with a generic `Mac`.
+
+The second effect is the one that surprises people. The privacy feature does
+not just hide the MAC address. It also withholds the real hostname. So the
+router receives `Mac` on the wire and displays `Mac`, while every name API on
+the machine reports the name you set.
+
+{/* Shape: hierarchy. One setting → two effects. Nodes: 3. Boundary crossings: 0. Aspect: ~4:3 TB. Pass. */}
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart TB
+  P{{Private Wi-Fi Address on}}
+  M([Randomized MAC address])
+  H([DHCP hostname sent as Mac])
+
+  P --> M
+  P --> H
+
+  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class P gate
+  class M,H hop
+
+  linkStyle 0,1 stroke:#4FB3A9,stroke-width:2px;
+```
+
+## Confirm it on the wire
+
+Do not trust the name APIs. They report what the Mac knows about itself, not
+what it sends. Capture the DHCP request and read option 12 directly.
+
+```bash
+# Capture the DHCP request while forcing a renew, then read the hostname option.
+sudo tcpdump -i en0 -v -s1500 "udp port 67 or udp port 68" > /tmp/dhcp.txt 2>&1 &
+sudo ipconfig set en0 NONE; sudo ipconfig set en0 DHCP; sleep 4
+sudo killall tcpdump
+grep -i hostname /tmp/dhcp.txt
+```
+
+With Private Wi-Fi Address on, the capture shows `Hostname (12): "Mac"`. With it
+off, the same capture shows your real name. That single line is ground truth —
+it is what the router acts on.
+
+## The fix
+
+Turn off Private Wi-Fi Address for the network. Do it per network, because the
+setting is stored per network.
+
+<Steps>
+  <Step title="Open the network details">
+    Go to **System Settings → Wi-Fi**, then click **Details** next to the
+    network you are on.
+  </Step>
+  <Step title="Set Private Wi-Fi Address to Off">
+    Change **Private Wi-Fi Address** to **Off**. This uses the hardware MAC and
+    releases the real hostname on that network.
+  </Step>
+  <Step title="Confirm">
+    Re-run the capture above. Option 12 now carries your real hostname, and the
+    router lists the machine by name on its next lease.
+  </Step>
+</Steps>
+
+## The tradeoff
+
+With Private Wi-Fi Address off, the network sees the hardware MAC address. That
+is the point of the setting: it trades MAC-address privacy for a real,
+discoverable identity. Turn it off only on networks you trust — your own
+homelab — and leave it on for public Wi-Fi.
+
+## Enforce it across every Mac
+
+Toggling this by hand on each machine and each network does not scale, and the
+default flips back on every new network. The homelab enforces the setting
+declaratively in [nix-darwin](/nix/nix-darwin): a module takes a list of
+trusted network names and holds Private Wi-Fi Address off for those networks on
+every Mac, so a new machine or a rejoined network never silently reverts to
+`Mac`.
