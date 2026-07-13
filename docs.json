@@ -113,7 +113,8 @@
                   "infrastructure/kubernetes-overview",
                   "infrastructure/lxc-vs-docker",
                   "infrastructure/vpn-egress-failover",
-                  "infrastructure/legacy-bmc-tactics"
+                  "infrastructure/legacy-bmc-tactics",
+                  "infrastructure/mac-homelab-setup"
                 ]
               },
               {
