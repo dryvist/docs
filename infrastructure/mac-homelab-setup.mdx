@@ -104,11 +104,46 @@ is the point of the setting: it trades MAC-address privacy for a real,
 discoverable identity. Turn it off only on networks you trust — your own
 homelab — and leave it on for public Wi-Fi.
 
-## Enforce it across every Mac
+## Why you turn it off by hand
 
-Toggling this by hand on each machine and each network does not scale, and the
-default flips back on every new network. The homelab enforces the setting
-declaratively in [nix-darwin](/nix/nix-darwin): a module takes a list of
-trusted network names and holds Private Wi-Fi Address off for those networks on
-every Mac, so a new machine or a rejoined network never silently reverts to
-`Mac`.
+Toggling this on each machine and each network does not scale, so the obvious
+next step is to enforce it automatically. On macOS you cannot — not for free,
+and not without more machinery than the setting is worth. Three mechanisms
+could enforce it, and each one fails for a homelab:
+
+- **Write the setting file directly.** macOS stores it in a Wi-Fi preferences
+  file that System Integrity Protection (SIP) guards. Even `root` cannot read
+  or write it, so no script or Nix activation step can touch it.
+- **Install a configuration profile from the command line.** Since macOS Big
+  Sur, macOS refuses to install a profile silently. A person must click
+  **Install** in System Settings, so it is not automatic. A hand-installed
+  profile also only *sets* the value; it does not lock it.
+- **Push the profile from an MDM server.** Mobile Device Management is the only
+  method that both sets the value and locks it. It also carries a price tag.
+
+### The MDM price tag
+
+Running your own MDM server is possible, but the push channel is neither free
+nor self-contained:
+
+- Every MDM needs an Apple Push Notification service (APNs) certificate. The
+  only ways to get one without a third-party signer are the **Apple Developer
+  Enterprise Program at about $300 per year**, or an **Apple Business Manager**
+  account, which needs a D-U-N-S number and a business registration.
+- On top of that you run the MDM server, renew the certificate every year, and
+  enroll each Mac.
+
+That is a recurring cost and a standing service, all to lock one Wi-Fi toggle
+on a couple of machines. The lock only stops a person from changing the setting
+by hand, which is not a threat on your own machines. So the homelab skips MDM.
+
+### Why Nix makes this a non-issue
+
+This is the case for managing Macs with [nix-darwin](/nix/nix-darwin) instead
+of MDM. Nix-darwin sets almost all Mac configuration declaratively and for
+free, so the homelab never needs a $300-per-year MDM server. This Wi-Fi setting
+is the rare exception that neither Nix nor a free profile can reach, because SIP
+and MDM gate it. You turn it off once per trusted network by hand, and that one
+manual step is acceptable precisely because everything else is already
+declarative. One hand-set toggle costs less than an MDM server built to avoid
+it.
