@@ -25,8 +25,10 @@ this path too, on two layers:
 
 - **A dedicated broker identity** whose only IAM permission is `sts:AssumeRole`
   into broker-managed roles — it holds no direct resource access itself. Its
-  own base key is rotated into OpenBao (`rotate-root`), so no long-lived AWS
-  key exists outside OpenBao at all.
+  own base key is seeded into OpenBao once, write-once; rotating it is a
+  deliberate operator action (mint a fresh key on an independent admin path,
+  re-seed), not an automatic process, so no long-lived AWS key sits anywhere
+  routine automation can reach it.
 - **Purpose roles behind it** — a role per per-project OpenTofu root (for
   example `role/tf-proxmox`), plus a broader `openbao-iac-admin` identity for
   AI and general IaC use. `openbao-iac-admin` is capped by an AWS permissions

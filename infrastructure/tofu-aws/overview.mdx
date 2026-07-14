@@ -14,7 +14,7 @@ The pattern below documents the IAM isolation retained by AWS workspaces. New an
 
 The per-project IAM role is the security boundary. Its trust policy lists GitHub OIDC for the matching repo, named operator IAM users, and the dedicated OpenBao broker identity described below. Its permissions policy grants S3 access to exactly one bucket — its own.
 
-Local and AI-agent access goes through [OpenBao](/security/tools/openbao)'s AWS secrets engine, not a static key. A dedicated broker identity can only `sts:AssumeRole` into broker-managed roles named `tf-*` (plus the broader, permissions-boundary-capped `openbao-iac-admin` for general IaC use); its own base key is rotated into OpenBao (`rotate-root`) so no long-lived AWS key exists outside it. A local `credential_process` AWS profile resolves the per-project role on demand, backed by an OpenBao AppRole held in a dedicated, auto-locking keychain whose lock state is the access boundary — see [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
+Local and AI-agent access goes through [OpenBao](/security/tools/openbao)'s AWS secrets engine, not a static key. A dedicated broker identity can only `sts:AssumeRole` into broker-managed roles named `tf-*` (plus the broader, permissions-boundary-capped `openbao-iac-admin` for general IaC use); its own base key is seeded into OpenBao once (write-once; rotation is a deliberate, separate operator action, not routine automation) so no long-lived AWS key sits anywhere routine automation can reach it. A local `credential_process` AWS profile resolves the per-project role on demand, backed by an OpenBao AppRole held in a dedicated, auto-locking keychain whose lock state is the access boundary — see [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
 
 CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS credentials directly via the role's trust policy. There is no `AWS_ACCESS_KEY_ID` secret in any repo. The same role that a human or agent assumes via OpenBao is the role CI assumes via OIDC — one trust policy, one permissions policy, audited the same way.
 
@@ -77,7 +77,7 @@ Application-layer secrets that genuinely need MFA-gated or cross-account key con
 
 ## Where the long-lived AWS key actually lives
 
-It doesn't — not outside OpenBao. The broker identity's base key is rotated into OpenBao (`rotate-root`); no long-lived AWS credential is ever held on a laptop, in `~/.aws/credentials`, in a `.env` file, or in shell history.
+It doesn't — not outside OpenBao. The broker identity's base key is seeded into OpenBao's AWS engine root config once, write-once; no long-lived AWS credential is ever held on a laptop, in `~/.aws/credentials`, in a `.env` file, or in shell history.
 
 Every local Terraform invocation runs under a short-lived STS session minted on demand by a `credential_process` AWS profile, which reads the per-project OpenBao AppRole from a dedicated, auto-locking keychain. See [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
 
