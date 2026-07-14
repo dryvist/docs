@@ -1,0 +1,96 @@
+---
+title: "Applying infrastructure via Terrakube"
+description: "How any operator or AI agent safely runs tofu apply against homelab infrastructure: one-time login, remote execution, and least-privilege access."
+page_type: how-to
+---
+
+> Supersedes older aws-vault and terragrunt apply guidance. Every active
+> OpenTofu repo now applies through Terrakube; there is no local wrapper
+> step and no long-lived cloud key on the operator's machine.
+
+## How an apply actually works
+
+Every OpenTofu root repo carries a `cloud {}` backend block naming its
+Terrakube workspace. Hostname and organization come from
+`TF_CLOUD_HOSTNAME` / `TF_CLOUD_ORGANIZATION` environment variables, never
+committed to the repo. `tofu apply` does not run locally — it submits the
+plan to a Terrakube workspace, which queues and runs it on a Terrakube
+executor:
+
+- **State** lives in the platform's object storage, versioned per workspace.
+- **Locking** is Terrakube's native one-run-per-workspace queue — no second,
+  repo-specific lock file or mechanism.
+- **Credentials** for the target provider (Proxmox, GitHub, AWS, and so on)
+  are never held by the operator or CI. The executor signs a short-lived
+  workload-identity JWT for the run, exchanges it with OpenBao for a
+  provider token scoped to that workspace (typically a few minutes'
+  lifetime), and OpenTofu's ephemeral resources read it directly into the
+  provider. The token is never written to state, a log, or a Terrakube
+  workspace variable.
+
+The operator only ever holds a Terrakube token. They never hold a Proxmox
+API token, an AWS key, a GitHub PAT, or the OpenBao root — those stay
+server-side, minted per run.
+
+## The process for any operator or agent to apply
+
+1. **Authenticate once per machine.**
+
+   ```bash
+   tofu login terrakube-api.<domain>
+   ```
+
+   On a machine that has no global `tofu` (for example, a workstation that
+   only gets it through per-repo dev shells), run it in an ephemeral shell
+   instead:
+
+   ```bash
+   nix shell nixpkgs#opentofu -c tofu login terrakube-api.<domain>
+   ```
+
+   Either form writes the credential to
+   `~/.opentofu/credentials.tfrc.json`. This is a one-time step per
+   machine, not per repo.
+
+2. **From then on, in any repo with a `cloud {}` block:**
+
+   ```bash
+   tofu init
+   tofu apply
+   ```
+
+   `tofu init` connects to the named workspace; `tofu apply` submits the run
+   and streams its remote output back to the terminal. No local backend
+   config, no exported cloud credentials, no wrapper script.
+
+3. **Review the plan before it applies.** The workspace's plan output is
+   visible in the terminal stream and in the Terrakube UI; approve or
+   decline the same as any other Terrakube run.
+
+There is no separate "agent path" — an AI agent runs the identical two
+commands as a human operator, gated by the identical Terrakube RBAC.
+
+## How access is granted and revoked
+
+Terrakube issues **scoped team tokens**, not personal long-lived credentials:
+
+- A token is minted per team, scoped to the workspaces that team may plan or
+  apply against (read-only plan vs. apply access are separate grants).
+- Granting a new operator or agent access means minting a token for the
+  team they belong to — no shared static secret, no keychain entry to
+  distribute.
+- Revoking access is a single action in Terrakube: invalidate the token (or
+  remove the team/workspace grant). Nothing downstream needs to change,
+  because the token never touched a provider credential directly — it only
+  ever unlocked a workspace run, and the run's own provider credentials were
+  short-lived and minted fresh from OpenBao regardless.
+- Least privilege stays intact end to end: a compromised Terrakube token
+  exposes at most "can plan/apply this workspace for a few minutes," never
+  a standing cloud credential.
+
+## See also
+
+- [IaC tooling: OpenTofu, Terrakube, and OpenBao](/infrastructure/iac-tooling) —
+  why the wrapper was removed and the control-plane architecture.
+- [aws-vault](/security/tools/aws-vault) — why local/manual AWS access no
+  longer uses long-lived keys either.

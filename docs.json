@@ -103,6 +103,7 @@
             "pages": [
               "infrastructure/overview",
               "infrastructure/iac-tooling",
+              "infrastructure/applying-via-terrakube",
               "infrastructure/deployment-state-contract",
               "infrastructure/configuration/overview",
               {
