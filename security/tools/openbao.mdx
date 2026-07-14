@@ -85,7 +85,7 @@ malicious plan cannot rewrite secrets Ansible later trusts.
 
 | Identity | Reads | Writes |
 | --- | --- | --- |
-| `terraform-apply` | `secret/infra/*`, `secret/platform/{dns,traefik}`, plus `aws/sts/tf-proxmox` and `aws/sts/openbao-iac-admin` | same |
+| `terraform-apply` | `secret/infra/*`, `secret/platform/{dns,traefik}`, plus `aws/sts/tf-*` and `aws/sts/openbao-iac-admin` | same |
 | `terrakube-plan` | `secret/platform/terrakube` only | — |
 | `ansible-converge` | `secret/platform/*`, `secret/apps/*` | — |
 | `observability` | `secret/platform/{splunk,cribl}` | — |

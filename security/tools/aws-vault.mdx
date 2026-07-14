@@ -29,7 +29,7 @@ this path too, on two layers:
   deliberate operator action (mint a fresh key on an independent admin path,
   re-seed), not an automatic process, so no long-lived AWS key sits anywhere
   routine automation can reach it.
-- **Purpose roles behind it** — a role per per-project OpenTofu root (for
+- **Purpose roles behind it** — a role per OpenTofu root (for
   example `role/tf-proxmox`), plus a broader `openbao-iac-admin` identity for
   AI and general IaC use. `openbao-iac-admin` is capped by an AWS permissions
   boundary that blocks privilege self-escalation, credential/identity
