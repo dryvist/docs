@@ -30,11 +30,11 @@ Not "should not." Cannot. The four-layer isolation (process scoping, keychain ti
 
 **How we enforce it.** Branch protection on `main` and feature branches via `.github-tofu`. CODEOWNERS gates security-sensitive paths. [Commit conventions](/conventions/commit-conventions) forbids destructive shortcuts. `--no-verify` and `--force` trigger PR-review flags.
 
-### 4. MFA on every elevated session
+### 4. Elevated sessions require a real gate — MFA or an equivalent lock boundary
 
-No AWS API call leaves the workstation without an MFA-derived session token. No GitHub admin operation runs without an `elevate-access` keychain unlock (which itself requires biometric Touch ID). No Bitwarden vault read happens without the master password plus device-bound second factor.
+No AWS API call leaves the workstation on a long-lived key. Automated and AI-agent AWS calls go through OpenBao's AWS secrets engine, gated by the `openbao.keychain-db` lock state (unlock every ~3 days) rather than a per-call MFA prompt; any remaining manual aws-vault session still requires its MFA-derived token. No GitHub admin operation runs without an `elevate-access` keychain unlock (which itself requires biometric Touch ID). No Bitwarden vault read happens without the master password plus device-bound second factor.
 
-**How we enforce it.** `aws-vault` config requires `mfa_serial` for every profile. The `elevate-access.keychain-db` is locked by default. Bitwarden TOTP is set across the vault. Touch ID for sudo is enabled in `nix-darwin/modules/darwin/security.nix`.
+**How we enforce it.** The OpenBao AWS broker's own base key is rotated into OpenBao (`rotate-root`) — no static AWS key sits on a workstation to gate in the first place. Any remaining `aws-vault` profile requires `mfa_serial`. The `elevate-access.keychain-db` and `openbao.keychain-db` are locked by default. Bitwarden TOTP is set across the vault. Touch ID for sudo is enabled in `nix-darwin/modules/darwin/security.nix`.
 
 ### 5. One source of truth per secret
 
@@ -44,9 +44,9 @@ A secret value lives in exactly one store. OpenBao is the default home for anyth
 
 ### 6. Time-bound every credential
 
-Indefinite tokens are pre-leaked tokens. Every PAT carries an expiry. Every aws-vault session has a TTL. Every Doppler service token rotates on a schedule. Anything claiming "never expires" is rejected at creation.
+Indefinite tokens are pre-leaked tokens. Every PAT carries an expiry. Every AWS session — OpenBao-brokered STS or a legacy aws-vault session — has a TTL. Every Doppler service token rotates on a schedule. Anything claiming "never expires" is rejected at creation.
 
-**How we enforce it.** Fine-grained GitHub PATs: 90-day max. `aws-vault` session_ttl: 1 hour soft cap. Doppler service tokens: 90 days aligned with the PAT. GitHub App private keys: annual rotation. SSH signing keys: rotated on key rollover. Rotation runbook lives in [secrets-sync](/security/secrets-sync).
+**How we enforce it.** Fine-grained GitHub PATs: 90-day max. OpenBao AWS broker STS: 1-hour default lease. Any remaining `aws-vault` session_ttl: 1 hour soft cap. Doppler service tokens: 90 days aligned with the PAT. GitHub App private keys: annual rotation. SSH signing keys: rotated on key rollover. Rotation runbook lives in [secrets-sync](/security/secrets-sync).
 
 ### 7. Fail closed, not open
 

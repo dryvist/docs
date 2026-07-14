@@ -5,9 +5,9 @@ page_type: explanation
 ---
 
 <Note>
-Status: **in progress.** Core OpenBao is live, while the AWS and GitHub service
-engines remain in rollout. Each linked page carries the current status for its
-workstream.
+Status: **in progress.** Core OpenBao is live and its AWS secrets engine now
+brokers automation's AWS access; the GitHub service engine remains in rollout.
+Each linked page carries the current status for its workstream.
 </Note>
 
 > Seven phases, each independently shippable, each with a rollback. The boundary
@@ -29,11 +29,11 @@ workstream.
     `agent-run.yml` reusable workflow dispatches runs to docker-host ephemeral
     runners via `workflow_dispatch` or the `ai:run` label.
   </Step>
-  <Step title="OpenBao">
+  <Step title="OpenBao (AWS STS live)">
     Core OpenBao is deployed. AppRole and response-wrapped bootstrap provide the
-    machine path. After live acceptance, the separate AWS STS engine will
-    replace [aws-vault](/security/tools/aws-vault) for automation; static
-    service credentials move to OpenBao KV.
+    machine path. The AWS STS engine now brokers AWS access for automation,
+    replacing the static [aws-vault](/security/tools/aws-vault) base key; other
+    static service credentials continue moving into OpenBao KV.
   </Step>
   <Step title="GitHub App service engine">
     A separate OpenBao engine issues fixed, named permission sets as one-hour
@@ -68,8 +68,9 @@ workstream.
 This section changes the trajectory of several existing pages without rewriting
 them yet. Until each phase lands, the existing pages describe the live system.
 
-- [aws-vault](/security/tools/aws-vault) — will be replaced for automation by
-  the OpenBao AWS STS engine after live acceptance in phase 4.
+- [aws-vault](/security/tools/aws-vault) — already replaced for automation by
+  the OpenBao AWS STS engine (phase 4); that page now documents the broker
+  model that replaced it.
 - [Doppler](/security/tools/doppler) — no longer decommissioned: the four-tier
   model (see the [comparison](/security/comparison)) keeps Doppler as the strict
   cloud tier holding secret-zero and rare human-approved credentials; routine

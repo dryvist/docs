@@ -1,19 +1,47 @@
 ---
 title: "aws-vault"
-description: "A legacy local AWS session tool. Active dryvist OpenTofu workspaces use Terrakube and OpenBao instead."
+description: "A legacy local AWS session tool. Active dryvist OpenTofu workspaces use Terrakube and OpenBao; local/manual AWS access is also brokered through OpenBao now."
 page_type: reference
 ---
 
-> Active IaC workspaces do not use aws-vault.
+> Active IaC workspaces do not use aws-vault. Neither does local/manual AWS access anymore.
 
 `aws-vault` can store long-lived AWS access keys in an operating-system
-keychain and mint bounded subprocess sessions. It remains useful for isolated
-manual AWS administration where no platform identity exists.
+keychain and mint bounded subprocess sessions. It is not part of the dryvist
+AWS access path, automated or manual. Do not add aws-vault profiles, wrapper
+commands, or long-lived operator keys to an active IaC repo or a laptop.
 
-It is not part of the dryvist OpenTofu path. Terrakube runs plans and applies;
-OpenBao mints short-lived STS credentials for each workspace through native
-dynamic credentials. Do not add aws-vault profiles, wrapper commands, or
-long-lived operator keys to an active IaC repo.
+## Terrakube workspaces
 
-Use [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo)
-for the current pattern.
+Terrakube runs plans and applies; OpenBao mints short-lived STS credentials
+for each workspace through native dynamic credentials, one scoped broker role
+per workspace. See [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo).
+
+## Local and AI-agent access
+
+The static aws-vault base key that used to mint local `tf-<project>` sessions
+is retired. [OpenBao](/security/tools/openbao)'s AWS secrets engine brokers
+this path too, on two layers:
+
+- **A dedicated broker identity** whose only IAM permission is `sts:AssumeRole`
+  into broker-managed roles — it holds no direct resource access itself. Its
+  own base key is rotated into OpenBao (`rotate-root`), so no long-lived AWS
+  key exists outside OpenBao at all.
+- **Purpose roles behind it** — a role per per-project OpenTofu root (for
+  example `role/tf-proxmox`), plus a broader `openbao-iac-admin` identity for
+  AI and general IaC use. `openbao-iac-admin` is capped by an AWS permissions
+  boundary that blocks privilege self-escalation, credential/identity
+  persistence (no new IAM users, keys, or login profiles), and audit/org/
+  billing tampering — it is not `AdministratorAccess`.
+
+A local AWS CLI profile (`credential_process`) resolves each identity on
+demand: it reads the profile's OpenBao AppRole from the dedicated,
+auto-locking keychain described in [macOS Keychain](/security/tools/macos-keychain)
+and mints a short-lived STS session per call. The keychain's lock state is
+the whole access boundary — nothing is ever written to `~/.aws/credentials`.
+
+## See also
+
+- [OpenBao](/security/tools/openbao) — the AWS secrets engine and RBAC.
+- [macOS Keychain](/security/tools/macos-keychain) — the lock-state-is-the-boundary mechanics `credential_process` relies on.
+- [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo) — the Terrakube-workspace path.
