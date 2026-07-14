@@ -12,25 +12,25 @@ The pattern below documents the IAM isolation retained by AWS workspaces. New an
 
 ## The isolation model
 
-The per-project IAM role is the security boundary. Its trust policy lists exactly two principal types: GitHub OIDC for the matching repo, and named IAM users with MFA. Its permissions policy grants S3 access to exactly one bucket — its own.
+The per-project IAM role is the security boundary. Its trust policy lists GitHub OIDC for the matching repo, named operator IAM users, and the dedicated OpenBao broker identity described below. Its permissions policy grants S3 access to exactly one bucket — its own.
 
-Humans authenticate as themselves with a base IAM user whose long-lived access key lives in the [aws-vault](/security/tools/aws-vault) macOS keychain. The base user holds one permission only: `sts:AssumeRole` on roles named `tf-*`. Every Terraform command runs through `aws-vault exec tf-<project> -- ...`, which mints a short-lived STS session for the per-project role and injects it into the subprocess.
+Local and AI-agent access goes through [OpenBao](/security/tools/openbao)'s AWS secrets engine, not a static key. A dedicated broker identity can only `sts:AssumeRole` into broker-managed roles named `tf-*` (plus the broader, permissions-boundary-capped `openbao-iac-admin` for general IaC use); its own base key is seeded into OpenBao once (write-once; rotation is a deliberate, separate operator action, not routine automation) so no long-lived AWS key sits anywhere routine automation can reach it. A local `credential_process` AWS profile resolves the per-project role on demand, backed by an OpenBao AppRole held in a dedicated, auto-locking keychain whose lock state is the access boundary — see [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
 
-CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS credentials directly via the role's trust policy. There is no `AWS_ACCESS_KEY_ID` secret in any repo. The same role that a human assumes is the role CI assumes — one trust policy, one permissions policy, audited the same way.
+CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS credentials directly via the role's trust policy. There is no `AWS_ACCESS_KEY_ID` secret in any repo. The same role that a human or agent assumes via OpenBao is the role CI assumes via OIDC — one trust policy, one permissions policy, audited the same way.
 
 {/* Shape: parallel convergence (two source chains join at the per-project role, continue to bucket). Ranks: 2x2x1x1. Boundary crossings: 0. Aspect: ~2:1 LR. Pass. */}
 
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  Op([Operator])
-  Vault([aws-vault MFA])
+  Op([Operator / agent])
+  Broker([OpenBao broker<br/>credential_process])
   CI([GitHub Actions])
   OIDC([OIDC token])
   Role{tf-project}
   Bucket[(tfstate-project)]
 
-  Op --> Vault --> Role
+  Op --> Broker --> Role
   CI --> OIDC --> Role
   Role --> Bucket
 
@@ -41,7 +41,7 @@ flowchart LR
   classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Op src
-  class Vault hop
+  class Broker hop
   class CI,OIDC external
   class Role gate
   class Bucket sink
@@ -77,9 +77,9 @@ Application-layer secrets that genuinely need MFA-gated or cross-account key con
 
 ## Where the long-lived AWS key actually lives
 
-The base IAM user's access key is stored in a dedicated [aws-vault](https://github.com/99designs/aws-vault) macOS keychain — a separate keychain from the login keychain, with its own password and access policy. No long-lived AWS credentials ever land in `~/.aws/credentials`, in a `.env` file, or in shell history.
+It doesn't — not outside OpenBao. The broker identity's base key is seeded into OpenBao's AWS engine root config once, write-once; no long-lived AWS credential is ever held on a laptop, in `~/.aws/credentials`, in a `.env` file, or in shell history.
 
-Every Terraform invocation runs under a one-hour STS session minted by `aws-vault exec tf-<project> -- <command>`. aws-vault prompts for an MFA token on the first invocation per cached session window and silently re-uses the cached chained session for the remainder of `session_ttl`. See [aws-vault](/security/tools/aws-vault) for the profile-management mechanics.
+Every local Terraform invocation runs under a short-lived STS session minted on demand by a `credential_process` AWS profile, which reads the per-project OpenBao AppRole from a dedicated, auto-locking keychain. See [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
 
 ## Tagging
 
@@ -100,8 +100,7 @@ The `Project` tag should be activated as an AWS cost allocation tag (Billing →
 | --- | --- | --- |
 | Terraform | 1.10 | S3 native locking (`use_lockfile`) released in Nov 2024 |
 | OpenTofu | 1.10 | S3 native locking released in 1.10 (conditional writes via `If-None-Match`) |
-| aws-vault | 7.x | Stable keychain backend and chained session caching |
-| AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects |
+| AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects; required by any `credential_process` profile |
 
 <Note>
 Active AWS workspaces run in Terrakube. OpenBao mints a short-lived, workspace-scoped STS session for the AWS provider; no local profile is part of the normal plan or apply path.
@@ -116,8 +115,8 @@ Active AWS workspaces run in Terrakube. OpenBao mints a short-lived, workspace-s
   <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/tofu-aws/consuming-repo">
     What goes inside the new repo so `terraform plan` runs immediately.
   </Card>
-  <Card title="aws-vault profile mechanics" icon="key" href="/security/tools/aws-vault">
-    How the keychain backend, MFA, and session TTLs interact in practice.
+  <Card title="aws-vault (legacy) and the OpenBao broker" icon="key" href="/security/tools/aws-vault">
+    Why aws-vault is retired and how the credential_process broker replaced it.
   </Card>
   <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
     Static checks in pre-commit, credentialed ops in CI. The placement rule every repo follows.

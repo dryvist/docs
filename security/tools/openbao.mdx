@@ -5,11 +5,13 @@ page_type: reference
 ---
 
 <Note>
-Status: **live core, service-engine rollout in progress.** A 2-node Raft
+Status: **live core; AWS engine live, GitHub engine in rollout.** A 2-node Raft
 cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) is running. The Ansible
 role provisions the KV hierarchy, domain-split RBAC, snapshot daemon, and the
-AWS and GitHub plugin configuration. The two engines remain in rollout until
-their live issuance and revocation checks pass. A 3rd Raft voter is planned.
+AWS and GitHub plugin configuration. The AWS engine now brokers automation's
+AWS access, replacing the static aws-vault base key; the GitHub engine remains
+in rollout until its live issuance and revocation checks pass. A 3rd Raft
+voter is planned.
 </Note>
 
 > The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
@@ -35,6 +37,8 @@ boundary. They are not one combined service.
 | --- | --- | --- | --- |
 | AWS | [`openbao/openbao-plugins` `secrets-aws-v0.3.0`](https://github.com/openbao/openbao-plugins/releases/tag/secrets-aws-v0.3.0) | `aws/` | Assume a narrow AWS IAM role and lease short-lived STS credentials |
 | GitHub | [`martinbaillie/vault-plugin-secrets-github` v2.3.2](https://github.com/martinbaillie/vault-plugin-secrets-github/releases/tag/v2.3.2) | `github/` | Exchange a protected GitHub App private key for one-hour installation tokens |
+
+**AWS engine, two layers.** A dedicated broker IAM identity holds one permission only — `sts:AssumeRole` into broker-managed roles — and its own base key is seeded into OpenBao's AWS engine root config once at bootstrap, write-once (a routine converge never overwrites it). Rotating it is a deliberate, separate operator action — minting a fresh key on an independent admin path and re-seeding, never OpenBao's own `rotate-root` call — so no long-lived AWS key sits anywhere routine automation can reach it. Behind it, one purpose role per consumer: a `tf-<project>` role per OpenTofu root, one `terrakube-<workspace>` role per Terrakube workspace, and a broader `openbao-iac-admin` role for AI and general IaC use. `openbao-iac-admin` carries an AWS permissions boundary that blocks privilege self-escalation, credential/identity persistence (no new IAM users, keys, or login profiles), and audit/org/billing tampering — it is not `AdministratorAccess`. Local and AI-agent callers reach these roles through a `credential_process` AWS profile backed by an AppRole in the dedicated keychain (below); Terrakube workspaces reach their own role directly through their workspace JWT identity, never through a local profile.
 
 Each engine has its own catalog entry, mount, service configuration, OpenBao
 policy, consumer endpoints, and leases. Normal API access to one engine does not
@@ -81,7 +85,7 @@ malicious plan cannot rewrite secrets Ansible later trusts.
 
 | Identity | Reads | Writes |
 | --- | --- | --- |
-| `terraform-apply` | `secret/infra/*`, `secret/platform/{dns,traefik}` | same |
+| `terraform-apply` | `secret/infra/*`, `secret/platform/{dns,traefik}`, plus `aws/sts/tf-*` and `aws/sts/openbao-iac-admin` | same |
 | `terrakube-plan` | `secret/platform/terrakube` only | — |
 | `ansible-converge` | `secret/platform/*`, `secret/apps/*` | — |
 | `observability` | `secret/platform/{splunk,cribl}` | — |
