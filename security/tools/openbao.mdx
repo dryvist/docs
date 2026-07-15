@@ -107,6 +107,18 @@ OpenBao cannot start sealed-and-empty on its own. Two pieces of *secret-zero* li
 
 On an **always-on Mac agent host**, each domain's AppRole `role_id`/`secret_id` is delivered as its own item in a **dedicated, auto-locking [keychain](/security/tools/macos-keychain)** (72-hour auto-lock). The keychain's **lock state is the access boundary**: a human unlocks once every ~3 days, and between unlocks a user-domain LaunchAgent reads each credential and publishes it into the session environment, so an agent's read is promptless — the "zero prompts at 3 a.m." property holds because the unlock is a periodic action, not a per-read one.
 
+### Autonomous Agent API Authentication
+
+Agents provisioned with an OpenBao AppRole `role_id` and `secret_id` (whether injected via Doppler or read from the keychain) must exchange them for a short-lived `client_token` via the OpenBao API before reading secrets or running pipelines that require OpenBao data (such as the infrastructure inventory).
+
+An agent can obtain its `BAO_TOKEN` programmatically using `curl` and `jq`:
+
+```bash
+export BAO_TOKEN=$(curl -s --request POST \
+  --data "{\"role_id\": \"$ROLE_ID\", \"secret_id\": \"$SECRET_ID\"}" \
+  $BAO_ADDR/v1/auth/approle/login | jq -r .auth.client_token)
+```
+
 ## Boundary with the other tiers
 
 - **SOPS + age (T1):** stays the source of truth for at-rest, in-repo config. OpenBao is for runtime-resolved secrets where lease/renew/rotation matters.
