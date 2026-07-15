@@ -114,9 +114,10 @@ Agents provisioned with an OpenBao AppRole `role_id` and `secret_id` (whether in
 An agent can obtain its `BAO_TOKEN` programmatically using `curl` and `jq`:
 
 ```bash
-export BAO_TOKEN=$(curl -s --request POST \
+export BAO_TOKEN=$(curl -s --fail --request POST \
+  --header "Content-Type: application/json" \
   --data "{\"role_id\": \"$ROLE_ID\", \"secret_id\": \"$SECRET_ID\"}" \
-  $BAO_ADDR/v1/auth/approle/login | jq -r .auth.client_token)
+  "$BAO_ADDR/v1/auth/approle/login" | jq -r .auth.client_token)
 ```
 
 ## Boundary with the other tiers
