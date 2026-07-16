@@ -37,13 +37,13 @@ this path too, on two layers:
   billing tampering — it is not `AdministratorAccess`.
 
 A local AWS CLI profile (`credential_process`) resolves each identity on
-demand: it reads the profile's OpenBao AppRole from the dedicated,
-auto-locking keychain described in [macOS Keychain](/security/tools/macos-keychain)
-and mints a short-lived STS session per call. The keychain's lock state is
-the whole access boundary — nothing is ever written to `~/.aws/credentials`.
+demand: it reads the profile's OpenBao AppRole — whose secret-zero the runtime
+secret injector supplies from the human-approved Doppler strict tier — and mints
+a short-lived STS session per call. The injector delivers the AppRole promptlessly,
+and nothing is ever written to `~/.aws/credentials`.
 
 ## See also
 
 - [OpenBao](/security/tools/openbao) — the AWS secrets engine and RBAC.
-- [macOS Keychain](/security/tools/macos-keychain) — the lock-state-is-the-boundary mechanics `credential_process` relies on.
+- [macOS Keychain](/security/tools/macos-keychain) — the two-database AI-readable / human-only boundary for local tokens.
 - [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo) — the Terrakube-workspace path.
