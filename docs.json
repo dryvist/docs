@@ -266,6 +266,7 @@
             "group": "Local LLM",
             "pages": [
               "local-llm/overview",
+              "local-llm/context",
               "local-llm/apple-silicon",
               "local-llm/mac-studio",
               "local-llm/models-and-quantization",
