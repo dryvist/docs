@@ -50,7 +50,7 @@ Runtime secrets are never stored in Nix store paths or committed files. Three in
 
 | Pattern | Used by | Mechanism |
 | --- | --- | --- |
-| OpenBao subprocess wrapper | Splunk MCP | Reads the `ai-readonly` AppRole from a dedicated macOS keychain, obtains a short-lived token, and injects the shared connection only into the child MCP process |
+| OpenBao subprocess wrapper | Splunk MCP | Reads the [`ai-readonly` AppRole credentials](/security/tools/openbao) from a dedicated macOS keychain, obtains a short-lived token, and injects the shared connection only into the child MCP process |
 | Doppler subprocess wrapper | Google Workspace MCP | `doppler run -p <project> -c prd -- <binary>` |
 | macOS Keychain via shell init | HuggingFace token, GitHub PAT | `security find-generic-password` exported in `~/.zshrc` |
 | Kubernetes Doppler Operator | Bifrost, Cribl pods | In-cluster operator syncs Doppler → K8s Secrets |
@@ -58,7 +58,7 @@ Runtime secrets are never stored in Nix store paths or committed files. Three in
 The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,
 and the Antigravity CLI and IDE surfaces. Antigravity (`agy`) is the
 Gemini-family harness; it is not a second Gemini MCP identity. Hermes uses the
-same current Splunk connection through its machine AppRole. Terrakube workload
+same Splunk connection through its machine AppRole. Terrakube workload
 identity applies only to remote Terrakube jobs, not interactive workstation
 agents.
 
