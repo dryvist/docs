@@ -7,17 +7,14 @@ page_type: reference
 > Two databases, three GitHub-token tiers. Unlock posture decides who can read what.
 
 <Note>
-**Per-secret automated reads are moving to the runtime manager — but one
-dedicated keychain becomes OpenBao's secret-zero store.** A headless flow cannot
-answer the `elevate-access` GUI prompt, so the day-to-day *machine* path moves to
-[OpenBao](/security/tools/openbao) (T2), where an agent authenticates via AppRole
-with zero interactive prompts. What stays on the keychain is narrower and
-different: a separate **`openbao.keychain-db`** (72-hour auto-lock) holds only the
-per-domain OpenBao AppRole `role_id`/`secret_id`. Its **lock state is the access
-boundary** — a human unlocks once every ~3 days and a user-domain LaunchAgent
-republishes the creds ambiently, so the keychain moves from holding *every* secret
-to holding just the secret-zero that fetches the rest. See the
-[four-tier model](/security/comparison).
+**Per-secret automated reads have moved to the runtime manager.** A headless
+flow cannot answer the `elevate-access` GUI prompt, so the day-to-day *machine*
+path runs through [OpenBao](/security/tools/openbao) (T2), where an agent
+authenticates via AppRole with zero interactive prompts. The AppRole secret-zero
+that bootstraps that path is not kept in a keychain — the runtime secret injector
+publishes it into the agent's ambient environment (`doppler run`). The keychain
+stays what its name says: login-convenience automated reads and human-only
+break-glass material. See the [four-tier model](/security/comparison).
 </Note>
 
 ## Two databases, one rule
@@ -28,11 +25,11 @@ The split is the entire access-control model: anything an AI can read non-intera
 | --- | --- | --- | --- |
 | `automation.keychain-db` | Unlocked at login | `GH_PAT_RESTRICTED`, `HF_TOKEN`, `BWS_ACCESS_TOKEN`, Claude Code credentials | Yes — via the launcher subshell |
 | `elevate-access.keychain-db` | Locked, GUI unlock prompt | `GH_PAT_PRIVATE`, `GH_PAT_ADMIN`, `GH_PAT_ORG_ADMIN` | No — the prompt blocks any non-interactive read |
-| `openbao.keychain-db` | 72-hour auto-lock (unlock every ~3 days) | Per-domain OpenBao AppRole `role_id`/`secret_id` (secret-zero for T2) | Yes while unlocked — a user LaunchAgent republishes into the session env |
 
-The third database is Nix-managed (its own unlock password is sops-managed) and
-is deliberately narrow: it holds only the secret-zero that fetches everything else
-from [OpenBao](/security/tools/openbao), never application secrets directly.
+Machine secret-zero no longer lives on the keychain. The per-domain OpenBao
+AppRole that bootstraps T2 reaches an agent through the runtime secret injector's
+ambient environment (`doppler run`), so the keychain holds only login-convenience
+and human-only material — never the AppRole, and never application secrets.
 
 ## GitHub PAT tiers
 
