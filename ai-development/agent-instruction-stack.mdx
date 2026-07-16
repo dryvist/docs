@@ -62,6 +62,61 @@ Practically, that means:
 - **Push state as it changes.** Current mode, tool availability, and permission tier are
   injected when they change, not carried as static boilerplate every turn.
 
+## Three tiers, by how often a rule applies
+
+Progressive disclosure is the principle. Here is the concrete shape that implements it
+for a rule library. Sort every rule into one of three tiers by how often it changes
+behavior.
+
+- **Always-on core.** One file, loaded every session, holds only the rules that shape
+  *every* task — how to verify work, when to ask before acting, how to tell hard truths.
+  Keep it small. A measured budget beats a vague "keep it short": cap the core at roughly
+  4,000 characters. Anything that does not change behavior on every task drops to a lower
+  tier.
+- **Path-scoped rules.** A rule that only matters when you touch a certain kind of file
+  carries a glob in its frontmatter — a `paths:` list. The harness loads it only when a
+  matching file is in the session's context. Shell conventions load when you edit a shell
+  script; a README standard loads when you edit a README. Off-task, they cost nothing.
+- **On-demand rules.** The rest live in an opt-in directory and are read by path when an
+  activity starts, not delivered automatically. A monitor-agent discipline, a release
+  runbook, a delegation contract — the agent pulls each one in when the work calls for it.
+
+The test for which tier a rule belongs in is one question: *does deleting this line change
+what the model does on the next task?* If yes on every task, it is core. If yes only when
+a certain file is open, it is path-scoped. If yes only when a certain activity starts, it
+is on-demand.
+
+This split matters most for smaller open-weight models. On a 30B-class local model the
+always-on core is the biggest lever you have — every token of irrelevant standing context
+costs more there than it does on a frontier model, so a shorter core measurably improves
+results. The tiers are how you keep the core short without losing the rest of the rules.
+
+## One base prompt, per-surface deltas
+
+Behavior is shared; identity and environment are not. A coding assistant, an unattended
+operations agent, and a chat surface should think the same way but know different things
+about who they are and what they can reach.
+
+Encode that split as a versioned base prompt plus one delta file per surface. The base
+holds the shared behavioral core. Each variant states only what *differs* for its surface
+— the extra tools, the tighter autonomy, the surface-specific scope — never a full copy.
+A variant is a diff, not a fork. When the shared behavior changes, you edit the base once
+and every surface inherits it; the variants stay small because they carry only their own
+exceptions.
+
+## A size gate keeps the core honest
+
+A character budget that nothing enforces drifts upward one "just this once" at a time. Put
+the budget in CI. A small check counts the always-on core and the base prompt block, and
+fails the build if either exceeds its cap — here, 4,000 characters each.
+
+The gate does two things. It makes "shorter wins" a rule the pipeline enforces, not a
+preference a reviewer has to remember. And it forces the demote decision: when the core
+grows past budget, someone has to move a rule to a lower tier instead of letting the
+always-on context bloat silently. Pair the gate with an evaluation scaffold — a small set
+of probe tasks you can re-run — so a change to the core is judged by whether it helps the
+model, not only by whether it fits.
+
 ## Typed memory, with an index
 
 Memory that persists across sessions works best when it is *typed* rather than kept as
