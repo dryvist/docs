@@ -89,6 +89,7 @@ The Hermes agent runs the bundled `llm-wiki` skill to build and maintain an inte
 The system keeps an `index.md` catalog and an append-only `log.md`, and lints for orphans, broken links, stale content, and source drift (tracked via SHA256 hashes). The wiki lives on the agent's persistent, snapshotted storage, with a nightly job running lint and health checks. "Compile knowledge once, reuse often" — providing inspectable Markdown instead of opaque memory.
 
 ```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
     Sources[Read sources] --> Raw[raw/ layer<br>immutable]
     Raw --> Curate[Curate wiki pages<br>wikilinks & tags]
@@ -96,6 +97,16 @@ flowchart LR
     Index --> Lint[Lint]
     Lint --> PR[Open signed draft PR]
     PR --> Review[Human review & merge]
+
+    classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+    classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+    classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+    class Sources src
+    class Raw,Curate,Index,Lint,PR hop
+    class Review sink
+
+    linkStyle 0,1,2,3,4,5 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
 ## Autonomous documentation contributor
@@ -111,6 +122,7 @@ The agent can read public repositories and open documentation pull requests on i
 The Hermes agent fan-out connects its LLM routing brain to multiple internal and external capabilities:
 
 ```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
     Brain[LLM Router Brain] --> LLMWiki[llm-wiki]
     Brain --> SplunkMCP[Splunk MCP]
@@ -118,6 +130,16 @@ flowchart LR
     Brain --> GitHubApp[GitHub App docs-PRs]
     Brain --> GitHubPAT[GitHub issues PAT]
     Brain --> Codex[Codex escalation]
+
+    classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+    classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+    classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+
+    class Brain ai
+    class LLMWiki,SplunkMCP,GitHubApp,GitHubPAT hop
+    class Context7,Codex external
+
+    linkStyle 0,1,2,3,4,5 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 - **Splunk MCP**: The `mcp_servers.splunk` entry connects to the Splunk MCP Server app (Splunkbase 7931) at `${SPLUNK_MCP_URL}` (which MUST be the management base plus the `/services/mcp` path) using `Authorization: Bearer ${SPLUNK_MCP_TOKEN}`. Tokens are not generic Splunk JWTs; the app strictly accepts tokens minted by its own `GET /services/mcp_token?username=<user>&expires_on=+90d` endpoint. These minted tokens have an `mcp` audience, are RSA-encrypted, and enforce encryption by default (`require_encrypted_token`). OpenBao is the sole machine-secret source for this shared connection. Hermes and Nix-managed workstation harnesses use the same Splunk service identity.
