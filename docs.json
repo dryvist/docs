@@ -123,6 +123,7 @@
                 "pages": [
                   "infrastructure/zfs-pool-naming",
                   "infrastructure/zfs-backup-replication",
+                  "infrastructure/data-platform-resilience",
                   "infrastructure/media-stack"
                 ]
               },
@@ -259,6 +260,9 @@
               "autonomous-agents/overview",
               "autonomous-agents/runtime",
               "autonomous-agents/github-access",
+              "autonomous-agents/task-management",
+              "autonomous-agents/incident-management",
+              "autonomous-agents/network-source-of-truth",
               "autonomous-agents/roadmap"
             ]
           },

@@ -1,0 +1,50 @@
+---
+title: "Data platform resilience"
+description: "How the shared application database survives a node loss and a bad day: a replicated primary and standby, layered versioned and immutable backups, and rehearsed restores."
+page_type: explanation
+---
+
+<Note>
+Status: **planned.** The resilience tiers below are the intended design; several
+are as-built pending the platform build-out.
+</Note>
+
+> Everything else is rebuildable from source. The data is not — so the data gets
+> the protection, and the rest gets to be disposable.
+
+The homelab's design philosophy is deliberate disposability: hosts and services are
+reconstructed from code, not nursed. That only works if the **irreplaceable data**
+sits behind real protection while everything around it stays cheap to rebuild. The
+shared application database is that irreplaceable layer, so it carries two
+independent resilience tiers.
+
+## High availability
+
+A **primary and a standby** database stay in sync through continuous replication.
+If the node holding the primary fails, failover management promotes the standby, so
+a single node loss is a brief interruption rather than an outage.
+
+<Note>
+As-built pending: replication, the standby role, and automatic failover management
+are staged but not yet live.
+</Note>
+
+## Layered backups
+
+Backups are layered so no single failure — hardware, mistake, or malice — can take
+the data with it.
+
+| Tier | Property |
+| --- | --- |
+| On-site versioned object store | Fast local restores; keeps historical versions, not just the latest |
+| Off-site immutable copy | Object-lock retention an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
+| Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
+
+<Note>
+As-built pending: the versioned store, the off-site immutable copy, and the restore
+drills are part of the platform build-out.
+</Note>
+
+This tier sits alongside the host-level
+[ZFS backup and replication](/infrastructure/zfs-backup-replication) that protects
+the guests themselves; together they cover both the box and the data inside it.
