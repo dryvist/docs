@@ -26,13 +26,12 @@ highly available resources, so losing a node triggers a managed restart on a
 surviving node instead of a manual recovery. An anti-affinity rule keeps the two
 database containers apart, so no single node can take both.
 
-A **primary and a standby** database are meant to stay in sync through continuous
-replication, turning that restart into a promotion.
-
-<Note>
-As-built pending: replication and the standby role. Failover today restarts a
-container elsewhere; it does not yet promote a warm copy.
-</Note>
+A **primary and a standby** database stay in sync through continuous streaming
+replication. The former primary now runs as a warm standby: it applies every
+write the primary ships and reports a healthy streaming state from both ends.
+The applications were cut over to the new primary with a single switch, verified
+by matching table counts and live client connections before the old primary was
+demoted.
 
 ## Layered backups
 
@@ -54,10 +53,15 @@ The off-site copy is meant to be identical to the on-site one — same layout, s
 names — so a restore reads the same paths either way and only swaps which store it
 points at.
 
+The off-site copy is rebuilt and verified: every object matches the on-site
+tier, and the check asks for the specific manifest file a restore needs rather
+than trusting a directory listing. The database can also write to both stores
+natively as twin repositories, which retires the mirror step entirely; that
+mode is built and tested but not yet switched on.
+
 <Note>
-As-built pending: the off-site copy is being rebuilt after a defect left it
-holding an incomplete subset, and its restore drill has not run. Until a restore
-is rehearsed, treat the tier as unproven.
+As-built pending: the off-site restore drill has not run. Until a restore is
+rehearsed from the off-site copy itself, treat that tier as unproven.
 </Note>
 
 The defect is worth naming, because it is the failure mode backups are famous
