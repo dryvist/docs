@@ -55,7 +55,27 @@ embeds the docs into a vector store and answers by similarity:
    similarity at agent time.
 
 Because the ingestion source is the same `llms-full.txt`, the retrieval index
-stays in step with the docs by rebuilding whenever the site does.
+stays in step with the docs by rebuilding from the published site.
+
+### In practice (verified)
+
+This project runs that pattern end to end: a scheduled job fetches
+`llms-full.txt` plus the generated registry document, splits them into
+~256-token chunks, embeds each chunk through the router's `embeddings` role,
+and rebuilds one Qdrant collection per run (drop-and-recreate, so re-runs
+replace rather than duplicate). Two implementation lessons worth stealing:
+
+- **Size the embedding server's physical batch to its context window.**
+  llama.cpp's default `--ubatch-size` (512 tokens) silently caps embedding
+  inputs far below the advertised context and returns a 500 for anything
+  larger — set `--batch-size`/`--ubatch-size` to the context size for
+  embedding models.
+- **Budget for tokenizer skew.** Chunkers that count tokens with tiktoken
+  under-count for wordpiece embedding models (nomic runs 1.6–2.4× on dense
+  technical text), so keep chunks well under the server ceiling.
+
+The rebuild is scheduled (daily), not merge-triggered — a docs change lands in
+the index at the next run, not instantly.
 
 ## How they fit
 
