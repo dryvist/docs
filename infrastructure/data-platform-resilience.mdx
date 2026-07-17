@@ -5,9 +5,9 @@ page_type: explanation
 ---
 
 <Note>
-Status: **partly built.** Failover management and both backup tiers are live.
-Database replication and the rehearsed restore drills are still in progress —
-each section says which.
+Status: **live.** Failover management, streaming replication, and both backup
+tiers run today; the on-site restore drill passes. One item remains open — the
+off-site restore drill — and its section says so.
 </Note>
 
 > Everything else is rebuildable from source. The data is not — so the data gets
@@ -41,7 +41,7 @@ the data with it.
 | Tier | Property |
 | --- | --- |
 | On-site versioned object store | Fast local restores; keeps historical versions, not just the latest |
-| Off-site immutable copy | Object-lock retention an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
+| Off-site immutable copy | Object-lock retention that an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
 | Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
 
 The on-site tier is live and rehearsed. The database ships every write to it
