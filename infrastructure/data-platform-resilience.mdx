@@ -45,17 +45,28 @@ the data with it.
 | Off-site immutable copy | Object-lock retention an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
 | Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
 
-Both copies are live. The database ships every write to the on-site store
+The on-site tier is live and rehearsed. The database ships every write to it
 continuously and takes a full base backup weekly with incrementals in between, so
-a restore can land on any point in time rather than the last nightly snapshot. The
-off-site copy is byte-for-byte identical to the on-site one — same layout, same
+a restore can land on any point in time rather than on the last nightly snapshot.
+A restore drill passes: the databases come back queryable.
+
+The off-site copy is meant to be identical to the on-site one — same layout, same
 names — so a restore reads the same paths either way and only swaps which store it
 points at.
 
 <Note>
-As-built pending: the scheduled restore drills. Until a restore is rehearsed, the
-tier is unproven.
+As-built pending: the off-site copy is being rebuilt after a defect left it
+holding an incomplete subset, and its restore drill has not run. Until a restore
+is rehearsed, treat the tier as unproven.
 </Note>
+
+The defect is worth naming, because it is the failure mode backups are famous
+for. The mirror copied only the files a directory listing showed it, the object
+store's listing silently stopped early, and every check compared the same partial
+view on both sides — so the copy reported perfect parity while missing the one
+file that makes it restorable at all. A check that reads the same lie as the
+thing it checks is not a check. The lesson generalises: verify a backup by asking
+for the specific file you would need, not by comparing inventories.
 
 This tier sits alongside the host-level
 [ZFS backup and replication](/infrastructure/zfs-backup-replication) that protects
