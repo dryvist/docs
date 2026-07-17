@@ -1,0 +1,40 @@
+---
+title: "Incident management"
+description: "A self-hosted ITSM system of record where agents open, dedupe, update, and auto-close homelab incidents under a strict contract that always yields to a human."
+page_type: explanation
+---
+
+<Note>
+Status: **planned.** The incident contract is written and released in the agent's
+skill bundle; the ITSM service it drives is not yet deployed.
+</Note>
+
+> When something is genuinely wrong, the durable record is a ticket — not a chat
+> message that scrolls away. When a person steps in, the agent steps back.
+
+The monitoring layer decides *something is wrong*; the incident system is where that
+becomes a **ticket** with a threaded narrative, and — once resolved — a
+knowledge-base article the next occurrence can reuse. Notifications are the alert
+surface; the ticket is the truth.
+
+## The operating contract
+
+Agents follow one deterministic contract so incidents stay clean and a person is
+never overwritten.
+
+| Rule | What it means |
+| --- | --- |
+| **Deterministic dedup** | Every finding gets a stable key built from its source, rule, and the one entity it is about, normalized so the same problem always produces the same key. The agent searches for an open ticket by that key before creating one; a match is appended to, never duplicated. |
+| **Severity mapping** | The monitoring layer's severity maps straight to ticket priority, so an alert's urgency carries through to the queue. |
+| **Auto-managed lifecycle** | Tickets the agent opens are tagged as agent-managed. After recovery is confirmed and the problem stays quiet for a defined window, the agent closes the ticket itself. |
+| **Yield to humans** | The instant a person touches a ticket — a comment, a state change, taking ownership — the agent drops its claim and never changes that ticket's state again. |
+
+## Guardrails
+
+The agent runs the contract under the same discipline as every other write path: a
+**dry-run** mode that prints what it would do instead of doing it, a **rate limit**
+of one write per finding per cycle, bounded reads that never pull full ticket
+histories into context, and credentials injected from the
+[secrets path for agents](/autonomous-agents/secrets) — never printed into a
+ticket. See the [Hermes agent](/autonomous-agents/hermes-agent) for the runtime
+that drives it.

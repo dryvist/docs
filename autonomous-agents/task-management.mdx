@@ -1,0 +1,45 @@
+---
+title: "Task management"
+description: "A self-hosted task and project tracker that autonomous agents read and write through an MCP server, so agent and operator share one board."
+page_type: explanation
+---
+
+<Note>
+Status: **live.** The tracker and its MCP server are deployed; agents read and
+write it today.
+</Note>
+
+> The agent and the operator plan against the same board. Neither keeps a private
+> to-do list the other can't see.
+
+Autonomous agents need somewhere durable to record what they are doing and what is
+left to do — a store that survives a restart, a new session, or a handoff to a
+person. A self-hosted task tracker fills that role: projects, tasks, labels, and
+status, shared by every agent and every human on the homelab.
+
+## What the agent can do
+
+Agents reach the tracker through an [MCP](/ai-development/ai-orchestration-stack)
+server that exposes project and task operations — create, read, update, close,
+and organize — as tools. The agent plans work as tasks, records progress, and
+closes items it finishes, the same way a person would from the web UI.
+
+| Capability | Who uses it |
+| --- | --- |
+| Create and organize projects and tasks | Agent and operator |
+| Update status, labels, priority | Agent and operator |
+| List work per project | Agent and operator |
+| Shared board of record | Both, one view |
+
+## Credentials, not prompts
+
+The MCP server authenticates with a **scoped service-account token** (a read-write
+tier, distinct from any human account) that is injected at process launch by the
+[secrets path for agents](/autonomous-agents/secrets) — never typed, never stored
+in the clone. An operator opts a host into the integration deliberately; it is off
+by default everywhere else.
+
+## Known limits
+
+Listing every task across all projects in one call is unreliable — agents list per
+project instead. This is a client-side quirk, not a data limit.

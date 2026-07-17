@@ -1,0 +1,49 @@
+---
+title: "Network source of truth"
+description: "A self-hosted inventory platform that becomes the single authoritative model of the homelab's network and hosts, imported read-only from existing state before it drives anything."
+page_type: explanation
+---
+
+<Note>
+Status: **planned.** The platform is modeled and staged; the import and
+inventory-serving phases have not landed.
+</Note>
+
+> One authoritative model of what exists — so agents and automation stop guessing
+> from three half-current lists.
+
+Infrastructure state lives in several places at once: the IaC that provisions it,
+hand-maintained inventory, and DNS. When those drift, automation acts on stale
+facts. A **source-of-truth (SSoT)** platform collapses them into one model of
+devices, addresses, and their relationships that both people and agents can query.
+
+## The migration story
+
+The platform earns trust before it holds any, in three deliberate phases:
+
+<Steps>
+
+1. **Read-only import.** The platform imports existing state from the IaC and
+   current inventory and presents it for review. It is a mirror at this stage —
+   authoritative of nothing, safe to compare against reality.
+
+2. **Reconcile.** Drift between the imported model and the live estate is resolved
+   in the model, so it becomes the accurate picture rather than another stale one.
+
+3. **Serve.** Only once the model is trusted does automation read *from* it —
+   dynamic inventory for configuration runs, and answers for agents that previously
+   scraped several sources.
+
+</Steps>
+
+<Note>
+Phases 1–3 are **as-built pending**: the read-only import, reconciliation jobs, and
+inventory-serving integration are staged but not yet live.
+</Note>
+
+## What the agent gets
+
+A single query surface for "what exists and how it is wired," instead of stitching
+together IaC state, inventory files, and DNS. Credentials for any agent integration
+come from the [secrets path for agents](/autonomous-agents/secrets), injected at
+launch.

@@ -1,0 +1,77 @@
+---
+title: "Data platform resilience"
+description: "How the shared application database survives a node loss and a bad day: a replicated primary and standby, layered versioned and immutable backups, and rehearsed restores."
+page_type: explanation
+---
+
+<Note>
+Status: **live.** Failover management, streaming replication, and both backup
+tiers run today; the on-site restore drill passes. One item remains open — the
+off-site restore drill — and its section says so.
+</Note>
+
+> Everything else is rebuildable from source. The data is not — so the data gets
+> the protection, and the rest gets to be disposable.
+
+The homelab's design philosophy is deliberate disposability: hosts and services are
+reconstructed from code, not nursed. That only works if the **irreplaceable data**
+sits behind real protection while everything around it stays cheap to rebuild. The
+shared application database is that irreplaceable layer, so it carries two
+independent resilience tiers.
+
+## High availability
+
+**Failover management is live.** The cluster manages the database containers as
+highly available resources, so losing a node triggers a managed restart on a
+surviving node instead of a manual recovery. An anti-affinity rule keeps the two
+database containers apart, so no single node can take both.
+
+A **primary and a standby** database stay in sync through continuous streaming
+replication. The former primary now runs as a warm standby: it applies every
+write the primary ships and reports a healthy streaming state from both ends.
+The applications were cut over to the new primary with a single switch, verified
+by matching table counts and live client connections before the old primary was
+demoted.
+
+## Layered backups
+
+Backups are layered so no single failure — hardware, mistake, or malice — can take
+the data with it.
+
+| Tier | Property |
+| --- | --- |
+| On-site versioned object store | Fast local restores; keeps historical versions, not just the latest |
+| Off-site immutable copy | Object-lock retention that an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
+| Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
+
+The on-site tier is live and rehearsed. The database ships every write to it
+continuously and takes a full base backup weekly with incrementals in between, so
+a restore can land on any point in time rather than on the last nightly snapshot.
+A restore drill passes: the databases come back queryable.
+
+The off-site copy is meant to be identical to the on-site one — same layout, same
+names — so a restore reads the same paths either way and only swaps which store it
+points at.
+
+The off-site copy is rebuilt and verified: every object matches the on-site
+tier, and the check asks for the specific manifest file a restore needs rather
+than trusting a directory listing. The database can also write to both stores
+natively as twin repositories, which retires the mirror step entirely; that
+mode is built and tested but not yet switched on.
+
+<Note>
+As-built pending: the off-site restore drill has not run. Until a restore is
+rehearsed from the off-site copy itself, treat that tier as unproven.
+</Note>
+
+The defect is worth naming, because it is the failure mode backups are famous
+for. The mirror copied only the files a directory listing showed it, the object
+store's listing silently stopped early, and every check compared the same partial
+view on both sides — so the copy reported perfect parity while missing the one
+file that makes it restorable at all. A check that reads the same lie as the
+thing it checks is not a check. The lesson generalises: verify a backup by asking
+for the specific file you would need, not by comparing inventories.
+
+This tier sits alongside the host-level
+[ZFS backup and replication](/infrastructure/zfs-backup-replication) that protects
+the guests themselves; together they cover both the box and the data inside it.
