@@ -5,8 +5,9 @@ page_type: explanation
 ---
 
 <Note>
-Status: **planned.** The resilience tiers below are the intended design; several
-are as-built pending the platform build-out.
+Status: **partly built.** Failover management and both backup tiers are live.
+Database replication and the rehearsed restore drills are still in progress —
+each section says which.
 </Note>
 
 > Everything else is rebuildable from source. The data is not — so the data gets
@@ -20,13 +21,17 @@ independent resilience tiers.
 
 ## High availability
 
-A **primary and a standby** database stay in sync through continuous replication.
-If the node holding the primary fails, failover management promotes the standby, so
-a single node loss is a brief interruption rather than an outage.
+**Failover management is live.** The cluster manages the database containers as
+highly available resources, so losing a node triggers a managed restart on a
+surviving node instead of a manual recovery. An anti-affinity rule keeps the two
+database containers apart, so no single node can take both.
+
+A **primary and a standby** database are meant to stay in sync through continuous
+replication, turning that restart into a promotion.
 
 <Note>
-As-built pending: replication, the standby role, and automatic failover management
-are staged but not yet live.
+As-built pending: replication and the standby role. Failover today restarts a
+container elsewhere; it does not yet promote a warm copy.
 </Note>
 
 ## Layered backups
@@ -40,9 +45,16 @@ the data with it.
 | Off-site immutable copy | Object-lock retention an operator cannot delete or overwrite early — survives ransomware and fat-finger alike |
 | Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
 
+Both copies are live. The database ships every write to the on-site store
+continuously and takes a full base backup weekly with incrementals in between, so
+a restore can land on any point in time rather than the last nightly snapshot. The
+off-site copy is byte-for-byte identical to the on-site one — same layout, same
+names — so a restore reads the same paths either way and only swaps which store it
+points at.
+
 <Note>
-As-built pending: the versioned store, the off-site immutable copy, and the restore
-drills are part of the platform build-out.
+As-built pending: the scheduled restore drills. Until a restore is rehearsed, the
+tier is unproven.
 </Note>
 
 This tier sits alongside the host-level
