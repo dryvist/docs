@@ -5,9 +5,10 @@ page_type: explanation
 ---
 
 <Note>
-Status: **rollout in progress.** The engine, fixed permission sets, and
-path-scoped minting policy are code-defined. Existing PAT paths remain in place
-until live issuance, use, and revocation checks pass.
+Status: **engine live, workstation cutover pending.** The engine was configured
+and converged on 2026-07-17, with read, per-repo write, and admin tiers defined.
+The workstation git/gh path and its PAT keychain tiers remain in place until the
+credential-helper cutover passes live issuance, use, and revocation checks.
 </Note>
 
 > An agent gets an installation token that dies in an hour. It never sees the
@@ -31,31 +32,45 @@ still authenticate to OpenBao with their existing AppRole identity.
 ## Token flow
 
 1. The agent authenticates to OpenBao as itself.
-2. It requests one named permission set from the `github/` mount.
+2. It requests a token at the tier its OpenBao identity allows.
 3. OpenBao uses the App private key to ask GitHub for an installation token.
-4. GitHub returns a token limited by the App installation and permission set.
+4. GitHub returns a token limited by the App installation and the tier's scope.
 5. OpenBao returns the token with a lease. The token expires after one hour and
    can be revoked early through its lease.
 
-The engine has a fixed full-automation permission set for each account
-installation. OpenBao policy grants callers `update` only on those named mint
-endpoints. It does not grant them access to engine configuration or the
-unrestricted `github/token` endpoint. This keeps installation choice and the
-permission envelope in reviewed configuration instead of agent-supplied request
-data.
+## Three tiers
 
-The current permission sets deliberately omit repository and permission
-restrictions, so each token receives the full repository and permission ceiling
-of its App installation. That ceiling includes write access to contents,
-workflows, secrets, hooks, pull requests, and organization-level automation
-settings where the installation supports them. The narrow boundary is the
-OpenBao path that callers may use, not the token's repository or operation
-scope.
+The engine exposes three access tiers. Each is a distinct OpenBao identity with
+its own minting path, so the tier a caller holds is the whole privilege
+boundary.
 
-GitHub still enforces the outer ceiling: an installation token cannot exceed
-the repositories or permissions granted to the App installation. An OpenBao
-permission set can narrow that ceiling, but the current full-automation sets
-narrow neither its repository list nor its permissions.
+| Tier | Scope | How it mints | Gate |
+| --- | --- | --- | --- |
+| Read | All repositories of an account installation, read-only | A named read permission set that stores a read-only permission map | Ambient — reading is pre-authorized |
+| Write | Exactly one named repository per request, at the App ceiling on that repo | The raw mint endpoint, with an OpenBao policy that requires and allowlists the repository parameter | Ambient for allowlisted repositories, plus a per-repository lease so two agents never hold the same repository |
+| Admin | An account installation's full ceiling across every repository | A named full-automation permission set | Human-only: an interactive, single-use grant per elevation |
+
+Read and admin tiers mint from named permission sets, whose stored scope the
+request body cannot widen. The write tier is the one identity allowed to use the
+raw mint endpoint, and its policy pins the request: the repository parameter is
+required and drawn from a reviewed allowlist, while the parameters that would
+name a whole installation or an arbitrary permission map are denied. So a write
+token carries write access to a single named repository, not an account.
+
+Adding a repository to the write allowlist is a reviewed configuration change,
+not something a caller can do at request time. GitHub still enforces the outer
+ceiling underneath all three tiers: an installation token can never exceed what
+the App installation itself holds.
+
+### The write lease
+
+Concurrent agents must not both hold write on the same repository. Before it
+mints a write token, the workstation helper takes a lease on that repository
+inside OpenBao, using an atomic check-and-set so exactly one holder wins. The
+lease carries a short deadman expiry, so a crashed holder frees it without a
+cleanup process. The lease is cooperative — the sanctioned helper is the only
+documented mint path — and it prevents two agents from owning one repository, not
+repository corruption itself, which the remote already rejects on a stale push.
 
 ## Separation from AWS
 
@@ -78,14 +93,14 @@ both engines.
 ## What it replaces
 
 | Old access path | New mechanism |
-| --- | --- | --- |
-| Routine public and organization automation PATs | Named GitHub permission-set endpoint |
-| Personal-account automation PAT | Separate named permission set for that installation |
-| Access outside the App permission ceiling | Human-only, interactive break-glass path |
+| --- | --- |
+| Routine read of any account repository | Ambient read tier — a read-only permission set |
+| Automation that writes to a repository | Per-repository write tier — one allowlisted repository per request, behind a lease |
+| Access outside the App permission ceiling | Human-only, interactive break-glass admin tier |
 
-The service engine does not add a generic admin-verb broker. Operations inside
-the reviewed full-automation ceiling are available to the agent, including the
-configured organization-level writes. Anything outside that ceiling stays on a
+The service engine does not add a generic admin-verb broker. Routine reads and
+per-repository writes are available to the agent within the reviewed allowlist.
+An installation-wide token, or a repository outside the allowlist, stays on a
 human-only, interactive break-glass path under
 [Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action).
 The password-gated human credential is never injected into automation.
@@ -93,11 +108,14 @@ The password-gated human credential is never injected into automation.
 ## Residual risk, honestly
 
 OpenBao becomes the path to the GitHub App private key. A caller that can use a
-permission-set endpoint can mint tokens up to that set's ceiling until its
-OpenBao access is revoked. The controls are layered: the App installation
-ceiling, fixed full-automation permission sets, path-scoped OpenBao policy,
-one-hour GitHub expiry, explicit lease revocation, and OpenBao audit logs. The
-broad permission sets make the shared OpenBao boundary a high-value target.
+mint endpoint can mint tokens up to that tier's scope until its OpenBao access is
+revoked. The controls are layered: the App installation ceiling, the tier's
+scope (a read-only map, or a single allowlisted repository), path- and
+parameter-scoped OpenBao policy, one-hour GitHub expiry, explicit lease
+revocation, and OpenBao audit logs. Per-repository write keeps a leaked write
+token's blast radius to one repository; the installation-wide admin tier stays
+human-gated precisely because it is the broad one, which makes the shared
+OpenBao boundary the target that matters.
 
 The GitHub plugin is a third-party Apache-2.0 component. Its signed checksum
 manifest, binary checksum, compatibility with the deployed OpenBao version,
