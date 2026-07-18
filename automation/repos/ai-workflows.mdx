@@ -4,9 +4,9 @@ description: "Reusable GitHub Actions workflows and GH-AW imports that turn issu
 page_type: explanation
 ---
 
-> One repo of reusable workflows and imported agentic workflows. Consumer repos write thin callers; GH-AW wrappers compile to locked workflows.
+> One repo of reusable workflows and imported agentic workflows. Consumer repos write thin callers, choose Claude or Codex once, and inherit future workflow updates.
 
-[`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`) and GitHub Agentic Workflow wrappers (`.md` source compiled to `.lock.yml`). The AI orchestration, prompts, provider routing, and rate guards live upstream; consumers declare triggers and inherit secrets.
+[`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`) and GitHub Agentic Workflow wrappers (`.md` source compiled to `.lock.yml`). The AI orchestration, prompts, provider routing, and rate guards live upstream. Consumers declare triggers, permissions, and secret forwarding.
 
 ## Event-triggered workflows
 
@@ -38,7 +38,6 @@ These run on cron — typically called with `schedule:` and a manual `workflow_d
 | `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
 | `public-docs-updater.md` / `.lock.yml` | Daily | GH-AW import of GitHubNext `doc-updater.md`; scans `dryvist` public PR activity and updates this docs repo |
 
-
 ## How a reusable caller looks
 
 A reusable-workflow caller is the smallest YAML that declares a trigger, sets permissions, and forwards to the upstream:
@@ -54,11 +53,11 @@ permissions:
   issues: write
 jobs:
   run:
-    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/issue-triage.yml@main
     secrets: inherit
 ```
 
-Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
+Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
 
 ## How a GH-AW import looks
 
@@ -83,56 +82,75 @@ Per [Dependency automation](/infrastructure/cicd/dependency-automation#version-p
 
 ## Authentication
 
-Reusable `.yml` workflows use a **provider-agnostic `GH_ACTION_AI_*` namespace** so you can swap providers, endpoints, or models at the org level without editing any caller.
+Reusable `.yml` workflows select the AI agent through one organization variable:
+`GH_ACTION_AI_AGENT=claude|codex`. The default is `claude`, so existing
+callers keep their current behavior. Set it to `codex` once at the organization,
+repository, or environment level to switch every inherited workflow.
+
+Each agent keeps its own credential. Pre-provision both secrets so switching the
+selector does not require caller edits.
 
 | Name | Kind | Purpose |
 | --- | --- | --- |
-| `GH_ACTION_AI_API_KEY` | Secret | Your provider's API key. Required by all workflows. |
-| `GH_ACTION_AI_BASE_URL` | Variable | Provider endpoint. Leave **empty** for direct Anthropic. |
-| `GH_ACTION_AI_MODEL` | Variable | Global default model name. |
-| `GH_ACTION_AI_MODEL_CODE` | Variable | Code-generation tier (falls back to `GH_ACTION_AI_MODEL`). |
-| `GH_ACTION_AI_MODEL_ISSUES` | Variable | Issue-management tier (falls back to `GH_ACTION_AI_MODEL`). |
-| `GH_ACTION_AI_MODEL_PLAN` | Variable | Deep-planning tier (falls back to `GH_ACTION_AI_MODEL`). |
+| `GH_ACTION_AI_AGENT` | Variable | `claude` or `codex`. Defaults to `claude`. |
+| `GH_ACTION_AI_API_KEY` | Secret | Anthropic API key used when the selector is `claude`. |
+| `OPENAI_API_KEY` | Secret | OpenAI API key used when the selector is `codex`. |
+| `GH_ACTION_AI_BASE_URL` | Variable | Optional Claude-compatible endpoint. Leave empty for direct Anthropic. |
+| `GH_ACTION_AI_MODEL` | Variable | Optional global Claude model default. |
+| `GH_ACTION_AI_MODEL_CODE` | Variable | Optional Claude code tier. Falls back to `GH_ACTION_AI_MODEL`. |
+| `GH_ACTION_AI_MODEL_ISSUES` | Variable | Optional Claude issue tier. Falls back to `GH_ACTION_AI_MODEL`. |
+| `GH_ACTION_AI_MODEL_PLAN` | Variable | Optional Claude planning tier. Falls back to `GH_ACTION_AI_MODEL`. |
+| `GH_ACTION_AI_CODEX_RESPONSES_API_ENDPOINT` | Variable | Optional Codex Responses API endpoint. |
+| `GH_ACTION_AI_CODEX_MODEL` | Variable | Optional Codex model override. |
+| `GH_ACTION_AI_CODEX_EFFORT` | Variable | Optional Codex reasoning-effort override. |
+| `GH_ACTION_AI_CODEX_VERSION` | Variable | Optional Codex CLI version override. |
 
 Set them at org level with the GitHub CLI:
 
 ```bash
-gh secret   set GH_ACTION_AI_API_KEY   --org <your-org>   # paste your key
-gh variable set GH_ACTION_AI_BASE_URL  --org <your-org> -b ""                       # empty = direct Anthropic
-gh variable set GH_ACTION_AI_MODEL     --org <your-org> -b "claude-sonnet-4-6"
+gh secret set GH_ACTION_AI_API_KEY --org <your-org>
+gh secret set OPENAI_API_KEY --org <your-org>
+gh variable set GH_ACTION_AI_AGENT --org <your-org> --body claude
 ```
 
-The same workflows run unchanged against any provider — only the org-level values change:
+Callers inside the same organization can use `secrets: inherit`. If a caller
+maps secrets explicitly, forward both credentials:
 
-| Provider | `GH_ACTION_AI_API_KEY` | `GH_ACTION_AI_BASE_URL` | Example model |
-| --- | --- | --- | --- |
-| Direct Anthropic | standard API key | *(empty)* | `claude-sonnet-4-6` |
-| OpenRouter | OpenRouter key | `https://openrouter.ai/api/v1` | `anthropic/claude-sonnet-4` |
-| Chutes.ai | Chutes key | Chutes endpoint | provider-specific name |
+```yaml
+secrets:
+  GH_ACTION_AI_API_KEY: ${{ secrets.GH_ACTION_AI_API_KEY }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
 
 > **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms) and risks an account ban — the subscription is intended for interactive sessions only. Use a standard API key (`GH_ACTION_AI_API_KEY`) instead; it is purpose-built for programmatic access with no ToS concerns.
 
-GH-AW imports use the Copilot engine (the current `public-docs-updater` wrapper). Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+GH-AW imports use the Copilot engine (the current `public-docs-updater` wrapper). Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md).
 
-## Commit signing
+## Security boundary
 
-`cc-ci-fix` (the CI auto-fixer) uses GitHub's `createCommitOnBranch` GraphQL mutation to push fix commits — no local clone, no custom signing script. The mutation runs as the Actions bot (`${{ github.token }}`), so every fix commit lands web-flow-signed and attributed to `github-actions[bot]`. This works without any App credential on the consumer repo, and is compatible with repos that enforce signed commits.
+The model job does not receive a privileged GitHub App token. It checks out
+code without persisted credentials and returns structured output or a workspace
+change. A separate publisher job validates that handoff, mints the short-lived
+App token, and performs the requested GitHub write.
 
-Other PR-writing workflows (`issue-resolver`, `code-simplifier`, `post-merge-*`) mint a `JacobPEvans-claude` GitHub App installation token and rely on `use_commit_signing: true` in the action. The App credentials (`GH_APP_CLAUDE_BOT_PRIVATE_KEY`, `GH_APP_CLAUDE_BOT_ID`) are distributed by `secrets-sync` to every repo in the `_github_app_repos` anchor.
+This boundary keeps repository comments, labels, branches, commits, and pull
+requests deterministic. It also applies to both agents, so changing
+`GH_ACTION_AI_AGENT` does not change the workflow's GitHub permissions.
+Existing GitHub App secret names remain supported for inherited callers.
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Getting started" icon="rocket" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+  <Card title="Getting started" icon="rocket" href="https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md">
     Caller templates for every workflow, with the correct permission blocks.
   </Card>
-  <Card title="Patterns" icon="puzzle-piece" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/PATTERNS.md">
+  <Card title="Patterns" icon="puzzle-piece" href="https://github.com/dryvist/ai-workflows/blob/main/docs/PATTERNS.md">
     The post-merge dispatch pattern, bot guards, and other recurring shapes.
   </Card>
-  <Card title="Authentication" icon="key" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+  <Card title="Authentication" icon="key" href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
     Full `GH_ACTION_AI_*` reference, provider routing, model variables, and GH-AW engine caveats.
   </Card>
-  <Card title="Verification" icon="check-double" href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/VERIFICATION.md">
+  <Card title="Verification" icon="check-double" href="https://github.com/dryvist/ai-workflows/blob/main/docs/VERIFICATION.md">
     The e2e runbook for checking a freshly-wired repo end to end.
   </Card>
   <Card title="Issue → PR pipeline on this repo" icon="route" href="/automation/issue-to-pr-pipeline">
