@@ -137,6 +137,9 @@ This boundary keeps repository comments, labels, branches, commits, and pull
 requests deterministic. It also applies to both agents, so changing
 `GH_ACTION_AI_AGENT` does not change the workflow's GitHub permissions.
 Existing GitHub App secret names remain supported for inherited callers.
+The `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_ID` secrets are
+distributed through the `_github_app_repos` anchor, not `_claude_bot_repos`, so
+reusable workflows can mint App tokens from consumer repositories.
 
 ## Where to go next
 
