@@ -1,0 +1,56 @@
+---
+title: "AI LLM prompts"
+description: "The versioned Open Knowledge Format catalog for Dryvist automation, applications, developer tools, and autonomous agents."
+page_type: reference
+---
+
+> One public catalog owns Dryvist-authored prompt text. Runtime repositories own schedules, credentials, deployment IDs, and application logic.
+
+[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. Its first release is
+[`v0.1.0`](https://github.com/dryvist/ai-llm-prompts/releases/tag/v0.1.0), resolved to commit
+[`0431be6994d51169b9f705ddeba958eb8a4d0fc4`](https://github.com/dryvist/ai-llm-prompts/commit/0431be6994d51169b9f705ddeba958eb8a4d0fc4).
+Consumers pin that full commit instead of a mutable branch.
+
+## Catalog layout
+
+| Directory | Prompt surface |
+| --- | --- |
+| `auto-ai-agent/` | Continuous local-agent behavior, curricula, and scheduled jobs |
+| `automation/` | Repository automation, cloud workflows, and routine prompts |
+| `applications/` | Application-facing system and user prompts |
+| `developer-tools/` | Model-visible hook, guard, and development-workflow prompts |
+
+Every prompt uses Open Knowledge Format 0.1 Markdown. YAML frontmatter carries its stable `prompt://dryvist/...` resource ID, rendering policy,
+variables, consumer list, status, and source history. Consumers follow the declared render contract and strip frontmatter when the prompt says
+`frontmatter: strip`.
+
+## Consumption contract
+
+The repository exposes one Nix package per catalog directory plus a combined default package. A consumer selects only the package it needs and
+pins the release commit in its flake input:
+
+```nix
+inputs.ai-llm-prompts.url =
+  "github:dryvist/ai-llm-prompts/0431be6994d51169b9f705ddeba958eb8a4d0fc4";
+```
+
+Release tags are immutable. Renovate proposes compatible prompt updates through normal pull requests. AI agents may prepare compatible patch or
+minor changes, but major and breaking releases remain human-only decisions.
+
+## GitHub Agentic Workflows status
+
+GitHub Agentic Workflows (GH-AW) are retired from active Dryvist repositories. Their useful local prompt bodies moved into this catalog; generated
+lock files, import caches, pin-refresh jobs, and maintenance workflows were removed. The catalog retains one dormant
+[`gh-aw-reference-template.md`](https://github.com/dryvist/ai-llm-prompts/blob/0431be6994d51169b9f705ddeba958eb8a4d0fc4/automation/gh-aw-reference-template.md)
+outside `.github/workflows` to document the historical format. It is not a production integration.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Browse the catalog" icon="book" href="https://github.com/dryvist/ai-llm-prompts/blob/v0.1.0/index.md">
+    Directory indexes for all prompt assets in `v0.1.0`.
+  </Card>
+  <Card title="AI workflows" icon="github" href="/automation/repos/ai-workflows">
+    How reusable workflows render pinned automation prompts.
+  </Card>
+</CardGroup>

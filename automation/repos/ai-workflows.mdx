@@ -1,12 +1,14 @@
 ---
 title: "AI workflows"
-description: "Reusable GitHub Actions workflows and GH-AW imports that turn issues into draft PRs, fix CI failures automatically, gate merges, and keep docs current."
+description: "Reusable GitHub Actions workflows that turn issues into draft PRs, fix CI failures automatically, and gate merges with pinned catalog prompts."
 page_type: explanation
 ---
 
-> One repo of reusable workflows and imported agentic workflows. Consumer repos write thin callers, choose Claude or Codex once, and inherit future workflow updates.
+> One repo of reusable workflows. Consumer repos write thin callers, choose Claude or Codex once, and inherit workflow updates.
 
-[`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`) and GitHub Agentic Workflow wrappers (`.md` source compiled to `.lock.yml`). The AI orchestration, prompts, provider routing, and rate guards live upstream. Consumers declare triggers, permissions, and secret forwarding.
+[`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`). The workflow
+orchestration, provider routing, and rate guards live there. Prompt text comes from the pinned
+[`dryvist/ai-llm-prompts`](/automation/repos/ai-llm-prompts) catalog. Consumers declare triggers, permissions, and secret forwarding.
 
 ## Event-triggered workflows
 
@@ -36,7 +38,6 @@ These run on cron — typically called with `schedule:` and a manual `workflow_d
 | `issue-hygiene.yml` | Weekly Mon 07:00 UTC | Detects duplicates, links merged PRs, flags stale issues |
 | `label-sync.yml` | Weekly Sun 05:00 UTC | Syncs canonical labels from the `.github` repo to consumers |
 | `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
-| `public-docs-updater.md` / `.lock.yml` | Daily | GH-AW import of GitHubNext `doc-updater.md`; scans `dryvist` public PR activity and updates this docs repo |
 
 ## How a reusable caller looks
 
@@ -59,22 +60,10 @@ jobs:
 
 Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
 
-## How a GH-AW import looks
+## How prompts are loaded
 
-GitHub Agentic Workflows are authored as Markdown and compiled:
-
-```yaml
----
-engine: copilot
-imports:
-  - githubnext/agentics/workflows/doc-updater.md@main
-on:
-  schedule: daily
-  workflow_dispatch:
----
-```
-
-`public-docs-updater.md` imports the GitHubNext doc updater, then adds local rules: scan `dryvist` public repos, include merged plus open/draft PR titles and descriptions, treat open work as in-progress only, and create one PR against `docs`.
+The reusable workflows check out the catalog at its pinned release commit, select an asset from `automation/`, and remove its OKF frontmatter before
+passing the prompt to the selected model. Local workflow YAML still owns triggers, permissions, publishing, and provider configuration.
 
 ## Versioning
 
@@ -124,7 +113,8 @@ secrets:
 
 > **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms) and risks an account ban — the subscription is intended for interactive sessions only. Use a standard API key (`GH_ACTION_AI_API_KEY`) instead; it is purpose-built for programmatic access with no ToS concerns.
 
-GH-AW imports use the Copilot engine (the current `public-docs-updater` wrapper). Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+GitHub Agentic Workflows are retired. The catalog keeps one dormant reference template, but no active repository compiles or runs GH-AW Markdown.
+Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md).
 
 ## Security boundary
 
@@ -151,7 +141,10 @@ reusable workflows can mint App tokens from consumer repositories.
     The post-merge dispatch pattern, bot guards, and other recurring shapes.
   </Card>
   <Card title="Authentication" icon="key" href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    Full `GH_ACTION_AI_*` reference, provider routing, model variables, and GH-AW engine caveats.
+    Full `GH_ACTION_AI_*` reference, provider routing, and model variables.
+  </Card>
+  <Card title="Prompt catalog" icon="book" href="/automation/repos/ai-llm-prompts">
+    Versioned OKF prompt assets and the immutable consumer pin.
   </Card>
   <Card title="Verification" icon="check-double" href="https://github.com/dryvist/ai-workflows/blob/main/docs/VERIFICATION.md">
     The e2e runbook for checking a freshly-wired repo end to end.
