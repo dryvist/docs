@@ -349,7 +349,9 @@
                 "group": "Documentation standards",
                 "pages": [
                   "conventions/documentation-standards",
-                  "conventions/diagramming"
+                  "conventions/diagramming",
+                  "conventions/mermaid-style",
+                  "conventions/mermaid-links"
                 ]
               }
             ]
