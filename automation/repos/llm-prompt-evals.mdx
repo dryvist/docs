@@ -68,5 +68,5 @@ tool call **fails** the test, even when the answer looks confident.
 
 Every pull request runs the eval across two models (a Claude-family and an
 OpenAI-family model, both through OpenRouter), and a separate job can run it
-against the local model fabric on the self-hosted runner. Fork pull requests never
-receive secrets, and no endpoints or keys are committed.
+against the [local model fabric](/local-llm/overview) on the self-hosted runner.
+Fork pull requests never receive secrets, and no endpoints or keys are committed.
