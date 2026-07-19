@@ -197,7 +197,8 @@
                 "pages": [
                   "automation/repos/ai-workflows",
                   "automation/repos/ai-llm-prompts",
-                  "automation/repos/claude-code-routines"
+                  "automation/repos/claude-code-routines",
+                  "automation/repos/llm-prompt-evals"
                 ]
               }
             ]
