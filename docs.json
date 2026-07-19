@@ -196,6 +196,7 @@
                 "group": "Repos",
                 "pages": [
                   "automation/repos/ai-workflows",
+                  "automation/repos/ai-llm-prompts",
                   "automation/repos/claude-code-routines"
                 ]
               }

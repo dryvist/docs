@@ -17,7 +17,6 @@ The cron-driven sibling — work that runs on a schedule rather than in response
 | `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Draft PR implementing the issue |
 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | Fix commit pushed back to the failing PR |
 | `pull_request` opened or `synchronize` | `code-simplifier.yml` | Review comments when ready |
-| `gh-aw` action SHA stale (Mon/Thu schedule) | `gh-aw-pin-refresh.yml` | PR refreshing pinned action SHAs |
 
 The full caller catalog and the post-merge dispatch chain live on the [ai-workflows page](/automation/repos/ai-workflows).
 
@@ -25,7 +24,7 @@ The full caller catalog and the post-merge dispatch chain live on the [ai-workfl
 
 <CardGroup cols={2}>
   <Card title="ai-workflows" icon="github" href="/automation/repos/ai-workflows">
-    Reusable workflows, GH-AW imports, the consumer-caller shape, auth + signing.
+    Reusable workflows, pinned prompts, the consumer-caller shape, auth + signing.
   </Card>
   <Card title="Scheduled routines" icon="clock" href="/automation/scheduled-routines/overview">
     The cron-driven sibling. Org-wide, no per-repo wiring.
