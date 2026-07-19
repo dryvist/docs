@@ -1,0 +1,72 @@
+---
+title: "LLM prompt evals"
+description: "Take any AI prompt, try a variation, and see which is better in a visual report — the llm-prompt-evals bench, step by step."
+page_type: how-to
+---
+
+> Prompts are code. This bench catches a bad wording change before it ships, the
+> same way tests catch a bad code change.
+
+[`dryvist/llm-prompt-evals`](https://github.com/dryvist/llm-prompt-evals) takes two
+versions of a prompt — the one you use now and a candidate you want to try — runs
+both against the same test questions, scores every answer, and shows you side by
+side which version did better.
+
+## Set up once
+
+You need [Nix](https://nixos.org/download) (with flakes) and
+[direnv](https://direnv.net). Those are the only two things you install by hand;
+the eval runner and everything else come from the dev shell. There is no `npm`.
+
+```bash
+git clone git@github.com:dryvist/llm-prompt-evals.git
+cd llm-prompt-evals
+direnv allow                   # loads the dev shell: promptfoo, python, node
+git submodule update --init    # fetch the prompt catalog
+cp .env.example .env           # paste your OPENROUTER_API_KEY into .env
+```
+
+## Evaluate a prompt
+
+<Steps>
+  <Step title="Pick the prompt">
+    The prompts in use live in `catalog/` (read-only). Choose the one you want to
+    change.
+  </Step>
+  <Step title="Write your candidate">
+    Copy the prompt into `variants/`, change the wording, and save it. Add one
+    block for it in the eval config, copying the candidate already there.
+  </Step>
+  <Step title="Run the eval">
+    ```bash
+    promptfoo eval -c evals/hermes/promptfooconfig.yaml
+    ```
+    It runs every question against both prompts and prints a pass/fail table.
+  </Step>
+  <Step title="Open the visual report">
+    ```bash
+    promptfoo view
+    ```
+    A web page opens showing every question, both answers side by side, and a
+    green check or red X for each. That is your report — no spreadsheet, no logs.
+    For a file to share, `scripts/report.sh` writes an HTML report instead.
+  </Step>
+</Steps>
+
+## What the tests check
+
+Each answer is scored two ways: exact checks with no model in the loop (a number
+matches, the output is valid JSON), and graded checks, where a cheap grader model
+scores the answer against a written rule for things exact checks miss.
+
+**Tool calls** get special treatment. Some tests give the model a couple of tools.
+The important ones are the *negative* tests: when no tool fits, or a required
+detail is missing, the model must ask or explain — not invent a call. A fabricated
+tool call **fails** the test, even when the answer looks confident.
+
+## In CI
+
+Every pull request runs the eval across two models (a Claude-family and an
+OpenAI-family model, both through OpenRouter), and a separate job can run it
+against the [local model fabric](/local-llm/overview) on the self-hosted runner.
+Fork pull requests never receive secrets, and no endpoints or keys are committed.
