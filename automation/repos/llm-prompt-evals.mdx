@@ -1,68 +1,72 @@
 ---
 title: "LLM prompt evals"
-description: "A promptfoo test bench that tells you whether a prompt change is better, worse, or neutral before it ships, comparing a canonical prompt to a candidate across deterministic and model-graded checks."
-page_type: explanation
+description: "Take any AI prompt, try a variation, and see which is better in a visual report — the llm-prompt-evals bench, step by step."
+page_type: how-to
 ---
 
-> Prompts are code. The eval repo catches a bad wording change before it ships,
-> the same way tests catch a bad code change.
+> Prompts are code. This bench catches a bad wording change before it ships, the
+> same way tests catch a bad code change.
 
-[`dryvist/llm-prompt-evals`](https://github.com/dryvist/llm-prompt-evals) runs a
-prompt through a suite of test cases and scores the replies. You run it on a
-prompt change to answer one question: is the change better, worse, or neutral?
+[`dryvist/llm-prompt-evals`](https://github.com/dryvist/llm-prompt-evals) takes two
+versions of a prompt — the one you use now and a candidate you want to try — runs
+both against the same test questions, scores every answer, and shows you side by
+side which version did better.
 
-## How it fits together
+## Set up once
 
-The canonical prompts live in the `ai-llm-prompts` catalog. This repo consumes
-them as a pinned git submodule and never copies them. A *candidate* is a
-deliberate fork of a canonical prompt that you want to measure. The harness runs
-both the canonical prompt and each candidate through the same test cases, then
-compares the scores.
+You need [Nix](https://nixos.org/download) (with flakes) and
+[direnv](https://direnv.net). Those are the only two things you install by hand;
+the eval runner and everything else come from the dev shell. There is no `npm`.
 
-Renovate bumps the pinned catalog, so an eval always runs against a known catalog
-version.
+```bash
+git clone git@github.com:dryvist/llm-prompt-evals.git
+cd llm-prompt-evals
+direnv allow                   # loads the dev shell: promptfoo, python, node
+git submodule update --init    # fetch the prompt catalog
+cp .env.example .env           # paste your OPENROUTER_API_KEY into .env
+```
 
-## What a test case checks
-
-Each test sends a user input to a model that is running the prompt under test,
-then runs assertions on the reply. There are two kinds:
-
-| Kind | Runs | Good for |
-| --- | --- | --- |
-| Deterministic | Exact checks, no model in the loop | A number matches, the reply is one lowercase word, the output is valid JSON |
-| llm-rubric | A cheap grader model scores against a written rubric | Behavior that exact checks miss, such as "the reply refuses to hand-edit a live server" |
-
-## Tool calls and the negative bank
-
-Tool-call tests give the model a small set of tools and check what it does.
-
-- **Positive:** the model must call the right tool with the required argument.
-- **Negative:** no tool fits, or a required argument is missing. The correct
-  behavior is to ask or explain, not to invent a call.
-
-The negative bank is the important part. A fabricated tool call **fails** the
-test, even when the reply looks confident. A model that guesses a city to satisfy
-a weather tool, or invents a call for a task no tool covers, is wrong.
-
-## Running an eval
+## Evaluate a prompt
 
 <Steps>
-  <Step title="Fetch the catalog and install">
-    Pull the pinned catalog submodule and install dependencies.
+  <Step title="Pick the prompt">
+    The prompts in use live in `catalog/` (read-only). Choose the one you want to
+    change.
   </Step>
-  <Step title="Run the suite">
-    Run the eval against a provider. Results render to JSON and HTML plus a
-    markdown summary.
+  <Step title="Write your candidate">
+    Copy the prompt into `variants/`, change the wording, and save it. Add one
+    block for it in the eval config, copying the candidate already there.
   </Step>
-  <Step title="Compare and decide">
-    Adopt a candidate only when it is at least as good as the canonical prompt on
-    every measure.
+  <Step title="Run the eval">
+    ```bash
+    promptfoo eval -c evals/hermes/promptfooconfig.yaml
+    ```
+    It runs every question against both prompts and prints a pass/fail table.
+  </Step>
+  <Step title="Open the visual report">
+    ```bash
+    promptfoo view
+    ```
+    A web page opens showing every question, both answers side by side, and a
+    green check or red X for each. That is your report — no spreadsheet, no logs.
+    For a file to share, `scripts/report.sh` writes an HTML report instead.
   </Step>
 </Steps>
 
+## What the tests check
+
+Each answer is scored two ways: exact checks with no model in the loop (a number
+matches, the output is valid JSON), and graded checks, where a cheap grader model
+scores the answer against a written rule for things exact checks miss.
+
+**Tool calls** get special treatment. Some tests give the model a couple of tools.
+The important ones are the *negative* tests: when no tool fits, or a required
+detail is missing, the model must ask or explain — not invent a call. A fabricated
+tool call **fails** the test, even when the answer looks confident.
+
 ## In CI
 
-The eval runs on pull requests across the cloud providers, and a separate job runs
+Every pull request runs the eval across two models (a Claude-family and an
+OpenAI-family model, both through OpenRouter), and a separate job can run it
 against the local model fabric on the self-hosted runner. Fork pull requests never
-receive cloud secrets, and the fabric endpoints come only from the runner
-environment. Nothing sensitive is committed.
+receive secrets, and no endpoints or keys are committed.
