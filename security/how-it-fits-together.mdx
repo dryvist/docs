@@ -15,7 +15,7 @@ The tools page lists what each one does. This page shows how they connect. Read 
 | **CI Tier 1 secret** | Doppler → `secrets-sync` repo → matrix job → target repo Actions secret |
 | **CI Tier 2 secret (infra)** | Doppler → `dopplerhq/secrets-fetch-action` at workflow runtime → env vars |
 | **OpenTofu** | operator CLI → Terrakube workspace → OpenBao dynamic credentials → provider API |
-| **Local AI session** | `git`/`gh` → credential helper → secrets engine mints a scoped token → used in memory → nothing persists |
+| **Local AI session** | `git` → credential helper, `gh` → shell wrapper → secrets engine mints a scoped token → used in memory → nothing persists |
 | **At-rest encrypted config** | `sops -e` → committed `.sops.json` → `sops -d` at CI/local boot |
 
 ## CI Tier 1 — Doppler distributes via secrets-sync
@@ -100,7 +100,7 @@ the operator shell or workspace variables.
 
 ## Local AI session — mint on demand, store nothing
 
-See [Local AI isolation](/security/local-ai-isolation) for the diagram and the full proof. Short version: no GitHub token sits on the workstation. A credential helper answers each `git` or `gh` request by minting a short-lived, scoped token; the token lives in memory for that operation and is never written to disk. Write access needs an explicit claim on one named repository.
+See [Local AI isolation](/security/local-ai-isolation) for the diagram and the full proof. Short version: no GitHub token sits on the workstation. Each request mints a short-lived, scoped token that lives in memory for that operation and is never written to disk. `git` and `gh` reach that mint by different routes — `git` through a credential helper, `gh` through a shell wrapper, because `gh` reads a token from the environment and never consults git's credential helpers. Write access needs an explicit claim on one named repository.
 
 ## Where each flow is documented
 
