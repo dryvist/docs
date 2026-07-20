@@ -27,7 +27,8 @@ Everything an always-on machine consumes routinely resides in T2, where credenti
 - SSH keys for git auth (lives in Bitwarden + ssh-agent).
 - Recovery codes, account passwords, age-key escrow (Bitwarden).
 - Anything an AI tool must never read (Bitwarden vault).
-- macOS-only GitHub PATs (Keychain — see [macos-keychain](/security/tools/macos-keychain)).
+- Service API keys that only the macOS host uses (Keychain — see [macos-keychain](/security/tools/macos-keychain)).
+- GitHub tokens — they are minted on demand and never stored (see [GitHub access](/autonomous-agents/github-access)).
 
 ## Project / config layout
 
@@ -61,9 +62,9 @@ copy an IaC credential from Doppler into a Terrakube workspace variable.
 ## Anti-patterns and best practices
 
 - Do not export `DOPPLER_TOKEN` in `~/.zshrc`. Use the `doppler-mcp` wrapper or `doppler login` interactive auth. Tokens persisted in the shell env are reachable by every later command.
-- Do not store the same value in both Doppler and the Keychain. Pick one source of truth per secret. The Keychain is for tokens that only the macOS host uses (GitHub PATs); Doppler is for tokens that CI also needs.
+- Do not store the same value in both Doppler and the Keychain. Pick one source of truth per secret. The Keychain is for keys that only the macOS host uses; Doppler is for tokens that CI also needs.
 - Rotate the service tokens at 90 days. The rotation runbook lives in [secrets-sync](/security/secrets-sync#rotation-cadence-best-practice).
-- Audit log: enable Doppler's per-project audit log; review on every PAT/key rotation.
+- Audit log: enable Doppler's per-project audit log; review on every key rotation.
 
 ## See also
 

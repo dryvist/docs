@@ -26,7 +26,7 @@ A new dryvist repo owns the whole runtime surface:
 | --- | --- |
 | `packages.agent-image` | The OCI image — `dockerTools.streamLayeredImage` |
 | `packages.egress-proxy` | Allowlisting CONNECT proxy with a Nix-defined domain list |
-| `packages.agent-cli` | `agent run\|dispatch\|shell` — replaces the `gh-claude-*` launcher zoo in [nix-darwin](/nix/nix-darwin) |
+| `packages.agent-cli` | `agent run\|dispatch\|shell` — the single entry point that replaced the per-credential launcher wrappers in [nix-darwin](/nix/nix-darwin) |
 | `agent-run.yml` | Reusable workflow for the Proxmox dispatch path |
 
 ## Image contents

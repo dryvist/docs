@@ -1,77 +1,79 @@
 ---
 title: "Local AI isolation"
-description: "Why AI tools (Claude Code, Gemini CLI, Codex) structurally cannot view protected secret values — process scoping, keychain tiers, and explicit deny lists."
+description: "Why AI tools (Claude Code, Gemini CLI, Codex) structurally cannot view protected secret values — no token at rest, scoped credential tiers, and explicit deny lists."
 page_type: explanation
 ---
 
-> Three layers of isolation. Each layer is sufficient on its own. Together, they make leakage structurally impossible.
+> Four layers of isolation. Each layer is sufficient on its own. Together, they make leakage structurally impossible.
 
-This page is the proof, not just the claim. AI tools running on this workstation cannot read tokens from the locked keychain, cannot persist tokens to the parent shell, and cannot read the file paths where keys live at rest.
+This page is the proof, not just the claim. AI tools running on this workstation cannot read the values behind the locked keychain, cannot obtain a GitHub write credential without taking a visible lease, and cannot read the file paths where keys live at rest.
 
-## Layer 1 — process scoping via subshells
+## Layer 1 — nothing is stored, so there is nothing to steal
 
-Every AI launcher runs `claude` inside a subshell. The subshell exports `GITHUB_TOKEN`; when `claude` exits, the subshell exits, and the env reverts. The parent shell never sees the token.
+There is no GitHub token at rest on the workstation. Every GitHub credential is an ephemeral GitHub App installation token minted at the moment of use and discarded with the process that asked for it. `git` never holds one of its own: a credential helper answers each request, mints a token scoped to that request, hands it to `git`, and forgets it.
 
-{/* Shape: linear chain. 6 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass. */}
+{/* Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass. */}
 
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
-  P0([parent shell<br/>GITHUB_TOKEN unset])
-  Sub([launcher subshell])
-  Kc[(automation.keychain-db)]
-  Cl([claude process])
-  Done([subshell exits])
-  P1([parent shell<br/>GITHUB_TOKEN still unset])
+  Op([git or gh<br/>needs a credential])
+  Helper([credential helper])
+  Bao[(secrets engine)]
+  Tok([token, in memory only])
+  Gone([process exits<br/>nothing on disk])
 
-  P0 --> Sub --> Kc
-  Kc --> Cl --> Done --> P1
+  Op --> Helper --> Bao
+  Bao --> Tok --> Gone
 
   classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef kc   fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
-  class P0,P1 host
-  class Sub,Cl,Done ai
-  class Kc kc
+  class Op,Gone host
+  class Helper,Tok ai
+  class Bao kc
 
-  linkStyle 0,1,2,3,4 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 0,1,2,3 stroke:#4FB3A9,stroke-width:2px;
 ```
 
-Green nodes are the parent shell (host), coral are the ephemeral subshell + `claude` process, ink is the keychain. The chain runs left-to-right and ends where it began — the parent shell on the right still has `GITHUB_TOKEN` unset.
+The chain starts at a command that needs a credential and ends with nothing persisted. A stolen shell history, a leaked environment dump, or a recovered disk image yields no usable GitHub credential, because none was ever written.
 
-## The launcher banner (verbatim)
+<Warning>
+**Never export a token from `.envrc`.** The directory-environment loader caches
+its environment dump on disk, so exporting a credential at load time would
+persist that credential — exactly the property this layer exists to remove. Mint
+at call time instead.
+</Warning>
 
-Every launcher prints this to stderr before calling `exec claude`. The banner lands in the AI's tool-output stream so it knows what it can and cannot do this session:
+## Layer 2 — three credential tiers, and only one is ambient
 
-```text
-[claude-launchers] custom authentication context is now active
-  type:    github-token tier
-  context: restricted
-  scope:   this claude process only — the parent shell is unaffected
+The credential an agent can obtain without ceremony is deliberately the least useful one. Escalation is not a matter of reading a different secret; it is a different minting path with a different gate.
 
-You now have the credentials and capabilities granted by this context.
-Tools that auto-detect credentials from the environment (aws, gh, git,
-tofu, kubectl, etc.) will pick them up automatically. Nothing
-persists once claude exits; the parent shell's environment is untouched.
-```
+| Tier | What it grants | Gate | AI can reach it? |
+| --- | --- | --- | --- |
+| Read | Read-only across the account installation | Ambient — pre-authorized | Yes, freely |
+| Write | Exactly one named repository, per request | A claim that takes an exclusive lease on that repository | Yes, but only one repository at a time, and visibly |
+| Admin | The installation's full ceiling | Human-only, interactive, single-use grant | No |
 
-No secret material is ever printed. The banner names the *kind* of context, never the value.
+This is a stronger boundary than "which secret can you read." A read credential cannot be widened into a write credential, because the write tier mints from a different endpoint under a policy that pins the repository parameter server-side. An agent that claims write on one repository still cannot touch a second one with that token. And the admin tier has no non-interactive path at all — there is nothing for an agent to read, unlock, or guess.
 
-## Layer 2 — keychain tier separation
+The lease is the visibility mechanism: a write claim is recorded, exclusive, and self-expiring, so two agents cannot silently both hold write on one repository. See [GitHub access](/autonomous-agents/github-access) for the full model.
 
-Secrets live in two separate macOS keychain databases. The detail is in [macOS Keychain](/security/tools/macos-keychain); the boundary that matters here is:
+## Layer 3 — the keychain split for what remains
+
+Secrets that no engine mints still live in two separate macOS keychain databases. The detail is in [macOS Keychain](/security/tools/macos-keychain); the boundary that matters here is:
 
 | Database | Holds | AI subprocess can read? |
 | --- | --- | --- |
-| `automation.keychain-db` | `GH_PAT_RESTRICTED`, `HF_TOKEN`, `BWS_ACCESS_TOKEN` | Yes — via launcher subshell (Layer 1) |
-| `elevate-access.keychain-db` | `GH_PAT_PRIVATE`, `GH_PAT_ADMIN`, `GH_PAT_ORG_ADMIN` | No — GUI unlock prompt blocks non-interactive reads |
+| `automation.keychain-db` | Service API keys such as `HF_TOKEN` and `CONTEXT7_API_KEY` | Yes |
+| `elevate-access.keychain-db` | Human-only break-glass material | No — GUI unlock prompt blocks non-interactive reads |
 
-`gh-claude-restricted` works non-interactively. `gh-claude-private` and `gh-claude-admin` exist for human use; an AI subprocess cannot satisfy the unlock prompt.
+An AI subprocess cannot satisfy the unlock prompt, which is the whole point of the second database.
 
-## Layer 3 — explicit allow / deny lists in Claude Code
+## Layer 4 — explicit allow / deny lists in Claude Code
 
-The Claude Code permission system bakes a deny list into the build. Even if the previous two layers were bypassed, the harness refuses the file paths that would yield secret material.
+The Claude Code permission system bakes a deny list into the build. Even if the previous layers were bypassed, the harness refuses the file paths that would yield secret material.
 
 | Allow (read-only inspection) | Deny (Read / Edit / Write blocked) |
 | --- | --- |
@@ -80,37 +82,60 @@ The Claude Code permission system bakes a deny list into the build. Even if the 
 | `security show-keychain-info` | `~/.gnupg/**` |
 |  | `~/.ssh/id_*` |
 
-The allow list lets the AI inspect *metadata* — "is there a keychain entry called `GH_PAT_ADMIN`?" — without ever returning the value. Reading the value still requires the launcher path, which goes through the subshell layer.
+The allow list lets the AI inspect *metadata* — "does a keychain entry with this service name exist?" — without ever returning the value.
 
-## Layer 4 — passwordless sudo, but only for `darwin-rebuild`
+## Layer 5 — passwordless sudo, but only for `darwin-rebuild`
 
 The `nix-darwin` configuration grants passwordless `sudo` exclusively for two paths: `/run/current-system/sw/bin/darwin-rebuild` and `/nix/var/nix/profiles/system/activate`. Both are declarative — they apply Nix store paths already built. No ad-hoc shell, no read access to anything else.
+
+## The launcher banner (verbatim)
+
+Some launchers relaunch `claude` under a scoped credential context — an AWS profile, for example. Each prints this to stderr before calling `exec claude`, so the banner lands in the AI's tool-output stream and the agent knows what it can and cannot do this session:
+
+```text
+[claude-launchers] custom authentication context is now active
+  type:    aws-vault profile
+  context: <profile name>
+  scope:   this claude process only — the parent shell is unaffected
+
+You now have the credentials and capabilities granted by this context.
+Tools that auto-detect credentials from the environment (aws, gh, git,
+terraform, kubectl, etc.) will pick them up automatically. Nothing
+persists once claude exits; the parent shell's environment is untouched.
+```
+
+No secret material is ever printed. The banner names the *kind* of context, never the value.
 
 ## What AI can and cannot do
 
 | Capability | AI tool | Why |
 | --- | --- | --- |
-| Read PAT value from `automation` keychain | ✅ (only via launcher subshell) | Subshell scoping; value never reaches parent |
-| Read PAT value from `elevate-access` keychain | ❌ | GUI unlock prompt; AI cannot respond |
+| Obtain a read-only GitHub credential | ✅ | Ambient read tier; read-only by construction |
+| Obtain GitHub write on one named repository | ✅ (one at a time) | Requires an exclusive, recorded, self-expiring lease |
+| Obtain GitHub write across an account | ❌ | Repository parameter is pinned server-side per request |
+| Obtain an installation-wide admin credential | ❌ | Human-only interactive single-use grant |
+| Recover a GitHub token from disk | ❌ | No token is ever written to disk |
+| Read a value from `elevate-access` keychain | ❌ | GUI unlock prompt; AI cannot respond |
 | Modify keychain entries | ❌ | `security add-generic-password` not in allow list |
 | Read `.env*` files | ❌ | Path glob denied |
 | Read `~/.ssh/id_*` private keys | ❌ | Path glob denied |
 | Read GPG keys | ❌ | `~/.gnupg/**` denied |
 | Run `sudo` outside `darwin-rebuild` | ❌ | sudoers entry is path-restricted |
-| Run `doppler run -- <cmd>` | ✅ | Doppler injection at subprocess boundary; same scoping rule as the launchers |
+| Run `doppler run -- <cmd>` | ✅ | Injection at the subprocess boundary; nothing persists past the child |
 
 ## Source files
 
 For the literal Nix and shell sources behind each layer, see:
 
-- [`nix-darwin/hosts/macbook-m4/gh-token-switching.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/macbook-m4/gh-token-switching.zsh) — the three-tier keychain reader.
-- [`nix-darwin/hosts/macbook-m4/claude-launchers.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/macbook-m4/claude-launchers.zsh) — the subshell launchers and banner.
+- [`nix-darwin/modules/darwin/scripts/openbao-github-creds.sh`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/scripts/openbao-github-creds.sh) — the credential helper and the claim/release lease.
+- [`nix-darwin/hosts/common/claude-launchers.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/common/claude-launchers.zsh) — the scoped launchers and banner.
 - [`nix-claude-code/data/permissions/allow.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/allow.nix) — read-only `security` allow list.
 - [`nix-claude-code/data/permissions/deny.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/deny.nix) — file-path deny globs.
 - [`nix-darwin/modules/darwin/security.nix`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/security.nix) — sudoers path restriction.
 
 ## See also
 
-- [macOS Keychain](/security/tools/macos-keychain) — the tier model in detail.
+- [GitHub access](/autonomous-agents/github-access) — the three credential tiers in detail.
+- [macOS Keychain](/security/tools/macos-keychain) — the two-database split.
 - [Doppler](/security/tools/doppler) — for AI-readable CI secrets that *should* be present.
 - [BWS](/security/tools/bws) — programmatic AI-token bridge that respects the same scoping rules.
