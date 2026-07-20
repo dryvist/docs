@@ -25,7 +25,7 @@ The two scenarios that drive the rule:
 
 A public repo's read path needs no auth (anyone can `git clone https://…`), and the write path is gated by GitHub-side branch protection and ruleset rules rather than client-side credentials. Routing public pushes through SSH:
 
-- Skips per-command credential lookups (no token timeout, no keychain unlock).
+- Skips per-command credential lookups entirely — no token to mint, no lease to take.
 - Keeps GitHub token scope completely orthogonal to public writes. Even a read-only token can push to a public repo over SSH, because the SSH key, not the token, is what GitHub authenticates.
 - Works fine on hosts where no token is configured at all (CI runners with deploy keys, for example).
 
@@ -76,7 +76,7 @@ gh repo view <owner>/<repo> --json visibility --jq .visibility
     Branch names are transport-agnostic. The conventions are the same on either remote.
   </Card>
   <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
-    PR creation uses the `gh` CLI, which needs the same scoped token a private `git push` resolves.
+    PR creation uses the `gh` CLI. It needs an equivalent scoped token, but reaches it by its own route — see [GitHub access](/autonomous-agents/github-access).
   </Card>
   <Card title="Golden laws" icon="shield-halved" href="/security/golden-laws">
     The non-negotiable rules around secrets, force-pushes, and admin operations.
