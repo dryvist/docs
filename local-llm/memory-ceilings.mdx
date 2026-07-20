@@ -133,7 +133,7 @@ of thumb is a guess; measure the machine instead.
 `iogpu.wired_limit_mb` is in **MiB**, and MLX reports the ceiling as:
 
 ```text
-max_recommended_working_set_size = wiredLimitMb × 1024²
+max_recommended_working_set_size = iogpu.wired_limit_mb × 1024²
 ```
 
 There is no rounding and no decimal conversion in that step. So a sysctl value
