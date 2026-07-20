@@ -14,7 +14,8 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
-- Ships plugins for git workflows (`ship`, `finalize-pr`, `wrap-up`), retrospectives, CodeQL resolution, and more
+- Ships plugins for git and GitHub workflows (`ship`, `finalize-pr`, `sync-main`), retrospectives, CodeQL resolution, and more
+- Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
 - Houses **skills** that progressively load only when their triggers fire — minimal token cost when idle
 - Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
@@ -25,8 +26,8 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 | Component | Examples |
 | --- | --- |
-| **Commands** | `/ship`, `/finalize-pr`, `/wrap-up`, `/retrospecting` |
-| **Skills** | `premium-agent-orchestration`, `delegate-to-ai`, `finalize-pr` |
+| **Commands** | `/ship`, `/finalize-pr`, `/sync-main`, `/retrospecting` |
+| **Skills** | `premium-agent-orchestration`, `delegate-to-ai`, `goal`, `handoff` |
 | **Agents** | Explore, Plan, code-reviewer |
 | **Hooks** | Style guards, permission gates |
 
