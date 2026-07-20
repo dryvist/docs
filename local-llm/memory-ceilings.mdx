@@ -1,0 +1,180 @@
+---
+title: "Memory ceilings on Apple Silicon"
+description: "Why GPU memory utilization is a cap and not a reservation, how it couples to the OS wired-memory ceiling, and the invariant that keeps a local LLM from paging the host."
+page_type: explanation
+---
+
+> Two memory behaviours, one flag, and a host ceiling that never moves on its
+> own. Tune them as a pair or the machine finds the edge for you.
+
+A local MLX serving stack — a swapping proxy in front of one or more inference
+workers — has a single flag, `--gpu-memory-utilization`, that drives two
+different memory behaviours at once. Reading it as one knob is the usual reason
+a well-sized host still ends up paging.
+
+## The two behaviours
+
+The flag is a fraction. It feeds two independent calculations:
+
+```text
+allocation_limit = util × ceiling
+trip             = (util + 0.05) × total_ram
+```
+
+- **`allocation_limit`** is the per-worker Metal allocation cap. A worker that
+  tries to allocate past it fails the allocation.
+- **`trip`** is the engine's emergency KV-cache clear. When resident memory
+  crosses it, the engine drops the cache to recover headroom.
+
+The two use *different* denominators, and that is the whole story:
+
+| Term | What it is | Moves when |
+| --- | --- | --- |
+| `ceiling` | The OS wired-memory ceiling for the GPU subsystem — `iogpu.wired_limit_mb` on macOS, exposed to MLX as `max_recommended_working_set_size`. | You set the sysctl. |
+| `total_ram` | Physical RAM installed in the host. | Never, short of new hardware. |
+
+Raising the wired ceiling raises `allocation_limit` but leaves `trip` exactly
+where it was.
+
+## Insight one: it is a cap, not a reservation
+
+`--gpu-memory-utilization` does not pre-allocate anything. Setting it to a large
+fraction does not hand that memory to the worker, and setting it small does not
+hold memory back for the desktop. It only says how far an allocation is allowed
+to go before it is refused.
+
+The knob that actually decides how much of a host goes to inference is the OS
+wired ceiling. Treat `--gpu-memory-utilization` as a safety rail on top of that
+decision, not as the decision itself.
+
+## Insight two: the two knobs move together
+
+The invariant to hold is:
+
+```text
+footprint < trip < ceiling
+```
+
+The trip point is a **soft valve**. It has to fire before the host reaches its
+hard ceiling and starts paging, and it has to sit above the worker's steady
+resident footprint so it does not fire during normal work.
+
+Move either knob alone and one side of that invariant breaks:
+
+<CardGroup cols={2}>
+  <Card title="Lowering utilization alone" icon="arrow-down">
+    The trip point drops below the resident working set. The engine clears the
+    KV cache constantly, every turn re-prefills from scratch, and multi-turn
+    sessions degrade badly while the GPU looks busy.
+  </Card>
+  <Card title="Raising the ceiling alone" icon="arrow-up">
+    The trip point stays put while the hard ceiling climbs past it — or the
+    trip lands above the ceiling entirely, so the soft valve never fires and
+    the host reaches its hard limit first.
+  </Card>
+</CardGroup>
+
+<Note>
+  Neither knob is safe to change by itself. Any change to the wired ceiling
+  needs a matching re-derivation of `--gpu-memory-utilization`, and the reverse.
+</Note>
+
+## Re-deriving the utilization
+
+Rearranging the invariant gives a symbolic band for the flag:
+
+```text
+footprint / ceiling  <  util  <  ceiling / total_ram − 0.05
+```
+
+The lower bound keeps the allocation cap above what the worker actually holds.
+The upper bound keeps the trip point below the hard ceiling, with the engine's
+own `0.05` offset subtracted out. Pick a value inside the band with margin on
+both sides, and re-derive it whenever the ceiling, the model, or the batch
+shape changes.
+
+If the band is empty — the lower bound exceeds the upper — no value of the flag
+satisfies the invariant on that host. Raise the ceiling, shrink the footprint
+(smaller cache reservation, fewer concurrent sequences, a smaller model), or
+both.
+
+## Measuring the footprint: use wired, not RSS
+
+On macOS, `ps` RSS does not attribute kernel-wired Metal allocations to the
+process that caused them. A worker holding tens of GB of wired GPU memory can
+look small in `ps` while `top` shows the real figure. Size against the wired
+number; RSS will quietly tell you the host has room it does not have.
+
+## Finding the real ceiling
+
+The default wired ceiling on Apple Silicon is commonly quoted as about 75% of
+RAM. In practice it can be a substantially larger fraction than that. The rule
+of thumb is a guess; measure the machine instead.
+
+<Steps>
+  <Step title="Read the ceiling from MLX">
+    Query `max_recommended_working_set_size` through MLX. That is the value the
+    allocator actually enforces, whatever the sysctl is currently set to. Read
+    it before changing anything — the default may already be higher than you
+    were about to set.
+  </Step>
+  <Step title="Set the sysctl, then re-read">
+    Change `iogpu.wired_limit_mb` and read `max_recommended_working_set_size`
+    again to confirm the new ceiling took effect.
+  </Step>
+  <Step title="Re-derive utilization">
+    Feed the confirmed ceiling back through the band above and set
+    `--gpu-memory-utilization` to a value inside it.
+  </Step>
+</Steps>
+
+### The unit is MiB, and it is exact
+
+`iogpu.wired_limit_mb` is in **MiB**, and MLX reports the ceiling as:
+
+```text
+max_recommended_working_set_size = iogpu.wired_limit_mb × 1024²
+```
+
+There is no rounding and no decimal conversion in that step. So a sysctl value
+read as "roughly N thousand MB" produces a ceiling about **7.4% larger** than
+the same number read as decimal GB — because 1024² bytes per MiB is that much
+more than 1000² bytes per MB.
+
+That gap matters because it lands on the wrong side of safety: the ceiling you
+get is *bigger* than the one you thought you set, so `util × ceiling` leaves
+more allocation headroom than intended while `trip` — computed against
+`total_ram`, untouched by the sysctl — stays exactly where it was. Always
+re-derive from the value MLX reports back, never from the number you typed
+into the sysctl.
+
+## Where this applies
+
+The same arithmetic holds in both serving modes. In **standalone** mode, one
+host serves itself and the footprint is a single worker plus whatever else is
+running on the desktop. In **clustered** mode, several hosts serve a shared
+endpoint, and each host is derived independently — a headless desktop-class
+member can carry a much higher ceiling than a laptop that also runs an
+interactive session, because the laptop must leave room for the compositor and
+the user's own work.
+
+Host-specific values — real ceilings, measured footprints, and the utilization
+figures derived from them — live in the gated operational reference, alongside
+the rest of the per-host numbers.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
+    The serving stack these knobs belong to, and the rest of the tuning playbook.
+  </Card>
+  <Card title="Models and quantization" icon="layer-group" href="/local-llm/models-and-quantization">
+    What sets the footprint side of the invariant in the first place.
+  </Card>
+  <Card title="Distributed serving" icon="network-wired" href="/local-llm/distributed">
+    How clustered mode spreads work across more than one host.
+  </Card>
+  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
+    The module that generates the serving config these flags land in.
+  </Card>
+</CardGroup>
