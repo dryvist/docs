@@ -20,7 +20,7 @@ The only legitimate homes for a secret value are: OpenBao (the default runtime s
 
 ### 2. AI tools cannot view protected secret values
 
-Not "should not." Cannot. The four-layer isolation (process scoping, keychain tier separation, explicit allow / deny lists, path-restricted sudoers) makes the read structurally impossible for the locked tier, and the unlocked tier's values reach the AI only inside an ephemeral subshell.
+Not "should not." Cannot. The layered isolation (no credential at rest, scoped credential tiers, explicit allow / deny lists, path-restricted sudoers) makes the read structurally impossible for locked material, and every issued credential is short-lived and scoped to the operation that asked for it.
 
 **How we enforce it.** See [Local AI isolation](/security/local-ai-isolation) for the full proof. Every layer is reviewable in source; the deny lists are baked into the harness build.
 
@@ -32,21 +32,21 @@ Not "should not." Cannot. The four-layer isolation (process scoping, keychain ti
 
 ### 4. Elevated sessions require a real gate — MFA or an equivalent lock boundary
 
-No AWS API call leaves the workstation on a long-lived key. Automated and AI-agent AWS calls go through OpenBao's AWS secrets engine; the AppRole secret-zero that reaches it is delivered by the runtime secret injector from the human-approved Doppler strict tier, not a long-lived workstation key, and no per-call MFA prompt sits in the path. Any remaining manual aws-vault session still requires its MFA-derived token. No GitHub admin operation runs without an `elevate-access` keychain unlock (which itself requires biometric Touch ID). No Bitwarden vault read happens without the master password plus device-bound second factor.
+No AWS API call leaves the workstation on a long-lived key. Automated and AI-agent AWS calls go through OpenBao's AWS secrets engine; the AppRole secret-zero that reaches it is delivered by the runtime secret injector from the human-approved Doppler strict tier, not a long-lived workstation key, and no per-call MFA prompt sits in the path. Any remaining manual aws-vault session still requires its MFA-derived token. No GitHub admin operation runs without a human-gated, interactive, single-use grant; there is no standing admin credential for automation to pick up. No Bitwarden vault read happens without the master password plus device-bound second factor.
 
 **How we enforce it.** The OpenBao AWS broker's own base key is seeded into OpenBao once, write-once, and rotated only by a deliberate operator action — no static AWS key sits on a workstation to gate in the first place. Any remaining `aws-vault` profile requires `mfa_serial`. The `elevate-access.keychain-db` is locked by default. Bitwarden TOTP is set across the vault. Touch ID for sudo is enabled in `nix-darwin/modules/darwin/security.nix`.
 
 ### 5. One source of truth per secret
 
-A secret value lives in exactly one store. OpenBao is the default home for anything a service, human, or agent might ever need at runtime. Doppler holds secret-zero and cloud/SaaS keys. Keychain holds macOS GitHub PATs. Bitwarden holds human-only material. SOPS is the rare exception — only a value used by exactly one repo, that is neither mission-critical nor a public-service credential. Duplicating a secret across stores creates drift; drift creates the question "which copy is current?"; the answer is always "the one you didn't check."
+A secret value lives in exactly one store. OpenBao is the default home for anything a service, human, or agent might ever need at runtime. Doppler holds secret-zero and cloud/SaaS keys. Keychain holds macOS-only service API keys and human-only break-glass material. Bitwarden holds human-only material. SOPS is the rare exception — only a value used by exactly one repo, that is neither mission-critical nor a public-service credential. Duplicating a secret across stores creates drift; drift creates the question "which copy is current?"; the answer is always "the one you didn't check."
 
 **How we enforce it.** The decision tree in [overview](/security/overview) maps every secret type to exactly one tool. `secrets-sync` is a distribution layer, not a store — it writes from Doppler / repo-secrets to target repos and never the other way.
 
 ### 6. Time-bound every credential
 
-Indefinite tokens are pre-leaked tokens. Every PAT carries an expiry. Every AWS session — OpenBao-brokered STS or a legacy aws-vault session — has a TTL. Every Doppler service token rotates on a schedule. Anything claiming "never expires" is rejected at creation.
+Indefinite tokens are pre-leaked tokens. Every token carries an expiry. Every AWS session — OpenBao-brokered STS or a legacy aws-vault session — has a TTL. Every Doppler service token rotates on a schedule. Anything claiming "never expires" is rejected at creation.
 
-**How we enforce it.** Fine-grained GitHub PATs: 90-day max. OpenBao AWS broker STS: 1-hour default lease. Any remaining `aws-vault` session_ttl: 1 hour soft cap. Doppler service tokens: 90 days aligned with the PAT. GitHub App private keys: annual rotation. SSH signing keys: rotated on key rollover. Rotation runbook lives in [secrets-sync](/security/secrets-sync).
+**How we enforce it.** GitHub App installation tokens: 1-hour expiry, minted per operation. Any remaining fine-grained GitHub PAT used by CI: 90-day max. OpenBao AWS broker STS: 1-hour default lease. Any remaining `aws-vault` session_ttl: 1 hour soft cap. Doppler service tokens: 90 days. GitHub App private keys: annual rotation. SSH signing keys: rotated on key rollover. Rotation runbook lives in [secrets-sync](/security/secrets-sync).
 
 ### 7. Fail closed, not open
 

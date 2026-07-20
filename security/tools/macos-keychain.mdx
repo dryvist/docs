@@ -1,10 +1,10 @@
 ---
 title: "macOS Keychain"
-description: "Two keychain databases with different access controls — tiered GitHub PATs, BWS access tokens, and the AI-readable / human-only boundary."
+description: "Two keychain databases with different access controls — login-convenience API keys, human-only break-glass material, and the AI-readable boundary."
 page_type: reference
 ---
 
-> Two databases, three GitHub-token tiers. Unlock posture decides who can read what.
+> Two databases. Unlock posture decides who can read what.
 
 <Note>
 **Per-secret automated reads have moved to the runtime manager.** A headless
@@ -17,30 +17,27 @@ stays what its name says: login-convenience automated reads and human-only
 break-glass material. See the [four-tier model](/security/comparison).
 </Note>
 
+<Warning>
+**GitHub tokens no longer live here.** The tiered GitHub personal access tokens
+this page used to document — and the shell functions that switched between them —
+were retired on 2026-07-20. Every GitHub token is now an ephemeral GitHub App
+installation token minted on demand and never written to disk. See
+[GitHub access](/autonomous-agents/github-access) for the model that replaced it.
+</Warning>
+
 ## Two databases, one rule
 
 The split is the entire access-control model: anything an AI can read non-interactively lives in `automation`; anything that requires a human at the keyboard lives in `elevate-access`.
 
 | Database | Unlock posture | Holds | AI can read? |
 | --- | --- | --- | --- |
-| `automation.keychain-db` | Unlocked at login | `GH_PAT_RESTRICTED`, `HF_TOKEN`, `BWS_ACCESS_TOKEN`, Claude Code credentials | Yes — via the launcher subshell |
-| `elevate-access.keychain-db` | Locked, GUI unlock prompt | `GH_PAT_PRIVATE`, `GH_PAT_ADMIN`, `GH_PAT_ORG_ADMIN` | No — the prompt blocks any non-interactive read |
+| `automation.keychain-db` | Unlocked at login | `HF_TOKEN`, `CONTEXT7_API_KEY`, `BWS_ACCESS_TOKEN`, and similar service API keys | Yes |
+| `elevate-access.keychain-db` | Locked, GUI unlock prompt | Break-glass material such as the `OPENBAO_TOKEN` root credential | No — the prompt blocks any non-interactive read |
 
 Machine secret-zero no longer lives on the keychain. The per-domain OpenBao
 AppRole that bootstraps T2 reaches an agent through the runtime secret injector's
 ambient environment (`doppler run`), so the keychain holds only login-convenience
 and human-only material — never the AppRole, and never application secrets.
-
-## GitHub PAT tiers
-
-| Tier | Service name | Database | Scope | Who uses it |
-| --- | --- | --- | --- | --- |
-| `RESTRICTED` | `GH_PAT_RESTRICTED` | `automation` | Public repos | `gh-restricted`, `gh-claude-restricted`, CI smoke jobs |
-| `PRIVATE` | `GH_PAT_PRIVATE` | `elevate-access` | + private repos | `gh-private`, `gh-claude-private` (human only) |
-| `ADMIN` | `GH_PAT_ADMIN` | `elevate-access` | JPE repo admin | `gh-admin`, `gh-claude-admin` (human only) |
-| `ORG_ADMIN` | `GH_PAT_ORG_ADMIN` | `elevate-access` | dryvist org admin | `.github-tofu` apply (human only) |
-
-The switching helpers (`gh-restricted` / `gh-private` / `gh-admin`) export `GITHUB_TOKEN` into the current shell. The AI-launcher variants (`gh-claude-*`) wrap the export in a subshell so the token never leaks to the parent — see [Local AI isolation](/security/local-ai-isolation).
 
 ## Reading a keychain entry the right way
 
@@ -48,18 +45,17 @@ The last positional argument is the keychain path. Omit it and `security` search
 
 ```bash
 # Fetch once into a variable; never inline the read into every command.
-GITHUB_TOKEN=$(security find-generic-password \
+HF_TOKEN=$(security find-generic-password \
   -a ai-cli-coder \
-  -s GH_PAT_ORG_ADMIN \
+  -s HF_TOKEN \
   -w \
-  ~/Library/Keychains/elevate-access.keychain-db)
+  ~/Library/Keychains/automation.keychain-db)
 
 # Use the variable.
-GITHUB_TOKEN=$GITHUB_TOKEN tofu plan
-GITHUB_TOKEN=$GITHUB_TOKEN tofu apply
+HF_TOKEN=$HF_TOKEN hf auth whoami
 ```
 
-For `automation` keychain entries, swap the path to `~/Library/Keychains/automation.keychain-db`. Each `security find-generic-password` call against `elevate-access` triggers an unlock prompt; inlining the read on every command would prompt every time. Fetch once, inject the variable across the session — and unset it when done.
+For human-only entries, swap the path to `~/Library/Keychains/elevate-access.keychain-db`. Each `security find-generic-password` call against `elevate-access` triggers an unlock prompt; inlining the read on every command would prompt every time. Fetch once, inject the variable across the session — and unset it when done.
 
 ## Adding a new keychain entry
 
@@ -67,7 +63,7 @@ For `automation` keychain entries, swap the path to `~/Library/Keychains/automat
 security add-generic-password \
   -U \
   -a ai-cli-coder \
-  -s GH_PAT_NEW_TOKEN \
+  -s SOME_SERVICE_API_KEY \
   -w '<token-value>' \
   ~/Library/Keychains/automation.keychain-db
 ```
@@ -76,13 +72,14 @@ Replace `automation.keychain-db` with `elevate-access.keychain-db` for human-onl
 
 ## Best practices
 
-- One account name for AI-readable entries: `ai-cli-coder`. The `-a` flag is the discriminator the launchers use.
+- One account name for AI-readable entries: `ai-cli-coder`. The `-a` flag is the discriminator.
 - Never put a value in `automation` that should require human approval. The unlock posture is the whole point.
 - Cap the auto-lock timeout on `elevate-access` (~5 minutes idle) so an abandoned session re-locks.
 - Touch ID for sudo (`security.pam.enableSudoTouchIdAuth = true` in nix-darwin) ensures even the human path requires biometric confirmation.
+- Prefer an engine-minted, expiring credential over a stored one. A static key belongs in a keychain only when no engine can mint it.
 
 ## See also
 
-- [Local AI isolation](/security/local-ai-isolation) — the subshell scoping that pairs with the keychain split.
+- [GitHub access](/autonomous-agents/github-access) — the ephemeral installation-token model that replaced GitHub tokens in the keychain.
+- [Local AI isolation](/security/local-ai-isolation) — the scoping that pairs with the keychain split.
 - [BWS](/security/tools/bws) — uses `automation` for its access token to remain AI-reachable.
-- [`nix-darwin/hosts/macbook-m4/gh-token-switching.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/macbook-m4/gh-token-switching.zsh) — the literal switching helpers.

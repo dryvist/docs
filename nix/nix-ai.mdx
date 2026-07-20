@@ -52,7 +52,7 @@ Runtime secrets are never stored in Nix store paths or committed files. Three in
 | --- | --- | --- |
 | OpenBao subprocess wrapper | Splunk MCP | Reads the [`ai-readonly` AppRole credentials](/security/tools/openbao) from a dedicated macOS keychain, obtains a short-lived token, and injects the shared connection only into the child MCP process |
 | Doppler subprocess wrapper | Google Workspace MCP | `doppler run -p <project> -c prd -- <binary>` |
-| macOS Keychain via shell init | HuggingFace token, GitHub PAT | `security find-generic-password` exported in `~/.zshrc` |
+| macOS Keychain via shell init | HuggingFace token, service API keys | `security find-generic-password` exported in `~/.zshrc` |
 | Kubernetes Doppler Operator | Bifrost, Cribl pods | In-cluster operator syncs Doppler → K8s Secrets |
 
 The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,

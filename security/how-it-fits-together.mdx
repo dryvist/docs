@@ -15,7 +15,7 @@ The tools page lists what each one does. This page shows how they connect. Read 
 | **CI Tier 1 secret** | Doppler → `secrets-sync` repo → matrix job → target repo Actions secret |
 | **CI Tier 2 secret (infra)** | Doppler → `dopplerhq/secrets-fetch-action` at workflow runtime → env vars |
 | **OpenTofu** | operator CLI → Terrakube workspace → OpenBao dynamic credentials → provider API |
-| **Local AI session** | `gh-claude-<tier>` launcher → subshell → keychain read → `exec claude` → exit erases env |
+| **Local AI session** | `git`/`gh` → credential helper → secrets engine mints a scoped token → used in memory → nothing persists |
 | **At-rest encrypted config** | `sops -e` → committed `.sops.json` → `sops -d` at CI/local boot |
 
 ## CI Tier 1 — Doppler distributes via secrets-sync
@@ -98,14 +98,14 @@ The CLI submits a remote run. Terrakube obtains a short-lived OpenBao identity,
 and OpenTofu consumes dynamic or ephemeral credentials without copying them to
 the operator shell or workspace variables.
 
-## Local AI session — launcher subshell
+## Local AI session — mint on demand, store nothing
 
-See [Local AI isolation](/security/local-ai-isolation) for the diagram and the full four-layer proof. Short version: the launcher wraps `claude` in a subshell, reads the token from `automation.keychain-db`, exports `GITHUB_TOKEN`, then `exec claude`. When `claude` exits, the subshell exits — and the parent shell's `GITHUB_TOKEN` is still unset.
+See [Local AI isolation](/security/local-ai-isolation) for the diagram and the full proof. Short version: no GitHub token sits on the workstation. A credential helper answers each `git` or `gh` request by minting a short-lived, scoped token; the token lives in memory for that operation and is never written to disk. Write access needs an explicit claim on one named repository.
 
 ## Where each flow is documented
 
 - **CI Tier 1**: [secrets-sync](/security/secrets-sync)
 - **CI Tier 2**: [doppler](/security/tools/doppler#runtime-fetch-via-github-actions)
 - **OpenTofu**: [OpenBao](/security/tools/openbao) + [IaC tooling](/infrastructure/iac-tooling)
-- **Local AI session**: [local-ai-isolation](/security/local-ai-isolation) + [macos-keychain](/security/tools/macos-keychain)
+- **Local AI session**: [local-ai-isolation](/security/local-ai-isolation) + [GitHub access](/autonomous-agents/github-access)
 - **Encrypted config**: [sops](/security/tools/sops)

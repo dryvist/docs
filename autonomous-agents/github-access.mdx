@@ -5,18 +5,18 @@ page_type: explanation
 ---
 
 <Note>
-Status: **engine live, workstation cutover pending.** The engine was configured
-and converged on 2026-07-17, with read, per-repo write, and admin tiers defined.
-The workstation git/gh path and its PAT keychain tiers remain in place until the
-credential-helper cutover passes live issuance, use, and revocation checks.
+Status: **live — cutover complete.** The engine was configured and converged on
+2026-07-17, and the workstation git/gh path cut over on 2026-07-20. The personal
+access tokens that used to sit in the macOS keychain, and the shell functions
+that switched between them, are retired and removed.
 </Note>
 
 > An agent gets an installation token that dies in an hour. It never sees the
 > GitHub App private key that minted it.
 
-The legacy model uses several PAT tiers in the macOS keychain. Shell functions
-select a tier, and an interactive password gates the dangerous ones. That design
-assumes a human at the keyboard.
+The retired model kept several token tiers in the macOS keychain. Shell functions
+selected a tier, and an interactive password gated the dangerous ones. That design
+assumes a human at the keyboard, and it leaves long-lived credentials at rest.
 
 The replacement is a dedicated GitHub App installed on the accounts where
 automation runs. The
@@ -118,8 +118,51 @@ human-gated precisely because it is the broad one, which makes the shared
 OpenBao boundary the target that matters.
 
 The GitHub plugin is a third-party Apache-2.0 component. Its signed checksum
-manifest, binary checksum, compatibility with the deployed OpenBao version,
-token use, and revocation behavior must pass before the rollout is marked live.
+manifest, binary checksum, compatibility with the deployed OpenBao version, token
+use, and revocation behavior were verified before the rollout was marked live.
+
+## Getting a token in a dev shell
+
+Most of the time you need no token at all. Reach for one only when a tool reads
+`GITHUB_TOKEN` from the environment.
+
+<Steps>
+  <Step title="For git, do nothing">
+    `git` needs no token of its own. A credential helper answers every HTTPS
+    credential request by minting one scoped to that request, so `clone`,
+    `fetch`, and `pull` just work. A `push` needs a claim first — see below.
+  </Step>
+  <Step title="Never export a token from .envrc">
+    The directory-environment loader caches its environment dump on disk. A token
+    exported at load time would be written to disk and would outlive the shell —
+    the one thing this model exists to prevent. Mint at call time instead.
+  </Step>
+  <Step title="For gh and other GITHUB_TOKEN readers, mint in the shell">
+    Two shell helpers cover the everyday cases. Both infer the account and
+    repository from the `origin` remote, so the bare form usually suffices:
+
+    ```bash
+    gh-read                  # ambient read token for this repo's account
+    gh-claim                 # per-repo write lease + write token
+    gh-release               # drop the lease early
+    ```
+
+    Pass an explicit target when you are outside the repo, or when the remote is
+    ambiguous: `gh-read <owner>`, `gh-claim <owner>/<repo>`.
+
+    A claim takes an exclusive lease on that one repository and installs a trap
+    that releases it when the shell exits. You do not have to remember
+    `gh-release`; run it only to free the repository sooner.
+  </Step>
+  <Step title="Secret-zero is ambient">
+    The address and identity material the helper needs to authenticate are
+    injected by the runtime secret injector (`doppler run`). Nothing about
+    bootstrapping is stored locally, and nothing is passed on the command line.
+  </Step>
+</Steps>
+
+Whatever you mint lives in that shell only. No token is written to disk at any
+point in this flow.
 
 ## See also
 
@@ -134,6 +177,6 @@ token use, and revocation behavior must pass before the rollout is marked live.
     The human-approval law that keeps destructive verbs out of the catalog.
   </Card>
   <Card title="Git transport" icon="lock" href="/conventions/git-transport">
-    The SSH/HTTPS split the token tiers currently gate.
+    The SSH/HTTPS split, and why the credential lookup gates private writes.
   </Card>
 </CardGroup>
