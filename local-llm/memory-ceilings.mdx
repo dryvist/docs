@@ -107,25 +107,46 @@ number; RSS will quietly tell you the host has room it does not have.
 
 ## Finding the real ceiling
 
-The OS default wired ceiling on Apple Silicon can be a substantially larger
-fraction of RAM than the commonly repeated rules of thumb suggest. Verify it on
-the machine rather than trusting a remembered fraction.
+The default wired ceiling on Apple Silicon is commonly quoted as about 75% of
+RAM. In practice it can be a substantially larger fraction than that. The rule
+of thumb is a guess; measure the machine instead.
 
 <Steps>
   <Step title="Read the ceiling from MLX">
     Query `max_recommended_working_set_size` through MLX. That is the value the
-    allocator actually enforces, whatever the sysctl is currently set to.
+    allocator actually enforces, whatever the sysctl is currently set to. Read
+    it before changing anything — the default may already be higher than you
+    were about to set.
   </Step>
   <Step title="Set the sysctl, then re-read">
     Change `iogpu.wired_limit_mb` and read `max_recommended_working_set_size`
-    again to confirm the new ceiling took effect. The sysctl unit is **MiB** —
-    an off-by-1024 here silently produces a ceiling nowhere near what you meant.
+    again to confirm the new ceiling took effect.
   </Step>
   <Step title="Re-derive utilization">
     Feed the confirmed ceiling back through the band above and set
     `--gpu-memory-utilization` to a value inside it.
   </Step>
 </Steps>
+
+### The unit is MiB, and it is exact
+
+`iogpu.wired_limit_mb` is in **MiB**, and MLX reports the ceiling as:
+
+```text
+max_recommended_working_set_size = wiredLimitMb × 1024²
+```
+
+There is no rounding and no decimal conversion in that step. So a sysctl value
+read as "roughly N thousand MB" produces a ceiling about **7.4% larger** than
+the same number read as decimal GB — because 1024² bytes per MiB is that much
+more than 1000² bytes per MB.
+
+That gap matters because it lands on the wrong side of safety: the ceiling you
+get is *bigger* than the one you thought you set, so `util × ceiling` leaves
+more allocation headroom than intended while `trip` — computed against
+`total_ram`, untouched by the sysctl — stays exactly where it was. Always
+re-derive from the value MLX reports back, never from the number you typed
+into the sysctl.
 
 ## Where this applies
 
