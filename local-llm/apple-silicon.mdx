@@ -58,7 +58,7 @@ portable to a smaller machine without re-measuring.
 | Knob | Setting | Why |
 | --- | --- | --- |
 | KV-cache reservation | small, fixed (single-digit GB) | The single most dangerous knob. Over-reserving cache (tens of GB per worker) drove this host into double-digit-GB swap and ~1 tok/s decode. Reserve for the realistic batch, not the theoretical max. |
-| GPU memory utilization | ~0.5 | A per-worker Metal ceiling. Leaves headroom for the compositor and the desktop's own GPU work instead of claiming the whole device. |
+| GPU memory utilization | ~0.5 | A per-worker Metal ceiling. Leaves headroom for the compositor and the desktop's own GPU work instead of claiming the whole device. It is a cap, not a reservation, and it is coupled to the OS wired-memory ceiling — see [Memory ceilings on Apple Silicon](/local-llm/memory-ceilings) before changing either. |
 | Paged KV cache | on | Pages the cache like vLLM's paged attention. Prerequisite for prefix sharing. |
 | Prefix cache | on | Reuses already-prefilled conversation prefixes across turns. The biggest single win for multi-turn and agentic tool loops — no re-prefill of unchanged context. |
 | Continuous batching | on | Folds parallel sequences into one GPU forward pass. |

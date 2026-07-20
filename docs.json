@@ -274,6 +274,7 @@
               "local-llm/overview",
               "local-llm/context",
               "local-llm/apple-silicon",
+              "local-llm/memory-ceilings",
               "local-llm/mac-studio",
               "local-llm/models-and-quantization",
               "local-llm/backends",
