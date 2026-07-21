@@ -172,6 +172,12 @@ more allocation headroom than intended while `trip` — computed against
 re-derive from the value MLX reports back, never from the number you typed
 into the sysctl.
 
+Weights carry the mirror-image trap. Hugging Face reports a model's size in
+**decimal GB** (`×1e9` bytes); every budget in the admission formula is in
+**GiB** (`×1024³`). Convert `weightsBytes` with `×1e9`, not `×1024³` — conflate
+the two and the subtracted weight inflates by 7.37%, silently shrinking the KV
+pool you thought you had.
+
 ## Bounding the footprint: which flag is the hard cap
 
 The invariant needs a real bound on `footprint`. Two flags look like they set
@@ -228,17 +234,35 @@ concurrency and context. Swapping a model needs no nix change:
 effectiveBudget = current iogpu.wired_limit_mb × 1024²   # reads the live sysctl (mode-aware)
 availableForKV  = effectiveBudget
                 − weightsBytes(model)                     # from the model's config
-                − bufferBytes − prefixCacheBytes
+                − bufferCacheBytes − prefixCacheBytes
                 − transientReserveBytes                   # ~10-20% of budget, from measured peaks
-perTokenKvBytes = 2 × layers × kvHeads × headDim × kvDtypeBytes
-maxCacheBlocks  = floor( availableForKV / (blockSize × perTokenKvBytes × concurrency) )
+perTokenKvBytes = 2 × kvLayers × kvHeads × headDim × kvDtypeBytes
+poolBlocks      = floor( availableForKV / (blockSize × perTokenKvBytes) )   # GLOBAL pool, not per-sequence
 ```
 
-The wrapper sets `--max-cache-blocks` to the computed value and derives
-`--gpu-memory-utilization` from the live ceiling band above. If the model does
-not fit the requested concurrency and context — `maxCacheBlocks` falls below the
-minimum viable — the wrapper **rejects or clamps the load and fails loud**. A
-model too big to fit even one sequence is refused, not paged to disk.
+`--max-cache-blocks` is that global pool count — the whole paged-KV pool, shared
+across every concurrent sequence, not a per-request budget. So the pool size
+does **not** divide by concurrency. Concurrency enters at admission instead:
+
+```text
+admit if:  concurrency × ceil(context / blockSize)  ≤  poolBlocks
+```
+
+The wrapper sets `--max-cache-blocks` to `poolBlocks` and derives
+`--gpu-memory-utilization` from the live ceiling band above. If the requested
+concurrency and context do not fit the pool, the wrapper **rejects or clamps the
+load and fails loud** — shrinking concurrency or context until the admission
+check holds. A model too big to fit even one sequence is refused, not paged to
+disk.
+
+<Note>
+  `kvLayers` is the count of layers that actually hold a KV cache, not the total
+  layer count. A hybrid-attention model charges KV only for its full-attention
+  layers: `qwen3-next-80b` runs 12 full-attention layers of 48, so its KV costs
+  about 24 KiB/token — *cheaper* than a dense 30B at about 96 KiB/token, despite
+  the far larger weights. Read `kvLayers` from the model's architecture; never
+  assume it equals the depth.
+</Note>
 
 One function covers every case by changing only the model or the mode:
 
