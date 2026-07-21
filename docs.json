@@ -276,6 +276,7 @@
               "local-llm/apple-silicon",
               "local-llm/memory-ceilings",
               "local-llm/mac-studio",
+              "local-llm/nix-serving-stack",
               "local-llm/models-and-quantization",
               "local-llm/backends",
               "local-llm/distributed",
