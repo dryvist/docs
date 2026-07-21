@@ -40,6 +40,11 @@ or talk to it in **Slack** — the wired-in messaging gateway (Socket Mode), and
 sole chat platform in front of it today. Multi-agent *profiles* + *Kanban* teams can
 be layered on later — the agent home is already provisioned for them.
 
+The optional Web Dashboard runs as a separate service. It is published only through
+the homelab's TLS reverse proxy and uses the same single-sign-on provider as the
+other browser UIs. Keep webhook and API paths separate from the interactive route:
+those machine clients use their own signed or bearer credentials.
+
 ## Configuring it
 
 Everything is in `$HERMES_HOME/config.yaml` (secrets in `.env`), set non-interactively
