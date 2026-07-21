@@ -65,6 +65,33 @@ generic and the repo stays the source of truth for its own environment.
   </Step>
 </Steps>
 
+## Operator interface
+
+A run is launched by the `agent` CLI:
+
+```bash
+agent run [--tool claude|codex|gemini] [--profile <name>] \
+          [--repo <owner/name>] [--host <fqdn>] [--no-oauth] <prompt...>
+```
+
+Two flags carry two **independent** credential axes — read-secret scope and
+repository-write scope are orthogonal, and a run gets only the axes it names:
+
+| Flag | Grants | How it is minted |
+| --- | --- | --- |
+| `--profile <name>` | Read access to one task profile's secret group | The profile is baked into the image; its OpenBao KV group is fetched by an AppRole login — ambient read-tier material by default, or a human-minted single-use wrapped secret ID for apply-tier profiles. Read-only. |
+| `--repo <owner/name>` | Write to exactly one repository, this run only | The launcher mints a per-run, single-repo-scoped GitHub App token via the write identity, behind a short claim-before-work lease so two runs never write the same repository. See [GitHub access](/autonomous-agents/github-access). |
+
+The split is the point: a `--profile` run with no `--repo` can read its secrets
+but can never push, and a `--repo` run's write reach is exactly one repository —
+never an account. **The token is minted launcher-side; the container can never
+mint a write token itself.** A caller-supplied token already in the environment
+always wins over the mint.
+
+Host targets, egress network names, and the apply-tier grant procedure are
+operational detail that lives in the internal ops runbooks, not in this public
+overview.
+
 ## Network boundary
 
 The portable control is an **allowlisting CONNECT proxy** — the same proxy package
