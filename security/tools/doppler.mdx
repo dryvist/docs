@@ -38,7 +38,7 @@ Three Doppler projects, three delivery modes — each lands in a different consu
 | --- | --- | --- |
 | `secrets-sync` | Auto-sync → GitHub Actions secrets on the `secrets-sync` repo | [`secrets-sync`](/security/secrets-sync) workflow fans out (Tier 1) |
 | `infra-project/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2 — values never sit in GitHub) |
-| `ai-ci-automation/prd` | `doppler run --` wrapper at subprocess launch | Local dev + the [`doppler-mcp`](/security/local-ai-isolation) bridge |
+| Locally selected AI project/config | `doppler run --` wrapper at subprocess launch | Local dev + the [`doppler-mcp`](/security/local-ai-isolation) bridge |
 
 ## Runtime fetch via GitHub Actions
 
