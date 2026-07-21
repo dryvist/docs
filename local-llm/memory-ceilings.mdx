@@ -148,6 +148,61 @@ more allocation headroom than intended while `trip` — computed against
 re-derive from the value MLX reports back, never from the number you typed
 into the sysctl.
 
+## Bounding the footprint: which flag is the hard cap
+
+The invariant needs a real bound on `footprint`. Two flags look like they set
+it; only one does.
+
+- **`--max-cache-blocks` is the hard cap.** It bounds the active paged-KV pool —
+  the memory that grows as concurrent requests and longer contexts arrive. When
+  the pool runs out, the worker rejects the request instead of allocating past
+  the bound. This is the flag that keeps `footprint` under `trip`.
+- **`--cache-memory-mb` bounds only the prefix cache.** The prefix cache is a
+  separate store that reuses shared prompt prefixes across requests. Sizing
+  against it leaves the paged-KV pool — the part that actually grows under
+  load — unbounded.
+
+Size the footprint against `--max-cache-blocks`. A host tuned on
+`--cache-memory-mb` alone can still cross `trip` under concurrency, because the
+pool that grew was never the one it capped.
+
+## One number per host
+
+Holding `footprint < trip < ceiling` by hand means two coupled knobs — the
+wired ceiling and `--gpu-memory-utilization` — re-derived together every time
+the model or the batch shape changes. The build can do that work instead.
+
+A host declares one number, `maxLocalLlmGb`: the total memory the local LLM
+stack may use. Every dependent value is derived from it:
+
+- `wiredLimitMb` = `maxLocalLlmGb × 1024` — the OS wired ceiling, in MiB.
+- OS reserve = `physicalRam − maxLocalLlmGb` — what stays free for the desktop
+  and the compositor.
+- the trip point, kept below the wired ceiling so the soft valve fires first.
+- `--gpu-memory-utilization`, derived from the ceiling and the trip — not typed.
+- per-model `--max-cache-blocks` and concurrency caps, split out of the budget.
+
+A build-time assertion refuses any host whose resident set will not fit the
+budget:
+
+```text
+assert Σ(resident weights + kv) + buffer + prefix ≤ maxLocalLlmGb
+```
+
+The sum runs over every model held resident at once. `buffer` is fixed working
+headroom; `prefix` is the prefix-cache reservation. If the total exceeds the
+budget, the build fails — you cannot ship a host that oversubscribes its own
+RAM.
+
+The budget is mode-aware. A host carries one `maxLocalLlmGb` for standalone
+serving and a separate, larger one for clustered mode, where the desktop is
+quiesced and more memory is free for a shard. The operator sets the numbers;
+the active mode picks which one applies.
+
+One number in, a proven-safe config out. You never hand-tune the ceiling, the
+utilization, or the per-model caps. The interactive laptop and the headless
+host differ only in the number they declare.
+
 ## Where this applies
 
 The same arithmetic holds in both serving modes. In **standalone** mode, one
@@ -165,6 +220,10 @@ the rest of the per-host numbers.
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Nix serving stack" icon="boxes-stacked" href="/local-llm/nix-serving-stack">
+    How the Nix modules turn `maxLocalLlmGb` into the ceiling, the serve flags,
+    and the build-time safety check.
+  </Card>
   <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
     The serving stack these knobs belong to, and the rest of the tuning playbook.
   </Card>
