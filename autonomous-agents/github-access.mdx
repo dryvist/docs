@@ -62,13 +62,41 @@ not something a caller can do at request time. GitHub still enforces the outer
 ceiling underneath all three tiers: an installation token can never exceed what
 the App installation itself holds.
 
+### Where the write allowlist lives
+
+The allowlist is a single variable in the runtime secret store, read by the
+OpenBao configuration role and rendered into the write policy when that role
+converges. Two consequences follow:
+
+- **A grant is not live until the converge runs.** Adding a repository to the
+  variable changes nothing on its own — the policy is only rewritten at converge
+  time. A write mint that fails right after an allowlist edit usually means the
+  converge has not happened yet.
+- **The list is deliberately not in any public repository.** The installations
+  cover private repositories, so an inline list would disclose private
+  repository names. It is referenced here by variable name only.
+
+A refused write mint is a deny, not a bug. There is no client-side workaround,
+and falling back to a standing personal access token to complete the write
+defeats the entire model.
+
+### What the read tier can see
+
+The read permission set is deliberately wider than "clone and read code." It
+also carries read on security events and on dependency vulnerability alerts, so
+code-scanning findings and dependency alerts are queryable under the ambient
+read token — no elevation, no claim. Security triage is a read-shaped activity,
+and making it require a write token would have pushed routine triage onto the
+privileged path.
+
 ### The write lease
 
 Concurrent agents must not both hold write on the same repository. Before it
 mints a write token, the workstation helper takes a lease on that repository
 inside OpenBao, using an atomic check-and-set so exactly one holder wins. The
-lease carries a short deadman expiry, so a crashed holder frees it without a
-cleanup process. The lease is cooperative — the sanctioned helper is the only
+lease carries a server-side deadman expiry — fifteen minutes by default — so a
+crashed holder frees the repository without a cleanup process. The lease is
+cooperative — the sanctioned helper is the only
 documented mint path — and it prevents two agents from owning one repository, not
 repository corruption itself, which the remote already rejects on a stale push.
 
@@ -121,10 +149,38 @@ The GitHub plugin is a third-party Apache-2.0 component. Its signed checksum
 manifest, binary checksum, compatibility with the deployed OpenBao version, token
 use, and revocation behavior were verified before the rollout was marked live.
 
+## Why `gh` needed its own cutover
+
+Routing `git` through a credential helper did not cover the `gh` CLI, and the
+gap is structural rather than an oversight. `gh` reads its token from the
+environment and does not consult git's credential helpers at all. A credential
+helper can therefore be perfectly wired and `gh` will still never call it.
+
+Left alone, `gh` authenticates from whatever credential it has stored. That is
+the failure worth naming plainly: a stored token can quietly satisfy a
+`gh pr create` against a repository whose write claim the secrets engine had
+just refused. The deny was real, and the outcome was a write anyway — by a
+different door.
+
+Requiring an explicit mint before every `gh` invocation would close the gap on
+paper, but "forgot to run it" is the same failure again. So the shell routes
+`gh` through the same engine by default:
+
+- With no token in the environment, an invocation mints a **read** token for
+  the account inferred from the `origin` remote, caches it in shell memory only,
+  and refreshes it well inside its lifetime.
+- A mutating call under a read token fails closed at GitHub with a 403. That is
+  the signal to take a lease with `gh-claim` — a read is never silently widened
+  into a write.
+- If minting fails, the call **fails**. It does not fall back to a stored
+  credential. There is no configuration that re-enables such a fallback, and
+  `gh auth login` has no place in this model.
+
 ## Getting a token in a dev shell
 
-Most of the time you need no token at all. Reach for one only when a tool reads
-`GITHUB_TOKEN` from the environment.
+Most of the time you need no token at all — `git` and `gh` reads both resolve
+one for you. Reach for a helper when you need a write, or when some other tool
+reads `GITHUB_TOKEN` from the environment.
 
 <Steps>
   <Step title="For git, do nothing">
@@ -137,8 +193,10 @@ Most of the time you need no token at all. Reach for one only when a tool reads
     exported at load time would be written to disk and would outlive the shell —
     the one thing this model exists to prevent. Mint at call time instead.
   </Step>
-  <Step title="For gh and other GITHUB_TOKEN readers, mint in the shell">
-    Two shell helpers cover the everyday cases. Both infer the account and
+  <Step title="For gh, reads need nothing; writes need a claim">
+    A plain `gh` read works with no ceremony — the shell mints a read token for
+    you. Reach for a helper when you need a write, or when another tool reads
+    `GITHUB_TOKEN` from the environment. All three infer the account and
     repository from the `origin` remote, so the bare form usually suffices:
 
     ```bash
