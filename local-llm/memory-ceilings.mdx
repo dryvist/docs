@@ -126,7 +126,24 @@ of thumb is a guess; measure the machine instead.
     Feed the confirmed ceiling back through the band above and set
     `--gpu-memory-utilization` to a value inside it.
   </Step>
+  <Step title="Confirm the engine actually applied it">
+    Read back the limit the engine reports at startup, not just the flag you
+    passed. Serving stacks build their engine down more than one code path, and
+    a flag honored on one path can be silently ignored on another — leaving the
+    default in force while your command line says otherwise. Trust the engine's
+    own log line, then check the resulting trip point still satisfies the
+    invariant.
+  </Step>
 </Steps>
+
+<Warning>
+  Passing `--gpu-memory-utilization` is not proof it took effect. If an idle
+  auto-unload or lazy-load feature routes model construction through a
+  secondary path, the value can revert to the engine default there. The only
+  reliable signal is the allocation limit the engine prints once the model
+  loads — if it does not match your flag, the invariant you derived is not the
+  one running.
+</Warning>
 
 ### The unit is MiB, and it is exact
 
