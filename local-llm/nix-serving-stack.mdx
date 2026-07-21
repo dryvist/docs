@@ -1,6 +1,6 @@
 ---
 title: "How the Nix stack serves a model"
-description: "The end-to-end path from one host file to a running inference worker: which model runs where, how the host and serving repos compose the serving command, and the memory-safety derivation that keeps a model from paging the host."
+description: "The end-to-end path from one host file to a running inference worker: which model runs where, how the host and serving repos compose the serving command, and the runtime memory-safety control plane that keeps a model from paging the host with no rebuild."
 page_type: explanation
 ---
 
@@ -79,12 +79,16 @@ and inference power knobs. Its main option is `wiredLimitMb` — the
 volatile (it resets on reboot), so the module re-applies it from a launchd
 daemon at boot and again at every rebuild.
 
-Each host's file sets the ceiling against that host's job: the headless host
-carries a higher ceiling because it reclaims the desktop working set the laptop
-must leave free. The value is not typed by hand — it is derived from the host's
-memory budget, `wiredLimitMb = maxLocalLlmGb × 1024`. See
-[the single-input derivation](/local-llm/memory-ceilings) for the whole scheme;
-the per-host budgets live in the gated operational reference.
+The ceiling is not static. A link watcher flips the sysctl to the current mode's
+budget when the cluster cable is plugged or unplugged — the clustered budget on
+plug, the standalone budget on unplug. That is a live sysctl write, not a
+rebuild, so the mode's memory envelope moves without one. Each host declares two
+budgets against its job — the headless host carries higher ones because it
+reclaims the desktop working set the laptop must leave free. The values are not
+typed by hand; each is derived from a memory budget, `wiredLimitMb =
+maxLocalLlmGb × 1024`. See
+[the runtime-dynamic derivation](/local-llm/memory-ceilings) for the whole
+scheme; the per-host budgets live in the gated operational reference.
 
 The module also handles power posture (Low Power Mode off, Power Nap off, App
 Nap disabled for the inference daemon) and a Metal debug-env guard. None of that
@@ -113,7 +117,9 @@ picks a model; it shapes the box the model runs in.
     Turns the merged option values into the actual `vllm-mlx serve …` command
     string. It reads a fixed list of `overridableFlags`; a per-model override
     that names a flag outside that list fails the build instead of being
-    silently dropped.
+    silently dropped. A load-time admission wrapper extends it, computing
+    `--max-cache-blocks` from the live wired ceiling and rejecting a model that
+    will not fit.
   </Card>
   <Card title="lib/checks/mlx-catalog.nix — the guards" icon="shield-check">
     Build-time regression asserts: that a host's catalog picks compile to the
@@ -145,26 +151,41 @@ strategy; the live id is always a registry value, never hard-coded.
 For the packaging view of these repos, see [AI tooling](/nix/nix-ai) and
 [macOS host](/nix/nix-darwin).
 
-## The memory-safety derivation
+## The memory-safety control plane
 
-Two memory behaviours ride on one flag, and a wired ceiling that must move with
-it. Setting either by hand is the usual reason a well-sized host still pages.
-The Nix build removes the hand-tuning: a host declares one number,
-`maxLocalLlmGb`, and every dependent value is derived from it — the wired
-ceiling, the emergency trip point, `--gpu-memory-utilization`, and the per-model
-cache and concurrency caps.
+Two memory behaviours ride on one flag, over a wired ceiling that must move with
+the serving mode. Setting either by hand is the usual reason a well-sized host
+still pages. But the safety is not baked in at build time — models and modes
+change while the host runs, and rebuilding to swap a model is friction the stack
+avoids. Nix ships the control plane; the plane enforces at runtime.
 
-A build-time assertion then proves the host is not oversubscribed:
+Nix's build-time job is narrow:
 
-```text
-assert Σ(resident weights + kv) + buffer + prefix ≤ maxLocalLlmGb
-```
+- **the mode-aware budgets** — one `maxLocalLlmGb` for standalone serving and a
+  larger one for clustered mode, per host.
+- **the sysctl mechanism and the mode-switch watcher** — the launchd daemon that
+  applies `iogpu.wired_limit_mb`, and the link watcher that flips it to the
+  current mode's budget on plug or unplug.
+- **the admission-control wrapper and the model arch data** — the wrapper that
+  computes the per-model caps, and the catalog fields it reads.
 
-If the resident set will not fit the budget, the build fails. The budget is
-mode-aware — one value for standalone serving, a larger one for clustered mode.
+Runtime does the rest, with no rebuild:
 
-The full derivation, the two-behaviour mechanism behind it, and why
-`--max-cache-blocks` (not `--cache-memory-mb`) is the real footprint cap live in
+- **the link watcher** raises or lowers the wired ceiling to the mode's budget
+  when the cluster cable changes.
+- **the admission wrapper** computes `--max-cache-blocks` and derived
+  `--gpu-memory-utilization` at each model load from the live sysctl, the
+  model's architecture, and the requested concurrency and context — and
+  **rejects or clamps** a load that will not fit. Swapping a model needs no nix
+  change.
+
+A build-time assert remains, demoted to a policy check: it verifies the declared
+budgets are internally consistent and each leaves an OS floor, not that any one
+model fits. The per-model guarantee is the runtime admission.
+
+The full derivation, the two-behaviour mechanism behind it, why
+`--max-cache-blocks` (not `--cache-memory-mb`) is the real footprint cap, and
+the seven invariants that make overload virtually impossible live in
 [Memory ceilings on Apple Silicon](/local-llm/memory-ceilings). This page links
 to that mechanism rather than restating it.
 
