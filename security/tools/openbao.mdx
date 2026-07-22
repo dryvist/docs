@@ -56,6 +56,18 @@ that the large change carries extra regression risk, so production acceptance
 includes a real issuance, identity check, and revocation canary. The third-party
 GitHub plugin receives the same compatibility, issuance, and revocation gates.
 
+## Optional Slack OAuth proof of concept
+
+The OpenBao role includes an isolated Slack OAuth proof of concept. It is
+disabled by default and does not change the active authentication path. When an
+operator deliberately enables it, the role requires an exact callback route,
+requests only the bot scope needed to send messages, and gives its reader a
+short-lived, read-only identity.
+
+The reverse proxy may publish the exact callback path while the engine remains
+disabled. That route returns a no-content response and strips query parameters
+from access logs, so OAuth authorization data does not enter routine proxy logs.
+
 ## Architecture
 
 A single OpenBao service holds the truth; one lightweight agent per consumer renews leases and renders the secrets it needs into a memory-only file.
