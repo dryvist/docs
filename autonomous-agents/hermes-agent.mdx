@@ -87,6 +87,19 @@ If a server- or router-side guard is the shortest link, it will abort real work.
 Set the serving disconnect/idle guard generously and let the client own the
 deadline.
 
+## Queue recovery
+
+Hermes keeps scheduled work on its Kanban board. If the scheduler queue wedges,
+the recovery path archives active incident cards, rebuilds enabled schedules,
+and verifies the gateway and watchdog services. Archiving preserves the task
+history for review while giving the scheduler a clean queue. Recovery never
+deletes the board or runs garbage collection.
+
+After recovery, operators verify the rebuilt schedule count and service state.
+They then wait for a normal scheduled delivery before declaring the incident
+resolved. This last check proves the complete scheduler-to-messaging path rather
+than only proving that configuration rendered successfully.
+
 ## LLM knowledge base (second brain)
 
 The Hermes agent runs the bundled `llm-wiki` skill to build and maintain an interlinked Markdown knowledge base from raw sources. It ingests URLs, PDFs, and notes into an immutable `raw/` layer, then synthesizes curated `entities`, `concepts`, `comparisons`, and `queries` pages. These pages use YAML frontmatter, `[[wikilinks]]`, and a tag taxonomy for structure.
