@@ -91,6 +91,7 @@ On-prem self-hosted runners are a single point of failure when the job has E2E c
 3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
 4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
 5. **Pre-flight check the secret-injection step** so it fails loud when required secrets are missing.
+6. **Build the runner image off-node** — build it on a dedicated build host and `docker load` it onto the runner host, never build it in-place on a hypervisor node. A heavy image build can overload the node that also runs production guests.
 
 Reference implementation: `orbstack-kubernetes/docker/actions-runner/` — see that repo's `Makefile` `runner-*` targets and `TESTING.md`.
 
