@@ -142,11 +142,14 @@ physically or logically co-locates, do NOT make it a subgraph.
   `Configuration`, `Nix`, `AI Development`, `Observability`.
 - For role/owner: use `classDef`, color the nodes. The chain stays linear.
 
+Reuse the canonical classes above — a human actor is an `external` node, so
+role encoding needs no new class. Copy these definitions byte-for-byte:
+
 ```text
-classDef human  fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px;
-classDef ai     fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px;
-classDef auto   fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px;
-class H1,H3 human
+classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+class H1,H3 external
 class A1,A2,A3 ai
 class T1,T2,T3 auto
 ```
