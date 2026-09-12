@@ -32,10 +32,5 @@ jobs:
       actions: write
     uses: dryvist/.github/.github/workflows/_ci-gate.yml@main
     with:
+      osv_scan: true
       markdown_lint: false
-      file_size: true
-      zizmor: true
-      filters: |
-        markdown:
-          - '**.md'
-          - '.markdownlint*'
