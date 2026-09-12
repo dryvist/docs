@@ -4,21 +4,66 @@
   "name": "Jacob P Evans",
   "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
   "redirects": [
-    { "source": "/infrastructure/terraform/overview", "destination": "/infrastructure/tofu-aws/overview" },
-    { "source": "/infrastructure/terraform/aws-bootstrap", "destination": "/infrastructure/tofu-aws/aws-bootstrap" },
-    { "source": "/infrastructure/terraform/consuming-repo", "destination": "/infrastructure/tofu-aws/consuming-repo" },
-    { "source": "/infrastructure/repos/terraform-proxmox", "destination": "/infrastructure/repos/tofu-proxmox" },
-    { "source": "/infrastructure/repos/terraform-unifi", "destination": "/infrastructure/repos/tofu-unifi" },
-    { "source": "/infrastructure/terraform-check-placement", "destination": "/infrastructure/tofu-check-placement" },
-    { "source": "/infrastructure/cicd/terraform-runs-on", "destination": "/infrastructure/cicd/tofu-runs-on" },
-    { "source": "/observability/repos/tf-splunk-aws", "destination": "/observability/repos/tofu-splunk-aws" },
-    { "source": "/infrastructure/hermes-agent", "destination": "/autonomous-agents/hermes-agent" },
-    { "source": "/infrastructure/secrets-sops", "destination": "/security/sops-for-iac" },
-    { "source": "/configuration/overview", "destination": "/infrastructure/configuration/overview" },
-    { "source": "/automation/cloud-pipelines/ai-workflows", "destination": "/automation/repos/ai-workflows" },
-    { "source": "/automation/scheduled-routines/claude-code-routines", "destination": "/automation/repos/claude-code-routines" },
-    { "source": "/infrastructure/local-llm", "destination": "/local-llm/overview" },
-    { "source": "/infrastructure/media-storage-hardlinks", "destination": "/infrastructure/overview" }
+    {
+      "source": "/infrastructure/terraform/overview",
+      "destination": "/infrastructure/tofu-aws/overview"
+    },
+    {
+      "source": "/infrastructure/terraform/aws-bootstrap",
+      "destination": "/infrastructure/tofu-aws/aws-bootstrap"
+    },
+    {
+      "source": "/infrastructure/terraform/consuming-repo",
+      "destination": "/infrastructure/tofu-aws/consuming-repo"
+    },
+    {
+      "source": "/infrastructure/repos/terraform-proxmox",
+      "destination": "/infrastructure/repos/tofu-proxmox"
+    },
+    {
+      "source": "/infrastructure/repos/terraform-unifi",
+      "destination": "/infrastructure/repos/tofu-unifi"
+    },
+    {
+      "source": "/infrastructure/terraform-check-placement",
+      "destination": "/infrastructure/tofu-check-placement"
+    },
+    {
+      "source": "/infrastructure/cicd/terraform-runs-on",
+      "destination": "/infrastructure/cicd/tofu-runs-on"
+    },
+    {
+      "source": "/observability/repos/tf-splunk-aws",
+      "destination": "/observability/repos/tofu-splunk-aws"
+    },
+    {
+      "source": "/infrastructure/hermes-agent",
+      "destination": "/autonomous-agents/hermes-agent"
+    },
+    {
+      "source": "/infrastructure/secrets-sops",
+      "destination": "/security/sops-for-iac"
+    },
+    {
+      "source": "/configuration/overview",
+      "destination": "/infrastructure/configuration/overview"
+    },
+    {
+      "source": "/automation/cloud-pipelines/ai-workflows",
+      "destination": "/automation/repos/ai-workflows"
+    },
+    {
+      "source": "/automation/scheduled-routines/claude-code-routines",
+      "destination": "/automation/repos/claude-code-routines"
+    },
+    {
+      "source": "/infrastructure/local-llm",
+      "destination": "/local-llm/overview"
+    },
+    {
+      "source": "/infrastructure/media-storage-hardlinks",
+      "destination": "/infrastructure/overview"
+    }
   ],
   "colors": {
     "primary": "#4FB3A9",
@@ -407,6 +452,18 @@
             ]
           }
         ]
+      },
+      {
+        "dropdown": "Homelab reference",
+        "icon": "book",
+        "groups": [
+          {
+            "group": "Conventions",
+            "pages": [
+              "conventions/data-protection-classes"
+            ]
+          }
+        ]
       }
     ]
   },
@@ -419,18 +476,39 @@
       {
         "header": "Connect",
         "items": [
-          {"label": "GitHub (JacobPEvans)", "href": "https://github.com/JacobPEvans"},
-          {"label": "GitHub (dryvist)", "href": "https://github.com/dryvist"},
-          {"label": "LinkedIn", "href": "https://www.linkedin.com/in/JacobPaulEvans/"}
+          {
+            "label": "GitHub (JacobPEvans)",
+            "href": "https://github.com/JacobPEvans"
+          },
+          {
+            "label": "GitHub (dryvist)",
+            "href": "https://github.com/dryvist"
+          },
+          {
+            "label": "LinkedIn",
+            "href": "https://www.linkedin.com/in/JacobPaulEvans/"
+          }
         ]
       },
       {
         "header": "Docs",
         "items": [
-          {"label": "Source repo", "href": "https://github.com/JacobPEvans/docs"},
-          {"label": "Source repo (dryvist)", "href": "https://github.com/dryvist/docs"},
-          {"label": "Built with Mintlify", "href": "https://mintlify.com"},
-          {"label": "Dryvist", "href": "https://docs.dryvist.com"}
+          {
+            "label": "Source repo",
+            "href": "https://github.com/JacobPEvans/docs"
+          },
+          {
+            "label": "Source repo (dryvist)",
+            "href": "https://github.com/dryvist/docs"
+          },
+          {
+            "label": "Built with Mintlify",
+            "href": "https://mintlify.com"
+          },
+          {
+            "label": "Dryvist",
+            "href": "https://docs.dryvist.com"
+          }
         ]
       }
     ]
