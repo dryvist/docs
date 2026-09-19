@@ -1,12 +1,10 @@
 ---
 title: "Data protection classes"
-description: "The four protection classes every data store is assigned to — each defined by three numbers, RPO, RTO, and recovery window, not RPO alone."
-page_type: reference
+description: "The four protection classes every data store in the homelab is assigned to — each defined by three numbers, RPO, RTO, and recovery window, not RPO alone."
 ---
-
-Every data store — databases, config, object storage, ZFS pools — is assigned
-one of four protection classes. There is no fifth class and no per-store
-exception outside the exemption tier below.
+Every data store in the homelab — databases, config, object storage, ZFS
+pools — is assigned one of four protection classes. There is no fifth class
+and no per-store exception outside the exemption tier below.
 
 ## Why three numbers, not one
 
@@ -49,11 +47,12 @@ anything slower is a decision someone signed, not a default anyone drifted
 into.
 
 <Warning>
-  **RTO is honest, not aspirational.** Nothing here implies automated
-  failover. An RTO of "≤ 30 min" means the data is available to restore into
-  a rebuilt guest within 30 minutes — not that the service self-heals. A
-  protection class is only real once a drill has demonstrated its RTO once;
-  an undemonstrated RTO is a guess.
+**RTO is honest, not aspirational**
+
+Nothing here implies automated failover. An RTO of "≤ 30 min" means the data
+is available to restore into a rebuilt guest within 30 minutes — not that
+the service self-heals. A protection class is only real once a drill has
+demonstrated its RTO once; an undemonstrated RTO is a guess.
 </Warning>
 
 ## Derived vs source of truth
@@ -80,19 +79,13 @@ keep the signal honest:
 - **A skipped run is not a success.** It is its own outcome, and it must
   carry a reason.
 
-Mechanisms emit facts; the alerting layer decides what's wrong. Absence of a
+Alerting on all of this follows
+Observability and alerting:
+mechanisms emit facts; the alerting layer decides what's wrong. Absence of a
 report is caught the same way — by comparing what ran against what was
 expected to run, not by watching each mechanism individually.
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Data platform resilience" icon="database" href="/infrastructure/data-platform-resilience">
-    A worked P0 example — replication and layered backups for a shared
-    application database.
-  </Card>
-  <Card title="ZFS backup and replication" icon="server" href="/infrastructure/zfs-backup-replication">
-    A worked example at the host layer — the 3-2-1 rule built as four
-    escalating ZFS layers.
-  </Card>
-</CardGroup>
+<Columns>
+</Columns>
