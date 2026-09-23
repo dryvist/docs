@@ -1,12 +1,15 @@
 ---
 title: "Package placement"
 description: "Where each tool belongs across nix-darwin, nix-ai, nix-home, and nix-devenv — and when to skip declaration entirely with nix run."
-page_type: decision
+page_type: "decision"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Prefer the most ephemeral install that still meets the tool's real requirements. Promote upward only when running on demand is too slow.
 
-Across the four Nix repos and the ephemeral options on top, every tool has exactly one correct home. The matrix below is ordered the same way you should read it: always-on at the top, ephemeral at the bottom. Work upward from the bottom and stop at the first row that actually satisfies the tool's needs.
+Across the four Nix repos and the ephemeral options on top, every tool has exactly one correct home.
+The matrix below is ordered the same way you should read it: always-on at the top, ephemeral at the
+bottom. Work upward from the bottom and stop at the first row that actually satisfies the tool's
+needs.
 
 ## Placement decision matrix
 
@@ -16,7 +19,7 @@ Across the four Nix repos and the ephemeral options on top, every tool has exact
 | macOS-only system tools (`mas`, `mactop`) | **nix-darwin** | `environment.systemPackages` |
 | macOS system-level C libs (`sox`, `portaudio`) | **nix-darwin** | `environment.systemPackages` |
 | GUI apps unavailable in nixpkgs | **nix-darwin** | `homebrew.casks` |
-| CLI tools unavailable in nixpkgs or version-pinned | **nix-darwin** | `homebrew.brews` |
+| Command-line tools unavailable in nixpkgs or version-pinned | **nix-darwin** | `homebrew.brews` |
 | AI tools, MCP servers, speech / audio stack | **nix-ai** | `home.packages` |
 | Host-specific AI provider adapters | consumer-specific flake | Home Manager module |
 | User dev tools, shell config, linters, credentials | **nix-home** | `home.packages` |
@@ -24,22 +27,27 @@ Across the four Nix repos and the ephemeral options on top, every tool has exact
 | Project-specific toolchains | **nix-devenv** | importable module |
 | Language-specific testers, CI linters (`bats`, `actionlint`) | **nix-devenv** | shell `buildInputs` |
 | Occasional one-off tools (diagramming, previews) | ephemeral | `nix run nixpkgs#<pkg>` |
-| npm-backed CLI tools | ephemeral | `bunx <pkg>@version` |
-| Python CLI tools | ephemeral | `uvx <pkg>` |
+| npm-backed command-line tools | ephemeral | `bunx <pkg>@version` |
+| Python command-line tools | ephemeral | `uvx <pkg>` |
 
 ## Critical rules
 
-**`homebrew.brews` stays in nix-darwin.** Home-manager (`nix-ai`, `nix-home`) cannot declare Homebrew formulas — `homebrew.*` is a nix-darwin option only. Group AI-adjacent brew tools with a `# AI tools` comment block for logical clarity, not a repo move.
+**`homebrew.brews` stays in nix-darwin.** Home-manager (`nix-ai`, `nix-home`) cannot declare
+Homebrew formulas: `homebrew.*` is a nix-darwin option only. Group AI-adjacent brew tools with a `#
+AI tools` comment block for logical clarity, not a repo move.
 
-**Pre-commit hooks with `language: system`** require the tool on PATH. If a tool is used as a `language: system` pre-commit hook, it must stay in `nix-home`'s `home.packages` even if it feels project-specific (`lychee`, for example).
+**Pre-commit hooks with `language: system`** require the tool on PATH. If a tool is used as a
+`language: system` pre-commit hook, it must stay in `nix-home`'s `home.packages` even if it feels
+project-specific (`lychee`, for example).
 
-**IDE linters stay global.** Tools like `pyright` that IDEs invoke as background processes must be in `home.packages` (always on PATH). Moving them to a project devenv shell breaks editor integration because IDEs activate the system environment, not a project shell.
+**IDE linters stay global.** Tools like `pyright` that IDEs invoke as background processes must be
+in `home.packages` (always on PATH). Moving them to a project devenv shell breaks editor integration
+because IDEs activate the system environment, not a project shell.
 
-**Provider adapters follow the endpoint.** If an AI CLI is generally useful, package
-the CLI in `nix-ai`. If the config bakes in a private gateway URL, model aliases,
-or token source, put that adapter module in the consuming host or workstation
-flake instead. The public package stays reusable; the private topology stays out
-of shared package docs.
+**Provider adapters follow the endpoint.** If an AI command-line tool is generally useful, package
+it in `nix-ai`. Its config might instead bake in a private gateway URL, model aliases, or a token
+source. If so, put that adapter module in the consuming host or workstation flake instead.
+The public package stays reusable, and the private topology stays out of shared package docs.
 
 ## On-demand patterns
 
@@ -63,25 +71,39 @@ uvx ruff check .
 | Repo | Scope |
 | --- | --- |
 | **nix-darwin** | macOS system config: system packages, Homebrew, security, GUI apps, LaunchDaemons |
-| **nix-ai** | AI tool ecosystem: Claude Code, Antigravity, MCP servers, whisper stack, AI CLIs |
+| **nix-ai** | AI tool ecosystem: Claude Code, Antigravity, MCP servers, whisper stack, AI command-line tools |
 | **nix-home** | User dev environment: dev tools, shell config, git, linters, credentials |
 | **nix-devenv** | Reusable project shells and importable modules: per-language toolchains |
 
-Full package lists live in each repo — this page carries placement logic only. Adding a repo to this set means updating the matrix categories above and the `AGENTS.md` of every consumer repo that references the rule.
+Full package lists live in each repo; this page carries placement logic only. Adding a repo to this
+set means updating the preceding matrix categories and the `AGENTS.md` of every consumer repo that
+references the rule.
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Nix Ecosystem overview" icon="snowflake" href="/nix/overview">
-    The four-repo split and how the layers compose at activation time.
-  </Card>
-  <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
-    macOS system config — where `homebrew.brews` legitimately lives.
-  </Card>
-  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
-    AI tool ecosystem — what `home.packages` carries in the AI tier.
-  </Card>
-  <Card title="nix-devenv" icon="cubes" href="/nix/nix-devenv">
-    Reusable per-language project shells and importable modules.
-  </Card>
+<Card
+  title="Nix Ecosystem overview"
+  icon="snowflake"
+  href="/nix/overview">
+  The four-repo split and how the layers compose at activation time.
+</Card>
+<Card
+  title="nix-darwin"
+  icon="apple"
+  href="/nix/nix-darwin">
+  macOS system config: where `homebrew.brews` legitimately lives.
+</Card>
+<Card
+  title="nix-ai"
+  icon="bot"
+  href="/nix/nix-ai">
+  AI tool ecosystem: what `home.packages` carries in the AI tier.
+</Card>
+<Card
+  title="nix-devenv"
+  icon="cubes"
+  href="/nix/nix-devenv">
+  Reusable per-language project shells and importable modules.
+</Card>
 </CardGroup>

@@ -1,16 +1,22 @@
 ---
 title: "ZFS backup and replication"
 description: "How the homelab protects data with ZFS — a 3-2-1 backup realized as four escalating layers of defense, from in-pool redundancy to an off-site copy."
-page_type: explanation
+page_type: "explanation"
 ---
+{/* projected from the authoring site; do not edit here */}
+> RAID is not a backup. A mirror survives a dead disk and nothing else.
+>
+> It does not survive a fat-fingered `rm`, a bad upgrade, or a fire. Real protection is layered.
 
-> RAID is not a backup. A mirror survives a dead disk and nothing else — not a fat-fingered `rm`, not a bad upgrade, not a fire. Real protection is layered.
-
-The homelab follows the **3-2-1 rule** — three copies of the data, on two kinds of media, with one copy off-site — built up as four layers that each survive a bigger failure than the last. ZFS makes this cheap: snapshots are near-free until data changes, and `zfs send` ships only the blocks that moved.
+The homelab follows the **3-2-1 rule**: three copies of the data, on two kinds of media, with one
+copy off-site. It builds this up as four layers, and each layer survives a bigger failure than the
+last. ZFS makes this cheap: snapshots are near-free until data changes, and `zfs send` ships only
+the blocks that moved.
 
 ## Four layers of defense
 
-Each layer is strictly stronger than the one before it. The first one barely counts as a backup at all — it is in the table to make the point.
+Each layer is strictly stronger than the one before it. The first one barely counts as a backup at
+all. It is in the table only to make the point.
 
 | Layer | What it is | Survives | Does **not** survive |
 | --- | --- | --- | --- |
@@ -19,12 +25,13 @@ Each layer is strictly stronger than the one before it. The first one barely cou
 | 2 | Cross-node replication | Loss of a whole node | Site loss (fire, theft, flood) |
 | 3 | Off-site / offline copy | Site loss, ransomware | — the last line |
 
-{/* Shape: linear chain. 4 nodes, escalating strength. Boundary crossings: 0. */}
-{/* Layer 0 is `auto` (paper, thin) on purpose — it is not really a backup. */}
+{/*Shape: linear chain. 4 nodes, escalating strength. Boundary crossings: 0. */}
+{/* Layer 0 is `auto` (paper, thin) on purpose — it is not really a backup.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   L0(["In-pool redundancy<br/>mirror · raidz"])
   L1(["Local snapshots<br/>sanoid"])
   L2(["Cross-node replica<br/>syncoid"])
@@ -48,7 +55,10 @@ flowchart LR
 
 ## What replicates, and what doesn't
 
-Not everything earns a second copy. Replication costs bandwidth, disk, and snapshot retention on the far side, so it is reserved for data that is irreplaceable or is the system of record. Everything else gets local snapshots only — enough to undo a mistake, but never shipped across the wire.
+Not everything earns a second copy. Replication costs bandwidth, disk, and snapshot retention on
+the far side. It is reserved for data that is irreplaceable or is the system of record. Everything
+else gets local snapshots only. These are enough to undo a mistake, but they never get shipped
+across the wire.
 
 | Tier | What it covers | Policy |
 | --- | --- | --- |
@@ -57,11 +67,12 @@ Not everything earns a second copy. Replication costs bandwidth, disk, and snaps
 
 The rule that decides which bucket a dataset lands in is simple:
 
-{/* Shape: decision gate. 3 nodes. Boundary crossings: 0. */}
+{/*Shape: decision gate. 3 nodes. Boundary crossings: 0.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Q{"Irreplaceable<br/>or system of record?"}
   Rep(["Replicate + snapshot"])
   Snap(["Snapshot only"])
@@ -83,13 +94,17 @@ flowchart LR
 
 ## How replication flows
 
-Two always-on nodes replicate to each other on a nightly incremental schedule — only changed blocks move, so even large datasets sync in seconds once seeded. A third node stays **powered down most of the time**. When it wakes, it **pulls** the latest snapshots from both always-on nodes, then shuts back off.
+Two always-on nodes replicate to each other on a nightly incremental schedule. Only changed blocks
+move, so even large datasets sync in seconds once seeded. A third node stays **powered down most of
+the time**. When it wakes, it **pulls** the latest snapshots from both always-on nodes, then shuts
+back off.
 
-{/* Shape: parallel convergence. 4 nodes; two sources land on the cold node. Boundary crossings: 0. */}
+{/*Shape: parallel convergence. 4 nodes; two sources land on the cold node. Boundary crossings: 0.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Primary(["Primary node<br/>always-on"])
   Secondary(["Secondary node<br/>always-on"])
   Cold(["Cold node<br/>offline DR"])
@@ -110,20 +125,27 @@ flowchart LR
   linkStyle 1,2,3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-That offline window is a feature, not a gap. A node that is powered off is **air-gapped** — ransomware and a bad `zfs destroy` can't reach it. And because the cold node **pulls** rather than being pushed to, a compromised primary has no standing credentials to corrupt the archive. The powered-down copy is the "1" in 3-2-1.
+That offline window is a feature, not a gap. A node that is powered off is **air-gapped**, so
+ransomware and a bad `zfs destroy` can't reach it. And because the cold node **pulls** rather than
+being pushed to, a compromised primary has no standing credentials to corrupt the archive. The
+powered-down copy is the "1" in 3-2-1.
 
 ## The toolchain
 
-Each concern maps to one well-worn open-source tool. None of it is bespoke.
+Each concern maps to one well-worn open source tool. None of it is bespoke.
 
 | Concern | Tool | Role |
 | --- | --- | --- |
 | Snapshot scheduling & retention | **sanoid** | Takes time-based snapshots and prunes them on an hourly / daily / monthly ladder |
 | Incremental replication | **syncoid** | Wraps `zfs send \| zfs receive` to ship only changed blocks between nodes |
-| App-consistent backup | **Logical dumps** | Per-application dump jobs (for example `pg_dump`) for data that must be consistent mid-write, written to a replicated dataset |
+| App-consistent backup | **Logical dumps** | Per-app dump jobs (for example `pg_dump`) for data that must be consistent mid-write, written to a replicated dataset |
 | Capacity alerting | **ntfy** | Pushes a notification when a pool crosses 50% / 75% / 90% |
 
-Snapshots and replication protect the filesystem; logical dumps protect the *applications* (a database mid-transaction needs an application-consistent backup, not just a block snapshot). The two are complementary, not redundant. A dedicated backup appliance was evaluated for this layer and deliberately not adopted — the dump-plus-replication pattern already covers the gap without operating a second backup product.
+Snapshots and replication protect the filesystem; logical dumps protect the *apps* (a
+database mid-transaction needs an app-consistent backup, not just a block snapshot). The two
+are complementary, not redundant. A dedicated backup appliance was evaluated for this layer.
+It was deliberately not adopted, because the dump-plus-replication pattern already covers the
+gap without operating a second backup product.
 
 ## A snapshot policy must not name a pool
 
@@ -132,13 +154,13 @@ begins with the pool name. Writing that pool name into the policy by hand
 couples the policy to where the data lives today.
 
 When a guest is later moved to a different storage tier, a hand-written policy
-keeps snapshotting the **old** path. The old dataset usually still exists — a
-tier move commonly retains the source — so snapshots keep being created and
+keeps snapshotting the **old** path. The old dataset usually still exists, since
+a tier move commonly retains the source. So snapshots keep being created and
 pruned on schedule. Snapshot counts and timestamps stay healthy while capturing
 nothing live.
 
 That failure is invisible to every count-based or age-based check, because the
-counts and ages are genuinely correct; they simply describe the wrong dataset.
+counts and ages are genuinely correct. They simply describe the wrong dataset.
 It is only detectable by comparing the policy's target against the guest's
 currently declared storage.
 
@@ -146,23 +168,32 @@ The rule:
 
 - Resolve the dataset path from the guest's **declared storage** at render time.
 - Never write the pool name into the policy.
-- If a guest's storage cannot be resolved to a dataset — a directory-backed
-  storage, for example, which has no per-guest dataset — the render must fail
+- If a guest's storage cannot be resolved to a dataset (a directory-backed
+  storage, for example, has no per-guest dataset), the render must fail
   loudly rather than emit a path or silently skip the guest.
 
 ## What this connects to
 
 <CardGroup cols={2}>
   <Card title="Homelab" icon="server" href="/about/homelab">
-    The hardware the pools run on.
-  </Card>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
-    Where sanoid, syncoid, and the ZFS roles are defined.
-  </Card>
-  <Card title="tofu-proxmox" icon="cubes" href="/infrastructure/repos/tofu-proxmox">
-    Declares the nodes, pools, and the guests that run on them.
-  </Card>
-  <Card title="Infrastructure overview" icon="sitemap" href="/infrastructure/overview">
-    How the Proxmox stack fits the rest of the homelab.
-  </Card>
+  The hardware the pools run on.
+</Card>
+<Card
+  title="ansible-proxmox"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox">
+  Where sanoid, syncoid, and the ZFS roles are defined.
+</Card>
+<Card
+  title="tofu-proxmox"
+  icon="cubes"
+  href="/infrastructure/repos/tofu-proxmox">
+  Declares the nodes, pools, and the guests that run on them.
+</Card>
+<Card
+  title="Infrastructure overview"
+  icon="sitemap"
+  href="/infrastructure/overview">
+  How the Proxmox stack fits the rest of the homelab.
+</Card>
 </CardGroup>

@@ -1,9 +1,9 @@
 ---
 title: "Roadmap"
 description: "Phases 1–7 from local Mac runs to full PAT decommission, and which repo owns each piece."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **in progress.** OpenBao and both its secrets engines are live. The Mac
 container path is in use. The agent pool is declared in infrastructure code and
@@ -17,44 +17,45 @@ page carries the current status for its workstream.
 ## Phases
 
 <Steps>
-  <Step title="Profiles + image + local Mac runs (done)">
-    The three autonomy profiles landed in nix-ai; the `nix-agent-sandbox` repo
-    ships `agent-image` and `agent-cli`; `agent run` works via Apple
-    `container` on the Mac.
-  </Step>
-  <Step title="The agent pool in infrastructure code (done)">
-    A dedicated firewall profile for pooled agent guests — internal services
-    plus the forward proxy, and no direct outbound web rule — and the proxy
-    guest that holds the domain allowlist. Both are declared in tofu-proxmox.
-  </Step>
-  <Step title="Pool converge role + canary (role written, canary pending)">
-    The `agent_guest` role converges a stock Debian LXC into a queue-pulling
-    agent guest: one systemd unit per job, credentials rendered per job,
-    transcripts shipped. The canary is one real job per agent CLI on a pool
-    guest; the legacy runtime retires only after it passes.
-  </Step>
-  <Step title="OpenBao (AWS STS live)">
-    Core OpenBao is deployed. AppRole and response-wrapped bootstrap provide the
-    machine path. The AWS STS engine now brokers AWS access for automation,
-    replacing the static [aws-vault](/security/tools/aws-vault) base key; other
-    static service credentials continue moving into OpenBao KV.
-  </Step>
-  <Step title="GitHub App service engine">
-    A separate OpenBao engine issues fixed, named permission sets as one-hour
-    installation tokens. Routine automation PATs retire after live issuance,
-    use, and revocation checks pass.
-  </Step>
-  <Step title="Consumer migration">
-    Agent launchers consume the GitHub engine. Access outside the configured
-    full-automation ceiling stays human-only; remaining privileged PATs become
-    break-glass credentials.
-  </Step>
-  <Step title="Decommission">
-    The legacy agent guests and the launcher zsh they needed are removed once
-    the pool carries load; routine machine secrets finish moving out of
-    [Doppler](/security/tools/doppler); optional credential-injecting proxy for
-    static-credential backends.
-  </Step>
+<Step title="Profiles + image + local Mac runs (done)">
+The three autonomy profiles landed in nix-ai; the `nix-agent-sandbox` repo
+ships `agent-image` and `agent-cli`; `agent run` works via Apple
+`container` on the Mac.
+</Step>
+<Step title="The agent pool in infrastructure code (done)">
+A dedicated firewall profile for pooled agent guests covers internal
+services plus the forward proxy, with no direct outbound web rule. It
+works with the proxy guest that holds the domain allowlist. Both are
+declared in tofu-proxmox.
+</Step>
+<Step title="Pool converge role + canary (role written, canary pending)">
+The `agent_guest` role converges a stock Debian LXC into a queue-pulling
+agent guest: one systemd unit per job, credentials rendered per job,
+transcripts shipped. The canary is one real job per agent command-line
+tool on a pool guest. The legacy runtime retires only after it passes.
+</Step>
+<Step title="OpenBao (AWS STS live)">
+Core OpenBao is deployed. AppRole and response-wrapped bootstrap provide the
+machine path. The AWS STS engine now brokers AWS access for automation,
+replacing the static [aws-vault](/security/tools/aws-vault) base key.
+Other static service credentials continue moving into OpenBao KV.
+</Step>
+<Step title="GitHub App service engine">
+A separate OpenBao engine issues fixed, named permission sets as one-hour
+installation tokens. Routine automation PATs retire after live issuance,
+use, and revocation checks pass.
+</Step>
+<Step title="Consumer migration">
+Agent launchers consume the GitHub engine. Access outside the configured
+full-automation ceiling stays human-only; remaining privileged PATs become
+break-glass credentials.
+</Step>
+<Step title="Decommission">
+The legacy agent guests and the launcher zsh they needed are removed once
+the pool carries load. Routine machine secrets finish moving out of
+[Doppler](/security/tools/doppler). An optional credential-injecting
+proxy covers static-credential backends.
+</Step>
 </Steps>
 
 ## Repo ownership map
@@ -73,33 +74,45 @@ page carries the current status for its workstream.
 This section changes the trajectory of several existing pages without rewriting
 them yet. Until each phase lands, the existing pages describe the live system.
 
-- [aws-vault](/security/tools/aws-vault) — already replaced for automation by
+- [aws-vault](/security/tools/aws-vault): already replaced for automation by
   the OpenBao AWS STS engine (phase 4); that page now documents the broker
   model that replaced it.
-- [Doppler](/security/tools/doppler) — the four-tier model (see the
+- [Doppler](/security/tools/doppler): the four-tier model (see the
   [comparison](/security/comparison)) keeps Doppler as the strict cloud tier
-  holding secret-zero and rare human-approved credentials; routine machine
-  secrets still migrate out in phase 7 — into OpenBao.
-- [OpenBao](/security/tools/openbao) — that page predates this design and
+  holding secret-zero and rare human-approved credentials. Routine machine
+  secrets still migrate out in phase 7, into OpenBao.
+- [OpenBao](/security/tools/openbao): that page predates this design and
   described OpenBao as a cluster-local alternative store; the four-tier model
   assigns OpenBao the single machine-secrets role (dynamic credentials
   included). The two converge in phase 4.
-- [SOPS in repos](/security/sops-for-iac) — unchanged in role; stays the
+- [SOPS in repos](/security/sops-for-iac): unchanged in role; stays the
   layer for committed deployment config.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Overview" icon="shield" href="/autonomous-agents/overview">
-    The boundary-inversion principle the phases build toward.
-  </Card>
-  <Card title="Runtime" icon="box" href="/autonomous-agents/runtime">
-    What phases 1–3 actually construct.
-  </Card>
-  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
-    What phase 4 migrates, class by class.
-  </Card>
-  <Card title="GitHub access" icon="github" href="/autonomous-agents/github-access">
-    What phases 5–6 replace.
-  </Card>
+<Card
+  title="Overview"
+  icon="shield"
+  href="/autonomous-agents/overview">
+  The boundary-inversion principle the phases build toward.
+</Card>
+<Card
+  title="Runtime"
+  icon="box"
+  href="/autonomous-agents/runtime">
+  What phases 1–3 actually construct.
+</Card>
+<Card
+  title="Secrets"
+  icon="key"
+  href="/autonomous-agents/secrets">
+  What phase 4 migrates, class by class.
+</Card>
+<Card
+  title="GitHub access"
+  icon="github"
+  href="/autonomous-agents/github-access">
+  What phases 5–6 replace.
+</Card>
 </CardGroup>

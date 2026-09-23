@@ -1,30 +1,34 @@
 ---
 title: "AI tooling"
 description: "Every AI coding tool, packaged. Claude Code, Antigravity, Copilot, MLX modules, a catalog of MCP servers — declarative, reproducible, version-pinned."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The whole AI toolkit, in one flake. `nix run` and go.
 
 <RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/nix-ai" />
 
-`nix-ai` is the package and config layer for everything AI-coding-related. It packages CLIs that don't yet have first-party Nix derivations, pins MCP server versions, and exports overlays the rest of the Nix stack consumes.
+`nix-ai` is the package and config layer for everything AI-coding-related. It packages command-line
+tools that don't yet have first-party Nix derivations. It also pins MCP server versions and exports
+overlays that the rest of the Nix stack consumes.
 
 Host-specific provider wiring is intentionally outside `nix-ai`. If a tool needs
-to point at a private local LLM gateway, package the tool here, then keep the
+to point at a private local LLM gateway, package the tool here. Then keep the
 endpoint and token-source module in the consuming workstation flake. That keeps
 reusable packaging public and environment topology private.
 
 ## What it does
 
-- Packages Claude Code, the Antigravity (`agy`) CLI, GitHub Copilot CLI, Cribl and Splunk operator CLIs, and assorted AI tooling
-- Tracks the operator CLI sources through the flake lock, so consumers can gate their installation to workstation hosts
+- Packages Claude Code, the Antigravity (`agy`) command-line tool, the GitHub Copilot command-line
+  tool, Cribl and Splunk operator command-line tools, and assorted AI tooling
+- Tracks the operator command-line tool sources through the flake lock, so consumers can gate their
+  installation to workstation hosts
 - Provides MLX module derivations for Apple Silicon
 - Pins a catalog of MCP servers and exposes them as reusable Nix attributes
 - Exports an overlay so `nix-darwin` and `nix-home` can include AI tools without duplicating logic
-- Includes a shell module (`devShells.default`) for "just give me an AI sandbox" workflows
+- Includes a shell module (`devShells.default`) for a ready-made AI sandbox
 
 ## How it fits
 
@@ -33,17 +37,23 @@ reusable packaging public and environment topology private.
 | [macOS host](/nix/nix-darwin) overlay, [User environment](/nix/nix-home) packages, ad-hoc `nix shell` | [ai-assistant-instructions](/ai-development/ai-assistant-instructions) rule set |
 
 <RepoFit>
-Anything that's "an AI tool I want everywhere" belongs here. Single-project AI experiments go in a project-local `nix-devenv`-style flake.
+Anything that counts as an AI tool needed everywhere belongs here. Single-project AI experiments go in a project-local `nix-devenv`-style flake.
 </RepoFit>
 
 ## Configuration surface
 
-`nix-ai` ships as a reusable flake module with a single knob surface — `modules/maintainer-profile.nix`. This is the one file a consumer touches to adapt the stack:
+`nix-ai` ships as a reusable flake module with a single knob surface: `modules/maintainer-profile.nix`. This is the one file a consumer touches to adapt the stack:
 
-- **Identity** fields (`user.fullName`, `user.trustedOrgs`) have maintainer defaults so derived values (e.g. Claude auto-mode trusted-org list) stay internally consistent; override them for your own identity.
-- **Infrastructure** fields (`homelab.*`, `telemetry.*`, `trustedProjectDirs`) default to clean/off/empty, so the module evaluates to a neutral config with zero consumer input — no personal context ships in the flake.
+- **Identity** fields (`user.fullName`, `user.trustedOrgs`) have maintainer defaults, so derived
+  values (for example, the Claude auto-mode trusted-org list) stay internally consistent. Override
+  them for your own identity.
+- **Infrastructure** fields (`homelab.*`, `telemetry.*`, `trustedProjectDirs`) default to
+  clean/off/empty, so the module evaluates to a neutral config with zero consumer input. No
+  personal context ships in the flake.
 
-Modules read `userConfig` via `_module.args` so nothing outside `maintainer-profile.nix` needs to import it directly. A consumer overrides values either in their own `nix-darwin` config (via `extraSpecialArgs`) or by importing the module and setting options.
+Modules read `userConfig` via `_module.args` so nothing outside `maintainer-profile.nix` needs to
+import it directly. A consumer overrides values either in their own `nix-darwin` config (via
+`extraSpecialArgs`) or by importing the module and setting options.
 
 ### Secrets and injection
 
@@ -57,54 +67,68 @@ Runtime secrets are never stored in Nix store paths or committed files. Four inj
 | Kubernetes Doppler Operator | Cribl pods | In-cluster operator syncs Doppler → K8s Secrets |
 
 **Source-control credentials use none of these.** They are short-lived tokens
-minted on demand per request and never written to disk — not to the Keychain, not
-to a `.env`, and not to a direnv cache, since direnv persists its environment dump
-on disk and would turn a mint-time credential into a stored one. The Keychain row
-above covers third-party service keys only; treat any older guidance that routes
+minted on demand per request. They are never written to disk: not to the Keychain, not
+to a `.env`, and not to a direnv cache. Direnv persists its environment dump
+on disk, which would turn a mint-time credential into a stored one. The Keychain row
+preceding this covers third-party service keys only. Treat any older guidance that routes
 source-control credentials through it as retired.
 
 The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,
-and the Antigravity CLI and IDE surfaces. Antigravity (`agy`) is the
+and the Antigravity command-line tool and IDE surfaces. Antigravity (`agy`) is the
 Gemini-family harness; it is not a second Gemini MCP identity. Hermes uses the
 same Splunk connection through its machine AppRole. Terrakube workload
 identity applies only to remote Terrakube jobs, not interactive workstation
 agents.
 
-The variable catalog (required vs optional, purpose, source) lives in `.env.example` at the repo root; a real `.env` is an opt-in convenience — direct injection is preferred. The local injection runbook is `AGENTS.local.md` (gitignored).
+The variable catalog (required vs optional, purpose, source) lives in `.env.example` at the repo
+root. A real `.env` is an opt-in convenience; direct injection is preferred. The local injection
+runbook is `AGENTS.local.md` (gitignored).
 
 ## Getting started
 
 <Steps>
-  <Step title="Try a single tool">
-    `nix run github:JacobPEvans/nix-ai#claude-code -- --help`. No clone needed.
-  </Step>
-  <Step title="Enter the sandbox shell">
-    `nix develop github:JacobPEvans/nix-ai` drops you into a shell with every AI CLI on PATH.
-  </Step>
-  <Step title="Import into nix-darwin">
-    Add `nix-ai` as a flake input, then include `nix-ai.overlays.default` in your nixpkgs config. The README has the boilerplate.
-  </Step>
-  <Step title="Override the maintainer profile">
-    Set `userConfig.user.fullName` and any `homelab.*` / `telemetry.*` options in your own config to adapt the stack to your environment.
-  </Step>
+<Step title="Try a single tool">
+`nix run github:JacobPEvans/nix-ai#claude-code -- --help`. No clone needed.
+</Step>
+<Step title="Enter the sandbox shell">
+`nix develop github:JacobPEvans/nix-ai` drops you into a shell with every AI command-line tool on PATH.
+</Step>
+<Step title="Import into nix-darwin">
+Add `nix-ai` as a flake input, then include `nix-ai.overlays.default` in your nixpkgs config. The README has the boilerplate.
+</Step>
+<Step title="Override the maintainer profile">
+Set `userConfig.user.fullName` and any `homelab.*` / `telemetry.*` options in your own config to adapt the stack to your environment.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
-    The rules layer. nix-ai packages the tools; this configures them.
-  </Card>
-  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
-    Extension layer on top of the packaged Claude Code CLI.
-  </Card>
+<Card
+  title="ai-assistant-instructions"
+  icon="book"
+  href="/ai-development/ai-assistant-instructions">
+  The rules layer. nix-ai packages the tools; this configures them.
+</Card>
+<Card
+  title="claude-code-plugins"
+  icon="plug"
+  href="/ai-development/claude-code-plugins">
+  Extension layer on top of the packaged Claude Code CLI.
+</Card>
   <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
-    The system-level consumer.
-  </Card>
-  <Card title="Local LLM" icon="microchip" href="/local-llm/overview">
-    How the packaged MLX stack runs and is tuned on Apple Silicon.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/nix-ai">
-    Packages, overlays, full README.
-  </Card>
+  The system-level consumer.
+</Card>
+<Card
+  title="Local LLM"
+  icon="microchip"
+  href="/local-llm/overview">
+  How the packaged MLX stack runs and is tuned on Apple Silicon.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/nix-ai">
+  Packages, overlays, full README.
+</Card>
 </CardGroup>

@@ -1,9 +1,9 @@
 ---
 title: "Agent multiplexer"
-description: "Running herdr as a homelab service: one runtime holds every coding agent's terminal, a Slack bridge answers blocked agents, and a web dashboard approves them — none of it tied to a laptop."
-page_type: explanation
+description: "Running herdr as a homelab service: one runtime holds every coding agent's terminal, a Slack bridge answers blocked agents, and a web dashboard approves them. None of it is tied to a laptop."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 Running three to ten AI coding agents at once is hard in plain tmux. You cannot
 see which agent is blocked, you cannot drive them from a script, and closing the
 laptop ends the work.
@@ -11,40 +11,41 @@ laptop ends the work.
 **[herdr](https://github.com/herdrdev/herdr)** fixes that. It is a background
 server that owns the terminals the agents run in. Sessions survive a reboot.
 Panes are marked *working*, *blocked* or *idle*. Agents drive it themselves
-through a CLI and a local socket API.
+through a command-line tool and a local socket API.
 
 The homelab runs it as a service, on the fleet, so the work does not live on a
 laptop.
 
 ## Three containers, on purpose
 
-Each part runs in its own LXC. A crash in the Slack bridge must not touch the
+Each part runs in its own LXC. A crash in the Slack bridge must not affect the
 runtime holding live agent panes.
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
-    Slack[Slack] -->|Socket Mode<br>outbound| Bridge[Slack bridge]
-    Browser[Browser or phone] -->|SSO gate| Dash[Web dashboard]
-    Bridge -->|forwarded socket<br>over SSH| Runtime[herdr runtime]
-    Dash -->|SSH| Runtime
-    Runtime --> Panes[Agent panes<br>Claude Code, Codex, agy, ...]
-    Laptop[Workstation] -->|herdr --remote| Runtime
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
+  Slack[Slack] -->|Socket Mode<br>outbound| Bridge[Slack bridge]
+  Browser[Browser or phone] -->|SSO gate| Dash[Web dashboard]
+  Bridge -->|forwarded socket<br>over SSH| Runtime[herdr runtime]
+  Dash -->|SSH| Runtime
+  Runtime --> Panes[Agent panes<br>Claude Code, Codex, agy, ...]
+  Laptop[Workstation] -->|herdr --remote| Runtime
 
-    classDef ext  fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-    classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-    classDef core fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef ext  fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef core fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
 
-    class Slack,Browser,Laptop ext;
-    class Bridge,Dash hop;
-    class Runtime,Panes core;
+  class Slack,Browser,Laptop ext;
+  class Bridge,Dash hop;
+  class Runtime,Panes core;
 ```
 
 | Container | What it does | Reachable from outside? |
 | --- | --- | --- |
-| Runtime | Holds the agent panes and every coding CLI | No — SSH only |
-| Slack bridge | Alerts when an agent blocks; sends your reply back to that pane | No — Slack Socket Mode dials out |
-| Dashboard | Live timelines, one-tap approvals, terminal access | Yes — behind the SSO gate |
+| Runtime | Holds the agent panes and every coding command-line tool | No: SSH only |
+| Slack bridge | Alerts when an agent blocks; sends your reply back to that pane | No: Slack Socket Mode dials out |
+| Dashboard | Live timelines, one-tap approvals, terminal access | Yes: behind the SSO gate |
 
 Only the runtime keeps state. Agent credentials, git worktrees and session
 state live on one backed-up volume. The other two rebuild from code, so they
@@ -53,8 +54,8 @@ need no backup and no failover.
 ## Talking to it from Slack
 
 This mirrors how the [self-hosted agent](/autonomous-agents/hermes-agent) is
-driven. When an agent blocks — it wants a decision, or approval to run
-something — the bridge posts to Slack. You reply in the thread, and the reply
+driven. When an agent blocks (it wants a decision, or approval to run
+something), the bridge posts to Slack. You reply in the thread, and the reply
 lands in that agent's terminal.
 
 herdr gets its **own** Slack app, not a shared one. Two Socket Mode connections
@@ -73,23 +74,24 @@ The whole stack is defined once, as Nix. The same flake produces:
 
 Both take their binaries from the same source, so a pane on the server runs the
 same build as a pane on the laptop. From the workstation, one command attaches
-to the server's herd — the laptop becomes a window onto the work, not the place
+to the server's herd. The laptop becomes a window onto the work, not the place
 it lives.
 
 ## Why the CLIs moved to Nix
 
-The agent CLIs used to come from Homebrew. Homebrew is macOS-only, so the stack
-could not leave one laptop — which is the whole problem this solves.
+The agent command-line tools used to come from Homebrew. Homebrew is
+macOS-only, so the stack could not leave one laptop, which is the whole
+problem this solves.
 
 They now come from Nix, which builds for macOS and Linux alike. Two sources
 cover everything: the main package set, and
 **[llm-agents.nix](https://github.com/numtide/llm-agents.nix)** for the agent
-CLIs the main set does not carry. Homebrew is kept only for desktop apps, which
-have no Nix equivalent.
+tools the main set does not carry. Homebrew is kept only for desktop apps,
+which have no Nix equivalent.
 
 ## Exposure
 
-The dashboard is the only part reachable from a browser, and it sits behind the
+The dashboard is the only part reachable from a browser. It sits behind the
 same SSO gate as every other internal service, on an internal name.
 
 The upstream project offers a free hosted tunnel. The homelab does not use it.
@@ -108,7 +110,7 @@ applies them without restarting. On a machine whose whole configuration is
 declared in code, that is state arriving from outside.
 
 Treat the fetch as something to override, not to rely on. Local definitions
-take precedence, so declare every agent you care about in Nix; the container's
+take precedence, so declare every agent you care about in Nix. The container's
 egress policy decides whether herdr can reach the update endpoint at all. Both
 levers are enforceable from code, which the fetch itself is not.
 

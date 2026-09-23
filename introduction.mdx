@@ -1,52 +1,79 @@
 ---
 title: "Jacob P Evans"
 description: "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored."
-page_type: overview
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.
 
-The single public reference for ~40 open-source repos that together form one ecosystem. Per-repo READMEs cover install. This site covers how it all fits together.
+The single public reference for ~40 open source repos that together form one ecosystem. Per-repo READMEs cover install. This site covers how it all fits together.
 
 ## The six surfaces
 
 <CardGroup cols={3}>
-  <Card title="Security" icon="shield-halved" href="/security/overview">
-    Doppler · SOPS · Keychain · Bitwarden · BWS
-  </Card>
-  <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
-    OpenTofu · Ansible · Proxmox
-  </Card>
-  <Card title="Observability" icon="chart-line" href="/observability/overview">
-    Cribl · Splunk · OTEL
-  </Card>
-  <Card title="Nix Ecosystem" icon="snowflake" href="/nix/overview">
-    macOS host · user env · AI tooling · dev shells
-  </Card>
-  <Card title="AI Development" icon="robot" href="/ai-development/overview">
-    Claude · Antigravity · Copilot · MLX
-  </Card>
-  <Card title="Dev Tools" icon="screwdriver-wrench" href="/tools/overview">
-    Raycast · MLX bench · K8s
-  </Card>
+<Card
+  title="Security"
+  icon="shield-halved"
+  href="/security/overview">
+  Doppler · SOPS · Keychain · Bitwarden · BWS
+</Card>
+<Card
+  title="Infrastructure"
+  icon="server"
+  href="/infrastructure/overview">
+  OpenTofu · Ansible · Proxmox
+</Card>
+<Card
+  title="Observability"
+  icon="chart-line"
+  href="/observability/overview">
+  Cribl · Splunk · OTEL
+</Card>
+<Card
+  title="Nix Ecosystem"
+  icon="snowflake"
+  href="/nix/overview">
+  macOS host · user env · AI tooling · dev shells
+</Card>
+<Card
+  title="AI Development"
+  icon="robot"
+  href="/ai-development/overview">
+  Claude · Antigravity · Copilot · MLX
+</Card>
+<Card
+  title="Dev Tools"
+  icon="screwdriver-wrench"
+  href="/tools/overview">
+  Raycast · MLX bench · K8s
+</Card>
 </CardGroup>
 
 ## Going deeper
 
 <CardGroup cols={3}>
-  <Card title="How it fits together" icon="diagram-project" href="/how-it-fits-together">
-    Cross-repo dependency map.
-  </Card>
-  <Card title="Repository catalog" icon="folder-tree" href="/repositories">
-    Every repo at a glance, by surface.
-  </Card>
-  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
-    Data pipelines and AI pipeline.
-  </Card>
+<Card
+  title="How it fits together"
+  icon="diagram-project"
+  href="/how-it-fits-together">
+  Cross-repo dependency map.
+</Card>
+<Card
+  title="Repository catalog"
+  icon="folder-tree"
+  href="/repositories">
+  Every repo at a glance, by surface.
+</Card>
+<Card
+  title="Architecture"
+  icon="sitemap"
+  href="/architecture/overview">
+  Data pipelines and AI pipeline.
+</Card>
 </CardGroup>
 
 <Note>
-  **This site is** the architecture map — how things connect, why
-  decisions were made, what to read next. **It isn't** the install
+  **This site is** the architecture map. It shows how things connect, why
+  decisions were made, and what to read next. **It isn't** the install
   walkthrough; that lives in each repo's `README.md`.
 </Note>

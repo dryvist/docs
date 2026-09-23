@@ -1,9 +1,9 @@
 ---
 title: "Mermaid style guide"
 description: "Canonical, byte-for-byte Mermaid authoring rules for docs.jacobpevans.com: theme directive, shape vocabulary, classDef and linkStyle palettes, the four narrative shapes, and density caps."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 The detailed style and layout rules for authoring diagrams on this site. For the
 reader-facing summary and when to draw a diagram at all, see
 [`conventions/diagramming`](/conventions/diagramming); for making diagram nodes
@@ -12,12 +12,12 @@ navigable, see [`conventions/mermaid-links`](/conventions/mermaid-links).
 ## Diagram style
 
 Inline ` ```mermaid ` fenced blocks render natively in Mintlify with ELK layout.
-One diagram per concern — do not combine.
+One diagram per concern. Do not combine.
 
 ### The canonical theme directive (use **exactly this**, byte-for-byte)
 
 Every Mermaid block on the site MUST begin with this directive. The
-`look:'handDrawn'` is non-negotiable — it gives the diagrams personality
+`look:'handDrawn'` is non-negotiable; it gives the diagrams personality
 that matches the site's voice. Any deviation (different fontSize, missing
 `look`, different palette) is a bug.
 
@@ -40,12 +40,12 @@ grep -h '%%{init:' --include='*.mdx' -r . | sort -u | wc -l
 - Circle `((Label))` for endpoints / external actors
 - Hexagon `{{Label}}` for special-purpose nodes (use sparingly)
 - Subgraphs for things that physically or logically co-locate
-  (a cluster, a host, a network, a repo group) — **never** for roles or phases
+  (a cluster, a host, a network, a repo group). **Never** for roles or phases
 
 ### Canonical classDef palette
 
 Use the semantic class names below. Pick ONE per node based on what it
-represents; don't invent new classes per page. This keeps the same colour
+represents; don't invent new classes per page. This keeps the same color
 meaning the same idea everywhere.
 
 ```text
@@ -60,8 +60,8 @@ classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 ```
 
 All classes share the same dark fill (`#102937`) so the diagram blends
-with the page; the **border colour** is what carries the semantic
-meaning. Text is always paper (`#F4EFE6`) — readable against the dark fill.
+with the page; the **border color** is what carries the semantic
+meaning. Text is always paper (`#F4EFE6`), readable against the dark fill.
 
 | Class | Border | Meaning |
 | --- | --- | --- |
@@ -93,7 +93,7 @@ linkStyle 7 stroke:#C25638,stroke-width:1.5px,stroke-dasharray:2 4;
 
 Within the canonical palette, these are **encouraged** for personality:
 
-- **Mix node shapes** purposefully — stadiums for processes, cylinders
+- **Mix node shapes** purposefully. Use stadiums for processes, cylinders
   for stores, diamonds for decisions, circles for external actors.
   Variety helps readers parse at a glance.
 - **Short labels.** `claude process`, not `the Claude Code subprocess`.
@@ -112,20 +112,20 @@ diagram fails ANY check, redesign it before writing the fence.
 ### Rule 1 · One narrative shape per diagram
 
 Decide which of these four shapes the data IS, then commit to it. If you
-can't pick one, you have two concerns — split into two diagrams.
+can't pick one, you have two concerns. Split into two diagrams.
 
-- **LINEAR CHAIN** — `A → B → C → D → E`. Use `flowchart LR`. No subgraphs
+- **LINEAR CHAIN**: `A → B → C → D → E`. Use `flowchart LR`. No subgraphs
   for "roles" or "phases" (they always cause zigzag). To show role/owner,
   color nodes via `classDef`. Don't put them in columns.
-- **PARALLEL CONVERGENCE** — two chains that join at the end. Use
+- **PARALLEL CONVERGENCE**: two chains that join at the end. Use
   `flowchart LR`. Declare the longer chain first (its nodes appear higher
-  in source). ELK will rank the shorter chain on the second row.
-- **HIERARCHY / TREE** — a parent with grouped children. Use `flowchart TB`.
+  in source). ELK ranks the shorter chain on the second row.
+- **HIERARCHY / TREE**: a parent with grouped children. Use `flowchart TB`.
   Children grouped in subgraphs with `direction LR`. Cap subgraph contents
-  at 5 nodes — overflow gets a second subgraph at the same rank.
-- **HUB AND SPOKES** — one central node connected to 4–8 leaves. Use
+  at 5 nodes; overflow gets a second subgraph at the same rank.
+- **HUB AND SPOKES**: one central node connected to 4–8 leaves. Use
   `flowchart LR`, put leaves in a single subgraph with `direction TB`. Do
-  not draw all edges from hub — chain leaves inside the subgraph with
+  not draw all edges from hub. Chain leaves inside the subgraph with
   invisible `~~~` links so they stack, then one edge hub → first leaf.
 
 ### Rule 2 · Subgraphs are for THINGS that live together, not for ROLES
@@ -137,7 +137,7 @@ physically or logically co-locates, do NOT make it a subgraph.
   any role or temporal phase. A workflow that hands off
   Human → AI → Human → AI draws a zigzag because arrows cross subgraph
   boundaries N times; visual complexity goes O(n) → O(n²).
-- **Allowed** subgraph names — actual co-location: `Proxmox cluster`,
+- **Allowed** subgraph names, for actual co-location: `Proxmox cluster`,
   `Cribl tier`, `UniFi network`, `AWS DR`, `Edge`, `Infrastructure`,
   `Configuration`, `Nix`, `AI Development`, `Observability`.
 - For role/owner: use `classDef`, color the nodes. The chain stays linear.
@@ -170,10 +170,10 @@ Aspect-ratio sanity check (mentally render before emitting):
 ### Rule 4 · `classDef` always, `linkStyle` by index
 
 - **Never emit per-node `style` statements.** Always use `classDef`. A
-  diagram with 8 identical `style X fill:...` lines is a code smell — the
+  diagram with 8 identical `style X fill:...` lines is a code smell. The
   8 nodes share a category; give them a class.
 - **Never emit a global `linkStyle default stroke:#E06B4A`**. It paints
-  every edge the same colour and throws away semantic differentiation.
+  every edge the same color and throws away semantic differentiation.
   Color edges by what they represent, using indexed `linkStyle`:
 
 ```text
@@ -186,7 +186,7 @@ Edge index = declaration order, zero-based. Count carefully.
 
 Standard edge palette for this site:
 
-| Meaning | Style | Colour |
+| Meaning | Style | Color |
 | --- | --- | --- |
 | Physical / network | solid | `#2F7E78` (deep green) |
 | Data / telemetry | dashed | `#E06B4A` (coral) |
@@ -222,5 +222,5 @@ shapes; tables and Steps are for everything else.
 | --- | --- |
 | `<Steps>` | Sequential process where each step is one action |
 | Table | Categorisation, comparison, "X column maps to Y column" |
-| Mermaid | One of the four shapes above; structure ≥ 4 nodes with real edges |
+| Mermaid | One of the four preceding shapes; structure ≥ 4 nodes with real edges |
 | Prose with bold leads | Relationships that read better as a paragraph |

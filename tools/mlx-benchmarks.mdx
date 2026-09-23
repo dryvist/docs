@@ -1,32 +1,38 @@
 ---
 title: "Local LLM benchmarking"
 description: "Reproducible benchmark harness for MLX-quantized LLMs on Apple Silicon. One envelope schema, one HuggingFace dataset, one viewer."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > One envelope schema, every upstream eval tool, one public HF dataset.
 
 <RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/mlx-benchmarks" />
 
-`mlx-benchmarks` is the result-envelope contract and publisher for benchmarking MLX-quantized and locally-hosted LLMs on Apple Silicon. It is the thin glue between upstream evaluation tools (`lm-eval`, `vllm benchmark_serving`, agent-framework harnesses) and a single public HuggingFace dataset, with a Gradio viewer on top.
+`mlx-benchmarks` is the result-envelope contract and publisher for benchmarking MLX-quantized and
+locally hosted LLMs on Apple Silicon. It is the thin glue between upstream evaluation tools
+(`lm-eval`, `vllm benchmark_serving`, agent-framework harnesses) and a single public HuggingFace
+dataset, with a Gradio viewer on top.
 
 ## What it does
 
-- Defines **envelope v1** in `schema.json` — the authoritative, versioned contract every published shard validates against.
-- Provides `mlx-bench-publish`, a CLI that converts raw tool output into the envelope, validates it, and uploads to the [HF dataset](https://huggingface.co/datasets/JacobPEvans/mlx-benchmarks) with content-addressed filenames (`data/run-<timestamp>-<git_sha>-<suite>-<model_slug>.parquet`).
+- Defines **envelope v1** in `schema.json`: the authoritative, versioned contract every published shard validates against.
+- Provides `mlx-bench-publish`, a command-line tool that converts raw tool output into the envelope, validates it,
+  and uploads to the [HF dataset](https://huggingface.co/datasets/JacobPEvans/mlx-benchmarks) with
+  content-addressed filenames (`data/run-<timestamp>-<git_sha>-<suite>-<model_slug>.parquet`).
 - Owns converters for `lm-eval`, `vllm benchmark_serving`, and framework-eval (OpenAI / Qwen-Agent / smolagents / ADK).
 - Auto-detects runtime metadata (OS, chip, memory, Python, MLX, lm-eval versions) via `detect_system()` so envelopes are fully reproducible without hand-curation.
 - Deploys a [Gradio viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) to HF Spaces on every `main` push touching `space/`.
 
 ## How it fits
 
-{/* Shape: linear chain. nix-ai feeds inference; this repo is the envelope/publisher; HF stores and visualizes. */}
+{/*Shape: linear chain. nix-ai feeds inference; this repo is the envelope/publisher; HF stores and visualizes.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   NixAI([nix-ai])
   Serve([vllm-mlx + llama-swap])
   Eval([lm-eval · vllm · framework-eval])
@@ -59,11 +65,11 @@ flowchart LR
 
 <Warning>
   **A row is only as good as its weight provenance.** A serving proxy was found
-  launching a fallback model's weights under other models' labels, which put
-  rows in the dataset measuring a model that was never loaded — one of them off
-  by 7x (verified 2026-07-26/27). Prove the loaded checkpoint from the running
-  process before you publish, and treat any historical row that cannot prove it
-  as unverified rather than as a baseline. See
+  launching a fallback model's weights under other models' labels. This put
+  rows in the dataset measuring a model that was never loaded. One of them was
+  off by 7x (verified 2026-07-26/27). Prove the loaded checkpoint from the
+  running process before you publish. Treat any historical row that cannot
+  prove it as unverified rather than as a baseline. See
   [Verifying the instrument](/local-llm/verifying-the-instrument).
 </Warning>
 
@@ -75,7 +81,7 @@ diagnostic.
 
 Decode-only throughput hides prefill. A model that reads its prompt several
 times faster delivers a visibly faster answer, and a decode-only number reports
-none of that gain — so tuning against it tunes for something the user never
+none of that gain. So tuning against it tunes for something the user never
 experiences. Cumulative counts every token the request touched against the
 time the user actually waited.
 
@@ -90,33 +96,34 @@ same model, on the same hardware, scored **551 cumulative at a 2291-token
 prompt** and **140.9 at a ~190-token prompt**. Neither is wrong; they are
 answers to different questions.
 
-So a cumulative figure without its regime is not a fast or slow result — it is
+So a cumulative figure without its regime is not a fast or slow result. It is
 an uninterpretable one:
 
 <Warning>
-  **Publish the regime with the number, every time.** At minimum: prompt size,
-  `max_tokens`, and cache state (assert `cached_tokens=0` per run if you are not
-  deliberately measuring cache hits). **Never compare two cumulative figures
-  taken in different regimes** — including your own earlier ones.
+  **Publish the regime with the number, every time.** At minimum, note prompt
+  size and `max_tokens`. Also note cache state (assert `cached_tokens=0` per
+  run if you are not deliberately measuring cache hits). **Never compare two
+  cumulative figures taken in different regimes**, including your own earlier
+  ones.
 </Warning>
 
 A stated regime is not sufficient on its own, because a regime can match on
 paper and still differ in practice. On 2026-08-14 a candidate read **37.1**
-cumulative against the incumbent's recorded **115.2** — a regime that looked
+cumulative against the incumbent's recorded **115.2**. That regime looked
 identical on every published field. Re-measuring the incumbent **with the same
-harness, in the same session** put it at **138.8**, not 115.2: the harness ran
+harness, in the same session** put it at **138.8**, not 115.2. The harness ran
 hot, and the naive comparison had understated the real gap by roughly 20%. It
 happened to understate; it could as easily have manufactured a win.
 
 <Warning>
   **Re-measure the incumbent alongside the candidate, every time.** A control
   run costs minutes and is the only thing that separates a model effect from a
-  harness effect. Also match the probe's concurrency to the endpoint's — a probe
+  harness effect. Also match the probe's concurrency to the endpoint's. A probe
   wider than the deployed decode concurrency collects `HTTP 429` responses and
   silently averages the failures into the aggregate.
 </Warning>
 
-**Decode-only is the most regime-stable of the three rates**, which makes it the
+**Decode-only is the most regime-stable of the three rates.** That makes it the
 honest basis for a cross-model comparison even though cumulative is the
 headline. When two numbers disagree about which model is faster, check whether
 they were taken in the same regime before you believe either.
@@ -170,14 +177,14 @@ rows is a zero-throughput result.
 Published results are immutable shards. A new campaign appends a new shard and
 run-index entry; it does not rewrite a historical row to make a comparison look
 cleaner. The viewer distinguishes historical evidence from current campaign
-evidence, and comparisons must name the run, serving profile, context values,
+evidence. Comparisons must name the run, serving profile, context values,
 concurrency, cache state, and model revision that produced them.
 
 ### Fresh 2026-08 context evidence
 
 The current isolated campaign uses a 64-token output reservation, one request
-at a time, a cache-busted full prompt for each measured repetition, and four
-warmed repetitions per successful cell. The first request is archived under
+at a time, and a cache-busted full prompt for each measured repetition. It
+runs four warmed repetitions per successful cell. The first request is archived under
 `readiness` with an explicit `initial_model_state`; it is never included in the
 warmed median.
 
@@ -195,8 +202,8 @@ warmed median.
 ### Clean-reset 2026-08-30 128k matrix
 
 This separate immutable campaign began after a Studio reboot. The production
-model lifecycle was quiesced before each cell, the preflight swap value was
-zero, and the server used a 131,072-token window with a 128,000-token prompt
+model lifecycle was quiesced before each cell, and the preflight swap value
+was zero. The server used a 131,072-token window with a 128,000-token prompt
 and a 64-token output reservation. Each row has four resident repetitions.
 The cold first request is retained as readiness evidence and is excluded from
 the warm medians.
@@ -214,7 +221,7 @@ at the c1 rate. In this native MTP configuration, the long-prefill path queued
 rather than increasing aggregate throughput. The c4 attempt is preserved as
 transport-limited evidence, not a capacity or quality verdict.
 
-Full-attention KV math informed the preflight only: 64 KiB per token per
+Full-attention KV math informed the preflight only. 64 KiB per token per
 sequence is about 7.816 GiB at 128,000 plus 64 tokens, or 31.266 GiB for four
 sequences. Hybrid linear-attention state, weights, allocator behavior, and
 scratch space are outside that calculation, so runtime telemetry remains the
@@ -229,7 +236,7 @@ The MTP drafter was proven by live completions in an isolated native-MTP c1
 profile. It is still not a base-model fallback or a serving default. The base
 and MTP rows use different serving backends, so their rate difference is not an
 MTP-only speed multiplier. That runtime status remains separate from the
-immutable measurement table: a production activation requires its own verified
+immutable measurement table. A production activation requires its own verified
 route and adds a labeled MTP row without changing any existing base-model
 evidence.
 
@@ -251,60 +258,83 @@ median of three runs, with the observed range in brackets.
 All four returned a genuine `tool_calls` **array** with
 `finish_reason: "tool_calls"` and correctly parsed arguments.
 
-The reasoning-first model is the cautionary row: it is competitive on every
-rate and **never exits thinking** at `max_tokens=300` — zero answer characters
+The reasoning-first model is the cautionary row. It is competitive on every
+rate and **never exits thinking** at `max_tokens=300`: zero answer characters
 across all three runs, against 1022–1193 characters of reasoning. Fast, and
 produces no answer. A throughput table cannot see that; a tool-call and
 answer-length assertion can. Measure what the caller receives, not only how
 quickly tokens arrive.
 
 <RepoFit>
-Anything that runs an LLM benchmark and wants the result comparable across tools, models, and dates goes through this envelope. Per-tool harness logic stays upstream; the publisher stays thin. No CI benchmarking — MLX needs Apple Silicon hardware, so runs are local; CI only validates the publisher against fixtures.
+Anything that runs an LLM benchmark and wants the result comparable across tools, models, and dates
+goes through this envelope. Per-tool harness logic stays upstream; the publisher stays thin. There is
+no CI benchmarking. MLX needs Apple Silicon hardware, so runs are local; CI only validates the
+publisher against fixtures.
 </RepoFit>
 
 ## Getting started
 
 <Steps>
-  <Step title="Bring up the inference stack">
-    From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .`. This starts `vllm-mlx` + `llama-swap` on `localhost:11434` via [`nix-ai`](/nix/nix-ai). Or run `vllm-mlx serve` directly if you're not on the Nix stack.
-  </Step>
-  <Step title="Install and authenticate">
-    `git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
-  </Step>
-  <Step title="Run a smoke benchmark">
-    Point `lm-eval` at the local endpoint:
-    ```bash
-    BASE="http://localhost:11434/v1/chat/completions"
-    .venv/bin/lm_eval --model local-chat-completions \
-      --model_args "base_url=$BASE,model=mlx-community/Qwen3.5-9B-MLX-4bit" \
-      --tasks gsm8k_cot_zeroshot --limit 10 \
-      --output_path ./run-output
-    ```
-  </Step>
-  <Step title="Publish (dry-run first)">
-    `.venv/bin/mlx-bench-publish ./run-output/<model-dir>/results_*.json --kind lm-eval --suite reasoning --dry-run` validates the envelope locally against `schema.json`. Drop `--dry-run` to push to the HF dataset.
-  </Step>
-  <Step title="View results">
-    Open the [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) — it auto-loads every published shard. Or `cd space && python app.py` for a local copy.
-  </Step>
+<Step title="Bring up the inference stack">
+From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .`. This starts
+`vllm-mlx` + `llama-swap` on `localhost:11434` via [`nix-ai`](/nix/nix-ai). Or run `vllm-mlx
+serve` directly if you're not on the Nix stack.
+</Step>
+<Step title="Install and authenticate">
+`git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
+</Step>
+<Step title="Run a smoke benchmark">
+Point `lm-eval` at the local endpoint:
+
+```bash
+BASE="http://localhost:11434/v1/chat/completions"
+.venv/bin/lm_eval --model local-chat-completions \
+  --model_args "base_url=$BASE,model=mlx-community/Qwen3.5-9B-MLX-4bit" \
+  --tasks gsm8k_cot_zeroshot --limit 10 \
+  --output_path ./run-output
+```
+</Step>
+<Step title="Publish (dry-run first)">
+`.venv/bin/mlx-bench-publish ./run-output/<model-dir>/results_*.json --kind lm-eval --suite
+reasoning --dry-run` validates the envelope locally against `schema.json`. Drop `--dry-run` to
+push to the HF dataset.
+</Step>
+<Step title="View results">
+Open the [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer). It auto-loads every published shard. Or `cd space && python app.py` for a local copy.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="nix-ai" icon="snowflake" href="/nix/nix-ai">
-    Packages the inference stack: `vllm-mlx` LaunchAgent, `llama-swap`, MLX module derivations. Where models actually run.
-  </Card>
-  <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
-    macOS host config. Composes `nix-ai` into the system flake so benchmarks have a reproducible environment.
-  </Card>
-  <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
-    Model routing + permission policy. Tells AI clients which models to benchmark.
-  </Card>
-  <Card title="Local LLM" icon="microchip" href="/local-llm/overview">
-    The serving stack, tuning, and model strategy these benchmarks measure.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/mlx-benchmarks">
-    Schema, publisher, converters, full README, `docs/architecture.md`.
-  </Card>
+<Card
+  title="nix-ai"
+  icon="snowflake"
+  href="/nix/nix-ai">
+  Packages the inference stack: `vllm-mlx` LaunchAgent, `llama-swap`, MLX module derivations. Where models actually run.
+</Card>
+<Card
+  title="nix-darwin"
+  icon="apple"
+  href="/nix/nix-darwin">
+  macOS host config. Composes `nix-ai` into the system flake so benchmarks have a reproducible environment.
+</Card>
+<Card
+  title="ai-assistant-instructions"
+  icon="book"
+  href="/ai-development/ai-assistant-instructions">
+  Model routing + permission policy. Tells AI clients which models to benchmark.
+</Card>
+<Card
+  title="Local LLM"
+  icon="microchip"
+  href="/local-llm/overview">
+  The serving stack, tuning, and model strategy these benchmarks measure.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/mlx-benchmarks">
+  Schema, publisher, converters, full README, `docs/architecture.md`.
+</Card>
 </CardGroup>

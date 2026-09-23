@@ -1,25 +1,26 @@
 ---
 title: "Legacy BMC tactics"
 description: "Reverse-engineering hidden HTTP endpoints, wrapping unsigned Java applets, and headless installs on enterprise hardware whose vendor moved on a decade ago."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > When the vendor stopped supporting the hardware before the cipher suites
-> were updated, the official path is gone. The hardware still works fine —
-> you just have to meet it on its own terms.
+> were updated, the official path is gone. The hardware still works fine.
+> You just have to meet it on its own terms.
 
-Older enterprise server BMCs (out-of-band management controllers — Dell
-iDRAC 6, HPE iLO 3, Supermicro IPMI 1.5 era) shipped with web consoles
-designed around contemporary Java Web Start, ActiveX, and TLS cipher
-suites. A decade later, every modern browser refuses the plugins,
-every modern JRE refuses the unsigned jars, and every modern TLS stack
-refuses the ciphers. The chassis is still on the rack, still drawing
-power, still perfectly usable — and the official remote-management story
-is gone.
+Older enterprise server BMCs are out-of-band management controllers
+that let someone manage a server remotely. Examples include Dell
+iDRAC 6, HPE iLO 3, and the Supermicro IPMI 1.5 era. These BMCs
+shipped with web consoles built around Java Web Start, ActiveX, and
+TLS cipher suites from their era. A decade later,
+every modern browser refuses the plugins. Every modern JRE refuses the
+unsigned jars, and every modern TLS stack refuses the ciphers. The
+chassis is still on the rack, still drawing power, still perfectly
+usable. Only the official remote-management story is gone.
 
-This page captures the patterns that keep us working on this gear
-without a VGA monitor and without lowering the security posture of our
-daily-driver workstation.
+This page describes patterns for working with this gear without a VGA
+monitor. These patterns also avoid lowering the security posture of the
+daily driver workstation used to reach it.
 
 ## Pattern 1 — Reverse-engineer the hidden HTTP API
 
@@ -34,12 +35,12 @@ What you almost always find:
 - Combined "system summary" endpoints that batch a dozen sensor and
   state fields in one XML payload
 - A screen-capture endpoint the web UI hits every few seconds to
-  refresh its tiny preview pane — this is the same VGA buffer the
+  refresh its tiny preview pane. This is the same VGA buffer the
   expensive Java applet would render at full resolution
 
 That screen-capture endpoint is the big prize. The preview is small
-and refreshes slowly, but it returns a real PNG of whatever is on the
-host's VGA output — POST, GRUB, BIOS, OS console, the lot. Two `curl`
+and refreshes slowly. But it returns a real PNG of whatever is on the
+host's VGA output, from POST, GRUB, BIOS, to the OS console. Two `curl`
 calls (trigger refresh, fetch PNG) replace the entire Java vKVM stack
 for monitoring purposes.
 
@@ -69,12 +70,13 @@ unsigned-jar dance, no TLS cipher negotiation, just `curl` and a PNG.
 
 ### Why this is safe to publish
 
-We are not publishing exploits. The endpoints are reachable to anyone
-already authenticated to the BMC. The vendor knows about them — their
-own web UI calls them. We are publishing **how to discover that the
-endpoints exist** so AI agents and homelab operators can build better
-monitoring tools instead of forcing brittle Java applets onto modern
-workstations.
+This page does not publish exploits. The endpoints are reachable to
+anyone already authenticated to the BMC. The vendor knows about them,
+since its own web UI calls them. This page publishes **how to
+discover that the endpoints exist**. AI agents and homelab operators
+can then build better monitoring tools instead of forcing brittle
+Java applets onto
+modern workstations.
 
 ## Pattern 2 — Wrap the Java applet, do not replace it
 
@@ -84,7 +86,7 @@ unsigned Java applet:
 1. Don't install Java on the host workstation. Put the whole legacy
    Java stack inside a single throwaway container.
 2. Inside that container, run a desktop environment streamed to the
-   browser (e.g. `linuxserver/webtop` for an XFCE-in-browser experience).
+   browser (for example, `linuxserver/webtop` for an XFCE-in-browser experience).
 3. Install OpenWebStart, JRE 8, and a `jarsigner`-capable JDK headless
    into that container.
 4. Intercept the `.jnlp` download with a small wrapper script that:
@@ -114,7 +116,7 @@ Sharp edges to budget for:
   `javaws`.
 - The BMC's video-encryption setting (often RC4) silently breaks the
   KVM connect on modern Java TLS stacks. If the BMC is on a trusted
-  out-of-band VLAN, disable it.
+  out-of-band VLAN, turn it off.
 
 ## Pattern 3 — Headless installs on hardware without VGA
 
@@ -127,12 +129,12 @@ For installing a modern OS onto a chassis where:
 The path is:
 
 1. Build a custom installer ISO with an embedded answer file (Proxmox's
-   `proxmox-auto-install-assistant`, Debian preseed, RHEL kickstart —
+   `proxmox-auto-install-assistant`, Debian preseed, RHEL kickstart:
    every distro has the equivalent). The answer file must specify
    network from DHCP and a known SSH key.
 2. Drop the ISO onto a multi-boot USB stick (Ventoy works well) and
    configure the stick's bootloader to auto-pick the installer with a
-   short timeout — no keyboard required.
+   short timeout. No keyboard is required.
 3. Use IPMI to force one-shot boot from removable media:
 
    ```bash
@@ -142,42 +144,43 @@ The path is:
    ```
 
    Note: in IPMI spec parlance, **`floppy` means "USB stick"** on
-   modern hardware — the spec predates USB. `cdrom` routes to optical
-   drives or virtual-CD subsystems (the latter is broken on a lot of
-   legacy BMCs, which is why USB-boot is the reliable path).
+   modern hardware. The spec predates USB. `cdrom` routes to optical
+   drives or virtual-CD subsystems. The latter is broken on a lot of
+   legacy BMCs, which is why USB-boot is the reliable path.
 
-4. Monitor progress via the Pattern 1 screenshot loop — every minute,
-   grab the PNG, compute its hash, alert on change. The installer
+4. Monitor progress via the Pattern 1 screenshot loop: every minute,
+   grab the PNG, compute its hash, and alert on change. The installer
    takes 15-30 min on legacy USB 2.0; you'll see GRUB, then the
    automated installer log, then a login prompt.
 
 5. Detect completion by polling SSH on the expected IP. When the port
    opens, the install succeeded.
 
-This is the same shape as PXE-boot install, but it works without any
-network-side infrastructure (DHCP option 66/67, TFTP server, HTTP boot
-server). The USB stick is the entire delivery mechanism.
+This is the same shape as a PXE-boot install. It works without any
+network-side infrastructure, though (no DHCP option 66/67, TFTP server,
+or HTTP boot server). The USB stick is the entire delivery mechanism.
 
 ## Pattern 4 — PXE-boot as the override of last resort
 
-When USB-boot keeps falling through to the wrong OS on internal disks
-(legacy BMC `bootdev=floppy options=persistent` is silently one-shot
-on many firmwares — the override is consumed on the next boot, then
-BIOS falls through to the default disk priority), PXE is the
-reliable last-mile remote install path:
+USB-boot sometimes keeps falling through to the wrong OS on internal
+disks. On many firmwares, the legacy BMC's `bootdev=floppy
+options=persistent` setting is silently one-shot. The override is
+consumed on the next boot. BIOS then falls through to the default
+disk priority. When that happens, PXE is the reliable last-mile
+remote install path:
 
 1. Stand up `dnsmasq` in **proxyDHCP mode** on a host that already
-   sits on the target VLAN (we use the existing healthy hypervisor).
+   sits on the target VLAN (the existing healthy hypervisor works well).
    `--dhcp-no-override --dhcp-range=<subnet>,proxy` supplements the
    existing gateway's DHCP with PXE options only, without conflicting.
    `--port=0` disables the DNS half so it doesn't clash with the
    site's real resolver.
 2. Build a **custom iPXE binary with an `EMBED=` script** baked in.
    Most distro packages of iPXE do not auto-execute the DHCP-offered
-   bootfile URL when chainloaded from BIOS PXE — iterating on dnsmasq
-   config alone will never make iPXE chain. Embedding the script
-   inside `undionly.kpxe` makes the chain deterministic, with no
-   external fetch dependency.
+   bootfile URL when chainloaded from BIOS PXE. Iterating on dnsmasq
+   config alone never makes iPXE chain. Embedding the script inside
+   `undionly.kpxe` makes the chain deterministic, with no external
+   fetch dependency.
 3. **Boot kernel + initrd directly via iPXE, not the ISO via
    sanboot.** sanboot of a large auto-install ISO is unreliable on
    pre-2010 server NICs and BMC video stacks. Extracting the kernel
@@ -191,17 +194,16 @@ reliable last-mile remote install path:
    over HTTP and proceeds unattended.
 
 The IPMI side is still `bootdev=pxe options=persistent` plus a
-power-cycle. The "persistent" keyword is still ignored on legacy
-BMCs, but PXE doesn't have the same fall-through-to-disk-OS problem
-that USB does — if the PXE server is reachable, the install
-proceeds; if not, the chassis simply hangs at "PXE boot failed",
-which is observable from the BMC screen-capture and IPMI sensor
-data.
+power-cycle. Legacy BMCs still ignore the "persistent" keyword. But
+PXE doesn't have the same fall-through-to-disk-OS problem that USB
+does. If the PXE server is reachable, the install proceeds. If not,
+the chassis simply hangs at "PXE boot failed," which shows up in the
+BMC screen-capture and IPMI sensor data.
 
 ## What we learned along the way
 
-- **Reach for plain HTTP first.** The fancier protocol — Java applet,
-  vendor-specific SDK, OEM thick-client tool — exists to ship features
+- **Reach for plain HTTP first.** The fancier protocol (Java applet,
+  vendor-specific SDK, OEM thick-client tool) exists to ship features
   the vendor wanted to sell. The actual data almost always flows over
   plain HTTP underneath. The plain HTTP path is older, simpler, and
   far more likely to still work when the vendor has moved on.
@@ -220,8 +222,8 @@ data.
 
 ## Related
 
-- [Infrastructure overview](/infrastructure/overview) — the modern hardware
+- [Infrastructure overview](/infrastructure/overview): the modern hardware
   story this hardware is being added to.
-- [Conventions / no scripts](/conventions/no-scripts) — the bias toward
-  one-liners over shell scripts; the workarounds above are kept to that
+- [Conventions / no scripts](/conventions/no-scripts): the bias toward
+  one-liners over shell scripts. The preceding workarounds are kept to that
   bar where possible.

@@ -1,23 +1,26 @@
 ---
 title: "Splunk on AWS"
 description: "Plain OpenTofu for an on-demand Splunk and/or Cribl environment on AWS. Both workloads are independently optional, the whole stack auto-stops on a schedule, and it starts and stops again through a credential-less GitHub Actions \"summon\" workflow."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> Splunk on AWS without the enterprise sticker shock — and without it running when nobody's using it.
+> Splunk on AWS without the enterprise sticker shock, and without it running when nobody's using it.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-splunk-aws" />
 
-`tofu-splunk-aws` provisions an on-demand data-ingest environment on AWS: a VPC with a cost-optimized NAT instance, and two independently-toggleable workloads — Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It uses plain OpenTofu.
+`tofu-splunk-aws` provisions an on-demand data-intake environment on AWS. It builds a VPC
+with a cost-optimized NAT instance. It also runs two independently toggleable workloads,
+Splunk Enterprise (on by default) and Cribl Stream + Cribl Edge (off by default). It uses
+plain OpenTofu.
 
 ## What it does
 
 - Builds an isolated VPC with public/private subnets and a t4g.nano NAT instance in place of a managed NAT Gateway
 - Deploys Splunk Enterprise and/or Cribl Stream/Edge, each behind its own `enable_*` toggle so a run can bring up either, both, or neither
-- Stops every tagged instance on a nightly schedule via an EventBridge Scheduler invoking AWS's built-in stop runbook — no custom Lambda
-- Starts or stops the whole environment on demand through a GitHub Actions "summon" workflow, authenticated by OIDC — no AWS credentials held by the operator
+- Stops every tagged instance on a nightly schedule via an EventBridge Scheduler that invokes AWS's built-in stop runbook, with no custom Lambda
+- Starts or stops the whole environment on demand through a GitHub Actions "summon" workflow, authenticated by OIDC, so the operator holds no AWS credentials
 - State locking uses S3's native conditional-write lockfile; there is no DynamoDB table
 
 ## How it fits
@@ -33,33 +36,42 @@ The AWS infrastructure side of Splunk and Cribl, sized to run only when it's nee
 ## Getting started
 
 <Steps>
-  <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/dryvist/tofu-splunk-aws && cd tofu-splunk-aws && nix develop`
-  </Step>
-  <Step title="Provide AWS credentials">
-    Any standard AWS credential source (env vars, SSO, aws-vault) works for the initial `tofu apply`.
-  </Step>
-  <Step title="Apply">
-    `tofu init -backend-config=envs/dev.s3.tfbackend && tofu apply -var-file=envs/dev.tfvars`. Toggle `enable_splunk` / `enable_cribl` to choose which workload(s) come up.
-  </Step>
-  <Step title="Summon it later without credentials">
-    Once `enable_github_summon = true` is applied, start or stop the whole environment from the repo's Actions tab — no AWS credentials needed for that step.
-  </Step>
+<Step title="Clone and enter the dev shell">
+`git clone https://github.com/dryvist/tofu-splunk-aws && cd tofu-splunk-aws && nix develop`
+</Step>
+<Step title="Provide AWS credentials">
+Any standard AWS credential source (env vars, SSO, aws-vault) works for the initial `tofu apply`.
+</Step>
+<Step title="Apply">
+`tofu init -backend-config=envs/dev.s3.tfbackend && tofu apply -var-file=envs/dev.tfvars`. Toggle `enable_splunk` / `enable_cribl` to choose which workloads come up.
+</Step>
+<Step title="Summon it later without credentials">
+Once `enable_github_summon = true` is applied, start or stop the whole environment from the repo's Actions tab. That step needs no AWS credentials.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
-    Configures the Splunk Enterprise install on what this provisions.
-  </Card>
-  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
-    Where this fits in the OTEL → Cribl → Splunk pipeline.
-  </Card>
+<Card
+  title="ansible-splunk"
+  icon="screwdriver-wrench"
+  href="/observability/repos/ansible-splunk">
+  Configures the Splunk Enterprise install on what this provisions.
+</Card>
+<Card
+  title="Observability overview"
+  icon="chart-line"
+  href="/observability/overview">
+  Where this fits in the OTEL → Cribl → Splunk pipeline.
+</Card>
   <Card title="tofu-aws (private)" icon="aws">
-    The broader AWS DR footprint repo this complements. Private infrastructure — no public source.
+    The broader AWS DR footprint repo this complements. It is private infrastructure with no public source.
   </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tofu-splunk-aws">
-    Modules, env folders, full README.
-  </Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/dryvist/tofu-splunk-aws">
+  Modules, env folders, full README.
+</Card>
 </CardGroup>

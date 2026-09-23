@@ -1,14 +1,14 @@
 ---
 title: "Writing prompts for small models"
-description: "How to tune goal statements and prompt blocks for a ~30 GB local model — short imperatives, explicit checklists, hard STOP conditions, and verification the model cannot skip."
-page_type: explanation
+description: "How to tune goal statements and prompt blocks for a ~30 GB local model. Covers short imperatives, explicit checklists, hard STOP conditions, and verification the model cannot skip."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 The [goal-statement components](/agent-ops/goal-statement-library) and
 [prompt blocks](/agent-ops/prompt-blocks) are written to work on a frontier
 model. This page is the rewrite discipline for running the same work on a
-~30 GB local model (Qwen3.x / GLM-4.x 30B class, a single-node serving
-tier).
+~30 GB local model. That means the Qwen3.x / GLM-4.x 30B class, a
+single-node serving tier.
 
 ## The governing result: shorter is better
 
@@ -19,7 +19,7 @@ task-specific signal. The test for every line: *if deleting it would not
 change what a 30B-class model does, delete it.*
 
 A small model does not fail by ignoring your prompt. It fails by weighting
-all of it equally — so a paragraph of context costs the same attention as
+all of it equally. A paragraph of context then costs the same attention as
 the one hard rule buried inside it. The fix is structural, not rhetorical.
 
 ## Rewrite rules
@@ -36,7 +36,7 @@ the one hard rule buried inside it. The fix is structural, not rhetorical.
 4. **Hard-coded STOP conditions.** Numbers, not judgment: "at most 30
    turns", "never retry a failing tool more than twice", "three probes with
    no new evidence -> stop". A small model cannot be trusted to notice it is
-   looping — the prompt must count for it. Use the
+   looping. The prompt must count for it. Use the
    [T1 hard-stops block](/agent-ops/prompt-blocks#stop-and-escalation-conditions)
    verbatim.
 5. **Concrete examples over abstractions.** Instead of "bound your
@@ -45,11 +45,11 @@ the one hard rule buried inside it. The fix is structural, not rhetorical.
    example outperforms three sentences of principle.
 6. **Verification the model cannot skip.** Encode the check in the
    deliverable's format, not in an instruction. An evidence table with a
-   mandatory `evidence` column per row forces a tool call per claim — the
+   mandatory `evidence` column per row forces a tool call per claim. The
    model cannot produce the artifact without doing the verification.
    Prompt-level "please verify" gets skipped; format-level contracts do not.
 7. **Bounded choices only.** Every unfilled `<placeholder>` and every "use
-   your judgment" is an unbound choice the small model will resolve
+   your judgment" is an unbound choice the small model resolves
    arbitrarily. Fill placeholders with concrete values; if a choice must
    stay open, enumerate the options.
 8. **Declare failure vocabulary.** Give the model the exact words for
@@ -70,11 +70,11 @@ When shrinking a frontier-targeted goal statement to small-model size:
 
 | Cut | Keep (verbatim) |
 | --- | --- |
-| Rationale and "why" prose — the model does not need convincing | Hard numbers: budgets, deadlines, crash limits, retry caps |
+| Rationale and "why" prose: the model does not need convincing | Hard numbers: budgets, deadlines, crash limits, retry caps |
 | Restatements of default competence ("write clean code", "be thorough") | STOP conditions, one per line |
-| Multi-lane missions — one lane per session for a small model | The deliverable format contract (table shape, required columns) |
+| Multi-lane missions: one lane per session for a small model | The deliverable format contract (table shape, required columns) |
 | Judgment-based guardrails ("be careful with…") | Mechanical guardrails ("never run X", "always quote output") |
-| Delegation contracts — small models orchestrate poorly; a frontier model orchestrates, small models execute | The denial list — verbatim, it is load-bearing at every tier |
+| Delegation contracts: small models orchestrate poorly; a frontier model orchestrates, small models execute | The denial list: verbatim, it is load-bearing at every tier |
 
 ## Worked example
 
@@ -88,7 +88,7 @@ issues, and file well-evidenced issues for anything actionable, being
 careful to verify claims and avoid duplicates.
 ```
 
-**30B-targeted rewrite** (a template — fill the remaining placeholders
+**30B-targeted rewrite** (a template: fill the remaining placeholders
 before dispatch, per rule 7):
 
 ```text
@@ -109,14 +109,15 @@ issue that does not exist scores the whole job 0.
 ```
 
 Every judgment call in the first version ("recent", "actionable",
-"well-evidenced", "avoid duplicates") became a number, an exact query, a
-named classification, or a format contract in the second.
+"well-evidenced", "avoid duplicates") became something concrete in the
+second. Each became a number, an exact query, a named classification, or a
+format contract.
 
 ## Choosing the tier at all
 
 Prompt tuning does not make a 30B model deep. Route tasks by what they
-need: high reasoning depth or cross-source synthesis belongs on the
-deep-reasoning tier; long-but-shallow tool chains run fine on the 30B tier
+need. High reasoning depth or cross-source synthesis belongs on the
+deep-reasoning tier. Long-but-shallow tool chains run fine on the 30B tier
 with a checklist prompt. The
 [T2 escalation rubric](/agent-ops/prompt-blocks#stop-and-escalation-conditions)
 is the routing contract; [choosing a local model](/local-llm/choosing-a-model)
@@ -124,8 +125,8 @@ holds more on verifying a model before you trust it.
 
 <Tip>
 **Grade the runs, keep the receipts.** Small-model reliability is
-empirical. Grade each curriculum-style run on completeness, correctness
-(spot-checked claim rate), evidence quality, and actionability — the
-[grading contract block](/agent-ops/prompt-blocks#verification-and-evidence-blocks)
-— and tune the prompt against the grades, not against intuition.
+empirical. Grade each run on completeness, correctness (spot-checked claim
+rate), evidence quality, and actionability. Use the
+[grading contract block](/agent-ops/prompt-blocks#verification-and-evidence-blocks).
+Then tune the prompt against the grades, not against intuition.
 </Tip>

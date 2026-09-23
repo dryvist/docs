@@ -1,47 +1,70 @@
 ---
 title: "Homelab explainers"
-description: "Plain-language explanations of what a homelab is and how this one works — no prior infrastructure knowledge assumed."
-page_type: explanation
+description: "Plain-language explanations of what a homelab is and how this one works: no prior infrastructure knowledge assumed."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Everything else on this site assumes you already know what a hypervisor is. These pages don't.
 
-A **homelab** is a small set of computers you run yourself, at home, to host the software you'd otherwise rent from someone else — photo storage, dashboards, a password manager, a media library, monitoring for your own network.
+A **homelab** is a small set of computers you run yourself, at home. It hosts the software you'd
+otherwise rent from someone else: photo storage, dashboards, a password manager, a media library,
+monitoring for your own network.
 
-People build them for three reasons that usually arrive in this order: curiosity, then cost, then control. Curiosity gets you the first machine. Cost keeps you going when you notice how many monthly subscriptions one box replaces. Control is the one that lasts — your data stays on hardware you can physically touch, and nothing gets discontinued because a company changed direction.
+People build them for three reasons that usually arrive in this order: curiosity, then cost, then
+control. Curiosity gets you the first machine. Cost keeps you going when you notice how many monthly
+subscriptions one box replaces. Control is the one that lasts: your data stays on hardware you can
+physically touch, and nothing gets discontinued because a company changed direction.
 
-The tradeoff is real and worth saying plainly: **you become the operations team.** When it breaks at 2am, nobody else is paged. Most of what's described in these pages exists to make that happen less often, and to make it recoverable when it does.
+The tradeoff is real and worth saying plainly: **you become the operations team.** When it breaks at
+2 AM, nobody else is paged. Most of what's described in these pages exists to make that happen less
+often, and to make it recoverable when it does.
 
 ## Start here
 
 <CardGroup cols={2}>
-  <Card title="What a hypervisor is" icon="layer-group" href="/explainers/what-is-a-hypervisor">
-    How one physical machine safely pretends to be many separate ones.
-  </Card>
-  <Card title="Clusters and quorum" icon="circle-nodes" href="/explainers/clusters-and-quorum">
-    Why several machines are joined together, and why the count is odd.
-  </Card>
-  <Card title="Staying up when a machine dies" icon="heart-pulse" href="/explainers/staying-up-when-a-machine-dies">
-    Backup, replication and failover are three different things.
-  </Card>
-  <Card title="One login for everything" icon="key" href="/explainers/one-login-for-everything">
-    What single sign-on actually does, and why it's safer than it sounds.
-  </Card>
-  <Card title="Secrets that expire" icon="clock-rotate-left" href="/explainers/secrets-that-expire">
-    Why passwords here are minted on demand instead of stored.
-  </Card>
+<Card
+  title="What a hypervisor is"
+  icon="layer-group"
+  href="/explainers/what-is-a-hypervisor">
+  How one physical machine safely pretends to be many separate ones.
+</Card>
+<Card
+  title="Clusters and quorum"
+  icon="circle-nodes"
+  href="/explainers/clusters-and-quorum">
+  Why several machines are joined together, and why the count is odd.
+</Card>
+<Card
+  title="Staying up when a machine dies"
+  icon="heart-pulse"
+  href="/explainers/staying-up-when-a-machine-dies">
+  Backup, replication and failover are three different things.
+</Card>
+<Card
+  title="One login for everything"
+  icon="key"
+  href="/explainers/one-login-for-everything">
+  What single sign-on actually does, and why it's safer than it sounds.
+</Card>
+<Card
+  title="Secrets that expire"
+  icon="clock-rotate-left"
+  href="/explainers/secrets-that-expire">
+  Why passwords here are minted on demand instead of stored.
+</Card>
 </CardGroup>
 
 ## The shape of it
 
-Four layers, each depending on the one below. Most homelab problems are a layer confusion — a networking problem being debugged as an application problem, or vice versa.
+Four layers, each depending on the one below. Most homelab problems are a layer confusion: a networking problem being debugged as an app problem, or vice versa.
 
-{/* Shape: linear chain. 4 nodes, top to bottom dependency order. Boundary crossings: 0. */}
-{/* Aspect ratio ~3:1 horizontal, within tolerance for a 4-node chain. */}
+{/*Shape: linear chain. 4 nodes, top to bottom dependency order. Boundary crossings: 0. */}
+{/* Aspect ratio ~3:1 horizontal, within tolerance for a 4-node chain.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Hw([Physical machines])
   Hv([Hypervisor])
   Gst([Guests])
@@ -60,19 +83,29 @@ flowchart LR
   click Hv "/explainers/what-is-a-hypervisor" "One machine, many guests"
 ```
 
-**Physical machines** are the actual computers. **The hypervisor** is the software that divides each one into isolated slices. **Guests** are those slices, each behaving like its own computer. **Applications** are what you actually wanted — the photo library, the dashboard.
+**Physical machines** are the actual computers. **The hypervisor** is the software that divides each
+one into isolated slices. **Guests** are those slices, each behaving like its own computer.
+**Applications** are what you actually wanted: the photo library, the dashboard.
 
 <Note>
-Throughout these pages, internal names appear as placeholders — `example.local` for the internal domain, `node-a` and `node-b` for machines. That's deliberate: the concepts are the point, and publishing a real map of a private network isn't.
+Throughout these pages, internal names appear as placeholders: `example.local` for the internal
+domain, `node-a` and `node-b` for machines. That's deliberate: the concepts are the point, and
+publishing a real map of a private network isn't.
 </Note>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
-    The technical view of the same stack, once these pages make sense.
-  </Card>
-  <Card title="How it fits together" icon="diagram-project" href="/how-it-fits-together">
-    The six surfaces this site is organised around.
-  </Card>
+<Card
+  title="Infrastructure overview"
+  icon="server"
+  href="/infrastructure/overview">
+  The technical view of the same stack, once these pages make sense.
+</Card>
+<Card
+  title="How it fits together"
+  icon="diagram-project"
+  href="/how-it-fits-together">
+  The six surfaces this site is organised around.
+</Card>
 </CardGroup>

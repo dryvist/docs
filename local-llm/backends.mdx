@@ -1,35 +1,35 @@
 ---
 title: "Backends and tool calling"
-description: "Why the Apple Silicon stack runs vllm-mlx, how the other MLX and GGUF servers compare, and why tool-calling reliability — not raw tokens-per-second — is the metric that actually matters for agents."
-page_type: explanation
+description: "Why the Apple Silicon stack runs vllm-mlx, how the other MLX and GGUF servers compare, and why tool-calling reliability, not raw tokens-per-second, is the metric that actually matters for agents."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > The fast server isn't the one with the biggest tok/s number. It's the one that
 > still emits a valid tool call on the fortieth turn of an agent loop.
 
 Any OpenAI-compatible server can answer a chat request. The ones that matter for
-agentic work are the ones that hold up under sustained, structured,
-multi-turn pressure — continuous batching, a paged KV cache, and a tool-call
-parser that doesn't drift. That's why this stack runs `vllm-mlx`.
+agentic work hold up under sustained, structured, multi-turn pressure. That
+means continuous batching, a paged KV cache, and a tool-call parser that
+doesn't drift. That's why this stack runs `vllm-mlx`.
 
 ## The landscape
 
 | Backend | What it's for | Notes for this stack |
 | --- | --- | --- |
-| **vllm-mlx** *(chosen)* | Production-shaped serving on Apple Silicon | Continuous batching, paged + prefix KV cache, OpenAI tool calling. The most server-shaped MLX runtime — what [`nix-ai`](/nix/nix-ai) packages and runs. |
+| **vllm-mlx** *(chosen)* | Production-shaped serving on Apple Silicon | Continuous batching, paged + prefix KV cache, OpenAI tool calling. The most server-shaped MLX runtime: what [`nix-ai`](/nix/nix-ai) packages and runs. |
 | **mlx-lm server** | The reference implementation | The baseline everyone benchmarks against; single-stream, explicitly not meant for production serving. |
 | **Ollama (MLX backend)** | Easiest setup | Mature tool calling; convenient, but a thinner serving layer than vllm-mlx for batched agentic load. |
 | **LM Studio** | GUI-first local serving | Great for interactive use; less suited to headless, automated serving. |
 | **llama.cpp (Metal)** | Maximum portability + GGUF | The most portable option and the home of vision/mmproj and exotic quants; generally slower than MLX on equivalent Apple hardware. |
-| **Rapid-MLX** | A hardened `vllm-mlx` derivative | Worth a scoped look — see below. |
+| **Rapid-MLX** | A hardened `vllm-mlx` derivative | Worth a scoped look. See below. |
 
 ## Why vllm-mlx
 
 Three properties decide it:
 
 1. **Prefix + paged KV cache.** Multi-turn and tool-loop workloads re-send a
-   growing, mostly-unchanged context. Reusing the already-prefilled prefix
-   instead of re-running it is the biggest real-world speedup there is — and it's
+   growing, mostly unchanged context. Reusing the already-prefilled prefix
+   instead of re-running it is the biggest real-world speedup there is. It's
    what makes a local model tolerable as an agent backend.
 2. **Continuous batching.** Concurrent callers fold into one GPU forward pass
    instead of serializing.
@@ -40,17 +40,17 @@ Three properties decide it:
 ## Rapid-MLX: evaluate, don't switch on hype
 
 [Rapid-MLX](https://github.com/raullenchai/Rapid-MLX) is real, actively
-developed, and — importantly — a *hardened derivative of `vllm-mlx`*, not a rival
+developed, and, importantly, a *hardened derivative of `vllm-mlx`*, not a rival
 engine. Its headline speed multipliers are author-reported and should be
 discounted. Its genuinely interesting feature is **tool-call auto-repair**: it
 detects malformed tool output and reshapes it back into a valid `tool_calls`
-structure, plus a prompt cache. Because it shares DNA with the current backend,
-the right move is a **scoped A/B on tool-calling reliability under multi-round
-load** — not a swap chasing a tokens-per-second headline.
+structure. It also adds a prompt cache. Because it shares DNA with the current
+backend, the right move is a **scoped A/B on tool-calling reliability under
+multi-round load**. It's not a swap chasing a tokens-per-second headline.
 
 ## Tool calling is the real failure mode
 
-The number-one way a local agent breaks isn't speed — it's a tool call that
+The number-one way a local agent breaks isn't speed. It's a tool call that
 doesn't parse. Two things cause most of it:
 
 - **Parser mismatch.** The server's tool-call parser has to match the model's
@@ -64,7 +64,7 @@ doesn't parse. Two things cause most of it:
 - **No parser at all for the model's format.** This is the one that gets
   misdiagnosed as a bad model. A large open-weights model emitted its own
   channel markup as raw text in the assistant `content` field, with
-  `finish_reason: stop` and **no `tool_calls` array** — the call was
+  `finish_reason: stop` and **no `tool_calls` array**. The call was
   semantically correct and the serving layer simply dropped it, because the
   server ships no parser for that format (verified 2026-07-26/27). It leaks into
   ordinary completions too. This is the same failure class as an agent runtime
@@ -72,68 +72,84 @@ doesn't parse. Two things cause most of it:
   plumbing lost it.
 
 <Note>
-  **Per-model tool-call verification is a required gate, not a nice-to-have.**
+  **Per-model tool-call verification is a required gate, not a nice-to-have**.
   Before a model is used for agent work, send a real tool-calling request to
-  `/v1/chat/completions` *through the deployed server* and confirm a populated
-  `tool_calls` array — across several turns, not one. Read `content` on the same
-  response: if it holds anything that looks like call markup, the parser is
-  missing, no matter how healthy the HTTP status looks. A model that cannot emit
-  a structured tool call through this server is disqualified for agent work no
-  matter how good it is, because the agent never sees the call.
+  `/v1/chat/completions` *through the deployed server*. Confirm a populated
+  `tool_calls` array across several turns, not one. Read `content` on the same
+  response. If it holds anything that looks like call markup, the parser is
+  missing, no matter how healthy the HTTP status looks. A model that cannot
+  emit a structured tool call through this server is disqualified for agent
+  work no matter how good it is. The agent never sees the call otherwise.
 </Note>
 
 Speed has a second dimension here. A model that *does* return valid structured
-calls can still burn several hundred reasoning tokens before the first one —
-measured at roughly 400 on one candidate. That is latency an agent pays on every
-single action, not once per conversation, so it belongs in the tool-calling
-verdict rather than in the raw tokens-per-second column.
+calls can still burn several hundred reasoning tokens before the first one.
+That was measured at roughly 400 on one candidate. It is latency an agent pays
+on every single action, not once per conversation. It belongs in the
+tool-calling verdict rather than in the raw tokens-per-second column.
 
 A parser gap also cuts the other way: writing the missing parser can unlock a
 model that the plumbing, not the model, was dropping. Check whether the failure
 is the model or the server before you retire the model. That is what happened
-with the channel-markup case above, and the parser was written as a declarative
-patch rather than the model being written off.
+with the channel-markup case described earlier. The parser was written as
+a declarative patch rather than the model being written off.
 
 <Warning>
-  **Do not justify a parser on a throughput claim you have not re-measured.**
+  **Do not justify a parser on a throughput claim you have not re-measured**.
   The original case for that parser cited a ~4.5x cumulative throughput lead
   over the incumbent. That figure was taken in a different regime and possibly
   through a proxy that was serving the wrong weights, so it is
   [not comparable](/tools/mlx-benchmarks#cumulative-is-meaningless-without-its-regime).
   Re-measured in one stated regime, the **incumbent** leads on decode by roughly
-  2.6x — the opposite direction.
+  2.6x. That's the opposite direction.
 
   The parser is still correct and still worth having: the markup leakage is real
-  and independently measured on an isolated worker. It just needed a reason that
-  survived scrutiny, and "fixes a genuine plumbing defect" was always the
+  and independently measured on an isolated worker. It just needed a reason
+  that survived scrutiny, and "fixes a genuine plumbing defect" was always the
   stronger one. A correct fix argued from a wrong number is one re-measurement
   away from being reverted.
 </Warning>
 
 <Note>
-  **Per-model configuration divergence is the intended end state, not a smell.**
+  **Per-model configuration divergence is the intended end state, not a smell**.
   A tool-call parser, a reasoning parser, and a chat-template flag are properties
   of the model's own output format. Forcing every model through one shared
-  setting is what produces silent leaks; a per-model toggle is the correct shape,
-  and a catalog that looks inconsistent across models is usually just accurate.
+  setting is what produces silent leaks. A per-model toggle is the correct
+  shape, and a catalog that looks inconsistent across models is usually just
+  accurate.
 </Note>
 
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
-    The `llama-swap` + `vllm-mlx` stack these backends slot into.
-  </Card>
-  <Card title="Models & quantization" icon="layer-group" href="/local-llm/models-and-quantization">
-    The quants whose tool formatting the parser has to keep up with.
-  </Card>
-  <Card title="AI development pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
-    How local serving is routed alongside the cloud providers.
-  </Card>
-  <Card title="Benchmarking" icon="gauge-high" href="/tools/mlx-benchmarks">
-    Where backend claims get measured instead of believed.
-  </Card>
-  <Card title="Verifying the instrument" icon="magnifying-glass-chart" href="/local-llm/verifying-the-instrument">
-    Proving which weights a server actually loaded before you trust its numbers.
-  </Card>
+<Card
+  title="Apple Silicon stack"
+  icon="microchip"
+  href="/local-llm/apple-silicon">
+  The `llama-swap` + `vllm-mlx` stack these backends slot into.
+</Card>
+<Card
+  title="Models & quantization"
+  icon="layer-group"
+  href="/local-llm/models-and-quantization">
+  The quants whose tool formatting the parser has to keep up with.
+</Card>
+<Card
+  title="AI development pipeline"
+  icon="diagram-project"
+  href="/architecture/ai-pipeline">
+  How local serving is routed alongside the cloud providers.
+</Card>
+<Card
+  title="Benchmarking"
+  icon="gauge-high"
+  href="/tools/mlx-benchmarks">
+  Where backend claims get measured instead of believed.
+</Card>
+<Card
+  title="Verifying the instrument"
+  icon="magnifying-glass-chart"
+  href="/local-llm/verifying-the-instrument">
+  Proving which weights a server actually loaded before you trust its numbers.
+</Card>
 </CardGroup>

@@ -1,23 +1,22 @@
 ---
 title: "Drive reliability"
 description: "Population failure statistics for reasoning about disk risk, and the rule that drive records state measurements rather than predictions."
-page_type: reference
 ---
-
+{/* projected from the authoring site; do not edit here */}
 Base rates for reasoning about HDD risk, and the recording standard that
 depends on them. The purpose of this page is to replace adjectives with
 numbers.
 
 ## The rule
 
-**No drive record calls a disk "dying," "worn," "end-of-life," or "on
-borrowed time."** Those are predictions written as observations. Record the
+**No drive record in any repo calls a disk "dying," "worn," "end-of-life," or
+"on borrowed time."** Those are predictions written as observations. Record the
 measured values, cite a base rate from this page, and let the reader do the
 arithmetic.
 
-This is not stylistic. Age-based intuition about disk risk is often wrong —
-the data below show failure rates that don't track age the way most people
-expect.
+This is not stylistic. Age-based intuition about disks is mostly wrong. A
+drive at 6–7 years is not end-of-life stock to be replaced individually; the
+largest public dataset does not support that read.
 
 ## Source data
 
@@ -46,20 +45,20 @@ The finding that matters most, from
 
 The age at which the failure rate spikes moved **later by roughly two years**
 between those cohorts. Backblaze's own conclusion is that the classic bathtub
-curve no longer describes their population: "the neat story of early
-failures, calm middle age, and gentle decline no longer fits the world our
-drives inhabit."
+curve no longer describes their population. In their words: "the neat story of
+early failures, calm middle age, and gentle decline no longer fits the world
+our drives inhabit."
 
 **Consequence.** A 6–7.5 year old drive is not self-evidently near failure. It
-sits inside the band where a modern cohort still shows a low per-drive AFR, at
-or before the age where the 2021 cohort's rate peaked. Age alone is not a
-defect and is not recorded as one.
+sits inside the band where a modern cohort still shows a low per-drive AFR. That
+band runs at or before the age where the 2021 cohort's rate peaked. Age alone is
+not a defect, and it is not recorded as one.
 
 ## What actually predicts failure
 
 Backblaze and Google independently identified a small set of SMART attributes
-that correlate with impending failure. Backblaze uses five, chosen because
-they are consistent across manufacturers:
+that correlate with impending failure. Backblaze uses five, chosen because they
+are consistent across manufacturers:
 
 | ID | Attribute |
 | --- | --- |
@@ -69,65 +68,60 @@ they are consistent across manufacturers:
 | 197 | Current Pending Sector Count |
 | 198 | Offline Uncorrectable Sector Count |
 
-Google's analysis found 5, 187, 197, and 198 consistently correlated, and
-reported that after a drive's **first** scan error — SMART 187 going
-non-zero — it is **39× more likely to fail within 60 days** than a drive with
-none.
+Google's analysis found attributes 5, 187, 197, and 198 consistently correlated.
+It also reported a finding about a drive's **first** scan error, meaning
+SMART 187 going non-zero. After that error, the drive is **39× more likely to
+fail within 60 days** than a drive with none.
 
 Two limits, because they change how strongly these may be cited:
 
 - Both analyses are **univariate**, one attribute at a time. They establish
   correlation, not a calibrated per-drive probability.
 - **Not every model implements every attribute.** A missing attribute is not a
-  reading of zero. Where one is absent, say so and substitute the evidence
-  that does exist — normally a completed extended self-test.
+  reading of zero. Where one is absent, say so and substitute the evidence that
+  does exist, normally a completed extended self-test.
 
 ## Recording standard
 
-1. **Record measurements, not prognosis.** Power-on hours, the five
-   predictive attributes, self-test outcomes with their LifeTime hour,
-   temperature.
-2. **Read self-test results from `smartctl -l selftest`**, never the `-c`
+1. **Record measurements, not prognosis.** Power-on hours, the five predictive
+   attributes, self-test outcomes with their LifeTime hour, temperature.
+2. **Read self-test results from `smartctl -l selftest`,** never the `-c`
    summary. `-c` reports "completed without error" even when no test has run;
    confirm the LifeTime hour advanced.
-3. **State absence explicitly.** "Attribute 197 not implemented on this
-   model" — never silently imply zero.
-4. **Cite a base rate rather than an adjective.** Record the measured
-   pattern — power-on hours, each predictive attribute's value, the self-test
-   result — instead of a subjective label. A full attribute readout is
-   checkable; "high-hours refurb nearing end of life" is not.
+3. **State absence explicitly.** "Attribute 197 not implemented on this model."
+   Never silently imply zero.
+4. **Cite a base rate rather than an adjective.** "65,281 h, all five
+   predictive attributes zero or unimplemented, extended self-test completed
+   without error" beats "high-hours refurb nearing end of life."
 5. **Redundancy is the control, not drive selection.** A non-zero population
-   AFR means any drive can fail at any age — that's what in-pool redundancy
-   and off-site copies absorb, not preemptive replacement. See
-   [ZFS backup and replication](/infrastructure/zfs-backup-replication) for
-   how those layers combine.
+   AFR means any drive can fail at any age. That is what raidz and off-box
+   copies absorb. Replacing healthy disks on an age heuristic is not a
+   protection strategy; see
+   [data protection classes](/conventions/data-protection-classes).
 
-## Worked examples (not published data)
+## Applying it
 
-The statistics above are population-level base rates from Backblaze and
-Google. Applying the recording standard to one drive is a different
-exercise. The two cases below are **invented to illustrate the reasoning** —
-they are not measurements, and not part of either dataset.
+Two cases from this lab, both measured rather than estimated.
 
-**Example — keep in service.** A drive several years into service reads
-zero on every predictive attribute it implements, and completes a full
-extended self-test without error. Nothing measured on it indicates a
-defect, regardless of its age.
+**A drive kept in service.** A 6 TB SATA unit at 65,281 power-on hours (7.5
+years) reads zero on every predictive attribute it implements. It also
+completed a full extended surface scan without error, hours before entering
+service. Attribute 197 is not implemented on that model, so the completed scan
+stands in as that evidence. Nothing measured on it indicates a defect, and its
+age sits below the 2021-cohort failure peak. It was put into a raidz1 vdev.
 
-**Example — pull from the pool.** A drive that accumulates Current Pending
-Sectors — even with Reallocated Sectors and Offline Uncorrectable Sectors
-still at zero — has crossed one of the five predictive attributes. That's
-evidence-backed grounds to remove a disk from a pool that can't absorb
-another failure, independent of the drive's age.
+**A drive removed from service.** A different 6 TB unit reached **56 Current
+Pending Sectors** with 0 reallocated and 0 offline-uncorrectable. Attribute 197
+is one of the five predictors. That makes this an evidence-backed reason to
+pull a disk from a pool that had no redundancy to spare.
 
-In this second example, a non-zero pending-sector count raises failure
-probability materially, but it doesn't mean the drive has failed: zero
-reallocated and zero offline-uncorrectable sectors means the platters
-haven't lost data. Retest a pulled drive standalone before any disposal
-decision.
+Note what that does and does not establish. A non-zero 197 raises failure
+probability materially, but it does not mean the drive is dead. And 0
+reallocated plus 0 offline-uncorrectable means the platters had not lost data.
+Retest standalone before any disposal decision.
 
-**Correlated age is a pool property, not a drive property.** Disks bought and
-deployed together tend to fail less independently than the base rate
-assumes — which matters most during a rebuild, when the surviving disks take
-their heaviest read load. That's an argument for rebuild-window planning and
-verified restores, not for treating any individual disk as suspect.
+**Correlated age is a vdev property, not a drive property.** Members bought
+together and run together fail less independently than the base rate assumes.
+That matters during a rebuild, when the surviving disks do their heaviest
+reading. That is an argument for rebuild-window planning and verified restores,
+not for calling any individual disk suspect.

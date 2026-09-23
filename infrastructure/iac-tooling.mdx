@@ -1,9 +1,9 @@
 ---
 title: "IaC tooling: OpenTofu, Terrakube, and OpenBao"
 description: "OpenTofu is the engine, Terrakube owns remote execution and state, and OpenBao supplies native short-lived credentials."
-page_type: decision
+page_type: "decision"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > One engine, one control plane, and one native runtime secret path.
 
 ## Decision
@@ -57,7 +57,7 @@ developer keychain for normal runs.
 
 An offline-ready platform mirrors every artifact needed to start the stack and
 execute a pinned workspace. External providers such as AWS or GitHub still need
-their target API when a plan manages those services, but the Terrakube control
+their target API when a plan manages those services. But the Terrakube control
 plane itself does not need public package or image downloads.
 
 ## State migration rule

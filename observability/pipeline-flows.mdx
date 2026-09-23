@@ -1,23 +1,30 @@
 ---
 title: "Pipeline flows"
-description: "The monitoring pipeline as diagrams: syslog families, AI-CLI shipping, the local LLM stack, OTLP fan-out, NetFlow, and the per-index HEC fan-in — one zoom per concern."
-page_type: explanation
+description: "The monitoring pipeline as diagrams: syslog families, AI-CLI shipping, the local LLM stack, OTLP fan-out, NetFlow, and the per-index HEC fan-in. One diagram zooms into each concern."
+page_type: "explanation"
 ---
+{/* projected from the authoring site; do not edit here */}
+> One overview, six zooms. Every source, every port, every index: this page shows which legs are live versus planned.
 
-> One overview, six zooms. Every source, every port, every index — and which legs are live versus planned.
-
-Every log and metric in this homelab converges on the same spine: sources reach an ingress load balancer or a local Cribl Edge, Cribl Stream routes, and Splunk indexes over per-index HEC. The diagrams below zoom into each ingest path. Flows that are not live yet carry a **planned** badge. The [family/port/index tables](#source--port--index-map) at the end cover every syslog family and AI log port.
+Every log and metric in this homelab converges on the same spine. Sources reach an ingress load
+balancer or a local Cribl Edge. Cribl Stream then routes each log, and Splunk indexes it over
+per-index HEC. The diagrams below zoom into each load path. Flows that are not live yet carry a **planned** badge.
+The [family/port/index tables](#source--port--index-map) at the end cover every syslog family and AI
+log port.
 
 ## Monitoring overview
 
-Five source groups, two ingress load balancers (HAProxy for TCP syslog, nginx for UDP), one Cribl Edge/Stream spine, three sinks. Splunk takes everything over per-index HEC; Langfuse and Phoenix each take the OTLP traces.
+Five source groups, two ingress load balancers (HAProxy for TCP syslog, nginx for UDP), one Cribl
+Edge/Stream spine, three sinks. Splunk takes everything over per-index HEC; Langfuse and Phoenix
+each take the OTLP traces.
 
-{/* Shape: parallel convergence. Boundary crossings: 0 (no subgraphs). */}
-{/* Ranks: 5 sources max. Total nodes: 12 (≤12). Aspect: ~2:1 LR. Pass. */}
+{/*Shape: parallel convergence. Boundary crossings: 0 (no subgraphs). */}
+{/* Ranks: 5 sources max. Total nodes: 12 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Gear([fa:fa-network-wired Network gear])
   Hosts([fa:fa-server Linux · Windows · Mac])
   CLIs([fa:fa-robot AI CLIs])
@@ -68,14 +75,17 @@ Solid green edges are the network/ingress hops; dashed coral edges carry telemet
 
 ## Syslog families
 
-Each syslog source family gets its own ingress port (514–523, plus the high port 1514 for UniFi), so a misbehaving sender is isolated at the port and each family routes to its own index. Ports come from the pipeline constants in the infrastructure repo — never hardcoded.
+Each syslog source family gets its own ingress port (514–523, plus the high port 1514 for UniFi). This
+isolates a misbehaving sender at the port, and each family routes to its own index. Ports come
+from the pipeline constants in the infrastructure repo; the pipeline never hardcodes them.
 
-{/* Shape: parallel convergence. Boundary crossings: 0. */}
-{/* Ranks: 5 sources max. Total nodes: 8 (≤12). Aspect: ~2.5:1 LR. Pass. */}
+{/*Shape: parallel convergence. Boundary crossings: 0. */}
+{/* Ranks: 5 sources max. Total nodes: 8 (≤12). Aspect: ~2.5:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   U([UniFi · 514 · 1514 · 520])
   FW([Palo Alto · ASA<br/>515 · 516])
   OS([Linux · Windows · macOS<br/>517 · 518 · 521])
@@ -108,24 +118,35 @@ flowchart LR
   linkStyle 5,6 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-The full family → port → index → sourcetype table lives on the [observability overview](/observability/overview#syslog-ingest-families). Hypervisor firewall drops ride the `linux` family: the node firewall logs to a file rather than the journal, so each node's rsyslog tails it with `imfile` and forwards it on the same port — searchable as `index=os process=pve-firewall`.
+The full family → port → index → sourcetype table lives on the [observability
+overview](/observability/overview#syslog-ingest-families). Hypervisor firewall drops ride the
+`linux` family. The node firewall logs to a file rather than the journal, so each node's rsyslog
+tails it with `imfile` and forwards it on the same port. Search for it as `index=os
+process=pve-firewall`.
 
 ## AI-CLI log shipping
 
-AI CLI logs never touch syslog. Each CLI writes local JSONL log files; the MacBook's standalone Cribl Edge tails them with file inputs and ships them as tcpjson (one port per CLI, 10311–10315) straight to Cribl Stream, which lands them in per-index HEC outputs.
+AI command-line tool logs never reach syslog. Each command-line tool writes local JSONL log files. The MacBook's standalone
+Cribl Edge tails them with file inputs and ships them as tcpjson (one port per command-line tool, 10311–10315).
+Cribl Stream then lands them in per-index HEC outputs.
 
-The same Edge also ships the **Mac firewall unified-log**: a launch daemon tails the firewall subsystems (application firewall, network extension, packet filter) as ndjson into a rotated file, and a file input forwards it over the shared S2S port with `index=firewall` stamped at the source. This replaced the retired BSD-syslogd remote forward, which could never be skew-safe (RFC3164 carries no year and no timezone, and workstations deliberately keep local time).
+The same Edge also ships the **Mac firewall unified-log**. A launch daemon tails the firewall
+subsystems (application firewall, network extension, packet filter) as ndjson into a rotated file.
+A file input then forwards it over the shared S2S port with `index=firewall` stamped at the source.
+The pipeline replaced the retired BSD-syslogd remote forward, which could never be skew-safe. RFC3164
+carries no year and no timezone, and workstations deliberately keep local time.
 
-{/* Shape: linear chain. Boundary crossings: 1 (Edge -> Stream). */}
-{/* Ranks: ≤3 in subgraph. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass. */}
+{/*Shape: linear chain. Boundary crossings: 1 (Edge -> Stream). */}
+{/* Ranks: ≤3 in subgraph. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   subgraph mb["MacBook"]
-    CLI([fa:fa-robot AI CLIs])
-    Files[(JSONL logs)]
-    Edge([Cribl Edge<br/>file inputs])
+  CLI([fa:fa-robot AI CLIs])
+  Files[(JSONL logs)]
+  Edge([Cribl Edge<br/>file inputs])
   end
   Stream([Cribl Stream])
   SP[(Splunk<br/>per-index HEC)]
@@ -150,21 +171,24 @@ flowchart LR
 
 ## Mac Studio LLM stack
 
-Local inference on the Mac Studio: clients hit the caddy gate on `:11434`, which fronts llama-swap, which spins model workers up and down. Logs and metrics from all three layers leave through the host's Cribl Edge on tcpjson ports 10321–10323.
+Local inference on the Mac Studio: clients hit the caddy gate on `:11434`, which fronts llama-swap,
+which spins model workers up and down. Logs and metrics from all three layers leave through the
+host's Cribl Edge on tcpjson ports 10321–10323.
 
-{/* Shape: hierarchy with telemetry exit. Boundary crossings: ≤1 per edge. */}
-{/* Ranks: ≤2 siblings. Subgraph: 5 nodes (cap). Total: 7 (≤12). Aspect: ~2:1 LR. Pass. */}
+{/*Shape: hierarchy with telemetry exit. Boundary crossings: ≤1 per edge. */}
+{/* Ranks: ≤2 siblings. Subgraph: 5 nodes (cap). Total: 7 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Client((Clients))
   subgraph ms["Mac Studio"]
-    Gate{"caddy gate<br/>:11434"}
-    Swap([llama-swap])
-    W1([worker · model A])
-    W2([worker · model B])
-    Edge([Cribl Edge])
+  Gate{"caddy gate<br/>:11434"}
+  Swap([llama-swap])
+  W1([worker · model A])
+  W2([worker · model B])
+  Edge([Cribl Edge])
   end
   Stream([Cribl Stream])
 
@@ -195,14 +219,17 @@ flowchart LR
 
 ## OTLP fan-out
 
-Orchestration apps emit OpenTelemetry to Cribl Edge's OTLP HTTP source — never to a backend directly. Edge fans out: traces to Langfuse and [Phoenix](/observability/phoenix) (live), everything to Splunk (**planned** — the leg is wired but not yet enabled).
+Orchestration apps emit OpenTelemetry to Cribl Edge's OTLP HTTP source. They never emit it to a
+backend directly. Edge fans out: traces to Langfuse and [Phoenix](/observability/phoenix) (live),
+everything to Splunk (**planned**: the leg is wired but not yet enabled).
 
-{/* Shape: parallel convergence (fan-out). Boundary crossings: 0. */}
-{/* Ranks: ≤2. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass. */}
+{/*Shape: parallel convergence (fan-out). Boundary crossings: 0. */}
+{/* Ranks: ≤2. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Apps([Orchestration apps<br/>OpenLLMetry])
   Edge([Cribl Edge<br/>OTLP HTTP])
   LF([Langfuse])
@@ -231,14 +258,20 @@ flowchart LR
 
 ## NetFlow *(gateway export gap — parked)*
 
-Flow records from the gateway and switches would take the UDP side of the ingress tier — and the whole receive chain (UDP LB, Edge NetFlow pipeline, dedicated index) is built, armed, and idle. The gateway shows NetFlow enabled in its console but **emits zero IPFIX packets**, a gateway-side export gap. The path stays documented and dotted; the index's silence detector ships disabled so a structurally-empty index doesn't alert on every cycle. Desired state (including the export settings the console claims) is version-controlled in the network IaC repo.
+Flow records from the gateway and switches would take the UDP side of the ingress tier. The whole
+receive chain (UDP LB, Edge NetFlow pipeline, dedicated index) is built, armed, and idle. The
+gateway shows NetFlow enabled in its console but **emits zero IPFIX packets**, a gateway-side export
+gap. The path stays documented and dotted. The index's silence detector ships turned off, so a
+structurally empty index doesn't alert on every cycle. Desired state (including the export settings
+the console claims) is version-controlled in the network IaC repo.
 
-{/* Shape: linear chain. Boundary crossings: 0. */}
-{/* Ranks: 1 per column. Total nodes: 4 (≤12). Aspect: ~4:1 LR (short chain). Pass. */}
+{/*Shape: linear chain. Boundary crossings: 0. */}
+{/* Ranks: 1 per column. Total nodes: 4 (≤12). Aspect: ~4:1 LR (short chain). Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Gear([fa:fa-network-wired Gateway · switches])
   NGX([nginx UDP LB])
   Edge([Cribl Edge<br/>NetFlow pipeline])
@@ -263,27 +296,31 @@ flowchart LR
 
 ## HEC fan-in
 
-Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-\<index\>` in a shared private namespace — Cribl and Splunk compute the same token independently, and the namespace UUID is the only secret.
+Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per
+index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-\<index\>` in a
+shared private namespace. Cribl and Splunk compute the same token independently, and the namespace
+UUID is the only secret.
 
-{/* Shape: hub and spokes (leaves chained with invisible links). Boundary crossings: 1 per real edge. */}
-{/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass. */}
+{/*Shape: hub and spokes (leaves chained with invisible links). Boundary crossings: 1 per real edge. */}
+{/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Stream([Cribl Stream<br/>uuid5 token per index])
   subgraph net["Network indexes"]
-    direction TB
-    Iu[(unifi)]
-    If[(firewall)]
-    Id[(dns)]
-    Ip[(proxy)]
+  direction TB
+  Iu[(unifi)]
+  If[(firewall)]
+  Id[(dns)]
+  Ip[(proxy)]
   end
   subgraph hostai["Host & AI indexes"]
-    direction TB
-    Io[(os)]
-    Ih[(honeypot)]
-    Ia[(AI log indexes)]
+  direction TB
+  Io[(os)]
+  Ih[(honeypot)]
+  Ia[(AI log indexes)]
   end
 
   Stream -->|per-index HEC| Iu
@@ -305,13 +342,13 @@ flowchart LR
   linkStyle 0,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs-and-derived-tokens) — an alert that fires when the index goes quiet.
+Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs-and-derived-tokens). It is an alert that fires when the index goes quiet.
 
 ## Source → port → index map
 
 Every syslog family and every AI log port, in one table. Syslog rides the HAProxy TCP LB (UDP variants via nginx); AI log ports are tcpjson from Cribl Edge to Cribl Stream.
 
-| Source | Family | Port(s) | Index |
+| Source | Family | Ports | Index |
 | --- | --- | --- | --- |
 | UniFi gear | `unifi` | 514 (std) / 1514 (high) | `unifi` |
 | Palo Alto firewall | `palo_alto` | 515 | `firewall` |
@@ -323,35 +360,39 @@ Every syslog family and every AI log port, in one table. Syslog rides the HAProx
 | macOS hosts | `macos` | 521 | `os` |
 | DNS query logs | `dns_query` | 522 | `dns` |
 | Forward proxy | `proxy` | 523 | `proxy` |
-| AI CLIs (one port per CLI) | `ai_log` | 10311–10315 | AI CLI log indexes |
+| AI command-line tools (one port per tool) | `ai_log` | 10311–10315 | AI command-line tool log indexes |
 | LLM stack (gate · router · workers) | `ai_log` | 10321–10323 | LLM stack log indexes |
 | OpenBao | `ai_log` | 10331 | OpenBao audit index |
 
 ## The network underneath
 
-The pipeline rides the trust-ordered VLAN tier model: VLAN tag = tier × 10, subnets follow the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are injected at runtime, never committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk; every other tier is a log source.
+The pipeline rides the trust-ordered VLAN tier model. The VLAN tag = tier × 10, and subnets follow
+the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are injected at runtime, never
+committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk. Every other
+tier is a log source.
 
-{/* Shape: hub and spokes (tiers chained with invisible links). Boundary crossings: 1 per real edge. */}
-{/* Subgraphs: 5 + 4 nodes (≤5 each). Total nodes: 10 (≤12). Aspect: ~2:1 LR. Pass. */}
+{/*Shape: hub and spokes (tiers chained with invisible links). Boundary crossings: 1 per real edge. */}
+{/* Subgraphs: 5 + 4 nodes (≤5 each). Total nodes: 10 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   GW((UniFi<br/>gateway))
   subgraph upper["Tiers 10–50 · most trusted"]
-    direction TB
-    T1([10 · Core services])
-    T2([20 · Storage])
-    T3([30 · Data / compute])
-    T4([40 · Observability])
-    T5([50 · AI / ML])
+  direction TB
+  T1([10 · Core services])
+  T2([20 · Storage])
+  T3([30 · Data / compute])
+  T4([40 · Observability])
+  T5([50 · AI / ML])
   end
   subgraph lower["Tiers 60–90 · least trusted"]
-    direction TB
-    T6([60 · Applications])
-    T7([70 · Media])
-    T8([80 · Home / IoT])
-    T9([90 · Untrusted / guest])
+  direction TB
+  T6([60 · Applications])
+  T7([70 · Media])
+  T8([80 · Home / IoT])
+  T9([90 · Untrusted / guest])
   end
 
   GW --> T1
@@ -377,21 +418,33 @@ flowchart LR
   linkStyle 0,5 stroke:#4FB3A9,stroke-width:2px;
 ```
 
-The full VMID ↔ VLAN convention — how a guest's six-digit ID encodes its tier — is on [VMID & network tier model](/infrastructure/vmid-network-tiers).
+The full VMID ↔ VLAN convention is on [VMID & network tier model](/infrastructure/vmid-network-tiers). It covers how a guest's six-digit ID encodes its tier.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
-    The family/port/index tables and the AI telemetry pipeline.
-  </Card>
-  <Card title="Monitoring agents" icon="satellite-dish" href="/observability/monitoring-agents">
-    Every collector, what it collects, where it runs.
-  </Card>
-  <Card title="LLM observability" icon="microchip" href="/observability/llm-observability">
-    The OTLP → Langfuse + Phoenix + Splunk fan-out in depth.
-  </Card>
-  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
-    The original log/NetFlow architecture page.
-  </Card>
+<Card
+  title="Observability overview"
+  icon="chart-line"
+  href="/observability/overview">
+  The family/port/index tables and the AI telemetry pipeline.
+</Card>
+<Card
+  title="Monitoring agents"
+  icon="satellite-dish"
+  href="/observability/monitoring-agents">
+  Every collector, what it collects, where it runs.
+</Card>
+<Card
+  title="LLM observability"
+  icon="microchip"
+  href="/observability/llm-observability">
+  The OTLP → Langfuse + Phoenix + Splunk fan-out in depth.
+</Card>
+<Card
+  title="Data pipelines"
+  icon="diagram-project"
+  href="/architecture/data-pipelines">
+  The original log/NetFlow architecture page.
+</Card>
 </CardGroup>

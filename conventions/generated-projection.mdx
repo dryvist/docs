@@ -1,9 +1,9 @@
 ---
 title: "Generated projection"
-description: "This site is generated output, not a knowledge base — authoring happens in a private source, and every page arrives through a publisher-only pull request that merges on green."
-page_type: explanation
+description: "This site is generated output, not a knowledge base. Authoring happens in a private source, and every page arrives through a publisher-only pull request that merges on green."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Nothing is authored here. Every page on this site is projected from a private source by a publisher identity, and merges when the checks pass.
 
 This repository is a publication target. The documentation it renders is
@@ -34,7 +34,7 @@ restricted to that identity.
 ## How a generated pull request merges
 
 Automatically, once every required check passes. There is no separate human
-approval step, because a generated pull request has no author to review — the
+approval step, because a generated pull request has no author to review. The
 review already happened on the source page. "Ready to merge" is defined as
 every required check green, enforced by the forge rather than by an agent's
 judgement. The required set covers content validation and a secret scan.
@@ -54,16 +54,28 @@ private source, not here.
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="No scripts" icon="file-code" href="/conventions/no-scripts">
-    Why the one transform is a real script file rather than inline workflow logic.
-  </Card>
-  <Card title="Pull request conventions" icon="code-pull-request" href="/conventions/pr-conventions">
-    What a hand-authored pull request against the control plane still has to do.
-  </Card>
-  <Card title="Documentation standards" icon="book" href="/conventions/documentation-standards">
-    The authoring standard the source pages are written to.
-  </Card>
-  <Card title="Harness trust tiers" icon="robot" href="/autonomous-agents/harness-trust-tiers">
-    Which identities may write to a repository at all.
-  </Card>
+<Card
+  title="No scripts"
+  icon="file-code"
+  href="/conventions/no-scripts">
+  Why the one transform is a real script file rather than inline workflow logic.
+</Card>
+<Card
+  title="Pull request conventions"
+  icon="code-pull-request"
+  href="/conventions/pr-conventions">
+  What a hand-authored pull request against the control plane still has to do.
+</Card>
+<Card
+  title="Documentation standards"
+  icon="book"
+  href="/conventions/documentation-standards">
+  The authoring standard the source pages are written to.
+</Card>
+<Card
+  title="Harness trust tiers"
+  icon="robot"
+  href="/autonomous-agents/harness-trust-tiers">
+  Which identities may write to a repository at all.
+</Card>
 </CardGroup>

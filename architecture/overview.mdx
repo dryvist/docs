@@ -1,26 +1,32 @@
 ---
 title: "Architecture"
 description: "System-level diagrams and philosophy for the data pipelines, AI development pipeline, and cross-repo dependencies."
-page_type: overview
+page_type: "overview"
 ---
-
-Architecture pages cover the parts of the stack that don't belong to a single repo. They sit above the per-category sections and explain *how* things move — data, code, and decisions.
+{/* projected from the authoring site; do not edit here */}
+Architecture pages cover the parts of the stack that don't belong to a single repo. They sit a level higher than the per-category sections and explain *how* data, code, and decisions move.
 
 ## In this section
 
 <CardGroup cols={2}>
-  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
-    The log and NetFlow ingest paths from the homelab edge to Splunk indexers. UniFi → HAProxy → Cribl Edge → Splunk.
-  </Card>
-  <Card title="AI development pipeline" icon="robot" href="/architecture/ai-pipeline">
-    The human → issue → AI agent → CI → review → ship flow. How Claude, Antigravity, and Copilot fit together.
-  </Card>
+<Card
+  title="Data pipelines"
+  icon="diagram-project"
+  href="/architecture/data-pipelines">
+  The log and NetFlow ingest paths from the homelab edge to Splunk indexers. UniFi → HAProxy → Cribl Edge → Splunk.
+</Card>
+<Card
+  title="AI development pipeline"
+  icon="robot"
+  href="/architecture/ai-pipeline">
+  The human → issue → AI agent → CI → review → ship flow. How Claude, Antigravity, and Copilot fit together.
+</Card>
 </CardGroup>
 
 ## Principles
 
 <Tip>
-- **One diagram per concern.** Combining a deploy pipeline with a data pipeline shows nothing. Each diagram is allowed to be small.
+- **One diagram per concern.** Combining a deploy pipeline with a data pipeline shows nothing. Each diagram can stay small.
 - **Diagrams over prose where structure matters.** If a relationship is clearer as a graph, draw it.
 - **READMEs own install and usage.** The docs site owns architecture, philosophy, and cross-repo context.
 </Tip>
@@ -28,16 +34,28 @@ Architecture pages cover the parts of the stack that don't belong to a single re
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
-    OpenTofu modules and the Proxmox stack.
-  </Card>
-  <Card title="Configuration" icon="screwdriver-wrench" href="/infrastructure/configuration/overview">
-    Ansible playbooks for host and app config.
-  </Card>
-  <Card title="Nix Ecosystem" icon="snowflake" href="/nix/overview">
-    Reproducible dev environments.
-  </Card>
-  <Card title="Observability" icon="chart-line" href="/observability/overview">
-    OTEL → Cribl → Splunk.
-  </Card>
+<Card
+  title="Infrastructure"
+  icon="server"
+  href="/infrastructure/overview">
+  OpenTofu modules and the Proxmox stack.
+</Card>
+<Card
+  title="Configuration"
+  icon="screwdriver-wrench"
+  href="/infrastructure/configuration/overview">
+  Ansible playbooks for host and app config.
+</Card>
+<Card
+  title="Nix Ecosystem"
+  icon="snowflake"
+  href="/nix/overview">
+  Reproducible dev environments.
+</Card>
+<Card
+  title="Observability"
+  icon="chart-line"
+  href="/observability/overview">
+  OTEL → Cribl → Splunk.
+</Card>
 </CardGroup>

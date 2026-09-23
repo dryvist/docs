@@ -1,16 +1,20 @@
 ---
 title: "/ship and /finalize-pr"
-description: "The local Claude Code skill that drives a PR to a fully-mergeable state. Phases, exit modes, and what it never does."
-page_type: how-to
+description: "The local Claude Code skill that drives a PR to a fully mergeable state. Phases, exit modes, and what it never does."
+page_type: "how-to"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > One command. Commit, push, open the PR, fix CodeQL, resolve threads, fix CI, verify everything is green. Never merges. That's a human decision.
 
-`/ship` is the local escape hatch for the cloud pipeline. The cloud pipeline ([ai-workflows](/automation/repos/ai-workflows), [claude-code-routines](/automation/repos/claude-code-routines)) gets a PR opened and reviewed without you. `/ship` is what you run from a Claude Code session when **you** are the one iterating on a PR and want it driven to a ready-to-merge state in one command.
+`/ship` is the local escape hatch for the cloud pipeline. The cloud pipeline
+([ai-workflows](/automation/repos/ai-workflows),
+[claude-code-routines](/automation/repos/claude-code-routines)) gets a PR opened and reviewed
+without you. `/ship` is what you run from a Claude Code session when **you** are the one
+iterating on a PR. It drives that PR to a ready-to-merge state in one command.
 
 ## What `/ship` does
 
-`/ship` is a thin orchestrator. It detects uncommitted changes (commits them), discovers recently-created PRs, then for each PR invokes `/finalize-pr` — which is where the real work happens.
+`/ship` is a thin orchestrator. It detects uncommitted changes (commits them), discovers recently created PRs, then for each PR invokes `/finalize-pr`, which is where the real work happens.
 
 ```text
 /ship
@@ -25,12 +29,13 @@ page_type: how-to
 
 `/finalize-pr` is the loop. Five phases per PR:
 
-{/* Shape: linear chain. Boundary crossings: 0. Ranks: 5×1. */}
-{/* Aspect: ~3:1 (LR). Pass. */}
+{/*Shape: linear chain. Boundary crossings: 0. Ranks: 5×1. */}
+{/* Aspect: ~3:1 (LR). Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   P1([1. Discover])
   P2([2. Resolve loop])
   P3{3. Verify gate}
@@ -54,9 +59,9 @@ flowchart LR
 
 | Phase | What it owns |
 | --- | --- |
-| 1. Discover | Resolve which PR(s) to act on (current branch, all, or org-wide) |
+| 1. Discover | Resolve which PR or PRs to act on (current branch, all, or org-wide) |
 | 2. Resolve loop | Start CI monitor in background; in parallel: invoke `/resolve-codeql fix`, `/resolve-pr-threads`, merge-conflict resolution; once CI completes, run `/simplify` once on the cumulative changes |
-| 3. Verify gate | Re-query live GitHub state — `state`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `statusCheckRollup.state`, all `reviewThreads.isResolved`, CodeQL alert count |
+| 3. Verify gate | Re-query live GitHub state: `state`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `statusCheckRollup.state`, all `reviewThreads.isResolved`, CodeQL alert count |
 | 4. Update metadata | A subagent updates PR title, description, linked issues |
 | 5. Report ready | Emit the canonical PR status block; wait for human merge |
 
@@ -77,7 +82,7 @@ flowchart LR
                      → background CI monitor (Task tool)
 ```
 
-Each subagent runs scoped to its task and reports back. The orchestrator re-verifies live state — never trusts a subagent's self-report as ground truth.
+Each subagent runs scoped to its task and reports back. The orchestrator re-verifies live state. It never trusts a subagent's self-report as ground truth.
 
 ## When to use `/ship` vs the cloud pipeline
 
@@ -86,21 +91,33 @@ Each subagent runs scoped to its task and reports back. The orchestrator re-veri
 | Issue is filed, you want a PR drafted without thinking | [`ai-workflows`](/automation/repos/ai-workflows) (the cloud pipeline triggered on issue open) |
 | You're editing a PR locally and want CI/threads/CodeQL handled in one command | `/ship` from your Claude Code session |
 | You want a daily org-wide sweep | [`claude-code-routines`](/automation/repos/claude-code-routines) (cron-scheduled) |
-| You want to know if a PR is *really* ready to merge | `/finalize-pr <N>` directly — gives you the canonical gate output without re-running fixes |
+| You want to know if a PR is *really* ready to merge | `/finalize-pr <N>` directly: gives you the canonical gate output without re-running fixes |
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="CodeQL resolution" icon="shield-check" href="/ai-development/skills/codeql-resolution">
-    Why CodeQL is fixed separately from CI checks, and what `/resolve-codeql` does.
-  </Card>
-  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
-    The plugin home for `/ship`, `/finalize-pr`, and all the supporting skills.
-  </Card>
-  <Card title="Source: ship/SKILL.md" icon="github" href="https://github.com/JacobPEvans/claude-code-plugins/blob/main/github-workflows/skills/ship/SKILL.md">
-    The full skill definition.
-  </Card>
-  <Card title="Source: finalize-pr/SKILL.md" icon="github" href="https://github.com/JacobPEvans/claude-code-plugins/blob/main/github-workflows/skills/finalize-pr/SKILL.md">
-    Phases, gates, and the merge prohibition.
-  </Card>
+<Card
+  title="CodeQL resolution"
+  icon="shield-check"
+  href="/ai-development/skills/codeql-resolution">
+  Why CodeQL is fixed separately from CI checks, and what `/resolve-codeql` does.
+</Card>
+<Card
+  title="claude-code-plugins"
+  icon="plug"
+  href="/ai-development/claude-code-plugins">
+  The plugin home for `/ship`, `/finalize-pr`, and all the supporting skills.
+</Card>
+<Card
+  title="Source: ship/SKILL.md"
+  icon="github"
+  href="https://github.com/JacobPEvans/claude-code-plugins/blob/main/github-workflows/skills/ship/SKILL.md">
+  The full skill definition.
+</Card>
+<Card
+  title="Source: finalize-pr/SKILL.md"
+  icon="github"
+  href="https://github.com/JacobPEvans/claude-code-plugins/blob/main/github-workflows/skills/finalize-pr/SKILL.md">
+  Phases, gates, and the merge prohibition.
+</Card>
 </CardGroup>

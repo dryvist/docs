@@ -1,9 +1,9 @@
 ---
 title: "Mac homelab setup"
 description: "Why a Mac shows up as \"Mac\" on your router, and how the Private Wi-Fi Address setting masks both the MAC address and the DHCP hostname."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 Homelab Macs should announce their real hostname to the router. When they do,
 you find each machine by name in the DHCP lease list and reach it over the
 network without hunting for an IP. One macOS default quietly breaks that: the
@@ -40,11 +40,12 @@ not just hide the MAC address. It also withholds the real hostname. So the
 router receives `Mac` on the wire and displays `Mac`, while every name API on
 the machine reports the name you set.
 
-{/* Shape: hierarchy. One setting → two effects. Nodes: 3. Boundary crossings: 0. Aspect: ~4:3 TB. Pass. */}
+{/*Shape: hierarchy. One setting → two effects. Nodes: 3. Boundary crossings: 0. Aspect: ~4:3 TB. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart TB
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart TB
   P{{Private Wi-Fi Address on}}
   M([Randomized MAC address])
   H([DHCP hostname sent as Mac])
@@ -78,7 +79,7 @@ grep -i hostname /tmp/dhcp.txt
 ```
 
 With Private Wi-Fi Address on, the capture shows `Hostname (12): "Mac"`. With it
-off, the same capture shows your real name. That single line is ground truth —
+off, the same capture shows your real name. That single line is ground truth:
 it is what the router acts on.
 
 ## The fix
@@ -87,31 +88,31 @@ Turn off Private Wi-Fi Address for the network. Do it per network, because the
 setting is stored per network.
 
 <Steps>
-  <Step title="Open the network details">
-    Go to **System Settings → Wi-Fi**, then click **Details** next to the
-    network you are on.
-  </Step>
-  <Step title="Set Private Wi-Fi Address to Off">
-    Change **Private Wi-Fi Address** to **Off**. This uses the hardware MAC and
-    releases the real hostname on that network.
-  </Step>
-  <Step title="Confirm">
-    Re-run the capture above. Option 12 now carries your real hostname, and the
-    router lists the machine by name on its next lease.
-  </Step>
+<Step title="Open the network details">
+Go to **System Settings → Wi-Fi**, then click **Details** next to the
+network you are on.
+</Step>
+<Step title="Set Private Wi-Fi Address to Off">
+Change **Private Wi-Fi Address** to **Off**. This uses the hardware MAC and
+releases the real hostname on that network.
+</Step>
+<Step title="Confirm">
+Re-run the preceding capture. Option 12 now carries your real hostname, and the
+router lists the machine by name on its next lease.
+</Step>
 </Steps>
 
 ## The tradeoff
 
 With Private Wi-Fi Address off, the network sees the hardware MAC address. That
 is the point of the setting: it trades MAC-address privacy for a real,
-discoverable identity. Turn it off only on networks you trust — your own
-homelab — and leave it on for public Wi-Fi.
+discoverable identity. Turn it off only on networks you trust, such as your own
+homelab, and leave it on for public Wi-Fi.
 
 ## Why you turn it off by hand
 
 Toggling this on each machine and each network does not scale, so the obvious
-next step is to enforce it automatically. On macOS you cannot — not for free,
+next step is to enforce it automatically. On macOS you cannot, not for free,
 and not without more machinery than the setting is worth. Three mechanisms
 could enforce it, and each one fails for a homelab:
 

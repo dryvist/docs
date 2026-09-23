@@ -1,21 +1,23 @@
 ---
 title: "Proxmox config"
 description: "Ansible roles that configure the Proxmox host itself: ZFS pools, networking, users, performance tuning, monitoring agents."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > OpenTofu made the box. This makes it Proxmox.
 
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox" />
 
-`ansible-proxmox` is the middle tier of the Proxmox stack. It owns everything that needs to be true about a Proxmox host *before* any workload runs on it: ZFS, networking, swap and CPU tuning, users, hardening, monitoring agents.
+`ansible-proxmox` is the middle tier of the Proxmox stack. It owns everything that needs to be true
+about a Proxmox host *before* any workload runs on it. That includes ZFS, networking, swap and CPU
+tuning, users, hardening, and monitoring agents.
 
 ## What it does
 
 - Provisions ZFS pools and datasets with sensible defaults for VM and LXC storage
-- Realizes the OpenTofu `node_storage` contract (the `zfs_pools` role): creates datasets, sets quotas, and registers PVE storage — pool creation from raw disks stays a per-host commissioning step
+- Realizes the OpenTofu `node_storage` contract (the `zfs_pools` role): creates datasets, sets quotas, and registers PVE storage. Pool creation from raw disks stays a per-host commissioning step
 - Sets up network bonding and bridges to match the homelab topology
 - Applies performance tuning (CPU governor, swap, sysctl) for VM density
 - Installs and configures monitoring agents that feed Splunk via Cribl
@@ -28,39 +30,51 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 | [Proxmox provisioning](/infrastructure/repos/tofu-proxmox) hands over an inventory of new hosts | Configured Proxmox hosts ready for [Apps on Proxmox](/infrastructure/repos/ansible-proxmox-apps) |
 
 <RepoFit>
-Run once per host after OpenTofu finishes. Re-running is safe — every role is idempotent.
+Run once per host after OpenTofu finishes. Re-running is safe. Every role is idempotent.
 </RepoFit>
 
 ## Getting started
 
 <Steps>
-  <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/JacobPEvans/ansible-proxmox && cd ansible-proxmox && nix develop`
-  </Step>
-  <Step title="Point at the OpenTofu inventory">
-    Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
-  </Step>
-  <Step title="Resolve secrets via Doppler">
-    `DOPPLER_TOKEN` lets the playbook fetch host passwords, SSH keys, and monitoring tokens at run time. No secrets in git.
-  </Step>
-  <Step title="Run the playbook">
-    `ansible-playbook -i inventory site.yml`. The first run is the slow one; subsequent runs only converge what's drifted.
-  </Step>
+<Step title="Clone and enter the dev shell">
+`git clone https://github.com/JacobPEvans/ansible-proxmox && cd ansible-proxmox && nix develop`
+</Step>
+<Step title="Point at the OpenTofu inventory">
+Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
+</Step>
+<Step title="Resolve secrets via Doppler">
+`DOPPLER_TOKEN` lets the playbook fetch host passwords, SSH keys, and monitoring tokens at run time. No secrets in git.
+</Step>
+<Step title="Run the playbook">
+`ansible-playbook -i inventory site.yml`. The first run is the slow one; subsequent runs only converge what's drifted.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="tofu-proxmox" icon="server" href="/infrastructure/repos/tofu-proxmox">
-    The provisioner. Run this first.
-  </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
-    The app deployer. Run this third.
-  </Card>
-  <Card title="Configuration overview" icon="screwdriver-wrench" href="/infrastructure/configuration/overview">
-    How all the Ansible repos fit together.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/ansible-proxmox">
-    Roles, inventory examples, full README.
-  </Card>
+<Card
+  title="tofu-proxmox"
+  icon="server"
+  href="/infrastructure/repos/tofu-proxmox">
+  The provisioner. Run this first.
+</Card>
+<Card
+  title="ansible-proxmox-apps"
+  icon="boxes-stacked"
+  href="/infrastructure/repos/ansible-proxmox-apps">
+  The app deployer. Run this third.
+</Card>
+<Card
+  title="Configuration overview"
+  icon="screwdriver-wrench"
+  href="/infrastructure/configuration/overview">
+  How all the Ansible repos fit together.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/ansible-proxmox">
+  Roles, inventory examples, full README.
+</Card>
 </CardGroup>

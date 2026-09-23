@@ -1,43 +1,56 @@
 ---
 title: "SOPS"
 description: "Encrypted-at-rest configuration committed directly to git — age keys, .sops.json files, and the editor / decrypt workflow."
-page_type: reference
+page_type: "reference"
 ---
-
-> SOPS is the single-repo exception, not the default. OpenBao (T2) is the default runtime store; SOPS holds only a value used by exactly one repo that is neither mission-critical nor a public-service credential.
+{/* projected from the authoring site; do not edit here */}
+> SOPS is the single-repo exception, not the default. OpenBao (T2) is the default runtime store;
+> SOPS holds only a value used by exactly one repo that is neither mission-critical nor a
+> public-service credential.
 
 ## What SOPS is for
 
-SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving the keys readable. The encrypted output is a regular file with structured contents — e.g. `terraform.sops.json`, `secrets.enc.yaml` — that lives in git and is decrypted at runtime by the age private key. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells SOPS which paths to encrypt and with which keys (see [.sops.yaml configuration](#sops-yaml-configuration) below).
+SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving
+the keys readable. The encrypted output is a regular file with structured contents, for example
+`terraform.sops.json` or `secrets.enc.yaml`. It lives in git and is decrypted at runtime by the age
+private key. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells
+SOPS which paths to encrypt and with which keys (see [SOPS configuration
+file](#sops-configuration-file) below).
 
-It is **not** a vault — OpenBao (T2) is. SOPS is checked-in, encrypted-at-rest configuration for the narrow single-repo case: OpenTofu variables that name internal networks, ansible variables that vary per host but aren't truly secret-secret. Control-plane credentials (Proxmox/iDRAC/network) are **not** SOPS material — they live in OpenBao `secret/infra/*` (or, human-only, the Keychain).
+It is **not** a vault. OpenBao (T2) is. SOPS is checked-in, encrypted-at-rest configuration for the
+narrow single-repo case. Examples include OpenTofu variables that name internal networks, and
+Ansible variables that vary per host but aren't truly secret-secret. Control-plane credentials
+(Proxmox/iDRAC/network) are **not** SOPS material. They live in OpenBao `secret/infra/*` (or,
+human-only, the Keychain).
 
 ## What does not belong in SOPS
 
-- Live API keys that rotate frequently — `git log` keeps the encrypted history forever, and "encrypted today" is only as strong as the age key. Use the runtime manager, or an engine that mints them per call.
-- SSH keys, recovery codes — these are human-only material; Bitwarden.
-- Anything you cannot afford to have in a public-fork forever — encryption is not deletion.
+- Live API keys that rotate frequently. `git log` keeps the encrypted history forever, and
+  "encrypted today" is only as strong as the age key. Use the runtime manager, or an engine that
+  mints them per call.
+- SSH keys, recovery codes. These are human-only material; Bitwarden.
+- Anything you cannot afford to have in a public-fork forever. Encryption is not deletion.
 
 ## The encrypt / commit / decrypt cycle
 
 <Steps>
-  <Step title="Edit plaintext">
-    The author edits the plaintext source.
-  </Step>
-  <Step title="Encrypt with sops">
-    `sops -e --in-place` re-encrypts every value declared in `.sops.yaml`.
-  </Step>
-  <Step title="Commit the encrypted file">
-    The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable; values stay encrypted in git history forever.
-  </Step>
-  <Step title="Decrypt at runtime">
-    `sops -d` (often via OpenTofu/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
-  </Step>
+<Step title="Edit plaintext">
+The author edits the plaintext source.
+</Step>
+<Step title="Encrypt with sops">
+`sops -e --in-place` re-encrypts every value declared in `.sops.yaml`.
+</Step>
+<Step title="Commit the encrypted file">
+The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable; values stay encrypted in git history forever.
+</Step>
+<Step title="Decrypt at runtime">
+`sops -d` (often via OpenTofu/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
+</Step>
 </Steps>
 
 The age private key lives in the SOPS age key path, passphrase-protected at rest; the canonical backup is escrowed in Bitwarden.
 
-## `.sops.yaml` configuration
+## SOPS configuration file
 
 Each repo that uses SOPS has a `.sops.yaml` declaring which paths get encrypted with which keys:
 
@@ -56,7 +69,9 @@ Only the public half of the age key appears here. The private half stays local a
 sops .sops.json
 ```
 
-`sops` opens the editor; you edit plaintext; on save it re-encrypts. Never `git add` an unencrypted copy. Pre-commit hooks (provided in `tofu-proxmox` and friends) verify every staged `.sops.json` is actually encrypted.
+`sops` opens the editor; you edit plaintext; on save it re-encrypts. Never `git add` an unencrypted
+copy. Pre-commit hooks (provided in `tofu-proxmox` and friends) verify every staged `.sops.json` is
+actually encrypted.
 
 ## Rotating the age key
 
@@ -66,21 +81,23 @@ sops .sops.json
 4. Remove the old recipient from `.sops.yaml`; run `sops updatekeys` again.
 5. Escrow the new key in Bitwarden; revoke the old.
 
-The cycle is documented in [`agentsmd/rules/config-secrets.md`](https://github.com/JacobPEvans/ai-assistant-instructions) — keep it in muscle memory for the team.
+The cycle is documented in [`agentsmd/rules/config-secrets.md`](https://github.com/JacobPEvans/ai-assistant-instructions). Keep it in muscle memory for the team.
 
 ## Best practices
 
 - Escrow the age private key in Bitwarden the moment it is generated. The local file is convenience; the escrow is canonical.
-- Use one age key per "trust domain" — homelab gets one key, AWS infra gets another. Compromise of one does not leak the other.
+- Use one age key per "trust domain": homelab gets one key, AWS infra gets another. Compromise of one does not leak the other.
 - Pre-commit hook in every repo that uses SOPS to verify staged `.sops.json` files have non-plaintext values. This is the cheapest control.
 - Never store the same value in two tiers. If it rotates, it belongs in the runtime manager (T2). If it never rotates and matters to one repo only, SOPS.
 
 ## Anti-pattern we don't ship
 
-A plaintext "starter" config like `terraform.tfvars.example` that gets renamed to `terraform.tfvars` and accidentally committed. The pattern we use: ship `terraform.sops.json.example` (already encryption-shaped); the rename-and-commit only ever produces an encrypted file.
+A plaintext "starter" config like `terraform.tfvars.example` that gets renamed to `terraform.tfvars`
+and accidentally committed. The safe pattern: ship `terraform.sops.json.example` (already
+encryption-shaped); the rename-and-commit only ever produces an encrypted file.
 
 ## See also
 
-- [OpenBao](/security/tools/openbao) — for values that rotate.
-- [Bitwarden](/security/tools/bitwarden) — where age private keys are escrowed.
-- [`tofu-proxmox`](https://github.com/dryvist/tofu-proxmox) — canonical example of `.sops.yaml` + pre-commit + editing workflow.
+- [OpenBao](/security/tools/openbao): for values that rotate.
+- [Bitwarden](/security/tools/bitwarden): where age private keys are escrowed.
+- [`tofu-proxmox`](https://github.com/dryvist/tofu-proxmox): canonical example of `.sops.yaml` + pre-commit + editing workflow.

@@ -1,42 +1,61 @@
 ---
 title: "How it fits together"
-description: "Six surfaces, one stack — and how each one depends on the others."
-page_type: explanation
+description: "Six surfaces, one stack: how each one depends on the others."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Forty repositories sound like a lot. They're really six surfaces working as one stack.
 
 ## The six surfaces
 
 <CardGroup cols={3}>
-  <Card title="Security" icon="shield-halved" href="/security/overview">
-    Doppler · SOPS · Keychain · Bitwarden · BWS
-  </Card>
-  <Card title="Infrastructure" icon="server" href="/infrastructure/overview">
-    OpenTofu · Ansible · Proxmox
-  </Card>
-  <Card title="Observability" icon="chart-line" href="/observability/overview">
-    Cribl · Splunk · OTEL
-  </Card>
-  <Card title="Nix Ecosystem" icon="snowflake" href="/nix/overview">
-    macOS host · user env · AI tooling · dev shells
-  </Card>
-  <Card title="AI Development" icon="robot" href="/ai-development/overview">
-    Claude · Antigravity · Copilot · MLX
-  </Card>
-  <Card title="Dev Tools" icon="screwdriver-wrench" href="/tools/overview">
-    Raycast · MLX bench · K8s
-  </Card>
+<Card
+  title="Security"
+  icon="shield-halved"
+  href="/security/overview">
+  Doppler · SOPS · Keychain · Bitwarden · BWS
+</Card>
+<Card
+  title="Infrastructure"
+  icon="server"
+  href="/infrastructure/overview">
+  OpenTofu · Ansible · Proxmox
+</Card>
+<Card
+  title="Observability"
+  icon="chart-line"
+  href="/observability/overview">
+  Cribl · Splunk · OTEL
+</Card>
+<Card
+  title="Nix Ecosystem"
+  icon="snowflake"
+  href="/nix/overview">
+  macOS host · user env · AI tooling · dev shells
+</Card>
+<Card
+  title="AI Development"
+  icon="robot"
+  href="/ai-development/overview">
+  Claude · Antigravity · Copilot · MLX
+</Card>
+<Card
+  title="Dev Tools"
+  icon="screwdriver-wrench"
+  href="/tools/overview">
+  Raycast · MLX bench · K8s
+</Card>
 </CardGroup>
 
 ## How they depend on each other
 
-{/* Shape: parallel convergence. Two chains land on Observability. */}
-{/* Security is the gate (dotted control edges). 6 nodes. Boundary crossings: 0. */}
+{/*Shape: parallel convergence. Two chains land on Observability. */}
+{/* Security is the gate (dotted control edges). 6 nodes. Boundary crossings: 0.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Inf([Infrastructure])
   Cfg([Configuration])
   Obs([Observability])
@@ -71,18 +90,29 @@ flowchart LR
   linkStyle 4,5,6 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-Two chains converge on Observability: the homelab chain (Infrastructure → Configuration) and the dev chain (Nix → AI Development). Security (coral) gates the upstream end of each — credentials, branch protection, isolation. Dotted amber edges are control, not data.
+Two chains converge on Observability: the homelab chain (Infrastructure → Configuration) and the dev
+chain (Nix → AI Development). Security (coral) gates the upstream end of each: credentials, branch
+protection, isolation. Dotted amber edges are control, not data.
 
 ## Going deeper
 
 <CardGroup cols={3}>
-  <Card title="Repository catalog" icon="folder-tree" href="/repositories">
-    Every repo at a glance, grouped by surface.
-  </Card>
-  <Card title="Security · cross-tool flows" icon="diagram-project" href="/security/how-it-fits-together">
-    CI, local-dev, and AI-session secret flows in detail.
-  </Card>
-  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
-    Data pipelines and AI pipeline narratives.
-  </Card>
+<Card
+  title="Repository catalog"
+  icon="folder-tree"
+  href="/repositories">
+  Every repo at a glance, grouped by surface.
+</Card>
+<Card
+  title="Security · cross-tool flows"
+  icon="diagram-project"
+  href="/security/how-it-fits-together">
+  CI, local-dev, and AI-session secret flows in detail.
+</Card>
+<Card
+  title="Architecture"
+  icon="sitemap"
+  href="/architecture/overview">
+  Data pipelines and AI pipeline narratives.
+</Card>
 </CardGroup>

@@ -1,9 +1,9 @@
 ---
 title: "Verifying the instrument"
 description: "A model server can serve the wrong weights silently. The two checks that verify nothing, the one check that works, and the 7x measurement error that proves why it matters."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Before you record a benchmark number, prove which weights the process actually
 > loaded. Nothing in the response tells you.
 
@@ -15,31 +15,32 @@ specifics as one estate's experience and the shape as general.
 ### Mechanism A — a collapse that grafts physical ids as aliases
 
 <Note>
-  This mechanism has since been **fixed** in the estate it was observed in: the
-  grafting is banned in the config generator, and a disabled model's physical id
-  now returns **HTTP 404**. It is kept here because the *shape* generalises to
-  any proxy that collapses a catalogue, and because it fails in the worst
-  possible way — a 200 with the requested name echoed back.
+  This mechanism has since been **fixed** in the estate it was observed in.
+  The grafting is banned in the config generator, and a turned-off model's
+  physical id now returns **HTTP 404**. It is kept here because the *shape*
+  generalises to any proxy that collapses a catalogue. It also fails in the
+  worst possible way: a 200 with the requested name echoed back.
 </Note>
 
 A proxy config generator collapses a multi-model catalog down to **one resident
-model** to fit a memory budget. Every other entry is disabled — kept intact,
-each still carrying its own correct launch command, simply not served. Then the
-generator did one more thing: it grafted every disabled model's **physical
-identifier** onto the surviving entry as an **alias**, so that "any caller
-naming any known model still gets an answer."
+model** to fit a memory budget. Every other entry is turned off but kept
+intact, and each still carries its own correct launch command. The generator
+just stops serving it. Then the generator did one more thing. It grafted every
+turned-off model's **physical identifier** onto the surviving entry as an
+**alias**. The point was that "any caller naming any known model still gets
+an answer."
 
 That is the defect. The surviving entry answers to names that do not identify
-it. Ask for a 120B model, get the 30B resident — HTTP 200, and a response
-labelled with the 120B you asked for. In one captured config, 11 of 12 model ids
-resolved to the same resident.
+it. Ask for a 120 B model, get the 30 B resident. You get HTTP 200, and a
+response labelled with the 120 B you asked for. In one captured config, 11 of
+12 model ids resolved to the same resident.
 
 The distinction the generator lost is between two kinds of name:
 
 | Kind of name | What it asserts | Repointing it is |
 | --- | --- | --- |
-| a **role alias** (`default`, `coding`, `fastest`) | intent — "something suitable" | correct, and the whole point |
-| a **physical model id** | identity — "these exact weights" | a silent lie |
+| a **role alias** (`default`, `coding`, `fastest`) | intent—"something suitable" | correct, and the whole point |
+| a **physical model id** | identity—"these exact weights" | a silent lie |
 
 Treating them as interchangeable is what makes the failure invisible. Nothing
 downstream caught it, because the two obvious checks are not checks.
@@ -50,26 +51,26 @@ The second route needs no bad config generator. A router carries an alias
 pointing at a model the backend does not actually serve. Instead of returning an
 error, the request **falls through to whatever is served** and comes back 200.
 
-This one is worse than Mechanism A in a specific way: nothing anywhere is
+This one is worse than Mechanism A in a specific way. Nothing anywhere is
 misconfigured in a way you can look at. The alias is spelled correctly, the
 backend is healthy, the response is well-formed. The only artifact of the defect
-is that the answer came from different weights than the name says — which is
-invisible in the response, by construction.
+is that the answer came from different weights than the name says. That
+mismatch is invisible in the response, by construction.
 
 The cost, observed in one deployment: an agent ran on a **different model than
 its configuration named**, for an unknown period. Nobody noticed, because there
 was nothing to notice. Every request succeeded.
 
 That is the real severity argument. A crash gets fixed in an hour. A silent
-substitution runs until someone independently verifies the instrument — and
+substitution runs until someone independently verifies the instrument. And
 "until someone thinks to check" is not a bounded interval.
 
 ## Two things that look like verification and verify nothing
 
 | What you check | What it actually reports |
 | --- | --- |
-| the `model` field in an OpenAI-style response | the value echoed back from your request — never read from the loaded checkpoint |
-| a `/v1/models` listing | the local model cache — not what any running process has loaded |
+| the `model` field in an OpenAI-style response | the value echoed back from your request—never read from the loaded checkpoint |
+| a `/v1/models` listing | the local model cache—not what any running process has loaded |
 
 Both hand back exactly what you hoped to see while the server runs something
 else. A label is not evidence.
@@ -87,7 +88,7 @@ If the command line does not name the model you think you are measuring, the
 number is void. Do this before the run, not after.
 
 Run it against the **worker**, never the proxy. A dedicated single-model worker
-resolves the id it was asked for and returns 404 on an id it does not hold — so
+resolves the id it was asked for and returns 404 on an id it does not hold. So
 once a worker's weights are proven by process inspection, "HTTP 200 plus a
 matching label" from *that worker* is trustworthy. Put a proxy in front of it
 and the same 200 and the same label prove nothing again. The guarantee belongs
@@ -95,26 +96,26 @@ to the worker, not to the response shape.
 
 ## The error this hid: a 7x gap that inverted the conclusion
 
-Taken through the proxy, a large (80B-class) mixture-of-experts model measured
+Taken through the proxy, a large (80 B-class) mixture-of-experts model measured
 about **72 tok/s**. Re-measured on an isolated worker with the loaded weights
-proven by process inspection, the same model decoded at **9–11 tok/s** —
-medians 11.05 and 8.96, replicated across two independent sequences, with
-prefill at 97–152 tok/s and time-to-first-token at 0.58–0.91 s
+proven by process inspection, the same model decoded at **9–11 tok/s**.
+Medians were 11.05 and 8.96, replicated across two independent sequences.
+Prefill ran at 97–152 tok/s and time-to-first-token at 0.58–0.91 s
 (verified 2026-07-26/27).
 
-A 7x gap. About 72 tok/s is 30B-class speed, and the grafted alias pointed at a
-30B-class resident. Storage and memory pressure were both ruled out.
+A 7x gap. About 72 tok/s is 30 B-class speed, and the grafted alias pointed at a
+30 B-class resident. Storage and memory pressure were both ruled out.
 
 The damage did not stay local. Because several grafted ids all resolved to the
 same resident, the numbers reached a **public dataset attributing one model's
-throughput to two others** — one wrong measurement became several wrong published
+throughput to two others**. One wrong measurement became several wrong published
 rows, each carrying a model name that had never been loaded. A silent
 substitution does not produce one bad number; it produces as many as there are
 aliases pointing at the survivor.
 
 On the
 [headline cumulative metric](/tools/mlx-benchmarks#the-headline-metric-is-cumulative-not-decode-only)
-the process-verified model runs 10–13 tok/s — the 7x gap holds on either
+the process-verified model runs 10–13 tok/s. The 7x gap holds on either
 metric, because the defect was never about which rate you report.
 
 The wrong number was never implausible, and that is the whole problem. **A
@@ -123,41 +124,42 @@ number prompts a measurement, while a wrong one ends the inquiry. "It looks
 about right" is exactly the reasoning that lets a fabricated measurement
 survive review.
 
-So every published result has to carry its weight provenance, and any row that
-cannot prove which checkpoint was loaded is unverified — not a baseline.
+So every published result has to carry its weight provenance. Any row that
+cannot prove which checkpoint was loaded is unverified, not a baseline.
 
 ## Three rules that fall out
 
 **Never let a name resolve to something it does not identify.** An alias is an
-assertion that two names mean the same thing. When a generator points a
+assertion that two names mean the same thing. A generator can point a
 *physical identifier* at a different object so that "every request gets an
-answer," it has chosen a confident wrong answer over an honest error. Drop the
-alias, or return an explicit 404 — either beats silence. Convenience routing is
-for names that express intent, never for names that express identity.
+answer." When it does, it has chosen a confident wrong answer over an honest
+error. Drop the alias, or return an explicit 404. Either beats silence.
+Convenience routing is for names that express intent, never for names that
+express identity.
 
 The corollary is a debugging one: when this happens, **nothing is corrupt**.
-The disabled entries were intact the whole time and would serve real weights the
+The turned-off entries were intact the whole time and would serve real weights the
 moment they were enabled. Only the names were wrong. Look at the routing table
 before you go looking for damage.
 
-**Resolve exactly, or fail loudly — never fall through.** A request for a name
+**Resolve exactly, or fail loudly—never fall through.** A request for a name
 the backend does not serve must return an error, not the nearest available
 weights. Silent fallback converts a configuration bug into a data-quality bug
-that no amount of downstream checking can recover, because the evidence that
-anything went wrong is never written down.
+that no amount of downstream checking can recover. The evidence that anything
+went wrong is never written down.
 
 **Log the resolved physical model next to the requested name.** This whole
-failure class is defined by being silent, so the cheapest possible fix is to make
-it speak: one log line per load, or per request, carrying both names. When they
-differ, that is the entire defect, visible in `grep`. Any serving layer that
-resolves a name owes you that line — if yours does not emit it, that is the first
-thing to add, ahead of any other guard, because every other check on this page is
-something a human has to remember to run.
+failure class is defined by being silent. So the cheapest possible fix is to
+make it speak: one log line per load, or per request, carrying both names.
+When they differ, that is the entire defect, visible in `grep`. Any serving
+layer that resolves a name owes you that line. If yours does not emit it,
+that is the first thing to add, ahead of any other guard. Every other
+check on this page is something a human has to remember to run.
 
 **Mutation-test every new check.** A check nobody has watched fail is not a
 check. After you add a guard, deliberately reinstate the defect it guards
-against and confirm the build breaks. The classic dud is `test.sh; touch $out`
-— the semicolon creates the output file even when the test fails, so the check
+against and confirm the build breaks. The classic dud is `test.sh; touch $out`.
+The semicolon creates the output file even when the test fails, so the check
 can never fail. A compatibility check added for the
 [shell-parser bugs](/local-llm/distributed) was mutation-tested this way:
 putting either defect back fails the build.
@@ -176,8 +178,8 @@ from its opposite:
 | a cluster membership list | the peers are alive | they are members |
 | a derived `1` | a hardcoded `1` | only the source line distinguishes them |
 
-Two habits cover most of it: **require three independent tools to agree before
-acting on a negative signal**, and prove a check *can* fail before you trust
+Two habits cover most of it. **Require three independent tools to agree before
+acting on a negative signal.** And prove a check *can* fail before you trust
 what it reports.
 
 ## A third thing that verifies nothing: a ratio of two runs
@@ -191,9 +193,10 @@ read a configuration value off the multiplier. "It went 15.9 → 28.0, that's
 
 The arithmetic is fine. The premise isn't. On this estate's own hardware, one
 model serving **byte-identical output** measured **17.4–27.3 tok/s** across
-runs — a spread wide enough to swallow the entire effect being attributed. A
-ratio built from two single runs is a ratio of two samples from overlapping
-distributions, so it identifies nothing, and the confident decimal places make
+runs. That spread is wide enough to swallow the entire effect being attributed.
+
+A ratio built from two single runs is a ratio of two samples from overlapping
+distributions, so it identifies nothing. The confident decimal places make
 that harder to notice, not easier.
 
 This is why the catalog entry for that model records **no tok/s figure at all**.
@@ -206,29 +209,44 @@ Three consequences:
 - **Never infer a parameter from a ratio.** Read the setting from the config, or
   from the process command line. Both are free and both are exact.
 - **Restart between arms.** Most serving options are read at startup only, so an
-  edited config without a restart benchmarks the *old* setting — and returns a
-  clean null result that looks like evidence.
+  edited config without a restart benchmarks the *old* setting. It then returns
+  a clean null result that looks like evidence.
 
-The general failure is the same as everywhere else on this page: a procedure
+The general failure is the same as everywhere else on this page. A procedure
 that produces an answer of the right *shape* is mistaken for one that produces a
 correct answer.
 
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Benchmarking" icon="gauge-high" href="/tools/mlx-benchmarks">
-    The envelope and public dataset every published number lands in.
-  </Card>
-  <Card title="Backends & tool calling" icon="server" href="/local-llm/backends">
-    The other thing the serving layer can silently drop: a valid tool call.
-  </Card>
-  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
-    Concurrency measured per model, including where more load makes it worse.
-  </Card>
-  <Card title="Distributed & multi-Mac" icon="network-wired" href="/local-llm/distributed">
-    Silent-success shell bugs, and debt that a retry only deepens.
-  </Card>
-  <Card title="Speculative decoding" icon="forward-fast" href="/local-llm/speculative-decoding">
-    The feature whose speedup a two-run ratio most often misreports.
-  </Card>
+<Card
+  title="Benchmarking"
+  icon="gauge-high"
+  href="/tools/mlx-benchmarks">
+  The envelope and public dataset every published number lands in.
+</Card>
+<Card
+  title="Backends & tool calling"
+  icon="server"
+  href="/local-llm/backends">
+  The other thing the serving layer can silently drop: a valid tool call.
+</Card>
+<Card
+  title="Apple Silicon stack"
+  icon="microchip"
+  href="/local-llm/apple-silicon">
+  Concurrency measured per model, including where more load makes it worse.
+</Card>
+<Card
+  title="Distributed & multi-Mac"
+  icon="network-wired"
+  href="/local-llm/distributed">
+  Silent-success shell bugs, and debt that a retry only deepens.
+</Card>
+<Card
+  title="Speculative decoding"
+  icon="forward-fast"
+  href="/local-llm/speculative-decoding">
+  The feature whose speedup a two-run ratio most often misreports.
+</Card>
 </CardGroup>

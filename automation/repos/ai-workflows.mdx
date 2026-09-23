@@ -1,9 +1,9 @@
 ---
 title: "AI workflows"
 description: "Reusable GitHub Actions workflows that turn issues into draft PRs, fix CI failures automatically, and gate merges with pinned catalog prompts."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > One repo of reusable workflows. Consumer repos write thin callers, choose Claude or Codex once, and inherit workflow updates.
 
 [`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`). The workflow
@@ -27,7 +27,7 @@ These run on GitHub events. Wire one caller per workflow you want.
 
 ## Scheduled workflows
 
-These run on cron — typically called with `schedule:` and a manual `workflow_dispatch:`.
+These run on cron, typically called with `schedule:` and a manual `workflow_dispatch:`.
 
 | Workflow | Default schedule | What it does |
 | --- | --- | --- |
@@ -58,16 +58,26 @@ jobs:
     secrets: inherit
 ```
 
-Permission shape varies per workflow — `issue-resolver` needs `pull-requests: write`, `ci-fix` needs `actions: read`, `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller templates](https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact permission block for each.
+Permission shape varies per workflow. `issue-resolver` needs `pull-requests: write`, `ci-fix` needs
+`actions: read`, and `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller
+templates](https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact
+permission block for each.
 
 ## How prompts are loaded
 
-The reusable workflows check out the catalog at its pinned release commit, select an asset from `automation/`, and remove its OKF frontmatter before
-passing the prompt to the selected model. Local workflow YAML still owns triggers, permissions, publishing, and provider configuration.
+The reusable workflows check out the catalog at its pinned release commit and select an asset from `automation/`.
+They remove its OKF frontmatter before passing the prompt to the selected model. Local workflow YAML still owns
+triggers, permissions, publishing, and provider configuration.
 
 ## Versioning
 
-Per [Dependency automation](/infrastructure/cicd/dependency-automation#version-pinning), consumers pin `ai-workflows` — and every `dryvist/*` reusable workflow — at `@main`, never a SHA or version pin. The SemVer tags still exist (`@v0.15.1`) and release-please keeps bumping them for the changelog and the per-run resolved-SHA audit trail, but callers ride `@main` so upstream fixes land immediately with no per-repo Renovate PR (the first-party immediate-propagation model). Every org scanner is configured to allow `@main` — see [scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
+Per [Dependency automation](/infrastructure/cicd/dependency-automation#version-pinning),
+consumers pin `ai-workflows`, and every `dryvist/*` reusable workflow, at `@main`, never a SHA or
+version pin. The SemVer tags still exist (`@v0.15.1`), and release-please keeps bumping them for the
+changelog and the per-run resolved-SHA audit trail. Callers ride `@main` instead, so upstream fixes land
+immediately with no per-repo Renovate PR (the first-party immediate-propagation model). Every org
+scanner is configured to allow `@main`. See [scanner
+posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 
 ## Authentication
 
@@ -92,9 +102,9 @@ selector does not require caller edits.
 | `GH_ACTION_AI_CODEX_RESPONSES_API_ENDPOINT` | Variable | Optional Codex Responses API endpoint. |
 | `GH_ACTION_AI_CODEX_MODEL` | Variable | Optional Codex model override. |
 | `GH_ACTION_AI_CODEX_EFFORT` | Variable | Optional Codex reasoning-effort override. |
-| `GH_ACTION_AI_CODEX_VERSION` | Variable | Optional Codex CLI version override. |
+| `GH_ACTION_AI_CODEX_VERSION` | Variable | Optional Codex command-line tool version override. |
 
-Set them at org level with the GitHub CLI:
+Set them at org level with the GitHub command-line tool:
 
 ```bash
 gh secret set GH_ACTION_AI_API_KEY --org <your-org>
@@ -111,7 +121,11 @@ secrets:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
 
-> **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms of Service](https://www.anthropic.com/legal/terms) and risks an account ban — the subscription is intended for interactive sessions only. Use a standard API key (`GH_ACTION_AI_API_KEY`) instead; it is purpose-built for programmatic access with no ToS concerns.
+> **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token
+> (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms
+> of Service](https://www.anthropic.com/legal/terms) and risks an account ban. The subscription is
+> intended for interactive sessions only. Use a standard API key (`GH_ACTION_AI_API_KEY`) instead;
+> it is purpose-built for programmatic access with no ToS concerns.
 
 GitHub Agentic Workflows are retired. The catalog keeps one dormant reference template, but no active repository compiles or runs GH-AW Markdown.
 Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md).
@@ -134,25 +148,46 @@ reusable workflows can mint App tokens from consumer repositories.
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Getting started" icon="rocket" href="https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md">
-    Caller templates for every workflow, with the correct permission blocks.
-  </Card>
-  <Card title="Patterns" icon="puzzle-piece" href="https://github.com/dryvist/ai-workflows/blob/main/docs/PATTERNS.md">
-    The post-merge dispatch pattern, bot guards, and other recurring shapes.
-  </Card>
-  <Card title="Authentication" icon="key" href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
-    Full `GH_ACTION_AI_*` reference, provider routing, and model variables.
-  </Card>
-  <Card title="Prompt catalog" icon="book" href="/automation/repos/ai-llm-prompts">
-    Versioned OKF prompt assets and the immutable consumer pin.
-  </Card>
-  <Card title="Verification" icon="check-double" href="https://github.com/dryvist/ai-workflows/blob/main/docs/VERIFICATION.md">
-    The e2e runbook for checking a freshly-wired repo end to end.
-  </Card>
-  <Card title="Issue → PR pipeline on this repo" icon="route" href="/automation/issue-to-pr-pipeline">
-    Exactly which six callers are wired on `JacobPEvans/docs` and why.
-  </Card>
-  <Card title="Secret distribution" icon="lock" href="/security/secrets-sync">
-    How `GH_ACTION_AI_API_KEY` and the App credentials land on each consumer repo.
-  </Card>
+<Card
+  title="Getting started"
+  icon="rocket"
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+  Caller templates for every workflow, with the correct permission blocks.
+</Card>
+<Card
+  title="Patterns"
+  icon="puzzle-piece"
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/PATTERNS.md">
+  The post-merge dispatch pattern, bot guards, and other recurring shapes.
+</Card>
+<Card
+  title="Authentication"
+  icon="key"
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+  Full `GH_ACTION_AI_*` reference, provider routing, and model variables.
+</Card>
+<Card
+  title="Prompt catalog"
+  icon="book"
+  href="/automation/repos/ai-llm-prompts">
+  Versioned OKF prompt assets and the immutable consumer pin.
+</Card>
+<Card
+  title="Verification"
+  icon="check-double"
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/VERIFICATION.md">
+  The e2e runbook for checking a freshly-wired repo end to end.
+</Card>
+<Card
+  title="Issue → PR pipeline on this repo"
+  icon="route"
+  href="/automation/issue-to-pr-pipeline">
+  Exactly which six callers are wired on `JacobPEvans/docs` and why.
+</Card>
+<Card
+  title="Secret distribution"
+  icon="lock"
+  href="/security/secrets-sync">
+  How `GH_ACTION_AI_API_KEY` and the App credentials land on each consumer repo.
+</Card>
 </CardGroup>

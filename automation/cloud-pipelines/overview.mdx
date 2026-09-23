@@ -1,14 +1,18 @@
 ---
 title: "Cloud pipelines"
 description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become draft PRs, CI failures get fixed, merge readiness is gated."
-page_type: overview
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Event in (`issues.opened`, `workflow_run`, `pull_request`). PR out. Every step runs on GitHub-hosted runners or RunsOn spot, attributable to the AI-bot App identity.
 
-Cloud pipelines are the **event-driven** half of the automation surface. Something happens in GitHub (an issue is filed, a CI run fails, a PR is opened), the reusable workflows in [`JacobPEvans/ai-workflows`](/automation/repos/ai-workflows) react, and the result lands as a draft PR or a commit on an existing PR — signed by [`JacobPEvans-claude[bot]`](/infrastructure/cicd/git-signing) and ready for review.
+Cloud pipelines are the **event-driven** half of the automation surface. Something happens in GitHub:
+an issue is filed, a CI run fails, or a PR is opened. The reusable workflows in
+[`JacobPEvans/ai-workflows`](/automation/repos/ai-workflows) react. The result lands as a
+draft PR or a commit on an existing PR, signed by
+[`JacobPEvans-claude[bot]`](/infrastructure/cicd/git-signing) and ready for review.
 
-The cron-driven sibling — work that runs on a schedule rather than in response to an event — is documented under [Scheduled routines](/automation/scheduled-routines/overview).
+The cron-driven sibling (work that runs on a schedule rather than in response to an event) is documented under [Scheduled routines](/automation/scheduled-routines/overview).
 
 ## How they fit
 
@@ -23,16 +27,28 @@ The full caller catalog and the post-merge dispatch chain live on the [ai-workfl
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="ai-workflows" icon="github" href="/automation/repos/ai-workflows">
-    Reusable workflows, pinned prompts, the consumer-caller shape, auth + signing.
-  </Card>
-  <Card title="Scheduled routines" icon="clock" href="/automation/scheduled-routines/overview">
-    The cron-driven sibling. Org-wide, no per-repo wiring.
-  </Card>
-  <Card title="Issue to PR pipeline" icon="diagram-project" href="/automation/issue-to-pr-pipeline">
-    The end-to-end flow on `JacobPEvans/docs`, step by step.
-  </Card>
-  <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
-    How AI-authored commits land verified under the `JacobPEvans-claude[bot]` identity.
-  </Card>
+<Card
+  title="ai-workflows"
+  icon="github"
+  href="/automation/repos/ai-workflows">
+  Reusable workflows, pinned prompts, the consumer-caller shape, auth + signing.
+</Card>
+<Card
+  title="Scheduled routines"
+  icon="clock"
+  href="/automation/scheduled-routines/overview">
+  The cron-driven sibling. Org-wide, no per-repo wiring.
+</Card>
+<Card
+  title="Issue to PR pipeline"
+  icon="diagram-project"
+  href="/automation/issue-to-pr-pipeline">
+  The end-to-end flow on `JacobPEvans/docs`, step by step.
+</Card>
+<Card
+  title="Git signing"
+  icon="signature"
+  href="/infrastructure/cicd/git-signing">
+  How AI-authored commits land verified under the `JacobPEvans-claude[bot]` identity.
+</Card>
 </CardGroup>

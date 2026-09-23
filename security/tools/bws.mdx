@@ -1,22 +1,26 @@
 ---
 title: "Bitwarden Secrets Manager (BWS)"
 description: "Programmatic bridge for AI service tokens — BWS project values fetched via a Python helper that keeps the access token in the macOS Keychain."
-page_type: reference
+page_type: "reference"
 ---
-
-> BWS is a separate Bitwarden product from the vault. It exists for the values that need to flow into a tool — without ever sitting on disk in plaintext.
+{/* projected from the authoring site; do not edit here */}
+> BWS is a separate Bitwarden product from the vault. It exists for the values that need to flow into a tool, without ever sitting on disk in plaintext.
 
 ## What BWS is — and what it isn't
 
-BWS (Bitwarden Secrets Manager) is the programmatic-access cousin of the Bitwarden vault. Different product, different storage tier, different access path. Values in BWS are reachable by a service account; values in the [Bitwarden vault](/security/tools/bitwarden) are not.
+BWS (Bitwarden Secrets Manager) is the programmatic-access cousin of the Bitwarden vault. Different
+product, different storage tier, different access path. Values in BWS are reachable by a service
+account; values in the [Bitwarden vault](/security/tools/bitwarden) are not.
 
-The local pattern uses BWS as a bridge: a Python helper fetches the BWS access token from the macOS Keychain (never from disk), uses it to call `bws secret get`, and returns a value to a caller — typically a launcher script for an AI tool that needs an OAuth token.
+The local pattern uses BWS as a bridge. A Python helper fetches the BWS access token from the macOS
+Keychain (never from disk). It uses that token to call `bws secret get`, and returns a value to a
+caller. That caller is typically a launcher script for an AI tool that needs an OAuth token.
 
 ## Why we use it (alongside Doppler)
 
 Doppler is the canonical home for AI provider keys. BWS shows up when:
 
-- An OAuth token is issued by a provider that doesn't fit cleanly into Doppler's config-injection model (e.g. `CLAUDE_CODE_OAUTH_TOKEN` for a session-bound credential).
+- An OAuth token is issued by a provider that doesn't fit cleanly into Doppler's config-injection model (for example, `CLAUDE_CODE_OAUTH_TOKEN` for a session-bound credential).
 - A token must be fetchable by a local script outside any CI context.
 - The team wants a Bitwarden-managed audit log for AI credentials, not just a Doppler audit log.
 
@@ -25,21 +29,21 @@ If both Doppler and BWS would work for a given secret, prefer Doppler. BWS is th
 ## The bridge pattern
 
 <Steps>
-  <Step title="Read references from disk">
-    `bws_helper.py` loads `~/.config/bws/.env` — BWS secret IDs and keychain references only. No values here.
-  </Step>
-  <Step title="Fetch the BWS access token from the keychain">
-    `security find-generic-password` retrieves `BWS_ACCESS_TOKEN` from the automation-tier keychain. The token never reaches disk.
-  </Step>
-  <Step title="Call BWS">
-    `bws secret get <id>` returns the value into helper memory.
-  </Step>
-  <Step title="Pipe straight into the child process">
-    The value goes directly into the requesting subprocess's env. It never touches the parent shell, shell history, or disk.
-  </Step>
+<Step title="Read references from disk">
+`bws_helper.py` loads `~/.config/bws/.env`. It holds BWS secret IDs and keychain references only. No values here.
+</Step>
+<Step title="Fetch the BWS access token from the keychain">
+`security find-generic-password` retrieves `BWS_ACCESS_TOKEN` from the automation-tier keychain. The token never reaches disk.
+</Step>
+<Step title="Call BWS">
+`bws secret get <id>` returns the value into helper memory.
+</Step>
+<Step title="Pipe straight into the child process">
+The value goes directly into the requesting subprocess's env. It never touches the parent shell, shell history, or disk.
+</Step>
 </Steps>
 
-Two non-secret pieces (config file + secret IDs) live on disk; one secret piece (the BWS access token) lives in the keychain; the retrieved value lives only inside the subprocess that asked for it.
+Two non-secret pieces (config file + secret IDs) live on disk. One secret piece (the BWS access token) lives in the keychain. The retrieved value lives only inside the subprocess that asked for it.
 
 ## Config shape
 
@@ -53,16 +57,16 @@ BWS_SECRET_CLAUDE_CODE_OAUTH_TOKEN=<bws-secret-uuid-or-name>
 Three rules for the `.env`:
 
 1. The file contains *references*, not values. Secret IDs are not secrets.
-2. The BWS access token itself is in the keychain, fetched at runtime — never inlined here.
+2. The BWS access token itself is in the keychain, fetched at runtime. It is never inlined here.
 3. The file is gitignored at the dotfiles level. Even with references-only, no advantage to sharing it.
 
 ## The Python helper
 
 [`bws_helper.py`](https://github.com/JacobPEvans/nix-ai/blob/main/modules/claude/bws_helper.py) does three things:
 
-1. `load_env()` — reads the `~/.config/bws/.env` for secret IDs and keychain refs.
-2. `get_bws_token()` — calls `security find-generic-password` (allowed read-only by Claude Code) to fetch the BWS access token from the automation-tier keychain.
-3. `get_secret(name)` — calls `bws secret get` and returns the value to the caller.
+1. `load_env()`: reads the `~/.config/bws/.env` for secret IDs and keychain refs.
+2. `get_bws_token()`: calls `security find-generic-password` (allowed read-only by Claude Code) to fetch the BWS access token from the automation-tier keychain.
+3. `get_secret(name)`: calls `bws secret get` and returns the value to the caller.
 
 Every step keeps secrets in process memory, never disk. Callers should pipe the value directly into a child process's env, never echo it.
 
@@ -76,11 +80,11 @@ Every step keeps secrets in process memory, never disk. Callers should pipe the 
 ## Status
 
 The helper is local-dev tooling, invoked directly from the Python module
-referenced above rather than distributed as a packaged overlay.
+described earlier rather than distributed as a packaged overlay.
 
 ## See also
 
-- [Bitwarden vault](/security/tools/bitwarden) — the human-only sibling product. Not interchangeable with BWS.
-- [Doppler](/security/tools/doppler) — preferred for AI provider keys where it fits.
-- [macOS Keychain](/security/tools/macos-keychain) — where the BWS access token actually lives.
-- [Local AI isolation](/security/local-ai-isolation) — the subprocess-scoping guarantee that lets BWS bridge values into a claude session safely.
+- [Bitwarden vault](/security/tools/bitwarden): the human-only sibling product. Not interchangeable with BWS.
+- [Doppler](/security/tools/doppler): preferred for AI provider keys where it fits.
+- [macOS Keychain](/security/tools/macos-keychain): where the BWS access token actually lives.
+- [Local AI isolation](/security/local-ai-isolation): the subprocess-scoping guarantee that lets BWS bridge values into a claude session safely.

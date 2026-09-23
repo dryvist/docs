@@ -1,23 +1,27 @@
 ---
 title: "Nix ecosystem"
 description: "Four flakes, one goal: rebuild every part of the dev environment from a single command."
-page_type: overview
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Reproducible everything. `nix build` and walk away.
 
-The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and orchestrates the macOS system. `nix-home` defines the user environment via home-manager. `nix-ai` packages every AI coding tool — Claude, Antigravity, Copilot, MLX, MCP servers. `nix-devenv` provides reusable project-level dev shells.
+The four Nix repos are layered, not parallel. `nix-darwin` sits at the top and orchestrates the
+macOS system. `nix-home` defines the user environment via home-manager. `nix-ai` packages every AI
+coding tool, including Claude, Antigravity, Copilot, MLX, and MCP servers. `nix-devenv` provides reusable
+project-level dev shells.
 
 Every flake in the ecosystem pins the same `nixpkgs` / `nix-darwin` / `home-manager` release channel, kept in lockstep across repos so one machine never mixes generations.
 
 ## Ecosystem
 
-{/* Shape: hierarchy. nix-darwin parent imports nix-home + nix-ai; nix-devenv parallel. */}
-{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
+{/*Shape: hierarchy. nix-darwin parent imports nix-home + nix-ai; nix-devenv parallel. */}
+{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart TB
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart TB
   ND([macOS host])
   NH([User environment])
   NA([AI tooling])
@@ -39,49 +43,69 @@ flowchart TB
   linkStyle 2 stroke:#E06B4A,stroke-width:1.5px,stroke-dasharray:4 3;
 ```
 
-`nix-darwin` (coral) is the system root. It imports `nix-home` and `nix-ai` (green). `nix-devenv` (ink) is a parallel concern — each project pulls it directly via `nix flake init`.
+`nix-darwin` (coral) is the system root. It imports `nix-home` and `nix-ai` (green). `nix-devenv` (ink) is a parallel concern. Each project pulls it directly via `nix flake init`.
 
 | Layer | Repo | What it owns |
 | --- | --- | --- |
 | **macOS system** | [macOS host](/nix/nix-darwin) | `environment.systemPackages`, sudoers, security, Touch ID, system-level config |
 | **User environment** | [User environment](/nix/nix-home) | `home.packages`, `programs.*` for zsh, git, tmux, direnv, ssh, gh |
-| **AI tooling** | [AI tooling](/nix/nix-ai) | Claude Code, Antigravity, Copilot, MLX, MCP servers — declarative, version-pinned |
+| **AI tooling** | [AI tooling](/nix/nix-ai) | Claude Code, Antigravity, Copilot, MLX, MCP servers: declarative, version-pinned |
 | **Per-project shells** | [Dev shells](/nix/nix-devenv) | Reusable `flake.nix` templates entered via `direnv` on `cd` |
 
 ## Package placement
 
 The boundary between system, user, and project is intentional:
 
-- `environment.systemPackages` (nix-darwin) — core bootstrap, macOS-only tools, GUI apps
-- `home.packages` (nix-home) — user dev tools, linters, CLIs that follow `$HOME`
-- AI packages (nix-ai) — Claude, Antigravity, Copilot, MLX, MCP servers
-- Project dev shells (nix-devenv) — language- or stack-specific tooling that should not pollute the global PATH
+- `environment.systemPackages` (nix-darwin): core bootstrap, macOS-only tools, GUI apps
+- `home.packages` (nix-home): user dev tools, linters, command-line tools that follow `$HOME`
+- AI packages (nix-ai): Claude, Antigravity, Copilot, MLX, MCP servers
+- Project dev shells (nix-devenv): language- or stack-specific tooling that should not pollute the global PATH
 
 `programs.*` declarations follow the same boundary; home-manager merges both layers cleanly.
 
 ## Continuous integration
 
-Nix CI runs through shared reusable workflows — `_nix-validate.yml` for `nix flake check` and `_nix-build.yml` for macOS builds — so every repo validates the same way. Caching uses the GitHub Actions cache (`actions/cache`) backed by the public `cache.nixos.org` binary cache.
+Nix CI runs through shared reusable workflows: `_nix-validate.yml` for `nix flake check` and
+`_nix-build.yml` for macOS builds. Every repo validates the same way. Caching uses the GitHub
+Actions cache (`actions/cache`) backed by the public `cache.nixos.org` binary cache.
 
-These workflows do **not** use FlakeHub. FlakeHub's hosted binary cache no longer offers a useful free tier, so there is nothing to gain from it — and a FlakeHub-backed cache action fails CI outright when it cannot authenticate to `api.flakehub.com`. The Determinate Systems **Nix installer** (`determinate-nix-action`) and the Determinate Nix module stay in use: both are free and independent of the FlakeHub cache.
+These workflows do **not** use FlakeHub. FlakeHub's hosted binary cache no longer offers a useful
+free tier, so there is nothing to gain from it. A FlakeHub-backed cache action also fails CI
+outright when it cannot authenticate to `api.flakehub.com`. The Determinate Systems **Nix
+installer** (`determinate-nix-action`) and the Determinate Nix module stay in use: both are free and
+independent of the FlakeHub cache.
 
 ## Repos in this section
 
 <CardGroup cols={2}>
-  <Card title="nix-darwin" icon="apple" href="/nix/nix-darwin">
-    macOS system config. Imports `nix-ai` and `nix-home`. The top-level entry point.
-  </Card>
-  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
-    Every AI coding tool, packaged. Claude Code, Antigravity, Copilot, MLX, MCP servers.
-  </Card>
-  <Card title="nix-home" icon="house" href="/nix/nix-home">
-    User dev environment via home-manager. Shell, editor, git, dev tools.
-  </Card>
-  <Card title="nix-devenv" icon="cube" href="/nix/nix-devenv">
-    Reusable per-project dev shells. `nix flake init -t github:JacobPEvans/nix-devenv#mkshell`.
-  </Card>
+<Card
+  title="nix-darwin"
+  icon="apple"
+  href="/nix/nix-darwin">
+  macOS system config. Imports `nix-ai` and `nix-home`. The top-level entry point.
+</Card>
+<Card
+  title="nix-ai"
+  icon="bot"
+  href="/nix/nix-ai">
+  Every AI coding tool, packaged. Claude Code, Antigravity, Copilot, MLX, MCP servers.
+</Card>
+<Card
+  title="nix-home"
+  icon="house"
+  href="/nix/nix-home">
+  User dev environment via home-manager. Shell, editor, git, dev tools.
+</Card>
+<Card
+  title="nix-devenv"
+  icon="cube"
+  href="/nix/nix-devenv">
+  Reusable per-project dev shells. `nix flake init -t github:JacobPEvans/nix-devenv#mkshell`.
+</Card>
 </CardGroup>
 
 ## Why four repos, not one
 
-Each layer is independently useful. `nix-devenv` is consumed by every other repo in the portfolio via `nix flake init`. `nix-ai` is consumed by personal config and by team setups. Splitting them keeps the dependency graph clean and lets each layer iterate at its own pace.
+Each layer is independently useful. `nix-devenv` is consumed by every other repo in the portfolio
+via `nix flake init`. `nix-ai` is consumed by personal config and by team setups. Splitting them
+keeps the dependency graph clean and lets each layer iterate at its own pace.

@@ -1,16 +1,20 @@
 ---
 title: "Running plan and diff reviews through Codex, Gemini, and local MLX"
-description: "How to fan a plan or diff out to three independent model families — the Codex CLI, the Antigravity (agy) CLI for Gemini, and a local MLX model — for adversarial review, plus the gotcha each one hits."
-page_type: how-to
+description: "How to fan a plan or diff out to three independent model families: the Codex CLI, the Antigravity (agy) CLI for Gemini, and a local MLX model, for adversarial review, plus the gotcha each one hits."
+page_type: "how-to"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Three independent model families that agree on the same finding, without seeing each other's output, is a stronger signal than any single review.
 
-This is the working recipe for fanning a plan or diff out to **Codex**, **Gemini**, and a **local MLX model** for adversarial review — three different invocation paths, plus the one gotcha each hits, so the fan-out is repeatable instead of rediscovered every time.
+This is the working recipe for fanning a plan or diff out to **Codex**,
+**Gemini**, and a **local MLX model** for adversarial review. It covers three
+different invocation paths, plus the one gotcha each hits, so the fan-out is
+repeatable instead of rediscovered every time.
 
 ## Codex — via the Codex CLI
 
-Use the Codex MCP tool (the Codex CLI runtime), not a raw API call — it reads the repository itself instead of needing file contents pasted into the prompt.
+Use the Codex MCP tool (the Codex CLI runtime), not a raw API call. It reads
+the repository itself instead of needing file contents pasted into the prompt.
 
 - **Sandbox**: `read-only`; **approval-policy**: `never`; **cwd**: the repo under review.
 - Point it at the plan or diff path in the prompt.
@@ -31,7 +35,7 @@ an explicit model on an API-key-backed Codex session.
 
 ## Gemini — via the Antigravity (`agy`) CLI
 
-The reliable CLI path for a Gemini review is Google's **Antigravity `agy` CLI**, not a raw Gemini API call.
+The reliable command-line path for a Gemini review is Google's **Antigravity `agy` CLI**, not a raw Gemini API call.
 
 ```sh
 agy models   # list what's available
@@ -48,20 +52,21 @@ agy --model "Gemini 3.1 Pro (High)" \
   modify anything.
 
 <Warning>
-**Use the strong reasoner, not a flash tier**
 
-A flash-tier Gemini model will run, but it can hallucinate on a factual
-review — for example claiming a current tool "doesn't exist" or is
-deprecated. A stale-cutoff small model isn't reliable for this task. Use the
+**Use the strong reasoner, not a flash tier.**
+
+A flash-tier Gemini model runs, but it can hallucinate on a factual review. For
+example, it might claim a current tool "doesn't exist" or is deprecated. A
+stale-cutoff small model isn't reliable for this task. Use the
 strongest reasoning tier available (for example `Gemini 3.1 Pro (High)`).
 </Warning>
 
 ## Local model — direct HTTP call
 
-A locally served model that speaks the OpenAI-compatible API (see
+A locally served model that speaks the OpenAI-compatible API needs no wrapper.
+Call the endpoint directly with the review prompt (see
 [how the Nix stack serves a model](/local-llm/nix-serving-stack) for the
-serving mechanics) needs no wrapper — call the endpoint directly with the
-review prompt.
+serving mechanics).
 
 **If nothing answers on the serving port**, the local serving daemon isn't
 running. Start it with your platform's service manager, then poll until the
@@ -87,38 +92,51 @@ curl -sf http://localhost:11434/v1/chat/completions \
                    {"role":"user","content":"...plan..."}]}' \
   | jq -r '.choices[0].message.content'
 ```
+
 </Tip>
 
 <Note>
 **Ground the small model**
 
-A 30B-class local model — and any stale-cutoff cloud model — can confidently
+A 30B-class local model, and any stale-cutoff cloud model, can confidently
 claim current tools "don't exist." Add a system line naming your current
-toolchain as real and current (for example *"Claude Code, Codex CLI, and
-Gemini CLI are all real, current tools"*) to keep the review grounded.
+toolchain as real and current. For example: *"Claude Code, Codex CLI, and
+Gemini CLI are all real, current tools."* This keeps the review grounded.
 </Note>
 
 ## Quick reference
 
 | Family | Path that works | Top gotcha |
 | --- | --- | --- |
-| Codex | Codex MCP/CLI | ChatGPT-backed sessions reject explicit model overrides — omit the parameter |
-| Gemini | Antigravity `agy` CLI, `-p` + `--add-dir` | Flash tiers hallucinate on factual review — use the strongest reasoning tier |
+| Codex | Codex MCP/CLI | ChatGPT-backed sessions reject explicit model overrides: omit the parameter |
+| Gemini | Antigravity `agy` CLI, `-p` + `--add-dir` | Flash tiers hallucinate on factual review: use the strongest reasoning tier |
 | Local model | Direct HTTP call to the OpenAI-compatible endpoint | Confirm the serving daemon is up; use the real served model id |
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="How the Nix stack serves a model" icon="server" href="/local-llm/nix-serving-stack">
-    The serving stack and port behind the local endpoint used here.
-  </Card>
-  <Card title="Choosing a local model" icon="microchip" href="/local-llm/choosing-a-model">
-    How to pick and verify a model before trusting its review output.
-  </Card>
-  <Card title="Writing prompts for small models" icon="message" href="/agent-ops/small-model-prompts">
-    How to shape the review prompt itself once a small local model is in the loop.
-  </Card>
-  <Card title="AI orchestration stack" icon="route" href="/ai-development/ai-orchestration-stack">
-    Where multi-model review fits among the rest of the AI tooling.
-  </Card>
+<Card
+  title="How the Nix stack serves a model"
+  icon="server"
+  href="/local-llm/nix-serving-stack">
+  The serving stack and port behind the local endpoint used here.
+</Card>
+<Card
+  title="Choosing a local model"
+  icon="microchip"
+  href="/local-llm/choosing-a-model">
+  How to pick and verify a model before trusting its review output.
+</Card>
+<Card
+  title="Writing prompts for small models"
+  icon="message"
+  href="/agent-ops/small-model-prompts">
+  How to shape the review prompt itself once a small local model is in the loop.
+</Card>
+<Card
+  title="AI orchestration stack"
+  icon="route"
+  href="/ai-development/ai-orchestration-stack">
+  Where multi-model review fits among the rest of the AI tooling.
+</Card>
 </CardGroup>

@@ -1,28 +1,45 @@
 ---
 title: "OpenTofu on AWS"
 description: "Terrakube-managed OpenTofu for AWS, with remote state, workspace locking, and short-lived OpenBao-minted STS credentials."
-page_type: overview
+page_type: "overview"
 ---
+{/* projected from the authoring site; do not edit here */}
+{/*TIER-GUARD: reference page — the isolation model, naming, encryption policy, and tagging belong together.*/}
 
-{/* TIER-GUARD: reference page — the isolation model, naming, encryption policy, and tagging belong together. */}
+> One IAM role per workspace. OpenBao mints short-lived STS credentials for Terrakube jobs. Nothing holds direct AWS resource access. Terrakube owns remote state and workspace locking.
 
-> One IAM role per workspace. OpenBao mints short-lived STS credentials for Terrakube jobs; nothing holds direct AWS resource access. Terrakube owns remote state and workspace locking.
-
-The pattern below documents the IAM isolation retained by AWS workspaces. New and migrated workloads run as Terrakube-managed OpenTofu workspaces and receive AWS credentials dynamically from OpenBao. The legacy S3 backend material remains only for migration and rollback until the Terrakube state cutover has soaked.
+The pattern below documents the IAM isolation retained by AWS workspaces. New and migrated workloads
+run as Terrakube-managed OpenTofu workspaces and receive AWS credentials dynamically from OpenBao.
+The legacy S3 backend material remains only for migration and rollback until the Terrakube state
+cutover has soaked.
 
 ## The isolation model
 
-The per-project IAM role is the security boundary. Its trust policy lists GitHub OIDC for the matching repo, named operator IAM users, and the dedicated OpenBao broker identity described below. Its permissions policy grants S3 access to exactly one bucket — its own.
+The per-project IAM role is the security boundary. Its trust policy lists GitHub OIDC for the
+matching repo, named operator IAM users, and the dedicated OpenBao broker identity described below.
+Its permissions policy grants S3 access to exactly one bucket: its own.
 
-Local and AI-agent access goes through [OpenBao](/security/tools/openbao)'s AWS secrets engine, not a static key. A dedicated broker identity can only `sts:AssumeRole` into broker-managed roles named `tf-*` (plus a broader, permissions-boundary-capped admin-purpose role for general IaC use); its own base key is seeded into OpenBao once (write-once; rotation is a deliberate, separate operator action, not routine automation) so no long-lived AWS key sits anywhere routine automation can reach it. A local `credential_process` AWS profile resolves the per-project role on demand, backed by an OpenBao AppRole whose secret-zero the runtime secret injector supplies from the human-approved Doppler strict tier — see [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
+Local and AI-agent access goes through [OpenBao](/security/tools/openbao)'s AWS secrets engine,
+not a static key. A dedicated broker identity can only `sts:AssumeRole` into broker-managed roles
+named `tf-*` (plus a broader, permissions-boundary-capped admin-purpose role for general IaC use).
+Its own base key is seeded into OpenBao once (write-once; rotation is a deliberate, separate
+operator action, not routine automation). No long-lived AWS key sits anywhere routine automation
+can reach it. A local `credential_process` AWS profile resolves the per-project role on demand. It
+relies on an OpenBao AppRole whose secret-zero the runtime secret injector supplies from the
+human-approved Doppler strict tier. See [aws-vault](/security/tools/aws-vault) for the mechanics
+that replaced the old MFA-session model.
 
-CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS credentials directly via the role's trust policy. There is no `AWS_ACCESS_KEY_ID` secret in any repo. The same role that a human or agent assumes via OpenBao is the role CI assumes via OIDC — one trust policy, one permissions policy, audited the same way.
+CI uses no static credentials at all. GitHub Actions exchanges its short-lived OIDC token for STS
+credentials directly via the role's trust policy. No repo carries an `AWS_ACCESS_KEY_ID` secret. The
+same role that a human or agent assumes via OpenBao is the role CI assumes via OIDC. Both paths
+share one trust policy, one permissions policy, audited the same way.
 
-{/* Shape: parallel convergence (two source chains join at the per-project role, continue to bucket). Ranks: 2x2x1x1. Boundary crossings: 0. Aspect: ~2:1 LR. Pass. */}
+{/*Shape: parallel convergence (two source chains join at the per-project role, continue to bucket). Ranks: 2x2x1x1. Boundary crossings: 0. Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Op([Operator / agent])
   Broker([OpenBao broker<br/>credential_process])
   CI([GitHub Actions])
@@ -65,34 +82,50 @@ Every project uses the same naming shape so that an account-wide audit (`aws s3 
 | State object key | `<project>/terraform.tfstate` | `widget/terraform.tfstate` |
 | Bootstrap state key | `_bootstrap/terraform.tfstate` | (same key in every project's bucket) |
 
-`<project>` is a short kebab-case identifier matching the consuming repo's last path segment (e.g. `widget` for `terraform-widget`). `<account-id>` is the 12-digit AWS account number — its inclusion in the bucket name makes the name globally unique across the S3 namespace without requiring a random suffix.
+`<project>` is a short kebab-case identifier matching the consuming repo's last path segment (for
+example, `widget` for `terraform-widget`). `<account-id>` is the 12-digit AWS account number. Including it
+in the bucket name makes the name globally unique across the S3 namespace without requiring a
+random suffix.
 
 ## Encryption — why SSE-S3, not SSE-KMS
 
-Every state bucket has bucket-default SSE-S3 (`AES256`) applied; the consuming repo's backend block sets `encrypt = true` so each PutObject carries the SSE header explicitly.
+Every state bucket applies bucket-default SSE-S3 (`AES256`). The consuming repo's backend block sets `encrypt = true` so each PutObject carries the SSE header explicitly.
 
-SSE-KMS uses the same AES-256 cipher under the hood. The difference is who owns the key material. SSE-KMS costs about $1 per month per project key plus a KMS API call on every state read and write — a real number in pipelines that re-plan on every PR. See [AWS KMS pricing](https://aws.amazon.com/kms/pricing/). Since access to the state bucket is already gated by the per-project IAM role's trust policy (MFA-required for humans, OIDC-bound for CI), the KMS layer adds operational cost without changing who can read the state.
+SSE-KMS uses the same AES-256 cipher under the hood. The difference is who owns the key material.
+SSE-KMS costs about $1 per month per project key plus a KMS API call on every state read and write.
+That's a real number in pipelines that re-plan on every PR. See [AWS KMS
+pricing](https://aws.amazon.com/kms/pricing/). Access to the state bucket is already gated by
+the per-project IAM role's trust policy (MFA-required for humans, OIDC-bound for CI). The KMS layer
+adds operational cost without changing who can read the state.
 
-Application-layer secrets that genuinely need MFA-gated or cross-account key control belong in [Bitwarden](/security/tools/bitwarden) for cold human secrets or [Doppler](/security/tools/doppler) for warm runtime injection — never inside the state file.
+Application-layer secrets that genuinely need MFA-gated or cross-account key control belong in
+[Bitwarden](/security/tools/bitwarden) for cold human secrets or
+[Doppler](/security/tools/doppler) for warm runtime injection. They never belong inside the
+state file.
 
 ## Where the long-lived AWS key actually lives
 
-It doesn't — not outside OpenBao. The broker identity's base key is seeded into OpenBao's AWS engine root config once, write-once; no long-lived AWS credential is ever held on a laptop, in `~/.aws/credentials`, in a `.env` file, or in shell history.
+It doesn't, not outside OpenBao. OpenBao's AWS engine root config seeds the broker identity's base
+key once, write-once. No long-lived AWS credential ever sits on a laptop, in
+`~/.aws/credentials`, in a `.env` file, or in shell history.
 
-Every local Terraform invocation runs under a short-lived STS session minted on demand by a `credential_process` AWS profile, which reads the per-project OpenBao AppRole from the ambient environment the runtime secret injector populates. See [aws-vault](/security/tools/aws-vault) for the mechanics that replaced the old MFA-session model.
+Every local Terraform invocation runs under a short-lived STS session. A `credential_process` AWS
+profile mints the session on demand. It reads the per-project OpenBao AppRole from the ambient
+environment the runtime secret injector populates. See [aws-vault](/security/tools/aws-vault) for
+the mechanics that replaced the old MFA-session model.
 
 ## Tagging
 
-Every resource carries four tags, applied via the AWS provider's `default_tags` block so individual resource declarations stay clean:
+The AWS provider's `default_tags` block applies four tags to every resource, so individual resource declarations stay clean:
 
 | Tag | Value |
 | --- | --- |
-| `Project` | `<project>` (same as in the naming table above) |
+| `Project` | `<project>` (same as in the earlier naming table) |
 | `ManagedBy` | `Terraform` |
 | `Repo` | `<github-org>/<github-repo>` |
 | `Environment` | `bootstrap` for the bootstrap module; per-environment (`prod`, `staging`) for the consuming repo |
 
-The `Project` tag should be activated as an AWS cost allocation tag (Billing → Cost allocation tags) so per-project spend appears in Cost Explorer.
+Activate the `Project` tag as an AWS cost allocation tag (Billing → Cost allocation tags) so per-project spend appears in Cost Explorer.
 
 ## Tool versions
 
@@ -103,22 +136,34 @@ The `Project` tag should be activated as an AWS cost allocation tag (Billing →
 | AWS CLI | v2 | `aws sts assume-role` behavior matches what the IAM trust policy expects; required by any `credential_process` profile |
 
 <Note>
-Active AWS workspaces run in Terrakube. OpenBao mints a short-lived, workspace-scoped STS session for the AWS provider; no local profile is part of the normal plan or apply path.
+Active AWS workspaces run in Terrakube. OpenBao mints a short-lived, workspace-scoped STS session for the AWS provider. No local profile is part of the normal plan or apply path.
 </Note>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Bootstrap the AWS foundation" icon="hammer" href="/infrastructure/tofu-aws/aws-bootstrap">
-    The admin-runnable Terraform that creates every per-project resource named on this page.
-  </Card>
-  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/tofu-aws/consuming-repo">
-    What goes inside the new repo so `terraform plan` runs immediately.
-  </Card>
-  <Card title="aws-vault (legacy) and the OpenBao broker" icon="key" href="/security/tools/aws-vault">
-    Why aws-vault is retired and how the credential_process broker replaced it.
-  </Card>
-  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    Static checks in pre-commit, credentialed ops in CI. The placement rule every repo follows.
-  </Card>
+<Card
+  title="Bootstrap the AWS foundation"
+  icon="hammer"
+  href="/infrastructure/tofu-aws/aws-bootstrap">
+  The admin-runnable Terraform that creates every per-project resource named on this page.
+</Card>
+<Card
+  title="Set up the consuming repo"
+  icon="folder-tree"
+  href="/infrastructure/tofu-aws/consuming-repo">
+  What goes inside the new repo so `terraform plan` runs immediately.
+</Card>
+<Card
+  title="aws-vault (legacy) and the OpenBao broker"
+  icon="key"
+  href="/security/tools/aws-vault">
+  Why aws-vault is retired and how the credential_process broker replaced it.
+</Card>
+<Card
+  title="OpenTofu check placement"
+  icon="list-check"
+  href="/infrastructure/tofu-check-placement">
+  Static checks in pre-commit, credentialed ops in CI. The placement rule every repo follows.
+</Card>
 </CardGroup>

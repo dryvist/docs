@@ -1,14 +1,18 @@
 ---
 title: "AWS bootstrap"
 description: "Admin-runnable Terraform that provisions the state bucket, GitHub OIDC trust, and per-project IAM role for a new Terraform repo. Idempotent; runs once per project."
-page_type: how-to
+page_type: "how-to"
 ---
-
-{/* TIER-GUARD: reference page — prerequisites, the bootstrap module, the migrate-state flow, and verify all belong together. */}
+{/* projected from the authoring site; do not edit here */}
+{/*TIER-GUARD: reference page — prerequisites, the bootstrap module, the migrate-state flow, and verify all belong together.*/}
 
 > Run this once per new project, with admin AWS credentials. Output is everything a new repo's `backend.tf` needs.
 
-The bootstrap is plain Terraform. The first `apply` runs with local state; once the bucket exists, you uncomment the `backend "s3"` block at the top of the file and `terraform init -migrate-state` lifts the state into the bucket the bootstrap itself just created. The bucket then hosts both its own bootstrap state (`_bootstrap/terraform.tfstate`) and the consuming repo's state (`<project>/terraform.tfstate`).
+The bootstrap is plain Terraform. The first `apply` runs with local state. Once the bucket exists,
+uncomment the `backend "s3"` block at the top of the file. Then `terraform init -migrate-state`
+lifts the state into the bucket the bootstrap itself just created. The bucket then hosts both its
+own bootstrap state (`_bootstrap/terraform.tfstate`) and the consuming repo's state
+(`<project>/terraform.tfstate`).
 
 ## Prerequisites
 
@@ -30,9 +34,11 @@ The bootstrap is plain Terraform. The first `apply` runs with local state; once 
     --client-id-list sts.amazonaws.com
   ```
 
-  AWS verifies the GitHub Actions issuer's certificate chain automatically — no manual thumbprint is needed.
+  AWS verifies the GitHub Actions issuer's certificate chain automatically. It needs no manual thumbprint.
 
-- Each human operator has an IAM user with MFA enabled, and a policy granting only `sts:AssumeRole` on `arn:aws:iam::<account-id>:role/tf-*` (no direct resource permissions). Operator IAM user creation is a per-operator one-time step, separate from per-project bootstrap.
+- Each human operator has an IAM user with MFA enabled, and a policy granting only `sts:AssumeRole`
+  on `arn:aws:iam::<account-id>:role/tf-*` (no direct resource permissions). Operator IAM user
+  creation is a per-operator one-time step, separate from per-project bootstrap.
 
 ## Where this lives
 
@@ -55,7 +61,9 @@ Each per-project directory is independent: its own state object lives in its own
 
 ## The bootstrap module
 
-The Terraform code lives in [`dryvist/tofu-aws-templates`][repo] (Apache-2.0, public). Each per-project bootstrap directory is a small root module that wires the published module to the project's values:
+The Terraform code lives in [`dryvist/tofu-aws-templates`][repo] (Apache-2.0, public). Each
+per-project bootstrap directory is a small root module that wires the published module to the
+project's values:
 
 ```hcl
 terraform {
@@ -104,9 +112,11 @@ output "state_bucket"     { value = module.state_backend.state_bucket }
 output "state_key_prefix" { value = module.state_backend.state_key_prefix }
 ```
 
-Full input / output reference and the list of underlying AWS resources live in the module repo's [README][readme]. The module pins to a tagged release (`v0.1.0` above) — breaking changes ship as new majors so existing bootstraps stay valid until you re-pin.
+Full input / output reference and the list of underlying AWS resources live in the module repo's
+[README][readme]. The module pins to a tagged release (`v0.1.0`, shown in the preceding block). Breaking changes ship as
+new majors, so existing bootstraps stay valid until you re-pin.
 
-The S3-native lock object (`<project>/terraform.tfstate.tflock`) is just another S3 object under the same prefix as state — no separate IAM permission required, no DynamoDB table.
+The S3-native lock object (`<project>/terraform.tfstate.tflock`) is just another S3 object under the same prefix as state. It needs no separate IAM permission and no DynamoDB table.
 
 [repo]: https://github.com/dryvist/tofu-aws-templates
 [readme]: https://github.com/dryvist/tofu-aws-templates/blob/main/README.md
@@ -114,44 +124,50 @@ The S3-native lock object (`<project>/terraform.tfstate.tflock`) is just another
 ## Bootstrap the chicken-and-egg
 
 <Steps>
-  <Step title="Apply locally">
-    With the module block above pointing at your project's values:
+<Step title="Apply locally">
+With the preceding module block pointing at your project's values:
 
-    ```bash
-    terraform init      # local state — no backend block yet
-    terraform apply
-    ```
+```bash
+terraform init      # local state — no backend block yet
+terraform apply
+```
 
-    Confirm the apply. `terraform output backend_config` emits the ready-to-paste `backend "s3" {}` block for the consuming repo (`terraform output -raw backend_config > /tmp/backend.tf` to ship it straight to a file).
-  </Step>
-  <Step title="Uncomment the backend block">
-    In `main.tf`, uncomment the `backend "s3"` block at the top of the `terraform {}` block and substitute the outputs the apply just produced:
+Confirm the apply. `terraform output backend_config` emits the ready-to-paste `backend "s3" {}`
+block for the consuming repo (`terraform output -raw backend_config > /tmp/backend.tf` to ship it
+straight to a file).
+</Step>
+<Step title="Uncomment the backend block">
+In `main.tf`, uncomment the `backend "s3"` block at the top of the `terraform {}` block and substitute the outputs the apply just produced:
 
-    ```hcl
-    backend "s3" {
-      bucket       = "tfstate-proxmox-<account-id>"
-      key          = "_bootstrap/terraform.tfstate"
-      region       = "us-east-1"
-      use_lockfile = true
-      encrypt      = true
-    }
-    ```
+```hcl
+backend "s3" {
+  bucket       = "tfstate-proxmox-<account-id>"
+  key          = "_bootstrap/terraform.tfstate"
+  region       = "us-east-1"
+  use_lockfile = true
+  encrypt      = true
+}
+```
 
-    `encrypt = true` instructs the client to send the SSE header on every PutObject. The bucket's default SSE-S3 encryption is already configured by the module above — no `kms_key_id` is needed because there is no KMS key.
-  </Step>
-  <Step title="Migrate state into the bucket">
-    ```bash
-    terraform init -migrate-state
-    ```
+`encrypt = true` instructs the client to send the SSE header on every PutObject. The preceding
+module already configures the bucket's default SSE-S3 encryption. `kms_key_id` is not needed,
+because there is no KMS key.
+</Step>
+<Step title="Migrate state into the bucket">
+```bash
+terraform init -migrate-state
+```
 
-    Terraform prompts to copy the local state file into the bucket. Confirm. Then delete the local artefacts:
+Terraform prompts to copy the local state file into the bucket. Confirm. Then delete the local artefacts:
 
-    ```bash
-    rm terraform.tfstate terraform.tfstate.backup
-    ```
+```bash
+rm terraform.tfstate terraform.tfstate.backup
+```
 
-    The bootstrap is now self-hosting in the bucket it created. Subsequent `terraform plan` / `terraform apply` runs against the bootstrap (for example to widen `branch_pattern` or add another operator) work like any other Terraform module.
-  </Step>
+The bootstrap is now self-hosting in the bucket it created. Subsequent `terraform plan` /
+`terraform apply` runs against the bootstrap (for example to widen `branch_pattern` or add
+another operator) work like any other Terraform module.
+</Step>
 </Steps>
 
 ## Verify
@@ -169,11 +185,12 @@ terraform output -json
 
 If all three succeed, the consuming repo can immediately set up its [backend.tf](/infrastructure/tofu-aws/consuming-repo) and run its first `terraform plan`.
 
-{/* Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~5:1 LR. Pass. */}
+{/*Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~5:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Admin([Admin shell])
   Apply([terraform apply<br/>local state])
   Bucket[(State bucket created)]
@@ -196,16 +213,28 @@ flowchart LR
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="OpenTofu on AWS overview" icon="diagram-project" href="/infrastructure/tofu-aws/overview">
-    The isolation model and naming conventions this bootstrap implements.
-  </Card>
-  <Card title="Set up the consuming repo" icon="folder-tree" href="/infrastructure/tofu-aws/consuming-repo">
-    What the new repo drops in next to use the outputs above.
-  </Card>
-  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    Where every Terraform / OpenTofu command runs — pre-commit vs CI.
-  </Card>
-  <Card title="aws-vault (legacy) and the OpenBao broker" icon="key" href="/security/tools/aws-vault">
-    How operators and agents now reach the role this bootstrap created.
-  </Card>
+<Card
+  title="OpenTofu on AWS overview"
+  icon="diagram-project"
+  href="/infrastructure/tofu-aws/overview">
+  The isolation model and naming conventions this bootstrap implements.
+</Card>
+<Card
+  title="Set up the consuming repo"
+  icon="folder-tree"
+  href="/infrastructure/tofu-aws/consuming-repo">
+  What the new repo drops in next to use the outputs above.
+</Card>
+<Card
+  title="OpenTofu check placement"
+  icon="list-check"
+  href="/infrastructure/tofu-check-placement">
+  Where every Terraform / OpenTofu command runs — pre-commit vs CI.
+</Card>
+<Card
+  title="aws-vault (legacy) and the OpenBao broker"
+  icon="key"
+  href="/security/tools/aws-vault">
+  How operators and agents now reach the role this bootstrap created.
+</Card>
 </CardGroup>

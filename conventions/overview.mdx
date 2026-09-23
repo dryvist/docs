@@ -1,56 +1,84 @@
 ---
 title: "Conventions"
-description: "Cross-repo writing standards — commit shape, branch shape, PR shape, transport, scripts, diagrams."
-page_type: overview
+description: "Cross-repo writing standards: commit shape, branch shape, PR shape, transport, scripts, diagrams."
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Standards that apply to every repo, public or private, regardless of language or tool.
 
-These conventions are the human-readable form of policies that AI assistants enforce automatically. Every contributor — human or model — works inside the same envelope, so PRs land consistently no matter who authored them.
+These conventions are the human-readable form of policies that AI assistants enforce automatically.
+Every contributor (human or model) works inside the same envelope, so PRs land consistently no
+matter who authored them.
 
 ## What this section covers
 
 ### Git & GitHub
 
 <CardGroup cols={2}>
-  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
-    No emoji in commit subjects, Conventional Commits, the autonomy rules that decide when to ship vs ask.
-  </Card>
-  <Card title="Branch conventions" icon="code-branch" href="/conventions/branch-conventions">
-    git-flow-next types (`feature/<issue>-slug`, `release/*`, `hotfix/*`) on `develop`-based repos; Conventional Branch short types (`feat/<name>`) on trunk-flow repos.
-  </Card>
-  <Card title="PR conventions" icon="code-pull-request" href="/conventions/pr-conventions">
-    PR title = the squash commit subject. Squash-merge into `develop` (or `main` on trunk-flow repos); `develop` → `main` promotion is merge-commit only.
-  </Card>
-  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
-    SSH for public repos, HTTPS for private repos. Visibility decides — not owner, not org.
-  </Card>
-  <Card title="README conventions" icon="book-open" href="/conventions/readme-conventions">
-    One standalone README shape per repo. Cross-repo context lives on this site, linked once.
-  </Card>
+<Card
+  title="Commit conventions"
+  icon="code-commit"
+  href="/conventions/commit-conventions">
+  No emoji in commit subjects, Conventional Commits, the autonomy rules that decide when to ship vs ask.
+</Card>
+<Card
+  title="Branch conventions"
+  icon="code-branch"
+  href="/conventions/branch-conventions">
+  git-flow-next types (`feature/<issue>-slug`, `release/*`, `hotfix/*`) on `develop`-based repos; Conventional Branch short types (`feat/<name>`) on trunk-flow repos.
+</Card>
+<Card
+  title="PR conventions"
+  icon="code-pull-request"
+  href="/conventions/pr-conventions">
+  PR title = the squash commit subject. Squash-merge into `develop` (or `main` on trunk-flow repos); `develop` → `main` promotion is merge-commit only.
+</Card>
+<Card
+  title="Git transport"
+  icon="lock"
+  href="/conventions/git-transport">
+  SSH for public repos, HTTPS for private repos. Visibility decides — not owner, not org.
+</Card>
+<Card
+  title="README conventions"
+  icon="book-open"
+  href="/conventions/readme-conventions">
+  One standalone README shape per repo. Cross-repo context lives on this site, linked once.
+</Card>
 </CardGroup>
 
 ### Writing & structure
 
 <CardGroup cols={2}>
-  <Card title="Documentation standards" icon="book-open-cover" href="/conventions/documentation-standards">
-    How this site is organized and written — IA, page naming, frontmatter, and the sources the rules derive from.
-  </Card>
-  <Card title="No scripts in non-script files" icon="ban" href="/conventions/no-scripts">
-    Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow.
-  </Card>
-  <Card title="Diagramming" icon="diagram-project" href="/conventions/diagramming">
-    Every repo with non-trivial architecture ships diagrams. Inline Mermaid where GitHub renders, standalone `.mmd` + SVG otherwise.
-  </Card>
+<Card
+  title="Documentation standards"
+  icon="book-open-cover"
+  href="/conventions/documentation-standards">
+  How this site is organized and written — IA, page naming, frontmatter, and the sources the rules derive from.
+</Card>
+<Card
+  title="No scripts in non-script files"
+  icon="ban"
+  href="/conventions/no-scripts">
+  Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow.
+</Card>
+<Card
+  title="Diagramming"
+  icon="diagram-project"
+  href="/conventions/diagramming">
+  Every repo with non-trivial architecture ships diagrams. Inline Mermaid where GitHub renders, standalone `.mmd` + SVG otherwise.
+</Card>
 </CardGroup>
 
 ## Related standards elsewhere in the site
 
-- [Golden laws](/security/golden-laws) — the 15 non-negotiable security rules
-- [Repo boundaries](/ai-development/repo-boundaries) — how rules, plugins, and docs split across the three AI repos
-- [CI/CD policy](/infrastructure/cicd/policy) — release-please, dependency pinning, runner choice
-- [Dependency automation](/infrastructure/cicd/dependency-automation) — Renovate trust tiers, scheduling, and automerge across every repo
-- [OpenTofu check placement](/infrastructure/tofu-check-placement) — static checks in pre-commit, credentialed ops in CI
-- [Verifying the instrument](/local-llm/verifying-the-instrument) — never let a name resolve to something it does not identify, and mutation-test every new check
+- [Golden laws](/security/golden-laws): the 15 non-negotiable security rules
+- [Repo boundaries](/ai-development/repo-boundaries): how rules, plugins, and docs split across the three AI repos
+- [CI/CD policy](/infrastructure/cicd/policy): release-please, dependency pinning, runner choice
+- [Dependency automation](/infrastructure/cicd/dependency-automation): Renovate trust tiers, scheduling, and automerge across every repo
+- [OpenTofu check placement](/infrastructure/tofu-check-placement): static checks in pre-commit, credentialed ops in CI
+- [Verifying the instrument](/local-llm/verifying-the-instrument): never let a name resolve to something it does not identify, and mutation-test every new check
 
-Standards that are AI-runtime only (tool routing, skill execution semantics, LiteLLM routing) stay in [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) and are loaded as agent context. Anything humans need to read lives here.
+Standards that are AI-runtime only (tool routing, skill execution semantics, LiteLLM routing) stay
+in [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) and are loaded as
+agent context. Anything humans need to read lives here.

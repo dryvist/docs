@@ -1,49 +1,49 @@
 ---
 title: "Model routing"
 description: "Why a multi-agent setup routes every model call through one endpoint, how work gets delegated to the cheapest capable tier, and the difference between a cost control that is enforced and one that is merely advised."
-page_type: explanation
+page_type: "explanation"
 ---
+{/* projected from the authoring site; do not edit here */}
+> The cheapest capable model that can do the job, chosen per task, and one place where that choice can actually be governed.
 
-> The cheapest capable model that can do the job, chosen per task — and one place where that choice can actually be governed.
-
-Running several AI agents at once creates a problem that does not exist with one:
-every agent has its own model, its own credential, and its own bill. Nobody can
-see the total, nobody can cap it, and the same work gets done at wildly different
-prices depending on which agent happened to pick it up.
+Running several AI agents at once creates a problem that does not exist with one.
+Every agent has its own model, its own credential, and its own bill. Nobody can
+see the total, and nobody can cap it. The same work gets done at wildly
+different prices, depending on which agent happened to pick it up.
 
 Model routing is the answer to that. This page is the concept; the specific
 endpoints, credentials, and model inventory are deliberately not here.
 
 ## One endpoint, many backends
 
-The core move is to stop letting each tool hold its own model configuration and
-put a single OpenAI-compatible endpoint in front of everything instead. Every
+The core move is to stop letting each tool hold its own model configuration. Put
+a single OpenAI-compatible endpoint in front of everything instead. Every
 consumer points at that one endpoint. Adding a backend, retiring one, or
-repointing a tier becomes a change in one config file rather than an edit to
-every tool that might use it.
+repointing a tier becomes a change in one config file. It is no longer an edit
+to every tool that might use it.
 
 This is worth doing even when all the backends are local, because the win is not
 about where the models run. It is about having exactly one place where routing,
 observability, and policy can live.
 
 The cost of the pattern is that the endpoint sits in the path of every model
-call. That is only acceptable if it cannot become a bottleneck — which in
-practice means keeping it **stateless**, with its configuration rendered from
-version control rather than authored in a UI or stored in a database. Several
-identical instances behind a health check can then serve interchangeably, and
-losing one costs nothing.
+call. That is only acceptable if it cannot become a bottleneck. In practice that
+means keeping it **stateless**, with its configuration rendered from version
+control rather than authored in a UI or stored in a database. Several identical
+instances behind a health check can then serve interchangeably, and losing one
+costs nothing.
 
-Keeping it stateless has a consequence worth planning for: features that need to
-remember something across requests — per-caller spend ledgers, revocable
-per-consumer keys — need somewhere to store that state. Statelessness and
-per-caller accounting pull in opposite directions, and that trade should be made
-deliberately rather than discovered later.
+Keeping it stateless has a consequence worth planning for. Features that need to
+remember something across requests, such as per-caller spend ledgers or
+revocable per-consumer keys, need somewhere to store that state. Statelessness
+and per-caller accounting pull in opposite directions, and that trade should be
+made deliberately rather than discovered later.
 
 ## Ask for a role, not a model
 
-Consumers should request a **stable alias** that names a job — the default
-reasoning model, the judge, the tool-calling tier — rather than a specific model
-identifier.
+Consumers should request a **stable alias** that names a job: the default
+reasoning model, the judge, the tool-calling tier. That beats requesting a
+specific model identifier.
 
 The reason is drift. Model identifiers change constantly: a new quantization, a
 better checkpoint, a swap for something cheaper. Every place that hardcoded the
@@ -52,8 +52,8 @@ the worst moment. An alias moves once, centrally.
 
 This extends to documentation. **A page that lists model names is wrong the
 moment the list changes**, and it is wrong silently. The right pattern is a
-single machine-readable registry that the routing config is generated from, and
-docs that point at it — or at the endpoint's own live model listing — instead of
+single machine-readable registry that the routing config is generated from.
+Docs should point at it, or at the endpoint's own live model listing, instead of
 restating it. That is why this page names no models.
 
 ## Delegation: the cheapest capable tier
@@ -64,7 +64,7 @@ whichever tier can do it most cheaply, in roughly this order:
 
 1. **A local tier.** No marginal cost, no data leaving the network, no
    credential. This covers most bounded subtasks and should be the default.
-2. **An external provider**, when a local tier genuinely cannot do the job — a
+2. **An external provider**, when a local tier genuinely cannot do the job: a
    context window it cannot hold, or a capability it does not have.
 3. **The agent's own model.** The fallback, not the default. An agent that
    delegates and ends up here has saved nothing.
@@ -72,44 +72,46 @@ whichever tier can do it most cheaply, in roughly this order:
 External access should always be **opt-in by explicit model identifier**, so
 nothing routes to a paid provider implicitly.
 
-Whether an external tier may also sit *inside* a fallback chain — rather than
-being reached only by explicit request — depends on whether its cost and
-failure modes are bounded. An external tier priced honestly (so the router's
-cost-vs-quality tradeoff sees its real price, not zero) and with fail-fast
-behavior (rejects immediately when unavailable, never retries or backs off in
-place) can safely occupy a fallback leg: a chain with several such legs, each
-individually rate-capped, degrades gracefully rather than emptying because one
-provider is flaky. The case the old, blanket "always exclude" advice actually
-guards against is the *unbounded* one — a provider with no rate ceiling of its
-own, or one that retries and backs off internally, can turn a fallback chain
-into an unbounded wait or an unbounded bill; keep that kind out entirely.
+Whether an external tier may also sit *inside* a fallback chain, rather than
+being reached only by explicit request, is a separate question. It depends on
+whether its cost and failure modes are bounded. An external tier can safely
+occupy a fallback leg when two things hold. It must be priced honestly, so the
+router's cost-vs-quality tradeoff sees its real price, not zero. And it must
+behave fail-fast: it rejects immediately when unavailable, never retrying or
+backing off in place. A chain built from several such legs, each individually
+rate-capped, degrades gracefully rather than emptying because one provider is
+flaky. The case the old, blanket "always exclude" advice actually guards
+against is the *unbounded* one. A provider with no rate ceiling of its own, or
+one that retries and backs off internally, is dangerous here. It can turn a
+fallback chain into an unbounded wait or an unbounded bill. Keep that kind out
+entirely.
 
 ### Cost as data, not a hardcoded order
 
-A hand-ordered fallback chain — "try local, then this provider, then that
-one" — freezes today's guess about what's cheap and good into code. It stops
+A hand-ordered fallback chain ("try local, then this provider, then that
+one") freezes today's guess about what's cheap and good into code. It stops
 being true the moment a model's price or quality changes, and nobody notices
 until the ordering is visibly wrong.
 
-The alternative is a router that classifies each request, keeps a running
-quality estimate per model, and weighs that estimate against each model's
-*registered* cost through a single tunable weight — rather than consulting a
-fixed list. "Prefer local" then isn't a rule anyone wrote; it falls out of
-local tiers carrying an honestly low registered cost. Raise a hosted tier's
+The alternative is a router that classifies each request and keeps a running
+quality estimate per model. It weighs that estimate against each model's
+*registered* cost through a single tunable weight. It never consults a fixed
+list. "Prefer local" then isn't a rule anyone wrote; it falls out of local
+tiers carrying an honestly low registered cost. Raise a hosted tier's
 registered price and the router prefers it less, automatically, with no
-reordering. The lesson generalizes past this one router: whenever "prefer
-cheap/local" is encoded as an explicit if-first-then-else chain, ask whether
-it could instead be a cost value the decision reads.
+reordering. The lesson generalizes past this one router. Whenever "prefer
+cheap/local" is encoded as an explicit if-first-then-else chain, consider an
+alternative. Ask whether it could instead be a cost value the decision reads.
 
 ### The stable-handle pattern, for a tier you don't control
 
-A hosted free tier is often a moving target — the provider lets you point a
-name at whichever underlying model you want, and changes it on their side
-without warning. Model routing already has the answer for that from
-[Ask for a role, not a model](#ask-for-a-role-not-a-model): give it a **stable
+A hosted free tier is often a moving target. The provider lets you point a name
+at whichever underlying model you want, and changes it on their side without
+warning. Model routing already has the answer for that, from
+[Ask for a role, not a model](#ask-for-a-role-not-a-model). Give it a **stable
 handle** and never route on the identifier behind it. Here the indirection is
-provider-side rather than in your own registry — you edit the provider's
-dashboard, not your config — but the property that matters is identical: the
+provider-side rather than in your own registry. You edit the provider's
+dashboard, not your config. But the property that matters is identical. The
 handle is what every caller names, and the model behind it can change with no
 code change and no redeploy on your end.
 
@@ -117,23 +119,23 @@ code change and no redeploy on your end.
 
 This is the distinction that matters most, and the one most easily blurred.
 
-A control that runs **at the caller** — an instruction in a prompt, a budget an
-agent tracks for itself — binds a well-behaved caller and nothing else. An agent
-that ignores it, misunderstands it, or is compromised simply proceeds. It is a
-convention.
+A control that runs **at the caller** binds a well-behaved caller. Examples
+include an instruction in a prompt or a budget an agent tracks for itself. It
+does nothing else. An agent that ignores it, misunderstands it, or is
+compromised simply proceeds. It is a convention.
 
-A control that runs **at the routing endpoint** — an allowlist of permitted
-models, a hard spend ceiling, a rate limit — binds every caller, because the
-caller is not the thing enforcing it.
+A control that runs **at the routing endpoint** binds every caller. Examples
+include an allowlist of permitted models, a hard spend ceiling, or a rate
+limit. The caller is not the thing enforcing it.
 
-Both are useful. The failure is writing documentation that describes the first as
-if it were the second, because that produces false confidence in a control that
-was never load-bearing. If a cap is tracked by the agent, the honest word is
+Both are useful. The failure is writing documentation that describes the first
+as if it were the second. That produces false confidence in a control that was
+never load-bearing. If a cap is tracked by the agent, the honest word is
 *advisory*, and it should stay that word until enforcement actually moves.
 
-An allowlist is often the pragmatic middle: it constrains *what* can be reached
-without needing anywhere to store spend, so it works on a stateless endpoint. It
-bounds reach rather than cost — a permitted model can still be expensive — but
+An allowlist is often the pragmatic middle. It constrains *what* can be reached
+without needing anywhere to store spend, so it works on a stateless endpoint.
+It bounds reach rather than cost. A permitted model can still be expensive. But
 against a broad credential it removes most of the exposure.
 
 ## Failing honestly
@@ -141,13 +143,13 @@ against a broad credential it removes most of the exposure.
 A shared endpoint is a shared dependency, so agents need defined behaviour when
 it is unreachable: a bounded timeout and a clear report.
 
-The one genuinely bad outcome is a **silent fallback** — the agent quietly does
-the work on its own model and presents the result as though delegation happened.
-That hides both the cost and the fact that the routing layer is down. If
-delegation failed, the report says delegation failed.
+The one genuinely bad outcome is a **silent fallback**. The agent quietly does
+the work on its own model and presents the result as though delegation
+happened. That hides both the cost and the fact that the routing layer is down.
+If delegation failed, the report says delegation failed.
 
 ## Related
 
-- [Repo boundaries](/ai-development/repo-boundaries) — where routing rules live relative to plugins and docs.
-- [MCP tool plane](/ai-development/mcp-tool-plane) — the same "register once, reach from everywhere" idea, applied to tools rather than models.
-- [Local LLM](/local-llm/overview) — the serving side: what runs the local tiers.
+- [Repo boundaries](/ai-development/repo-boundaries): where routing rules live relative to plugins and docs.
+- [MCP tool plane](/ai-development/mcp-tool-plane): the same "register once, reach from everywhere" idea, applied to tools rather than models.
+- [Local LLM](/local-llm/overview): the serving side, what runs the local tiers.

@@ -1,14 +1,18 @@
 ---
 title: "Packer Windows templates on Proxmox: six silent traps"
 description: "Six failure modes in a proxmox-iso Windows build. Each one presents as the same symptom — Packer waiting for WinRM against a VM that looks healthy — and four of them fail without writing an error anywhere Packer can see."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > A Windows build on the `proxmox-iso` builder fails in ways that all look identical from the Packer log. Diagnose by measuring the VM, not by reading the stall.
 
-Building a Windows template with [`packer-plugin-proxmox`](https://github.com/hashicorp/packer-plugin-proxmox) puts a full unattended install between you and any feedback. When something goes wrong, Packer prints `Waiting for WinRM to become available...` and keeps printing it until the timeout. That one line covers at least six distinct root causes, so the log alone never tells you which you have.
+Building a Windows template with
+[`packer-plugin-proxmox`](https://github.com/hashicorp/packer-plugin-proxmox) puts a full unattended
+install between you and any feedback. When something goes wrong, Packer prints `Waiting for WinRM to
+become available...` and keeps printing it until the timeout. That one line covers at least six
+distinct root causes, so the log alone never tells you which you have.
 
-Each trap below costs a full 30–60 minute build to find by trial. Four of them fail silently: Windows rejects an instruction and carries on as if you never gave it.
+Each trap below costs a full 30–60 minute build to find by trial. Four of them fail silently. Windows rejects an instruction and carries on as if you never gave it.
 
 ## Diagnose the stall before you theorize
 
@@ -25,7 +29,7 @@ Interpret the delta, not the absolute value:
 | --- | --- |
 | A few MB read, **0 written** | The guest never booted the installer |
 | Hundreds of MB read, **0 written** | Setup booted but cannot see a disk |
-| Both climbing | Something is installing — but confirm *what* |
+| Both climbing | Something is installing, but confirm *what* |
 | Both flat, CPU near zero | Genuinely stuck |
 
 Take a console screenshot rather than guessing. From the node:
@@ -34,7 +38,7 @@ Take a console screenshot rather than guessing. From the node:
 qm monitor <vmid> <<<"screendump /tmp/console.ppm"
 ```
 
-One picture routinely replaces three competing theories. If the display is blank because the desktop is idle, ask the guest agent instead — it works with no network at all:
+One picture routinely replaces three competing theories. If the display is blank because the desktop is idle, ask the guest agent instead. It works with no network at all:
 
 ```bash
 # POST /nodes/<node>/qemu/<vmid>/agent/exec  then poll
@@ -42,12 +46,16 @@ One picture routinely replaces three competing theories. If the display is blank
 ```
 
 <Warning>
-Heavy disk I/O proves activity, not the activity you assume. BitLocker encrypting a 64 GB volume looks exactly like a long install. "Not hung" is a sound conclusion from these counters; "the step I expect is progressing" is not.
+Heavy disk I/O proves activity, not the activity you assume. BitLocker encrypting a 64 GB volume
+looks exactly like a long install. "Not hung" is a sound conclusion from these counters; "the step
+you expect is progressing" is not.
 </Warning>
 
 ## 1. UEFI media needs a boot command
 
-Official Windows media stops at `Press any key to boot from CD or DVD...` and falls through when nobody presses one. Packer then waits out its entire `winrm_timeout` against a guest that never started installing.
+Official Windows media stops at `Press any key to boot from CD or DVD...` and falls through when
+nobody presses one. Packer then waits out its entire `winrm_timeout` against a guest that never
+started installing.
 
 Confirmed on a real run: eight minutes after power-on, **3.6 MB read** (the EFI bootloader and nothing else) and **0 bytes written**.
 
@@ -66,9 +74,14 @@ The `sendkey` endpoint this uses requires the **`VM.Console`** privilege on the 
 
 ## 2. DriverPaths belongs to PnpCustomizationsWinPE
 
-If your boot disk sits behind a `virtio-scsi-pci` controller, WinPE sees no disk until `vioscsi` loads. Attaching `virtio-win.iso` is necessary but not sufficient — you must also point the answer file at the driver.
+If your boot disk sits behind a `virtio-scsi-pci` controller, WinPE sees no disk until `vioscsi`
+loads. Attaching `virtio-win.iso` is necessary but not sufficient. You must also point the answer
+file at the driver.
 
-Put `DriverPaths` under `Microsoft-Windows-Setup` and it is silently ignored. Setup honours *every other element* of that component — it skips language, EULA, and edition selection — and drops the one it does not own. The result is the "Select location to install Windows" screen with an empty disk list: 715 MiB read, **0 bytes written**, forever.
+Put `DriverPaths` under `Microsoft-Windows-Setup` and it is silently ignored. Setup honours *every
+other element* of that component: it skips language, EULA, and edition selection, and drops the
+one it does not own. The result is the "Select location to install Windows" screen with an empty
+disk list: 715 MiB read, **0 bytes written**, forever.
 
 It belongs to `Microsoft-Windows-PnpCustomizationsWinPE`:
 
@@ -89,7 +102,10 @@ Correct placement produced 9 GiB written within three minutes.
 
 ## 3. An unidentified network is Public, and Public rules are LocalSubnet
 
-Windows classifies a network it cannot identify as **Public**. The built-in WinRM and Remote Desktop rules for the Public profile are scoped to `LocalSubnet`. So the guest listens on 5985 and 3389 and silently drops every connection from another subnet — Packer, Ansible, and any off-subnet RDP client all fail against a demonstrably healthy VM.
+Windows classifies a network it cannot identify as **Public**. The built-in WinRM and Remote Desktop
+rules for the Public profile are scoped to `LocalSubnet`. So the guest listens on 5985 and 3389 and
+silently drops every connection from another subnet. Packer, Ansible, and any off-subnet RDP client
+all fail against a demonstrably healthy VM.
 
 Observed live inside such a guest:
 
@@ -100,9 +116,11 @@ WINRM-HTTP-In-TCP           profile=Public          remote=LocalSubnet
 WINRM-HTTP-In-TCP-NoScope   profile=Domain,Private  remote=Any
 ```
 
-The `-NoScope` rule is the one that would allow the connection, and it is inactive purely because of the category. Setting `<NetworkLocation>Work</NetworkLocation>` in the answer file does **not** settle this.
+The `-NoScope` rule is the one that would allow the connection, and it is inactive purely because of
+the category. Setting `<NetworkLocation>Work</NetworkLocation>` in the answer file does **not**
+settle this.
 
-Set the category explicitly at first logon, *before* `winrm quickconfig` — which refuses outright on a Public network. Retry, because the virtio NIC may not be up yet and there is no profile to set:
+Set the category explicitly at first logon, *before* `winrm quickconfig`, which refuses outright on a Public network. Retry, because the virtio NIC may not be up yet and there is no profile to set:
 
 ```powershell
 1..30 | ForEach-Object {
@@ -118,7 +136,9 @@ Do not write that with PowerShell's `%{` alias inside a `templatefile()` source.
 
 ## 4. Windows 11 24H2 encrypts the disk, and sysprep then refuses
 
-Automatic device encryption now triggers on any clean install with a TPM present — which a Windows 11 template always has. `sysprep /generalize` aborts with `0x80310039`, "BitLocker is on for the OS volume".
+Automatic device encryption now triggers on any clean install with a TPM present, which a Windows
+11 template always has. `sysprep /generalize` aborts with `0x80310039`, "BitLocker is on for the OS
+volume."
 
 This fails at the *last* step, after a 35-minute install has already succeeded.
 
@@ -131,21 +151,30 @@ Fix it at the source, in the **specialize** pass. OOBE is where the encryption d
 </RunSynchronousCommand>
 ```
 
-Keep a bounded decrypt-and-wait guard ahead of sysprep as well. It costs nothing when the registry key worked, and it turns a lost build into a merely slow one if a future Windows release enables encryption by another route.
+Keep a bounded decrypt-and-wait guard ahead of sysprep as well. It costs nothing when the registry
+key worked. And it turns a lost build into a merely slow one if a future Windows release enables
+encryption by another route.
 
-Disk encryption belongs on the deployed clone, applied by configuration management — not baked into a golden image where every clone inherits one recovery key.
+Disk encryption belongs on the deployed clone, applied by configuration management, not baked into a golden image where every clone inherits one recovery key.
 
 ## 5. Never let sysprep power the guest off
 
-This builder has no `shutdown_command`. `stepConvertToTemplate` unconditionally calls `ShutdownVm`, which posts to `/nodes/<node>/qemu/<vmid>/status/shutdown`, retries three times, and then fails with "could not stop".
+This builder has no `shutdown_command`. `stepConvertToTemplate` unconditionally calls `ShutdownVm`,
+which posts to `/nodes/<node>/qemu/<vmid>/status/shutdown`, retries three times, and then fails with
+"could not stop."
 
-Proxmox errors on a VM that is already stopped. So `sysprep /shutdown` races the builder and loses the whole build at its final step. Use `/quit` and let the builder do the power-off it insists on doing.
+Proxmox errors on a VM that is already stopped. So `sysprep /shutdown` races the builder and loses
+the whole build at its final step. Use `/quit` and let the builder do the power-off it insists on
+doing.
 
-Related: `task_timeout` defaults to **1m**, which a Windows guest shutdown routinely exceeds — and that shutdown is a Proxmox task the plugin waits on. Raise it.
+Related: `task_timeout` defaults to **1m**, which a Windows guest shutdown routinely exceeds, and that shutdown is a Proxmox task the plugin waits on. Raise it.
 
 ## 6. PowerShell's call operator does not wait for sysprep
 
-`sysprep.exe` is a GUI-subsystem binary, so `&` returns immediately. The provisioner finishes while generalization is still running, the builder cuts power mid-reseal, and the result **converts cleanly**. You get a template that looks fine and whose clones misbehave at OOBE — worse than a failed build, because nothing tells you.
+`sysprep.exe` is a GUI-subsystem binary, so `&` returns immediately. The provisioner finishes while
+generalization is still running, the builder cuts power mid-reseal, and the result **converts
+cleanly**. You get a template that looks fine and whose clones misbehave at OOBE. That's worse than
+a failed build, because nothing tells you.
 
 Use `Start-Process -Wait`, then poll until Windows itself reports the reseal finished:
 
@@ -164,15 +193,19 @@ while ((Get-ItemProperty $state).ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_T
 }
 ```
 
-Dump `setupact.log` and `setuperr.log` on timeout. Do **not** gate on `setuperr.log` being non-empty — it carries benign lines on a clean run.
+Dump `setupact.log` and `setuperr.log` on timeout. Do **not** gate on `setuperr.log` being non-empty; it carries benign lines on a clean run.
 
 ## The autologon everyone forgets
 
 A `FirstLogonCommands` block in a post-sysprep answer file needs an `<AutoLogon>` beside it, with `LogonCount` set to 1.
 
-Those commands run at the first interactive logon and nowhere else. Without an autologon nobody ever logs in, none of them run, and every clone comes up with neither WinRM nor RDP — unreachable, which is exactly the failure the answer file exists to prevent.
+Those commands run at the first interactive logon and nowhere else. Without an autologon, nobody
+ever logs in, so none of them run. Every clone comes up with neither WinRM nor RDP: unreachable,
+which is exactly the failure the answer file exists to prevent.
 
 ## Two dead ends worth not repeating
 
-- **`isoinfo -f` shows the ISO 9660 8.3 tree even on a Joliet disc.** A generated answer ISO therefore *looks* like it contains `AUTOUNAT.XML`. Check `isoinfo -d` for a Joliet record and `isoinfo -J -f` for the real names before you blame the ISO.
+- **`isoinfo -f` shows the ISO 9660 8.3 tree even on a Joliet disc.** A generated answer ISO
+  therefore *looks* like it contains `AUTOUNAT.XML`. Check `isoinfo -d` for a Joliet record and
+  `isoinfo -J -f` for the real names before you blame the ISO.
 - **Verify driver paths by mounting the ISO** rather than inferring them from a failure. In one investigation the paths were correct the whole time and the real fault was trap 2.

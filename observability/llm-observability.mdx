@@ -1,15 +1,15 @@
 ---
 title: "LLM observability"
 description: "Every LLM call from the orchestration stack emits OpenTelemetry, routes through Cribl, and lands in Langfuse (trace UX), Arize Phoenix (evals + experiments), and Splunk (archival + SIEM)."
-page_type: explanation
+page_type: "explanation"
 ---
-
-> If a model was called, there's a trace — and you can see what it cost.
+{/* projected from the authoring site; do not edit here */}
+> If a model was called, there's a trace. You can see what it cost.
 
 The [AI-coding-tool pipeline](/observability/overview) traces the IDEs. This is
-its sibling for the AI component tier: every component — including `dify`,
-`langflow`, `agent-exec`, `hermes-agent`, and `open-webui` — now emits
-OpenTelemetry for every LLM call, and so does the proxy and router tier that
+its sibling for the AI component tier. Every component, including `dify`,
+`langflow`, `agent-exec`, `hermes-agent`, and `open-webui`, now emits
+OpenTelemetry for every LLM call. So does the proxy and router tier that
 those components call through. Cribl Edge collects on the endpoint, Cribl Stream
 tags and fans out, and the spans land in Langfuse, [Arize Phoenix](/observability/phoenix),
 and Splunk. There are zero direct-to-backend paths.
@@ -17,29 +17,30 @@ and Splunk. There are zero direct-to-backend paths.
 ## Emitting traces — OpenLLMetry + OTEL GenAI
 
 Apps are instrumented with [OpenLLMetry](https://github.com/traceloop/openllmetry)
-(the Traceloop SDK), which wraps LLM providers, vector stores, and frameworks
-(LangChain, CrewAI) and emits spans following OpenTelemetry's
+(the Traceloop SDK). It wraps LLM providers, vector stores, and frameworks
+(LangChain, CrewAI). It emits spans following OpenTelemetry's
 [GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/).
-Those conventions matured in 2026, so framework-native spans and SDK-emitted
-spans now line up on the same schema — prompt, completion, model, token counts,
+Those conventions matured in 2026. Framework-native spans and SDK-emitted
+spans now line up on the same schema: prompt, completion, model, token counts,
 latency, cost.
 
 The spans leave the app over OTLP (gRPC `4317` / HTTP `4318`) pointed at the
-collector, **not** at any one backend. Keeping the emit target on the pipeline —
-not the trace store — is what lets the same telemetry reach more than one place.
+collector, **not** at any one backend. Keeping the emit target on the pipeline,
+not the trace store, is what lets the same telemetry reach more than one place.
 
 ## Cribl is the hub
 
-A single collector tier owns ingest and fan-out. Cribl Edge runs **native
+A single collector tier owns intake and fan-out. Cribl Edge runs **native
 OpenTelemetry sources**, one per signal type on its own port, so it can route by
 type without parsing payloads. Edge relays to Cribl Stream, which tags each span
 with its producer and forks it in parallel:
 
-{/* Shape: fan-out. Apps -> Cribl -> three sinks. */}
+{/*Shape: fan-out. Apps -> Cribl -> three sinks.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Apps([Orchestration stack<br/>+ proxy tier])
   Cribl([Cribl<br/>Edge collects · Stream routes])
   LF([Langfuse<br/>trace · cost])
@@ -72,11 +73,11 @@ flowchart LR
   becomes a test case: datasets, experiments, LLM-as-judge evals, and a
   playground that replays a captured call. See [Arize Phoenix](/observability/phoenix).
 - **Splunk** gets everything, for archival and correlation with the rest of the
-  homelab's telemetry — the same indexer the AI-coding pipeline already feeds.
+  homelab's telemetry. It's the same indexer the AI-coding pipeline already feeds.
 
 Apps never talk to a trace store directly, and they never reach across into the
-monitoring tier — they emit to the collector, and the collector decides where it
-goes. One ingest point, three sinks, no second collector to run.
+monitoring tier. They emit to the collector, and the collector decides where it
+goes. One intake point, three sinks, no second collector to run.
 
 ## Reaching the pipeline: subdomains, TLS, and who gets gated
 
@@ -84,23 +85,23 @@ Two rules govern how anything reaches a service in this stack, and both matter
 for telemetry.
 
 **Every service answers on its own subdomain over TLS.** A caller uses
-`https://<app>.<subdomain>/` and nothing else. No caller — human, agent, or
-collector — targets a raw port. The port a service listens on is an
-implementation detail of the host it runs on, so a config that hardcodes one
+`https://<app>.<subdomain>/` and nothing else. No caller targets a raw port,
+whether human, agent, or collector. The port a service listens on is an
+implementation detail of the host it runs on. A config that hardcodes the port
 breaks the moment the service moves. Naming the subdomain instead means a move
 costs a DNS record, not an edit in every producer.
 
-**Single sign-on gates humans, never ingestion.** The forward-auth layer sits in
-front of the human-facing routes: dashboards, trace browsers, admin consoles.
-Machine telemetry must not sit behind an interactive login — a collector cannot
+**Single sign-on (SSO) gates humans, never ingestion.** The forward-auth layer sits in
+front of the human-facing routes: dashboards, trace browsers, administrator consoles.
+Machine telemetry must not sit behind an interactive login. A collector cannot
 complete a browser redirect, and a pipeline that stalls on a login page drops
 data silently rather than failing loudly.
 
 You can tell the two apart by what an unauthenticated request gets back. Call an
 ingestion path with no credentials and the answer is the receiving service's own
-`401` — the service saw the request and rejected the credential. Call a
-human-facing path the same way and the answer is a redirect to the login flow —
-the request never reached the service at all. A `401` from the application is
+`401`. The service saw the request and rejected the credential. Call a
+human-facing path the same way and the answer is a redirect to the login flow.
+The request never reached the service at all. A `401` from the app is
 the signal that ingestion is correctly excluded from the human gate.
 
 ## What the traces do not cover
@@ -110,8 +111,8 @@ invites the wrong conclusion.
 
 **In-process tracing is not available for every serving backend.** Some model
 servers ship no OpenTelemetry integration at all. Calls to those backends are
-still recorded — the proxy tier in front of them attributes the model, the token
-counts, and the latency — but the span stops at the proxy boundary. You see that
+still recorded. The proxy tier in front of them attributes the model, the token
+counts, and the latency, but the span stops at the proxy boundary. You see that
 the call happened and what it cost in time and tokens. You do not see inside the
 server: no per-stage timing, no queue depth, no batching detail. Coverage of
 calls is complete; coverage of internals is not.
@@ -119,21 +120,21 @@ calls is complete; coverage of internals is not.
 **Per-call cost is only meaningful where a price exists.** Cost is computed from
 a published per-token price for the model. A locally served model has no such
 price, so its cost is reported as zero. That zero is a statement about billing,
-not about resource use — the call consumed power, memory, and time. Read cost
+not about resource use. The call still consumed power, memory, and time. Read cost
 figures as "what a vendor invoiced," and never as "what this workload consumed."
 
 ## Why Langfuse
 
 | Criterion | Langfuse |
 | --- | --- |
-| License | MIT — self-host with no feature gates |
+| License | MIT, self-host with no feature gates |
 | Ingestion | Native OTLP, GenAI-convention aware |
-| Built for | LLM apps — traces, cost, evals, prompt management |
+| Built for | LLM apps, traces, cost, evals, prompt management |
 | Footprint | Web + worker + Postgres + ClickHouse + Redis + object storage |
 
-[Laminar](https://laminar.sh/) (Apache-2.0) is the runner-up — lighter, tilted
+[Laminar](https://laminar.sh/) (Apache-2.0) is the runner-up. It's lighter, tilted
 toward long-running agent debugging. Arize Phoenix ships under the Elastic
-License 2.0, which only forbids reselling it as a managed service; it runs here
+License 2.0, which only forbids reselling it as a managed service. It runs here
 as the [evals and experiments](/observability/phoenix) peer rather than as the
 trace-of-record.
 
@@ -141,22 +142,31 @@ trace-of-record.
 Langfuse keeps its trace-of-record (relational + analytical) on durable local
 storage; its blob store points at the homelab object store. Backend choices like
 the vector store and model provider are made **per tool, per that tool's own
-standard** — never by forcing a shared backend across unrelated stacks.
+standard**. No shared backend gets forced across unrelated stacks.
 </Note>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="AI orchestration stack" icon="diagram-project" href="/ai-development/ai-orchestration-stack">
-    The tools whose calls this pipeline traces.
-  </Card>
-  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
-    The AI-coding-tool side of the same Cribl → Splunk spine.
-  </Card>
-  <Card title="ansible-proxmox-ai" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox-ai">
-    Deploys Langfuse and Phoenix. The Cribl OTEL sources they feed come from ansible-proxmox-apps.
-  </Card>
+<Card
+  title="AI orchestration stack"
+  icon="diagram-project"
+  href="/ai-development/ai-orchestration-stack">
+  The tools whose calls this pipeline traces.
+</Card>
+<Card
+  title="Observability overview"
+  icon="chart-line"
+  href="/observability/overview">
+  The AI-coding-tool side of the same Cribl → Splunk spine.
+</Card>
+<Card
+  title="ansible-proxmox-ai"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox-ai">
+  Deploys Langfuse and Phoenix. The Cribl OTEL sources they feed come from ansible-proxmox-apps.
+</Card>
   <Card title="Local LLM" icon="microchip" href="/local-llm/overview">
-    The models being traced.
-  </Card>
+  The models being traced.
+</Card>
 </CardGroup>

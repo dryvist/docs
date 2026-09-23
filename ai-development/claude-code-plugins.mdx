@@ -1,22 +1,24 @@
 ---
 title: "Claude Code plugins"
-description: "Custom Claude Code plugins: commands, skills, hooks, agents. Extends the base CLI with project-specific automation."
-page_type: repo
+description: "Custom Claude Code plugins: commands, skills, hooks, agents. Extends the base command-line tool with project-specific automation."
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Drop-in plugins for Claude Code. The pieces that make a generic agent useful for a specific stack.
 
 <RepoMeta language="Python" status="active" lastActive="today" repoUrl="https://github.com/JacobPEvans/claude-code-plugins" />
 
-`claude-code-plugins` packages the extension points Claude Code supports — commands, skills, agents, hooks — into reusable plugins. Each plugin lives in its own directory and is installable via the Claude Code plugin API.
+`claude-code-plugins` packages the extension points Claude Code supports (commands, skills, agents,
+hooks) into reusable plugins. Each plugin lives in its own directory and is installable via the
+Claude Code plugin API.
 
 ## What it does
 
 - Ships plugins for git and GitHub workflows (`ship`, `finalize-pr`, `sync-main`), retrospectives, CodeQL resolution, and more
 - Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
-- Houses **skills** that progressively load only when their triggers fire — minimal token cost when idle
+- Houses **skills** that progressively load only when their triggers fire, keeping token cost minimal when idle
 - Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
 - Houses **hooks** that enforce conventions automatically (style, permissions, no-skip patterns)
@@ -40,36 +42,54 @@ Workflow logic. Anything that's "how Claude Code should approach a task" lives h
 ## Getting started
 
 <Steps>
-  <Step title="Browse the plugins">
-    Each plugin is its own directory. The repo README enumerates installed plugins and their entry points.
-  </Step>
-  <Step title="Install a plugin">
-    Claude Code's plugin install path varies by version — see the README for the current command. Plugins typically live under `~/.claude/plugins/`.
-  </Step>
-  <Step title="Invoke a command">
-    From any Claude Code session, type the slash command (e.g. `/ship`) to use a plugin's command. Skills auto-activate on matching triggers.
-  </Step>
+<Step title="Browse the plugins">
+Each plugin is its own directory. The repo README enumerates installed plugins and their entry points.
+</Step>
+<Step title="Install a plugin">
+Claude Code's plugin install path varies by version. See the README for the current command. Plugins typically live under `~/.claude/plugins/`.
+</Step>
+<Step title="Invoke a command">
+From any Claude Code session, type the slash command (for example, `/ship`) to use a plugin's command. Skills auto-activate on matching triggers.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="Repo boundaries" icon="border-all" href="/ai-development/repo-boundaries">
-    How rules, plugins, and docs are split across three repos.
-  </Card>
-  <Card title="ai-assistant-instructions" icon="book" href="/ai-development/ai-assistant-instructions">
-    The rules layer these plugins operate within.
-  </Card>
-  <Card title="/ship and /finalize-pr" icon="ship" href="/ai-development/skills/ship-and-finalize">
-    The full skill lifecycle — phases, exit modes, known reliability gaps.
-  </Card>
-  <Card title="claude-code-routines" icon="clock" href="/automation/repos/claude-code-routines">
-    Scheduled Claude.ai routines — the cron side of the same ecosystem.
-  </Card>
-  <Card title="ai-workflows" icon="github" href="/automation/repos/ai-workflows">
-    Reusable GitHub Actions workflows that drive the cloud half of the pipeline.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/claude-code-plugins">
-    Plugins, hooks, full README.
-  </Card>
+<Card
+  title="Repo boundaries"
+  icon="border-all"
+  href="/ai-development/repo-boundaries">
+  How rules, plugins, and docs are split across three repos.
+</Card>
+<Card
+  title="ai-assistant-instructions"
+  icon="book"
+  href="/ai-development/ai-assistant-instructions">
+  The rules layer these plugins operate within.
+</Card>
+<Card
+  title="/ship and /finalize-pr"
+  icon="ship"
+  href="/ai-development/skills/ship-and-finalize">
+  The full skill lifecycle — phases, exit modes, known reliability gaps.
+</Card>
+<Card
+  title="claude-code-routines"
+  icon="clock"
+  href="/automation/repos/claude-code-routines">
+  Scheduled Claude.ai routines — the cron side of the same ecosystem.
+</Card>
+<Card
+  title="ai-workflows"
+  icon="github"
+  href="/automation/repos/ai-workflows">
+  Reusable GitHub Actions workflows that drive the cloud half of the pipeline.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/claude-code-plugins">
+  Plugins, hooks, full README.
+</Card>
 </CardGroup>

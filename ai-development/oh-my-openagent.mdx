@@ -1,17 +1,17 @@
 ---
 title: "oh-my-openagent"
-description: "omo agent harness across OpenCode (Ultimate), Codex CLI (Light), and the standalone Senpi edition — what Nix owns, what runtime state owns, and how they coexist."
-page_type: how-to
+description: "omo agent harness across OpenCode (Ultimate), Codex CLI (Light), and the standalone Senpi edition: what Nix owns, what runtime state owns, and how they coexist."
+page_type: "how-to"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (omo) is an
-agent harness that loads into an existing CLI host. Three editions ship from
+agent harness that loads into an existing command-line host. Three editions ship from
 the same project:
 
 | Edition | Host | Installed by | Lands on disk |
 | --- | --- | --- | --- |
 | **Ultimate** | OpenCode | `bunx oh-my-openagent install` | `opencode.json` plugin entry + `~/.omo/omo.jsonc` |
-| **Light** | Codex CLI | `bunx lazycodex-ai install` | `~/.codex/plugins/cache/sisyphuslabs/`, `~/.codex/agents/`, `~/.local/bin` CLIs, `config.toml` blocks |
+| **Light** | Codex CLI | `bunx lazycodex-ai install` | `~/.codex/plugins/cache/sisyphuslabs/`, `~/.codex/agents/`, `~/.local/bin` command-line tools, `config.toml` blocks |
 | **Senpi** | standalone | `omo-senpi` wrapper | nothing persistent |
 
 ## Division of ownership
@@ -27,7 +27,7 @@ The line between Nix and runtime state is deliberate:
 - **Runtime state owns** everything else: `~/.omo/omo.jsonc` (agent→model
   mappings), provider auth (`~/.local/share/opencode/auth.json`,
   `~/.codex/auth.json`), the Light edition's plugin cache and hook trust
-  hashes. The installers are idempotent — rerun them after an omo upgrade.
+  hashes. The installers are idempotent. Rerun them after an omo upgrade.
 - The bin named `omo` belongs to the **Light** toolkit (`~/.local/bin`, first
   on PATH). The standalone Senpi command is therefore exposed as
   `omo-senpi`.
@@ -35,8 +35,8 @@ The line between Nix and runtime state is deliberate:
 ## Why the plugin entry is declarative
 
 OpenCode's global config is a home-manager-owned store symlink. The Ultimate
-installer writes its plugin registration through that symlink unconditionally,
-which fails against the read-only store and would be clobbered by the next
+installer writes its plugin registration through that symlink unconditionally.
+That fails against the read-only store and would be clobbered by the next
 switch anyway. Declaring `"oh-my-openagent@latest"` (the tagged form the
 installer itself writes) means the only thing left for the installer to manage
 is `~/.omo` runtime state.
@@ -45,23 +45,25 @@ Codex is the mirror image: nix-ai renders `config.toml` defaults through a
 deep-merge activation that preserves every key Nix does not manage (only
 `mcp_servers` is stripped). The installer's `[marketplaces.sisyphuslabs]`,
 `[plugins."omo@sisyphuslabs"]`, `[features.multi_agent_v2]`, and
-`[hooks.state]` blocks therefore survive every `darwin-rebuild switch` —
+`[hooks.state]` blocks therefore survive every `darwin-rebuild switch`,
 verified by switching after install and grepping the merged file.
 
 ## Upgrading
 
 1. Bump `omoSenpi` in nix-ai's `lib/versions.nix` (manual, beta channel).
 2. Rerun both installers:
+
    ```bash
    bunx oh-my-openagent install --no-tui --platform=opencode --claude=no --openai=yes --gemini=yes --copilot=no
    bunx lazycodex-ai install --no-tui --no-codex-autonomous
    ```
-3. Restart each host once. Codex shows a hooks review after plugin upgrades —
-   re-approve; the hashes changed because the files did.
 
-Autonomous mode (`--codex-autonomous`) is deliberately not used: nix-ai pins
-`approval_policy = "never"` with a `workspace-write` sandbox and no network,
-and the next rebuild would revert the installer's danger-full-access keys into
+3. Restart each host once. Codex shows a hooks review after plugin upgrades;
+   re-approve. The hashes changed because the files did.
+
+Autonomous mode (`--codex-autonomous`) is deliberately not used. nix-ai pins
+`approval_policy = "never"` with a `workspace-write` sandbox and no network.
+The next rebuild would revert the installer's danger-full-access keys into
 a mixed posture.
 
 ## Verification
@@ -78,10 +80,10 @@ plugin is live; a plain answer with no header means it is not loaded.
 
 ## Known upstream skew
 
-The latest published release disagrees with itself about agent model config:
-its `doctor` command flags the installer-generated `models[]` arrays as
-invalid while calling the documented `model`/`fallback_models` shape
-deprecated, and its own `config migrate` is a no-op. Either shape loads (exit 0); the normalized shape
+The latest published release disagrees with itself about agent model config.
+Its `doctor` command flags the installer-generated `models[]` arrays as
+invalid, while calling the documented `model`/`fallback_models` shape
+deprecated. Its own `config migrate` is a no-op. Either shape loads (exit 0); the normalized shape
 avoids the startup-blocking warnings. Model IDs in generated chains can also
-drift behind the live provider catalog (for example `gpt-5-nano`) — fallback
+drift behind the live provider catalog (for example `gpt-5-nano`). Fallback
 chains absorb it at runtime.

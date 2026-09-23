@@ -63,6 +63,22 @@
     {
       "source": "/infrastructure/media-storage-hardlinks",
       "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/networking",
+      "destination": "/infrastructure/vmid-network-tiers"
+    },
+    {
+      "source": "/backup",
+      "destination": "/infrastructure/zfs-backup-replication"
+    },
+    {
+      "source": "/monitoring",
+      "destination": "/observability/overview"
+    },
+    {
+      "source": "/firewall",
+      "destination": "/security/overview"
     }
   ],
   "colors": {
@@ -449,18 +465,6 @@
                   "conventions/drive-reliability"
                 ]
               }
-            ]
-          }
-        ]
-      },
-      {
-        "dropdown": "Homelab reference",
-        "icon": "book",
-        "groups": [
-          {
-            "group": "Conventions",
-            "pages": [
-              "conventions/data-protection-classes"
             ]
           }
         ]

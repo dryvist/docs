@@ -1,9 +1,9 @@
 ---
 title: "Splunk frozen buckets: archive and restore"
 description: "Why Splunk archives aged-out index data instead of deleting it, and the procedure to bring an archived bucket back so it's searchable again."
-page_type: how-to
+page_type: "how-to"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 ## When to use this
 
 You need data that has aged out of Splunk. Either an index reached its
@@ -16,12 +16,13 @@ deliberate operation measured in minutes.
 
 Splunk **deletes** a bucket when it ages out, unless a freeze mechanism
 catches it first. Configure `coldToFrozenDir` or `coldToFrozenScript` on the
-index before a retention window or volume cap can actually bind — once one
+index before a retention window or volume cap can actually bind. Once one
 does, the delete path is live immediately. The archive exists so that ageing
 out means archiving, not losing the data.
 
 <Warning>
-**Enforcing retention and losing data are the same action without an archive.**
+**Enforcing retention and losing data is the same action without an archive.**
+
 If you're tempted to lower a retention setting or a volume cap to reclaim
 space, confirm archiving is enabled **first**. Otherwise the space is
 reclaimed by permanently deleting whatever was oldest.
@@ -47,46 +48,46 @@ deployment, on three independent grounds:
 It also searches raw files rather than Splunk buckets, so it wouldn't read
 archived index data even if the rest applied.
 
-SmartStore is the only option that keeps aged data directly searchable, but it
+SmartStore is the only option that keeps aged data directly searchable. It
 sits outside the supported topology for an on-premises indexer pointed at a
-remote object store, removes the cold-bucket state entirely, and still
-requires days of local cache to warm. Treat it as a separate architectural
-decision, not a drop-in fix for this workflow.
+remote object store. It also removes the cold-bucket state entirely, and it
+still requires days of local cache to warm. Treat it as a separate
+architectural decision, not a drop-in fix for this workflow.
 
 ## Restoring a bucket
 
 <Steps>
-  <Step title="Find what is archived">
-    List everything archived for the index. Bucket directory names encode
-    their time range, so restore tooling that lists archived buckets should
-    let you identify the right one by date without downloading anything.
-  </Step>
-  <Step title="Fetch the bucket">
-    Download every file that belongs to it. Have the fetch retry transient
-    throttling and server errors from the object-storage backend — a restore
-    that gives up partway leaves a half-written bucket that looks present but
-    won't rebuild.
-  </Step>
-  <Step title="Move it under the index's thawedPath">
-    The thawed location is a literal path, never a volume reference — Splunk
-    rejects a `volume:` reference for `thawedPath`. It's always
-    `$SPLUNK_DB/<index>/thaweddb`.
+<Step title="Find what is archived">
+List everything archived for the index. Bucket directory names encode
+their time range. Restore tooling that lists archived buckets should let
+you identify the right one by date without downloading anything.
+</Step>
+<Step title="Fetch the bucket">
+Download every file that belongs to it. Have the fetch retry transient
+throttling and server errors from the object-storage backend. A restore
+that gives up partway leaves a half-written bucket that looks present but
+won't rebuild.
+</Step>
+<Step title="Move it under the index's thawedPath">
+The thawed location is a literal path, never a volume reference. Splunk
+rejects a `volume:` reference for `thawedPath`. It's always
+`$SPLUNK_DB/<index>/thaweddb`.
 
-    Bucket IDs must not collide with anything already in `thaweddb`. If one
-    does, rename the incoming directory rather than overwrite it.
-  </Step>
-  <Step title="Rebuild the index metadata">
-    ```bash
-    splunk rebuild <bucket_dir>
-    ```
+Bucket IDs must not collide with anything already in `thaweddb`. If one
+does, rename the incoming directory rather than overwrite it.
+</Step>
+<Step title="Rebuild the index metadata">
+```bash
+splunk rebuild <bucket_dir>
+```
 
-    Without this, the bucket is present but unsearchable — the most common
-    way a restore looks finished when it isn't.
-  </Step>
-  <Step title="Restart splunkd, then confirm the data is actually searchable">
-    Search the restored time range explicitly. Don't infer success from the
-    files being on disk.
-  </Step>
+Without this, the bucket is present but unsearchable. That's the most
+common way a restore looks finished when it isn't.
+</Step>
+<Step title="Restart splunkd, then confirm the data is actually searchable">
+Search the restored time range explicitly. Don't infer success from the
+files being on disk.
+</Step>
 </Steps>
 
 ## After restoring
@@ -104,26 +105,32 @@ Remove the thawed bucket once the work that needed it is finished.
 A failed archive **leaves the bucket on disk**. That's intentional: a stuck
 bucket costs space, but a false success costs the data.
 
-Point your freeze/archive tooling's logging somewhere splunkd's own logging
-captures — `splunkd.log` is the standard place to look. Distinguish two kinds
-of failure: refusals to freeze (the safe outcome — the bucket stays put and
-is retried) and retryable upload errors (also safe — the bucket is attempted
-again).
+Point your freeze and archive tooling's logging somewhere splunkd's own
+logging captures. `splunkd.log` is the standard place to look. Distinguish
+two kinds of failure. One is a refusal to freeze, the safe outcome where the
+bucket stays put and is retried. The other is a retryable upload error, also
+safe, where the bucket is attempted again.
 
 The failure mode worth watching for is silence: buckets ageing out with no
 archive activity at all. A common cause is configuring both
-`coldToFrozenDir` and `coldToFrozenScript` on the same index — Splunk treats
-them as mutually exclusive and silently prefers the directory, disabling
+`coldToFrozenDir` and `coldToFrozenScript` on the same index. Splunk treats
+them as mutually exclusive. It silently prefers the directory, disabling
 script-based uploads with no error anywhere. Configure exactly one of the two
 per index, and check for this first if archiving appears to have stopped.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
-    Where Splunk sits in the ingest pipeline.
-  </Card>
-  <Card title="Splunk install" icon="server" href="/observability/repos/ansible-splunk">
-    The role that configures indexes, storage tiering, and retention.
-  </Card>
+<Card
+  title="Observability overview"
+  icon="chart-line"
+  href="/observability/overview">
+  Where Splunk sits in the ingest pipeline.
+</Card>
+<Card
+  title="Splunk install"
+  icon="server"
+  href="/observability/repos/ansible-splunk">
+  The role that configures indexes, storage tiering, and retention.
+</Card>
 </CardGroup>
