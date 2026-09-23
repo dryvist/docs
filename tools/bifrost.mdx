@@ -1,19 +1,22 @@
 ---
 title: "Bifrost AI gateway"
 description: "OpenAI-compatible multi-provider gateway, evaluated for workstation AI routing and not part of the current stack."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 Bifrost was evaluated as an OpenAI-compatible HTTP gateway for routing AI requests from workstation tools to OpenAI, Gemini, OpenRouter, and local MLX inference. It is not part of the current stack.
 
-- **GitHub:** https://github.com/maximhq/bifrost
-- **Homepage:** https://www.getmaxim.ai/bifrost
+- **GitHub:** [https://github.com/maximhq/bifrost](https://github.com/maximhq/bifrost)
+- **Homepage:** [https://www.getmaxim.ai/bifrost](https://www.getmaxim.ai/bifrost)
 
 ## Current path
 
-The [LiteLLM router pool](/local-llm/homelab-gpu) is the single endpoint for local, on-estate inference — it took over Bifrost's local-routing role. Workstation tools call local MLX directly or route through the router pool for the shared local fabric; cloud providers (OpenAI, Gemini, OpenRouter) are reached directly, with each tool's own native credentials.
+The [LiteLLM router pool](/local-llm/homelab-gpu) is the single endpoint for local, on-estate
+inference. It took over Bifrost's local-routing role. Workstation tools call local MLX directly, or
+they route through the router pool for the shared local fabric. These cloud providers (OpenAI,
+Gemini, OpenRouter) are reached directly, with each tool's own native credentials.
 
 ## See also
 
-- [AI development pipeline](/architecture/ai-pipeline) — the current model-routing pipeline
-- [Homelab GPU](/local-llm/homelab-gpu) — the LiteLLM router pool in use
+- [AI development pipeline](/architecture/ai-pipeline): the current model-routing pipeline
+- [Homelab GPU](/local-llm/homelab-gpu): the LiteLLM router pool in use

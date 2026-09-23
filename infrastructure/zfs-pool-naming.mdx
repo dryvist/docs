@@ -1,10 +1,12 @@
 ---
 title: "ZFS pool naming: tiers, not nodes"
 description: "Pool names encode the storage medium (nvme / ssd / sas / bulk) or the system role (rpool) and nothing else — never the node, the RAID level, or the drive count — so dataset paths are identical on every node and replicas line up by construction."
-page_type: decision
+page_type: "decision"
 ---
-
-> A pool name is an API. Services, replication jobs, and inventory all address storage through it — so it must only encode things that never change. The performance tier never changes. Everything else does.
+{/* projected from the authoring site; do not edit here */}
+> A pool name is an API. Services, replication jobs, and inventory all address storage through it,
+> so it must only encode things that never change. The performance tier never changes. Everything
+> else does.
 
 ## The convention
 
@@ -13,26 +15,28 @@ has that class of storage:
 
 | Pool | Medium | Backing |
 | --- | --- | --- |
-| `rpool` | Boot / system | The OS disk — Proxmox's ZFS-on-root install-time default, kept as-is |
+| `rpool` | Boot / system | The OS disk: Proxmox's ZFS-on-root install-time default, kept as-is |
 | `nvme` | NVMe flash | An NVMe device that is not the boot disk |
 | `ssd` | SATA / SAS flash | A solid-state device that is not NVMe |
 | `sas` | Spinning SAS | Enterprise spinning disks, usually the boot-class disks on an older chassis |
-| `bulk` | Bulk capacity | Spinning-disk raidz — large, slow, cheap |
+| `bulk` | Bulk capacity | Spinning-disk raidz: large, slow, cheap |
 
 ## Why `fast` was retired
 
 An earlier version of this convention used `fast` for any non-boot flash. That
 name was a **relative** claim, and it stopped being true. It named a SATA SSD on
-a node that later gained an NVMe device — so the pool called `fast` was the
+a node that later gained an NVMe device. So the pool called `fast` was the
 *slower* of the two, and the genuinely faster one was not named at all.
 
 A medium name cannot rot that way. `nvme` describes what the device is, not how
 it ranks against whatever else gets installed later. That is why medium names
-are allowed here while the anti-patterns below are not: the medium is a fact
+are allowed here while the anti-patterns below are not. The medium is a fact
 about the device, whereas node, RAID level, and drive count are facts about a
 particular arrangement of devices.
 
-A node only creates the pools it has hardware for. A `proxmox-2`-style node with an HDD array gets `bulk`; a node with spare enterprise spinning disks gets `sas`; a node with a spare SATA SSD gets `ssd`; a node with a spare NVMe device gets `nvme`; every ZFS-boot node already has `rpool`.
+A node only creates the pools it has hardware for. A `proxmox-2`-style node with an HDD array gets
+`bulk`. A node with spare enterprise spinning disks gets `sas`. A node with a spare SATA SSD gets
+`ssd`, and a node with a spare NVMe device gets `nvme`. Every ZFS-boot node already has `rpool`.
 
 ## What a pool name must never encode
 
@@ -52,7 +56,9 @@ Medium names survive all of those events. The name tells you what the device is;
 Because the pool name is the same on every node, a dataset's full path is **node-agnostic**:
 
 - `bulk/data` means "the bulk media dataset" on whichever node currently holds it. Moving the service to another node changes zero mount configuration.
-- Replication targets line up by construction — `bulk/data` on the source replicates to `bulk/replica/<source>/data` on the destination, and a restored replica is **byte-identical at the same path** it had at home.
+- Replication targets line up by construction: `bulk/data` on the source replicates to
+  `bulk/replica/<source>/data` on the destination, and a restored replica is **byte-identical at the
+  same path** it had at home.
 - Inventory and IaC reference one path per dataset, not one per node × dataset.
 
 Any node can stand in for another, because storage addressing was never node-specific to begin with.
@@ -60,13 +66,19 @@ Any node can stand in for another, because storage addressing was never node-spe
 ## What this connects to
 
 <CardGroup cols={2}>
-  <Card title="ZFS backup & replication" icon="clone" href="/infrastructure/zfs-backup-replication">
-    The snapshot and replication layers that ride on these pools.
-  </Card>
-  <Card title="VMID & network tier model" icon="hashtag" href="/infrastructure/vmid-network-tiers">
-    The same encode-only-what-never-changes philosophy, applied to guest identity.
-  </Card>
+<Card
+  title="ZFS backup & replication"
+  icon="clone"
+  href="/infrastructure/zfs-backup-replication">
+  The snapshot and replication layers that ride on these pools.
+</Card>
+<Card
+  title="VMID & network tier model"
+  icon="hashtag"
+  href="/infrastructure/vmid-network-tiers">
+  The same encode-only-what-never-changes philosophy, applied to guest identity.
+</Card>
   <Card title="Homelab" icon="server" href="/about/homelab">
-    The hardware behind the pools.
-  </Card>
+  The hardware behind the pools.
+</Card>
 </CardGroup>

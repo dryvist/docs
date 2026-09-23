@@ -1,50 +1,61 @@
 ---
 title: "Assistant rules"
 description: "Vendor-agnostic framework for AI coding workflows. One set of rules, every AI tool reads them: Claude, Antigravity, Copilot, Codex."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Configure once, every model behaves the same way.
 
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ai-assistant-instructions" />
 
-`ai-assistant-instructions` is the rules and conventions layer for every AI coding tool in the portfolio. The same files (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, etc.) are sourced from this repo so Claude Code, the Antigravity (`agy`) CLI, GitHub Copilot, and Codex all behave consistently.
+`ai-assistant-instructions` is the rules and conventions layer for every AI coding tool in the
+portfolio. The same files (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, etc.) are sourced from this
+repo so Claude Code, the Antigravity (`agy`) command-line tool, GitHub Copilot, and Codex all behave consistently.
 
 ## What it does
 
 - Defines the canonical `CLAUDE.md` and `AGENTS.md` files used by every project
-- Sets the **autonomous orchestration defaults** — proceed on low-risk ambiguity, delegate context-heavy work, verify the
+- Sets the **autonomous orchestration defaults**: proceed on low-risk ambiguity, delegate context-heavy work, verify the
   result, and keep user output compact
-- Owns the **model-routing policy** — when to reach for Claude vs Gemini vs Copilot vs local MLX
-- Owns the **tool-use rules** — Read over `cat`, Edit over `sed`, Bash for shell-only
-- Owns the git-flow branching/merge model and `git-flow-next` tool usage — [`agentsmd/rules/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/git-flow.md); the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and [PR conventions](/conventions/pr-conventions)
+- Owns the **model-routing policy**: when to reach for Claude vs Gemini vs Copilot vs local MLX
+- Owns the **tool-use rules**: Read over `cat`, Edit over `sed`, Bash for shell-only
+- Owns the git-flow branching/merge model and `git-flow-next` tool usage:
+  [`agentsmd/rules/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/git-flow.md);
+  the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and
+  [PR conventions](/conventions/pr-conventions)
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, LiteLLM-routing details
-- Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs —
+- Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs:
   [`agentsmd/rules/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/subagent-resilience.md)
   (probe before fan-out, bounded concurrency, mandatory solo fallback),
   [`agentsmd/rules/loop-cadence.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/loop-cadence.md)
   (every recurring loop gates itself on a durable min-interval marker), and
   [`agentsmd/rules/delegation-trust.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/delegation-trust.md)
-  (a denial binds to the action, not the requester — no permission laundering across agent hops)
-- Owns the **shared behavioral base (soul)** for every agent surface —
+  (a denial binds to the action, not the requester; no permission laundering across agent hops)
+- Owns the **shared behavioral base (soul)** for every agent surface:
   [`agentsmd/rules/soul.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/soul.md)
   (ground truth before claims, verify before done, reversibility gates autonomy) and its
   copy-paste rendering for non-Claude agents,
   [`agentsmd/prompts/autonomous-base.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/prompts/autonomous-base.md)
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
 
-Cross-repo writing standards that humans also need to read — commit conventions, no-scripts, diagramming, CI/CD policy, OpenTofu check placement, Nix package placement, scrubbed values — live on this docs site. See [Conventions](/conventions/overview) for the full set.
+Cross-repo writing standards that humans also need to read live on this docs site. They
+cover commit conventions, no-scripts, diagramming, CI/CD policy, OpenTofu check placement,
+Nix package placement, and scrubbed values. See [Conventions](/conventions/overview) for
+the full set.
 
-Situational agent guidance — pre-commit architecture, the Nix tool policy, shared-workflow org references — ships as
-on-demand skills in [claude-code-plugins](/ai-development/claude-code-plugins) instead of always-loaded rules, keeping
-the per-session footprint focused on voice, tool use, skill-execution integrity, and repository-local routing.
+Situational agent guidance ships as on-demand skills in
+[claude-code-plugins](/ai-development/claude-code-plugins) instead of always-loaded
+rules. Examples include pre-commit architecture, the Nix tool policy, and shared-workflow
+org references. This keeps the per-session footprint focused on voice, tool use,
+skill-execution integrity, and repository-local routing.
 
-The [default development loop](/architecture/ai-pipeline) is intentionally lightweight: gather enough context, choose the
-simplest verifiable path, implement the smallest correct change, and report only the result plus verification. PRD-heavy,
-test-first gating remains available for high-risk or explicitly gated work, but it is no longer the default for routine
-tasks.
+The [default development loop](/architecture/ai-pipeline) is intentionally lightweight.
+It gathers enough context, chooses the simplest verifiable path, implements the smallest
+correct change, and reports only the result plus verification. PRD-heavy, test-first
+gating remains available for high-risk or explicitly gated work, but it is no longer the
+default for routine tasks.
 
 ## The `CLAUDE.md` → `@AGENTS.md` convention
 
@@ -56,7 +67,10 @@ tasks.
 @AGENTS.md
 ```
 
-That's the entire file. Two lines of content (plus a heading). All actual project guidance lives in `AGENTS.md`. Claude Code resolves `@AGENTS.md` as an inline file import ([official docs](https://code.claude.com/docs/en/memory)) — the contents are loaded into context exactly as if they had been written into `CLAUDE.md` directly.
+That's the entire file. Two lines of content (plus a heading). All actual project guidance lives in
+`AGENTS.md`. Claude Code resolves `@AGENTS.md` as an inline file import ([official
+docs](https://code.claude.com/docs/en/memory)) — the contents are loaded into context exactly as if
+they had been written into `CLAUDE.md` directly.
 
 ### Why
 
@@ -69,16 +83,24 @@ That's the entire file. Two lines of content (plus a heading). All actual projec
 
 ### Where it applies
 
-**Every repo.** Public or private, monorepo or single-purpose, infra or app. If a repo has a `CLAUDE.md`, it must be the two-line import. Project-level instructions, command runbooks, conventions, and tool guidance all belong in `AGENTS.md` (or files it `@imports`).
+**Every repo.** Public or private; monorepo or single-purpose; infra or app. If a repo has a
+`CLAUDE.md`, it must be the two-line import. Project-level instructions, command runbooks,
+conventions, and tool guidance all belong in `AGENTS.md` (or files it `@imports`).
 
-The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific files — each is a thin import of `AGENTS.md`.
+The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific
+files: each is a thin import of `AGENTS.md`.
 
-**The one exception is `ai-assistant-instructions` itself.** Its `AGENTS.md` is already auto-loaded globally on Nix-managed machines (the home-level `~/CLAUDE.md` imports it), so a project-level `@AGENTS.md` import there would load the identical bytes twice in every session. That repo's `CLAUDE.md` is a stub explaining exactly this, and its auto-loaded rules likewise come from the global `~/.claude/rules` wiring rather than a per-repo `.claude/rules` symlink.
+**The one exception is `ai-assistant-instructions` itself.** Its `AGENTS.md` is already
+auto-loaded globally on Nix-managed machines (the home-level `~/CLAUDE.md` imports it). A
+project-level `@AGENTS.md` import there would load the identical bytes twice in every
+session. That repo's `CLAUDE.md` is a stub explaining exactly this. Its auto-loaded rules
+likewise come from the global `~/.claude/rules` wiring rather than a per-repo
+`.claude/rules` symlink.
 
 ### How to migrate a repo
 
 1. Move every section of the existing `CLAUDE.md` into `AGENTS.md` (merge with any existing content, dedupe, prefer linking to `docs/*.md` for deep dives).
-2. Replace `CLAUDE.md` with the two-line import shown above.
+2. Replace `CLAUDE.md` with the two-line import shown earlier.
 3. If `AGENTS.md` ends up > 12 KB, either trim further (link out to `docs/`) or add a `.file-size.yml` extension:
 
    ```yaml
@@ -89,8 +111,10 @@ The same convention applies symmetrically to `GEMINI.md` and any future vendor-s
        - AGENTS
    ```
 
-4. Mirror the same change in any other agent file (e.g. `GEMINI.md` → `@AGENTS.md`).
-5. Update CI: most repos already inherit the [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml) check from `JacobPEvans/.github`. No per-repo workflow edit needed.
+4. Mirror the same change in any other agent file (for example, `GEMINI.md` → `@AGENTS.md`).
+5. Update CI: most repos already inherit the
+   [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml)
+   check from `JacobPEvans/.github`. No per-repo workflow edit needed.
 
 ## How it fits
 
@@ -105,33 +129,50 @@ The "rules of engagement." Every AI workflow elsewhere in the portfolio assumes 
 ## Getting started
 
 <Steps>
-  <Step title="Clone or symlink">
-    `git clone https://github.com/JacobPEvans/ai-assistant-instructions ~/.ai-assistant-instructions` and symlink the project files into the relevant repo, or import via the Nix module the README points to.
-  </Step>
-  <Step title="Pick a profile">
-    Profiles cover personal, work, and learning contexts. The README enumerates which rules each one activates.
-  </Step>
-  <Step title="Update from upstream regularly">
-    The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines).
-  </Step>
+<Step title="Clone or symlink">
+`git clone https://github.com/JacobPEvans/ai-assistant-instructions ~/.ai-assistant-instructions`
+and symlink the project files into the relevant repo, or import via the Nix module the README
+points to.
+</Step>
+<Step title="Pick a profile">
+Profiles cover personal, work, and learning contexts. The README enumerates which rules each one activates.
+</Step>
+<Step title="Update from upstream regularly">
+The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines).
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="Repo boundaries" icon="border-all" href="/ai-development/repo-boundaries">
-    How rules, plugins, and docs are split across three repos.
-  </Card>
-  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
-    Extends Claude Code with custom skills, hooks, and commands that respect these rules.
-  </Card>
-  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
-    Packages the AI tools that read these rules.
-  </Card>
-  <Card title="AI pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
-    How rules + tools + automation become an actual development loop.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/ai-assistant-instructions">
-    Rules, profiles, full README.
-  </Card>
+<Card
+  title="Repo boundaries"
+  icon="border-all"
+  href="/ai-development/repo-boundaries">
+  How rules, plugins, and docs are split across three repos.
+</Card>
+<Card
+  title="claude-code-plugins"
+  icon="plug"
+  href="/ai-development/claude-code-plugins">
+  Extends Claude Code with custom skills, hooks, and commands that respect these rules.
+</Card>
+<Card
+  title="nix-ai"
+  icon="bot"
+  href="/nix/nix-ai">
+  Packages the AI tools that read these rules.
+</Card>
+<Card
+  title="AI pipeline"
+  icon="diagram-project"
+  href="/architecture/ai-pipeline">
+  How rules + tools + automation become an actual development loop.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/ai-assistant-instructions">
+  Rules, profiles, full README.
+</Card>
 </CardGroup>

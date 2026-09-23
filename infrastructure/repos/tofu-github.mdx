@@ -1,23 +1,31 @@
 ---
 title: "GitHub org governance"
 description: "OpenTofu-managed GitHub organization governance for the dryvist org: push-protection, branch-protection, and review-gate rulesets, plus the org-wide markdown-lint required workflow — as code instead of click-ops repeated per repo."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Org rulesets defined once, in code, instead of click-ops repeated across every repo.
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-github" />
 
-`tofu-github` puts the `dryvist` GitHub organization's rulesets under OpenTofu, applied through the same Terrakube workspace pattern as the rest of the homelab. GitHub doesn't auto-inherit CI or branch-protection config across repos — the old pattern was a reusable workflow plus a per-repo call copied into every repo, which drifts. Org rulesets (available since `dryvist` moved to the GitHub Team plan) let this be defined once and applied to every repo automatically.
+`tofu-github` puts the `dryvist` GitHub organization's rulesets under OpenTofu, applied through the
+same Terrakube workspace pattern as the rest of the homelab. GitHub doesn't auto-inherit CI or
+branch-protection config across repos. The old pattern was a reusable workflow plus a per-repo call
+copied into every repo, which drifts. Org rulesets (available since `dryvist` moved to the GitHub
+Team plan) let dryvist define this once and apply it to every repo automatically.
 
 ## What it manages
 
-- **Push protection** — a hard ceiling on file size and a banned-extension list, enforced at the git layer (no workflow run) on every repo and ref
-- **Branch protection** — required commit signatures, a branch-name pattern, a strict Conventional Commits regex, and PR thread resolution on every default branch, with no bypass for anyone including org admins
-- **Review gate** — one approving review plus a CODEOWNER review on every default branch, with an admin-only bypass so admins can merge their own PRs while bots and other contributors still need the review
-- **Markdown lint** — requires the markdownlint workflow (defined once in the org's `.github` repo) to pass on every ref of every repo, with new repos exempted until their default branch exists
+- **Push protection.** A hard ceiling on file size and a banned-extension list, enforced at the git layer (no workflow run) on every repo and ref.
+- **Branch protection.** Required commit signatures, a branch-name pattern, a strict Conventional
+  Commits regex, and PR thread resolution on every default branch, with no bypass for anyone,
+  including org admins.
+- **Review gate.** One approving review plus a CODEOWNER review on every default branch, with an
+  admin-only bypass so admins can merge their own PRs while bots and other contributors still need
+  the review.
+- **Markdown lint.** Requires the markdownlint workflow (defined once in the org's `.github` repo) to pass on every ref of every repo, with new repos exempted until their default branch exists.
 
 ## How it fits
 
@@ -26,36 +34,52 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 | Explicitly approved `tofu apply` in Terrakube | Every repo in the `dryvist` org, at the ruleset layer |
 
 <RepoFit>
-Org-wide GitHub governance only — rulesets, required workflows, and (over time) org/repo settings. It doesn't touch what any individual repo's CI pipeline does; see [CI/CD policy](/infrastructure/cicd/policy) for that layer.
+Org-wide GitHub governance only: rulesets, required workflows, and (over time) org/repo settings.
+It doesn't touch what any individual repo's CI pipeline does. See [CI/CD
+policy](/infrastructure/cicd/policy) for that layer.
 </RepoFit>
 
 ## Getting started
 
 <Steps>
-  <Step title="Clone and enter the dev shell">
-    `git clone git@github.com:dryvist/tofu-github.git && cd tofu-github && direnv allow`
-  </Step>
-  <Step title="Log in to the Terrakube workspace">
-    `tofu login "$TF_CLOUD_HOSTNAME"` — requires membership in the org's `terrakube-admins` team. No AWS account, no local `GITHUB_TOKEN`: the org-admin GitHub credential is injected by Terrakube at run time.
-  </Step>
-  <Step title="Plan and apply">
-    `tofu init && tofu plan && tofu apply` — plan and apply execute remotely in Terrakube; output streams back to the local shell.
-  </Step>
+<Step title="Clone and enter the dev shell">
+`git clone git@github.com:dryvist/tofu-github.git && cd tofu-github && direnv allow`
+</Step>
+<Step title="Log in to the Terrakube workspace">
+`tofu login "$TF_CLOUD_HOSTNAME"` requires membership in the org's `terrakube-admins` team. It
+needs no AWS account and no local `GITHUB_TOKEN`. Terrakube injects the org-admin GitHub
+credential at run time.
+</Step>
+<Step title="Plan and apply">
+`tofu init && tofu plan && tofu apply` runs plan and apply remotely in Terrakube. Output streams back to the local shell.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="tofu-proxmox" icon="server" href="/infrastructure/repos/tofu-proxmox">
-    Same OpenTofu-through-Terrakube pattern, applied to the Proxmox cluster instead of GitHub.
-  </Card>
-  <Card title="tofu-unifi" icon="network-wired" href="/infrastructure/repos/tofu-unifi">
-    Same pattern again, applied to the UniFi controller's data plane.
-  </Card>
-  <Card title="CI/CD policy" icon="shield-halved" href="/infrastructure/cicd/policy">
-    The per-repo CI/CD conventions these org rulesets enforce the shape of.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tofu-github">
-    Ruleset definitions, config thresholds, full README.
-  </Card>
+<Card
+  title="tofu-proxmox"
+  icon="server"
+  href="/infrastructure/repos/tofu-proxmox">
+  Same OpenTofu-through-Terrakube pattern, applied to the Proxmox cluster instead of GitHub.
+</Card>
+<Card
+  title="tofu-unifi"
+  icon="network-wired"
+  href="/infrastructure/repos/tofu-unifi">
+  Same pattern again, applied to the UniFi controller's data plane.
+</Card>
+<Card
+  title="CI/CD policy"
+  icon="shield-halved"
+  href="/infrastructure/cicd/policy">
+  The per-repo CI/CD conventions these org rulesets enforce the shape of.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/dryvist/tofu-github">
+  Ruleset definitions, config thresholds, full README.
+</Card>
 </CardGroup>

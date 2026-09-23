@@ -1,22 +1,28 @@
 ---
 title: "Local AI isolation"
 description: "Why AI tools (Claude Code, Antigravity, Codex) structurally cannot view protected secret values — no token at rest, scoped credential tiers, and explicit deny lists."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Four layers of isolation. Each layer is sufficient on its own. Together, they make leakage structurally impossible.
 
-This page is the proof, not just the claim. AI tools running on this workstation cannot read the values behind the locked keychain, cannot obtain a GitHub write credential without taking a visible lease, and cannot read the file paths where keys live at rest.
+This page is the proof, not just the claim. AI tools running on this workstation cannot read the
+values behind the locked keychain. They cannot obtain a GitHub write credential without taking a
+visible lease, and they cannot read the file paths where keys live at rest.
 
 ## Layer 1 — nothing is stored, so there is nothing to steal
 
-There is no GitHub token at rest on the workstation. Every GitHub credential is an ephemeral GitHub App installation token minted at the moment of use and discarded with the process that asked for it. `git` never holds one of its own: a credential helper answers each request, mints a token scoped to that request, hands it to `git`, and forgets it.
+There is no GitHub token at rest on the workstation. Every GitHub credential is an ephemeral GitHub
+App installation token minted at the moment of use and discarded with the process that asked for it.
+`git` never holds one of its own: a credential helper answers each request, mints a token scoped to
+that request, hands it to `git`, and forgets it.
 
-{/* Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass. */}
+{/*Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Op([git or gh<br/>needs a credential])
   Helper([credential helper])
   Bao[(secrets engine)]
@@ -37,36 +43,45 @@ flowchart LR
   linkStyle 0,1,2,3 stroke:#4FB3A9,stroke-width:2px;
 ```
 
-The chain starts at a command that needs a credential and ends with nothing persisted. A stolen shell history, a leaked environment dump, or a recovered disk image yields no usable GitHub credential, because none was ever written.
+The chain starts at a command that needs a credential and ends with nothing persisted. A stolen
+shell history, a leaked environment dump, or a recovered disk image yields no usable GitHub
+credential, because none was ever written.
 
 <Warning>
 **Never export a token from `.envrc`.** The directory-environment loader caches
-its environment dump on disk, so exporting a credential at load time would
-persist that credential — exactly the property this layer exists to remove. Mint
+its environment dump on disk. Exporting a credential at load time would
+persist that credential, exactly the property this layer exists to remove. Mint
 at call time instead.
 </Warning>
 
 ## Layer 2 — three credential tiers, and only one is ambient
 
-The credential an agent can obtain without ceremony is deliberately the least useful one. Escalation is not a matter of reading a different secret; it is a different minting path with a different gate.
+The credential an agent can obtain without ceremony is deliberately the least useful one. Escalation
+is not a matter of reading a different secret; it is a different minting path with a different gate.
 
 | Tier | What it grants | Gate | AI can reach it? |
 | --- | --- | --- | --- |
-| Read | Read-only across the account installation | Ambient — pre-authorized | Yes, freely |
+| Read | Read-only across the account installation | Ambient: pre-authorized | Yes, freely |
 | Write | Exactly one named repository, per request | A claim that takes an exclusive lease on that repository | Yes, but only one repository at a time, and visibly |
 | Admin | The installation's full ceiling | Human-only, interactive, single-use grant | No |
 
-This is a stronger boundary than "which secret can you read." A read credential cannot be widened into a write credential, because the write tier mints from a different endpoint under a policy that pins the repository parameter server-side. An agent that claims write on one repository still cannot touch a second one with that token. And the admin tier has no non-interactive path at all — there is nothing for an agent to read, unlock, or guess.
+This is a stronger boundary than "which secret can you read." A read credential cannot be widened
+into a write credential. The write tier mints from a different endpoint under a policy that
+pins the repository parameter server-side. An agent that claims write on one repository still cannot
+touch a second one with that token. And the administrator tier has no non-interactive path at all.
+There is nothing for an agent to read, unlock, or guess.
 
-The lease is the visibility mechanism: a write claim is recorded, exclusive, and self-expiring, so two agents cannot silently both hold write on one repository. See [GitHub access](/autonomous-agents/github-access) for the full model.
+The lease is the visibility mechanism: a write claim is recorded, exclusive, and self-expiring.
+Two agents cannot silently both hold write on one repository. See [GitHub
+access](/autonomous-agents/github-access) for the full model.
 
 ## Layer 3 — the keychain holds nothing an agent needs
 
 There is no AI-readable keychain tier. Every automated read moved to the runtime
 manager, and what stays on the keychain is human-only break-glass material in a
-locked database. The detail is in [macOS Keychain](/security/tools/macos-keychain);
-the boundary that matters here is that an AI subprocess cannot satisfy the unlock
-prompt, and there is no unlocked database holding a credential it could use
+locked database. The detail is in [macOS Keychain](/security/tools/macos-keychain).
+The boundary that matters here is that an AI subprocess cannot satisfy the unlock
+prompt. There is no unlocked database holding a credential it could use
 instead.
 
 ## Layer 4 — explicit allow / deny lists in Claude Code
@@ -78,23 +93,25 @@ The Claude Code permission system bakes a deny list into the build. Even if the 
 | `security find-generic-password` (lookup metadata) | `**/.env*` |
 | `security list-keychains` | `**/secrets/**` |
 | `security show-keychain-info` | `~/.gnupg/**` |
-|  | `~/.ssh/id_*` |
+| | `~/.ssh/id_*` |
 
-The allow list lets the AI inspect *metadata* — "does a keychain entry with this service name exist?" — without ever returning the value.
+The allow list lets the AI inspect *metadata*, such as whether a keychain entry with a given service name exists, without ever returning the value.
 
 ## Layer 5 — unattended convergence belongs to one identity
 
 The interactive human account has no password-less escalation. Every `sudo` it
 runs is biometrically gated, convergence included. Unattended convergence runs
 instead under a dedicated automation account whose grant covers one exact
-declarative command and nothing else — it applies store paths that were already
+declarative command and nothing else. It applies store paths that were already
 built, with no ad-hoc shell and no other read access. Which harnesses run under
 that account is set out in
 [harness trust tiers](/autonomous-agents/harness-trust-tiers).
 
 ## The launcher banner (verbatim)
 
-Some launchers relaunch `claude` under a scoped credential context — an AWS profile, for example. Each prints this to stderr before calling `exec claude`, so the banner lands in the AI's tool-output stream and the agent knows what it can and cannot do this session:
+Some launchers relaunch `claude` under a scoped credential context, such as an AWS profile.
+Each prints this to stderr before calling `exec claude`. The banner lands in the AI's tool-output
+stream, so the agent knows what it can and cannot do this session:
 
 ```text
 [claude-launchers] custom authentication context is now active
@@ -117,7 +134,7 @@ No secret material is ever printed. The banner names the *kind* of context, neve
 | Obtain a read-only GitHub credential | ✅ | Ambient read tier; read-only by construction |
 | Obtain GitHub write on one named repository | ✅ (one at a time) | Requires an exclusive, recorded, self-expiring lease |
 | Obtain GitHub write across an account | ❌ | Repository parameter is pinned server-side per request |
-| Obtain an installation-wide admin credential | ❌ | Human-only interactive single-use grant |
+| Obtain an installation-wide administrator credential | ❌ | Human-only interactive single-use grant |
 | Recover a GitHub token from disk | ❌ | No token is ever written to disk |
 | Read a value from the human-only keychain | ❌ | GUI unlock prompt; AI cannot respond |
 | Modify keychain entries | ❌ | `security add-generic-password` not in allow list |
@@ -131,15 +148,16 @@ No secret material is ever printed. The banner names the *kind* of context, neve
 
 For the literal Nix and shell sources behind each layer, see:
 
-- [`nix-darwin/modules/darwin/scripts/openbao-github-creds.sh`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/scripts/openbao-github-creds.sh) — the credential helper and the claim/release lease.
-- [`nix-darwin/hosts/common/claude-launchers.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/common/claude-launchers.zsh) — the scoped launchers and banner.
-- [`nix-claude-code/data/permissions/allow.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/allow.nix) — read-only `security` allow list.
-- [`nix-claude-code/data/permissions/deny.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/deny.nix) — file-path deny globs.
-- [`nix-darwin/modules/darwin/security.nix`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/security.nix) — sudoers path restriction.
+- [`nix-darwin/modules/darwin/scripts/openbao-github-creds.sh`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/scripts/openbao-github-creds.sh)
+  : the credential helper and the claim/release lease.
+- [`nix-darwin/hosts/common/claude-launchers.zsh`](https://github.com/JacobPEvans/nix-darwin/blob/main/hosts/common/claude-launchers.zsh): the scoped launchers and banner.
+- [`nix-claude-code/data/permissions/allow.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/allow.nix): read-only `security` allow list.
+- [`nix-claude-code/data/permissions/deny.nix`](https://github.com/JacobPEvans/nix-claude-code/blob/main/data/permissions/deny.nix): file-path deny globs.
+- [`nix-darwin/modules/darwin/security.nix`](https://github.com/JacobPEvans/nix-darwin/blob/main/modules/darwin/security.nix): sudoers path restriction.
 
 ## See also
 
-- [GitHub access](/autonomous-agents/github-access) — the three credential tiers in detail.
-- [macOS Keychain](/security/tools/macos-keychain) — the two-database split.
-- [Doppler](/security/tools/doppler) — for AI-readable CI secrets that *should* be present.
-- [BWS](/security/tools/bws) — programmatic AI-token bridge that respects the same scoping rules.
+- [GitHub access](/autonomous-agents/github-access): the three credential tiers in detail.
+- [macOS Keychain](/security/tools/macos-keychain): the two-database split.
+- [Doppler](/security/tools/doppler): for AI-readable CI secrets that *should* be present.
+- [BWS](/security/tools/bws): programmatic AI-token bridge that respects the same scoping rules.

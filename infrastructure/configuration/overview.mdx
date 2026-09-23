@@ -1,21 +1,24 @@
 ---
 title: "Configuration"
 description: "Ansible playbooks for Proxmox host setup, application stack on VMs and LXCs, and Splunk Enterprise."
-page_type: overview
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > OpenTofu builds the box. Ansible makes it useful.
 
-Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host, the application stack on top, and Splunk Enterprise as a separate concern because of its scale and uptime requirements.
+Three Ansible repos cover everything that runs on the provisioned infrastructure: the Proxmox host,
+the app stack on top, and Splunk Enterprise. Splunk gets its own repo as a separate concern because
+of its scale and uptime requirements.
 
 ## Role map
 
-{/* Shape: hierarchy. TF parent → 3 Ansible role children. */}
-{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass. */}
+{/*Shape: hierarchy. TF parent → 3 Ansible role children. */}
+{/* Nodes: 4. Boundary crossings: 0. Aspect: ~3:2 TB. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart TB
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart TB
   TF([Proxmox provisioning])
   AP([Proxmox config])
   APA([Apps on Proxmox])
@@ -34,41 +37,56 @@ flowchart TB
   linkStyle 0,1,2 stroke:#F4EFE6,stroke-width:1.5px;
 ```
 
-OpenTofu outputs an inventory; each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
+OpenTofu outputs an inventory. Each Ansible role consumes it independently. Ink edges signal control / provisioning hand-off (not data flow).
 
 | Role | Repo | What it does |
 | --- | --- | --- |
 | Host config | [Proxmox config](/infrastructure/repos/ansible-proxmox) | ZFS, networking, users, performance tuning, monitoring agents |
 | Apps on hosts | [Apps on Proxmox](/infrastructure/repos/ansible-proxmox-apps) | HAProxy, Cribl Edge, Cribl Stream |
-| Splunk install | [Splunk install](/observability/repos/ansible-splunk) | Splunk Enterprise — indexers, search heads, license, storage tiering |
+| Splunk install | [Splunk install](/observability/repos/ansible-splunk) | Splunk Enterprise: indexers, search heads, license, storage tiering |
 
 ## Repos in this section
 
 <CardGroup cols={3}>
-  <Card title="ansible-proxmox" icon="server" href="/infrastructure/repos/ansible-proxmox">
-    Proxmox host config — ZFS, networking, users, hardening.
-  </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
-    HAProxy, Cribl Edge, Cribl Stream on VMs and LXCs.
-  </Card>
-  <Card title="ansible-splunk" icon="chart-line" href="/observability/repos/ansible-splunk">
-    Splunk Enterprise — indexers, search heads, license.
-  </Card>
+<Card
+  title="ansible-proxmox"
+  icon="server"
+  href="/infrastructure/repos/ansible-proxmox">
+  Proxmox host config — ZFS, networking, users, hardening.
+</Card>
+<Card
+  title="ansible-proxmox-apps"
+  icon="boxes-stacked"
+  href="/infrastructure/repos/ansible-proxmox-apps">
+  HAProxy, Cribl Edge, Cribl Stream on VMs and LXCs.
+</Card>
+<Card
+  title="ansible-splunk"
+  icon="chart-line"
+  href="/observability/repos/ansible-splunk">
+  Splunk Enterprise — indexers, search heads, license.
+</Card>
 </CardGroup>
 
 ## Secrets
 
-<Info>
-Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` resolves project-specific secrets at run time; nothing sensitive lands in git.
-</Info>
+<Note>
+Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` resolves project-specific secrets at run time. Nothing sensitive lands in git.
+</Note>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Infrastructure overview" icon="server" href="/infrastructure/overview">
-    The OpenTofu side that provisions everything Ansible configures.
-  </Card>
-  <Card title="tofu-proxmox" icon="vault" href="/infrastructure/repos/tofu-proxmox">
-    How VMs and LXCs are provisioned before Ansible touches them.
-  </Card>
+<Card
+  title="Infrastructure overview"
+  icon="server"
+  href="/infrastructure/overview">
+  The OpenTofu side that provisions everything Ansible configures.
+</Card>
+<Card
+  title="tofu-proxmox"
+  icon="vault"
+  href="/infrastructure/repos/tofu-proxmox">
+  How VMs and LXCs are provisioned before Ansible touches them.
+</Card>
 </CardGroup>

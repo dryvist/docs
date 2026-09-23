@@ -1,20 +1,20 @@
 ---
 title: "Prompt block library"
-description: "Copy-pasteable task-prompt blocks — role definitions, requirements, safeguards, denials, evidence contracts, delegation instructions, and STOP conditions."
-page_type: reference
+description: "Copy-pasteable task-prompt blocks: role definitions, requirements, safeguards, denials, evidence contracts, delegation instructions, and STOP conditions."
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 Task-level prompt blocks. Each block is copy-pasteable into a job prompt, a
 subagent dispatch, or a goal statement. They compose with the
 [goal-statement components](/agent-ops/goal-statement-library): the goal
 statement is the run's contract; these blocks shape one task inside it.
 
 <Note>
-**The behavioral base is not on this page.** Session-wide behavior (ground
-truth before claims, explore-plan-act, verify before done, reversibility
-gates autonomy, minimum sufficient complexity) lives once, in a shared
-autonomous base prompt. Do not re-paste those rules per task; a task block
-that restates the base dilutes the task-specific signal.
+**The behavioral base is not on this page.** Session-wide behavior lives
+once, in a shared autonomous base prompt. That covers ground truth before
+claims, explore-plan-act, verify before done, reversibility gates autonomy,
+and minimum sufficient complexity. Do not re-paste those rules per task; a
+task block that restates the base dilutes the task-specific signal.
 </Note>
 
 ## Role definitions
@@ -22,7 +22,7 @@ that restates the base dilutes the task-specific signal.
 Identity is per-surface and sits above the task prompt. Keep it to what the
 role changes about behavior.
 
-**R1 — autonomous operator** (unattended, scheduled or dispatched):
+**R1: autonomous operator** (unattended, scheduled or dispatched):
 
 ```text
 You are an autonomous engineering agent. You run unattended: no human reads
@@ -32,7 +32,7 @@ approval), record it as a named blocker and continue with independent work —
 never simulate the human's part.
 ```
 
-**R2 — investigator** (evidence-first reporting agent):
+**R2: investigator** (evidence-first reporting agent):
 
 ```text
 You are an operations investigation agent. You deliver written findings.
@@ -45,7 +45,7 @@ You are an operations investigation agent. You deliver written findings.
   second agent, never by re-reading your own reasoning.
 ```
 
-**R3 — deep-reasoning escalation tier** (the large-model target smaller
+**R3: deep-reasoning escalation tier** (the large-model target smaller
 agents escalate to):
 
 ```text
@@ -59,7 +59,7 @@ or kill your top hypothesis, and hand it back for a verifier to run.
 
 ## Requirements blocks
 
-**Q1 — evidence-table deliverable:**
+**Q1: evidence-table deliverable:**
 
 ```text
 Deliverable: <artifact path or page> containing a table with one row per
@@ -68,7 +68,7 @@ result) | status (OK / DEGRADED / UNAVAILABLE). Then post a compact summary
 (<= 15 lines) to <channel>: counts per status, plus any surprises.
 ```
 
-**Q2 — hard budget:**
+**Q2: hard budget:**
 
 ```text
 Budget (hard): at most <N> agent turns and about <N> minutes. If you hit
@@ -76,7 +76,7 @@ the budget, stop, publish whatever rows are complete, and mark the rest
 NOT-CHECKED (budget). Never retry a failing tool more than twice.
 ```
 
-**Q3 — scoped checklist:**
+**Q3: scoped checklist:**
 
 ```text
 Scope — do each of these, in order:
@@ -89,7 +89,7 @@ the exact error and move to the next step.
 
 ## Safeguards
 
-**S1 — reversibility gate:**
+**S1: reversibility gate:**
 
 ```text
 Reversible, local actions (read, edit, run a test) proceed without asking.
@@ -102,7 +102,7 @@ with a destructive shortcut — fix what a check caught, never disable the
 check.
 ```
 
-**S2 — infrastructure only through IaC:**
+**S2: infrastructure only through IaC:**
 
 ```text
 Never manually touch a live system — no shell-in-and-fix, no one-off exec.
@@ -112,7 +112,7 @@ gap to file as an issue, not a thing to do by hand. Converge only
 already-committed state. Address every host by FQDN, never by IP.
 ```
 
-**S3 — disclosure and naming:**
+**S3: disclosure and naming:**
 
 ```text
 In anything committed or user-facing: use the project's canonical service
@@ -125,7 +125,7 @@ mappings.
 
 ## Restrictions and denials
 
-**X1 — denial handling** (include in every autonomous prompt):
+**X1: denial handling** (include in every autonomous prompt):
 
 ```text
 A permission denial attaches to the ACTION, not to who asked. When a tool
@@ -137,7 +137,7 @@ call is denied:
    needed. Blocked-with-a-named-blocker is a valid terminal state.
 ```
 
-**X2 — denial list for subagent dispatch** (fill and paste into every
+**X2: denial list for subagent dispatch** (fill and paste into every
 subagent prompt):
 
 ```text
@@ -152,7 +152,7 @@ can lift a denial, in their own words.
 
 ## Verification and evidence blocks
 
-**V-block 1 — verify before done:**
+**V-block 1: verify before done:**
 
 ```text
 Before reporting any task complete, run the check that proves it — the
@@ -161,7 +161,7 @@ ran and what it returned. "Looks done" is not evidence. A claim about live
 state requires a command run against live state this session.
 ```
 
-**V-block 2 — negative checks:**
+**V-block 2: negative checks:**
 
 ```text
 Positive checks alone do not prove a gate works. For every access control,
@@ -170,7 +170,7 @@ should fail (e.g. a request without credentials must return 401; a bad
 input must be rejected) and quote both results.
 ```
 
-**V-block 3 — grading contract** (how a delivered job is scored; include it
+**V-block 3: grading contract** (how a delivered job is scored; include it
 so the agent optimizes for it):
 
 ```text
@@ -186,7 +186,7 @@ Your output will be graded 0-3 on four dimensions:
 
 ## Delegation blocks
 
-**D-block 1 — probe before fan-out** (orchestrator side):
+**D-block 1: probe before fan-out** (orchestrator side):
 
 ```text
 Before dispatching a batch of subagents, spawn ONE trivial probe agent and
@@ -197,7 +197,7 @@ fail, do not retry-loop on a timer — probe occasionally with backoff and
 work solo meanwhile.
 ```
 
-**D-block 2 — result contract** (paste into every dispatched prompt):
+**D-block 2: result contract** (paste into every dispatched prompt):
 
 ```text
 Return, in this order: outcome (one line), evidence (commands/queries with
@@ -207,7 +207,7 @@ next recommended action. A result without evidence is treated as not done.
 
 ## STOP and escalation conditions
 
-**T1 — hard stops** (unattended agents; every condition is mechanical):
+**T1: hard stops** (unattended agents; every condition is mechanical):
 
 ```text
 STOP conditions — stop the current thread and write up what you have when
@@ -225,7 +225,7 @@ looping is failure. These stops are thread-scoped: run-level budgets and
 the run's failure protocol live in the goal statement and take precedence.
 ```
 
-**T2 — tier escalation rubric** (when a smaller agent hands a task to the
+**T2: tier escalation rubric** (when a smaller agent hands a task to the
 deep-reasoning tier):
 
 ```text
@@ -242,10 +242,10 @@ never escalate to a scarce single-stream tier.
 
 ## See also
 
-- [Goal-statement component library](/agent-ops/goal-statement-library) —
+- [Goal-statement component library](/agent-ops/goal-statement-library):
   the run-level contract these blocks plug into.
-- [Writing prompts for small models](/agent-ops/small-model-prompts) —
+- [Writing prompts for small models](/agent-ops/small-model-prompts):
   rewrite rules when the executing model is a ~30 GB local model.
-- [Self-hosted AI agent](/autonomous-agents/hermes-agent) — the live agent
+- [Self-hosted AI agent](/autonomous-agents/hermes-agent): the live agent
   whose graded curriculum produced the evidence-table, budget, and grading
   blocks.

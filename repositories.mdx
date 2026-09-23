@@ -1,12 +1,15 @@
 ---
 title: "Repository catalog"
-description: "Every public repo at a glance, grouped by the six surfaces. The single index of what exists — so a README never has to list its neighbors."
-page_type: reference
+description: "Every public repo at a glance, grouped by the six surfaces. The single index of what exists, so a README never has to list its neighbors."
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > The map of every repo, in one place. This is what a README's footer points back to instead of carrying its own "related repos" list.
 
-Each repo's own `README.md` covers install and usage for that repo alone (see [README conventions](/conventions/readme-conventions)). This page is the index that holds the relationships — what exists, which surface it belongs to, and where to read more. For the dependency flow between surfaces, see [how it fits together](/how-it-fits-together).
+Each repo's own `README.md` covers install and usage for that repo alone (see [README
+conventions](/conventions/readme-conventions)). This page is the index that holds the
+relationships: what exists, which surface it belongs to, and where to read more. For the dependency
+flow between surfaces, see [how it fits together](/how-it-fits-together).
 
 ## Infrastructure
 
@@ -16,19 +19,19 @@ OpenTofu / Terraform / Ansible that builds and configures the homelab.
 | --- | --- | --- |
 | [tofu-proxmox](https://github.com/dryvist/tofu-proxmox) | Proxmox VM/LXC provisioning; the deployment + constants source of truth | [hub](/infrastructure/repos/tofu-proxmox) |
 | [ansible-proxmox](https://github.com/dryvist/ansible-proxmox) | Host tuning, ZFS pools, replication, monitoring | [hub](/infrastructure/repos/ansible-proxmox) |
-| [ansible-proxmox-apps](https://github.com/dryvist/ansible-proxmox-apps) | App roles — Cribl, HAProxy, and the rest | [hub](/infrastructure/repos/ansible-proxmox-apps) |
-| [ansible-proxmox-ai](https://github.com/dryvist/ansible-proxmox-ai) | AI/LLM stack roles — serving, RAG, agents, LLM app platforms | [hub](/infrastructure/repos/ansible-proxmox-ai) |
-| `tofu-unifi` (private) | UniFi network-as-code — VLANs, firewall, WLANs, VPN | [hub](/infrastructure/repos/tofu-unifi) |
+| [ansible-proxmox-apps](https://github.com/dryvist/ansible-proxmox-apps) | App roles: Cribl, HAProxy, and the rest | [hub](/infrastructure/repos/ansible-proxmox-apps) |
+| [ansible-proxmox-ai](https://github.com/dryvist/ansible-proxmox-ai) | AI/LLM stack roles: serving, RAG, agents, LLM app platforms | [hub](/infrastructure/repos/ansible-proxmox-ai) |
+| `tofu-unifi` (private) | UniFi network-as-code: VLANs, firewall, WLANs, VPN | [hub](/infrastructure/repos/tofu-unifi) |
 | [orbstack-kubernetes](https://github.com/dryvist/orbstack-kubernetes) | Local K8s monitoring stack (OTEL, Cribl) | [hub](/infrastructure/repos/orbstack-kubernetes) |
 | [tofu-runs-on](https://github.com/dryvist/tofu-runs-on) | Self-hosted GitHub Actions runners on AWS spot | [hub](/infrastructure/cicd/tofu-runs-on) |
 | [tofu-aws-templates](https://github.com/dryvist/tofu-aws-templates) | Per-project AWS state-backend bootstrap template | [OpenTofu on AWS](/infrastructure/tofu-aws/overview) |
-| [tofu-github](https://github.com/dryvist/tofu-github) | Declarative GitHub org governance — rulesets, settings | [hub](/infrastructure/repos/tofu-github) |
-| [iac-platform](https://github.com/dryvist/iac-platform) | Self-hosted Terrakube + Semaphore UI — remote OpenTofu/Ansible execution | [remote plan/apply](/infrastructure/iac-tooling#remote-planapply-terrakube) |
+| [tofu-github](https://github.com/dryvist/tofu-github) | Declarative GitHub org governance: rulesets, settings | [hub](/infrastructure/repos/tofu-github) |
+| [iac-platform](https://github.com/dryvist/iac-platform) | Self-hosted Terrakube + Semaphore UI: remote OpenTofu/Ansible execution | [remote plan/apply](/infrastructure/iac-tooling) |
 | [nix-pxe-bootstrap](https://github.com/dryvist/nix-pxe-bootstrap) | NixOS-on-Pi netboot + Proxmox auto-installer | — |
 
 ## Observability
 
-The telemetry spine — capture, route, index, visualize.
+The telemetry spine: capture, route, index, visualize.
 
 | Repo | Does | More |
 | --- | --- | --- |
@@ -42,7 +45,7 @@ The telemetry spine — capture, route, index, visualize.
 | [cc-stream-github-copilot-rest-io](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics via REST | — |
 | [cc-edge-pack-template](https://github.com/dryvist/cc-edge-pack-template) | Scaffold for new Cribl Edge packs | — |
 | [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Splunk dashboards for AI-tool observability | — |
-| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Splunk add-on — field aliases, CIM mappings | — |
+| [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans/VisiCore_TA_AI_Observability) | Splunk add-on: field aliases, CIM mappings | — |
 
 ## Nix Ecosystem
 
@@ -52,7 +55,7 @@ Declarative macOS host, dev environment, AI tooling, and dev shells.
 | --- | --- | --- |
 | [nix-darwin](https://github.com/dryvist/nix-darwin) | macOS system config + home-manager orchestration | [hub](/nix/nix-darwin) |
 | [nix-home](https://github.com/dryvist/nix-home) | Cross-platform user dev environment | [hub](/nix/nix-home) |
-| [nix-ai](https://github.com/dryvist/nix-ai) | AI coding toolkit — Claude, Gemini, Copilot, MCP | [hub](/nix/nix-ai) |
+| [nix-ai](https://github.com/dryvist/nix-ai) | AI coding toolkit: Claude, Gemini, Copilot, MCP | [hub](/nix/nix-ai) |
 | [nix-devenv](https://github.com/dryvist/nix-devenv) | Reusable dev shells (Terraform, Ansible, K8s, AI/ML) | [hub](/nix/nix-devenv) |
 | [nix-claude-code](https://github.com/dryvist/nix-claude-code) | Declarative Claude Code config in Nix | [hub](/nix/nix-claude-code) |
 | [nixos-ai](https://github.com/dryvist/nixos-ai) | NixOS system configs for AI workloads (LLM inference, ROCm, model serving) | — |
@@ -77,13 +80,13 @@ Templates and standalone tools.
 | --- | --- | --- |
 | [mlx-benchmarks](https://github.com/dryvist/mlx-benchmarks) | MLX + local LLMs on Apple Silicon | [hub](/tools/mlx-benchmarks) |
 | [python-template](https://github.com/dryvist/python-template) | Python project template (pytest, Ruff, MyPy) | — |
-| [raycast-smart-issue](https://github.com/dryvist/raycast-smart-issue) | Raycast extension — AI GitHub issue generation | — |
+| [raycast-smart-issue](https://github.com/dryvist/raycast-smart-issue) | Raycast extension: AI GitHub issue generation | — |
 
 ## Docs & org
 
 | Repo | Does | More |
 | --- | --- | --- |
-| [docs](https://github.com/JacobPEvans/docs) | This site — the public architecture map | — |
+| [docs](https://github.com/JacobPEvans/docs) | This site: the public architecture map | — |
 | [.github](https://github.com/dryvist/.github) | Org community-health files + the README template | — |
 | [secrets-sync](https://github.com/JacobPEvans/secrets-sync) | Distributes Doppler-held secrets and variables to GitHub Actions | [hub](/security/secrets-sync) |
 
@@ -92,5 +95,7 @@ Templates and standalone tools.
 </Note>
 
 <Note>
-  **Direction:** the ecosystem is consolidated under the [dryvist](https://github.com/dryvist) org. New repositories and projects are created under the `dryvist` organization. Interdependencies — what feeds what, how secrets flow — live on [how it fits together](/how-it-fits-together).
+  **Direction:** the ecosystem is consolidated under the [dryvist](https://github.com/dryvist) org.
+  New repositories and projects are created under the `dryvist` organization. Interdependencies
+  live on [how it fits together](/how-it-fits-together): what feeds what, and how secrets flow.
 </Note>

@@ -1,37 +1,37 @@
 ---
 title: "Hermes operating profiles"
 description: "How a Hermes agent scopes tools and credentials per job with named profiles, the current roster, and when to use each one."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 See [Self-hosted AI agent](/autonomous-agents/hermes-agent) for the container
 and multi-agent picture this page sits underneath. This page covers what
 happens *inside* one agent.
 
 ## What a profile is
 
-A profile is a fully independent `HERMES_HOME` directory — its own config,
-secrets file, persona, and skill set — that a Kanban card selects through its
-assignee. There is **one** shared gateway, dispatcher, Kanban board, and Slack
-bot per agent; no per-profile gateway service exists. A profile is the entire
-tool/credential envelope a worker runs under: MCP servers, native tools,
-secrets, and skills.
+A profile is a fully independent `HERMES_HOME` directory, holding its own
+config, secrets file, persona, and skill set. A Kanban card selects it
+through its assignee. There is **one** shared gateway, dispatcher, Kanban
+board, and Slack bot per agent; no per-profile gateway service exists. A
+profile is the entire tool/credential envelope a worker runs under, covering
+MCP servers, native tools, secrets, and skills.
 
 A profile's config **overrides** the shared config; it does not merge with it.
 A named profile that omits something the default profile has simply does not
-get it — there is no fallback to the shared value. A job needing a tool must
+get it. There is no fallback to the shared value. A job needing a tool must
 have that tool named on its assignee's profile, or the worker runs without it.
 
-**The isolation boundary is tools and credentials — not memory.** Every
+**The isolation boundary is tools and credentials, not memory.** Every
 profile of one agent reads and writes the same memory bank. This is
 deliberate: it is what lets a `default`-profile job recall a card's findings
-after its assignee moves — but it means a narrowly scoped profile can still
-recall anything any other profile of that agent ever wrote. Profile scoping
-is not a data boundary.
+after its assignee moves. But it also means a narrowly scoped profile can
+still recall anything any other profile of that agent ever wrote. Profile
+scoping is not a data boundary.
 
 The shared bank is the agent's bank in the network memory provider, not the
-per-directory files. It is keyed by the agent's id and deliberately not
-sub-keyed by profile, so every profile of one agent resolves to the same bank.
+per-directory files. It is keyed by the agent's id, not sub-keyed by profile.
+So every profile of one agent resolves to the same bank.
 The built-in `MEMORY.md` / `USER.md` files described in
 [Self-hosted AI agent](/autonomous-agents/hermes-agent) live in each profile's
 own `HERMES_HOME` and are not the shared surface. Separate agents derive
@@ -48,26 +48,31 @@ write-bearing GitHub work.
 | `default` | Cross-domain, board-meta, write-bearing GitHub | Everything | — |
 | `splunk-admin` | Read-only SIEM: search, alert, report | Splunk + docs MCP, a Splunk-monitoring skill | GitHub, incident-ticketing, other tools |
 | `homelab-admin` | Incidents + fabric health | Docs MCP, an incident-ticketing skill | Splunk, GitHub, other tools |
-| `github-maint` | Read-only repo review + proposals | Docs MCP, a GitHub-issues skill, a **read-only** token | GitHub writes — no issues opened, no PRs filed, no comments posted |
+| `github-maint` | Read-only repo review + proposals | Docs MCP, a GitHub-issues skill, a **read-only** token | GitHub writes: no issues opened, no PRs filed, no comments posted |
 
 `github-maint` is the one profile whose headline constraint is enforced by a
-credential rather than by tool availability: it renders a read-only token
-under the same key its skill authenticates with, so the skill works
-unchanged and every write call fails at the API. Its output leaves through
-Slack and a Kanban card, never a direct repository write.
+credential rather than by tool availability. It renders a read-only token
+under the same key its skill authenticates with. The skill works unchanged,
+but every write call fails at the API. Its output leaves through Slack and a
+Kanban card, never a direct repository write.
 
 Adding a new profile means scoping it by what it must **not** reach, not by
-what it might someday need — a new capability is a new profile decision, not
+what it might someday need. A new capability is a new profile decision, not
 a widened existing one.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Self-hosted AI agent" icon="robot" href="/autonomous-agents/hermes-agent">
-    The container, brain, and multi-agent picture this page sits underneath.
-  </Card>
-  <Card title="GitHub access" icon="github" href="/autonomous-agents/github-access">
-    The separate OpenBao GitHub App engine workstation sessions and runners use —
-    a different credential path than a Hermes profile's own token.
-  </Card>
+<Card
+  title="Self-hosted AI agent"
+  icon="robot"
+  href="/autonomous-agents/hermes-agent">
+  The container, brain, and multi-agent picture this page sits underneath.
+</Card>
+<Card
+  title="GitHub access"
+  icon="github"
+  href="/autonomous-agents/github-access">
+  The separate OpenBao GitHub App engine workstation sessions and runners use — a different credential path than a Hermes profile's own token.
+</Card>
 </CardGroup>

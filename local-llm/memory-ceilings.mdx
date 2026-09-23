@@ -1,17 +1,17 @@
 ---
 title: "Memory ceilings on Apple Silicon"
 description: "Why GPU memory utilization is a cap and not a reservation, how a live mode-aware wired ceiling and per-model load-time admission control keep a local LLM from paging the host with no rebuild, and the honest limits of that guarantee."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Two memory behaviours ride on one flag, over a wired ceiling that moves with
-> the serving mode. The stack tunes them at runtime — a model or mode swap needs
-> no rebuild — but the GPU cap alone is necessary, not sufficient.
+> the serving mode. The stack tunes them at runtime. A model or mode swap needs
+> no rebuild. But the GPU cap alone is necessary, not sufficient.
 
-A local MLX serving stack — a swapping proxy in front of one or more inference
-workers — has a single flag, `--gpu-memory-utilization`, that drives two
-different memory behaviours at once. Reading it as one knob is the usual reason
-a well-sized host still ends up paging.
+A local MLX serving stack is a swapping proxy in front of one or more
+inference workers. It has a single flag, `--gpu-memory-utilization`, that
+drives two different memory behaviours at once. Reading it as one knob is the
+usual reason a well-sized host still ends up paging.
 
 ## The two behaviours
 
@@ -31,7 +31,7 @@ The two use *different* denominators, and that is the whole story:
 
 | Term | What it is | Moves when |
 | --- | --- | --- |
-| `ceiling` | The OS wired-memory ceiling for the GPU subsystem — `iogpu.wired_limit_mb` on macOS, exposed to MLX as `max_recommended_working_set_size`. | You set the sysctl. |
+| `ceiling` | The OS wired-memory ceiling for the GPU subsystem. It's `iogpu.wired_limit_mb` on macOS, exposed to MLX as `max_recommended_working_set_size`. | You set the sysctl. |
 | `total_ram` | Physical RAM installed in the host. | Never, short of new hardware. |
 
 Raising the wired ceiling raises `allocation_limit` but leaves `trip` exactly
@@ -39,10 +39,10 @@ where it was.
 
 ## Insight one: it is a cap, not a reservation
 
-`--gpu-memory-utilization` does not pre-allocate anything. Setting it to a large
-fraction does not hand that memory to the worker, and setting it small does not
-hold memory back for the desktop. It only says how far an allocation is allowed
-to go before it is refused.
+`--gpu-memory-utilization` does not pre-allocate anything. Setting it to a
+large fraction does not hand that memory to the worker. Setting it small does
+not hold memory back for the desktop either. It only says how far an
+allocation is allowed to go before it is refused.
 
 The knob that actually decides how much of a host goes to inference is the OS
 wired ceiling. Treat `--gpu-memory-utilization` as a safety rail on top of that
@@ -57,7 +57,7 @@ footprint < trip < ceiling
 ```
 
 The trip point is a **soft valve**. It has to fire before the host reaches its
-hard ceiling and starts paging, and it has to sit above the worker's steady
+hard ceiling and starts paging. It also has to clear the worker's steady
 resident footprint so it does not fire during normal work.
 
 Move either knob alone and one side of that invariant breaks:
@@ -69,9 +69,9 @@ Move either knob alone and one side of that invariant breaks:
     sessions degrade badly while the GPU looks busy.
   </Card>
   <Card title="Raising the ceiling alone" icon="arrow-up">
-    The trip point stays put while the hard ceiling climbs past it — or the
-    trip lands above the ceiling entirely, so the soft valve never fires and
-    the host reaches its hard limit first.
+    The trip point stays put while the hard ceiling climbs past it. Or the
+    trip point already lands past the ceiling entirely. Either way, the soft
+    valve never fires, and the host reaches its hard limit first.
   </Card>
 </CardGroup>
 
@@ -88,13 +88,13 @@ Rearranging the invariant gives a symbolic band for the flag:
 footprint / ceiling  <  util  <  ceiling / total_ram − 0.05
 ```
 
-The lower bound keeps the allocation cap above what the worker actually holds.
+The lower bound keeps the allocation cap higher than what the worker actually holds.
 The upper bound keeps the trip point below the hard ceiling, with the engine's
 own `0.05` offset subtracted out. Pick a value inside the band with margin on
 both sides, and re-derive it whenever the ceiling, the model, or the batch
 shape changes.
 
-If the band is empty — the lower bound exceeds the upper — no value of the flag
+If the band is empty (the lower bound exceeds the upper), no value of the flag
 satisfies the invariant on that host. Raise the ceiling, shrink the footprint
 (smaller cache reservation, fewer concurrent sequences, a smaller model), or
 both.
@@ -104,13 +104,14 @@ both.
 On macOS, `ps` RSS does not attribute kernel-wired Metal allocations to the
 process that caused them. A worker holding tens of GB of wired GPU memory can
 look small in `ps` while `top` shows the real figure. Size against the wired
-number; RSS will quietly tell you the host has room it does not have.
+number; RSS quietly tells you the host has room it does not have.
 
 Wired is the right number for the *GPU* footprint, but it is not the whole
 process. On unified memory a worker also holds CPU-side tensors, memory-mapped
 weight pages, and load-time copies that the wired cap does not charge. Bounding
-wired memory is necessary but not sufficient — [the honest
-guarantee](#the-honest-guarantee) below bounds the whole process instead.
+wired memory is necessary but not sufficient. See [the honest
+guarantee](#the-honest-guarantee) below, which bounds the whole process
+instead.
 
 ## Finding the real ceiling
 
@@ -119,28 +120,28 @@ RAM. In practice it can be a substantially larger fraction than that. The rule
 of thumb is a guess; measure the machine instead.
 
 <Steps>
-  <Step title="Read the ceiling from MLX">
-    Query `max_recommended_working_set_size` through MLX. That is the value the
-    allocator actually enforces, whatever the sysctl is currently set to. Read
-    it before changing anything — the default may already be higher than you
-    were about to set.
-  </Step>
-  <Step title="Set the sysctl, then re-read">
-    Change `iogpu.wired_limit_mb` and read `max_recommended_working_set_size`
-    again to confirm the new ceiling took effect.
-  </Step>
-  <Step title="Re-derive utilization">
-    Feed the confirmed ceiling back through the band above and set
-    `--gpu-memory-utilization` to a value inside it.
-  </Step>
-  <Step title="Confirm the engine actually applied it">
-    Read back the limit the engine reports at startup, not just the flag you
-    passed. Serving stacks build their engine down more than one code path, and
-    a flag honored on one path can be silently ignored on another — leaving the
-    default in force while your command line says otherwise. Trust the engine's
-    own log line, then check the resulting trip point still satisfies the
-    invariant.
-  </Step>
+<Step title="Read the ceiling from MLX">
+Query `max_recommended_working_set_size` through MLX. That is the value the
+allocator actually enforces, whatever the sysctl is currently set to. Read
+it before changing anything. The default may already be higher than you
+were about to set.
+</Step>
+<Step title="Set the sysctl, then re-read">
+Change `iogpu.wired_limit_mb` and read `max_recommended_working_set_size`
+again to confirm the new ceiling took effect.
+</Step>
+<Step title="Re-derive utilization">
+Feed the confirmed ceiling back through the preceding band and set
+`--gpu-memory-utilization` to a value inside it.
+</Step>
+<Step title="Confirm the engine actually applied it">
+Read back the limit the engine reports at startup, not just the flag you
+passed. Serving stacks build their engine down more than one code path. A
+flag honored on one path can be silently ignored on another, leaving the
+default in force while your command line says otherwise. Trust the engine's
+own log line, then check the resulting trip point still satisfies the
+invariant.
+</Step>
 </Steps>
 
 <Warning>
@@ -148,7 +149,7 @@ of thumb is a guess; measure the machine instead.
   auto-unload or lazy-load feature routes model construction through a
   secondary path, the value can revert to the engine default there. The only
   reliable signal is the allocation limit the engine prints once the model
-  loads — if it does not match your flag, the invariant you derived is not the
+  loads. If it does not match your flag, the invariant you derived is not the
   one running.
 </Warning>
 
@@ -162,19 +163,19 @@ max_recommended_working_set_size = iogpu.wired_limit_mb × 1024²
 
 There is no rounding and no decimal conversion in that step. So a sysctl value
 read as "roughly N thousand MB" produces a ceiling about **7.4% larger** than
-the same number read as decimal GB — because 1024² bytes per MiB is that much
-more than 1000² bytes per MB.
+the same number read as decimal GB. That's because 1024² bytes per MiB is that
+much more than 1000² bytes per MB.
 
-That gap matters because it lands on the wrong side of safety: the ceiling you
+That gap matters because it lands on the wrong side of safety. The ceiling you
 get is *bigger* than the one you thought you set, so `util × ceiling` leaves
-more allocation headroom than intended while `trip` — computed against
-`total_ram`, untouched by the sysctl — stays exactly where it was. Always
+more allocation headroom than intended. Meanwhile `trip` is computed against
+`total_ram`, untouched by the sysctl, so it stays exactly where it was. Always
 re-derive from the value MLX reports back, never from the number you typed
 into the sysctl.
 
 Weights carry the mirror-image trap. Hugging Face reports a model's size in
 **decimal GB** (`×1e9` bytes); every budget in the admission formula is in
-**GiB** (`×1024³`). Convert `weightsBytes` with `×1e9`, not `×1024³` — conflate
+**GiB** (`×1024³`). Convert `weightsBytes` with `×1e9`, not `×1024³`. Conflate
 the two and the subtracted weight inflates by 7.37%, silently shrinking the KV
 pool you thought you had.
 
@@ -183,14 +184,14 @@ pool you thought you had.
 The invariant needs a real bound on `footprint`. Two flags look like they set
 it; only one does.
 
-- **`--max-cache-blocks` is the hard cap.** It bounds the active paged-KV pool —
+- **`--max-cache-blocks` is the hard cap.** It bounds the active paged-KV pool,
   the memory that grows as concurrent requests and longer contexts arrive. When
   the pool runs out, the worker rejects the request instead of allocating past
   the bound. This is the flag that keeps `footprint` under `trip`.
 - **`--cache-memory-mb` bounds only the prefix cache.** The prefix cache is a
   separate store that reuses shared prompt prefixes across requests. Sizing
-  against it leaves the paged-KV pool — the part that actually grows under
-  load — unbounded.
+  against it leaves the paged-KV pool unbounded, and that pool is the part
+  that actually grows under load.
 
 Size the footprint against `--max-cache-blocks`. A host tuned on
 `--cache-memory-mb` alone can still cross `trip` under concurrency, because the
@@ -216,24 +217,25 @@ reports:
 - **Actual total context:** what the request used after completion.
 
 This distinction prevents two common mistakes. First, a 32k prompt with a
-512-token reservation does not fit a 32k total limit; it needs a larger total
+512-token reservation does not fit a 32k total limit. It needs a larger total
 budget or a smaller prompt. Second, enabling a 192k total limit does not turn a
 32k input into a 192k benchmark. It creates a useful window-sensitivity case:
 measure the same 32k input under both configurations, then report the actual
 prompt and configured limit together.
 
 Context is only one part of memory use. The active paged-KV pool grows with
-actual admitted requests. The prefix cache is separate shared storage, and
-model weights, operating-system cache, and load-time workspace use affect
+actual admitted requests. The prefix cache is separate shared storage. Model
+weights, operating-system cache, and load-time workspace use also affect
 headroom without changing a request's token count. A safe long-context policy
 therefore reserves output first, admits against the global KV pool, and records
 which cache states applied to the measurement.
 
 ## Safety is runtime, not a build assert
 
-Holding `footprint < trip < ceiling` by hand means two coupled knobs — the
-wired ceiling and `--gpu-memory-utilization` — re-derived every time the model,
-the mode, or the batch shape changes. A build could derive them once and assert
+Holding `footprint < trip < ceiling` by hand means two coupled knobs move
+together: the wired ceiling and `--gpu-memory-utilization`. Both must be
+re-derived every time the model, the mode, or the batch shape changes. A build
+could derive them once and assert
 the result, but that only covers the config it was built with. Models and modes
 change while the host runs, and rebuilding to swap a model is exactly the
 friction the stack avoids. So the safety lives at runtime, at two enforcement
@@ -243,25 +245,28 @@ as cheap as changing a model in a proxy router.
 ### One budget input per host, per mode
 
 A host declares one number, `maxLocalLlmGb`: the total memory the local LLM
-stack may use. It carries two of them — one for standalone serving and a larger
-one for clustered mode, where the desktop is quiesced and more memory is free
-for a shard. The operator sets the numbers; the running mode picks which one
-applies.
+stack may use. It carries two values: one for standalone serving, and a larger
+one for clustered mode. In clustered mode the desktop is quiesced, so more
+memory is free for a shard. The operator sets the numbers; the running mode
+picks which one applies.
 
 ### Enforcement point one: the live mode-aware sysctl cap
 
 The OS wired ceiling, `iogpu.wired_limit_mb`, is a live sysctl. A link watcher
-flips it to the current mode's budget the moment the cluster cable is plugged or
-unplugged — the clustered budget on plug, the standalone budget on unplug. No
-reboot, no rebuild. In clustered mode both Macs raise the same higher cap. This
-is the hard kernel backstop on GPU-wired memory, and it moves with the mode. It
-stays high — set to the mode's budget — and is never lowered as a quick fix.
+flips it to the current mode's budget the moment the cluster cable is plugged
+or unplugged. Plugging in applies the clustered budget; unplugging applies the
+standalone budget. No reboot, no rebuild. In clustered mode both Macs raise the
+same higher cap.
+This is the hard kernel backstop on GPU-wired memory, and it moves with the
+mode. It stays high, set to the mode's budget, and is never lowered as a quick
+fix.
 
 ### Enforcement point two: per-model load-time admission control
 
 When the swap proxy spawns a worker, a wrapper computes the safe caps from live
-inputs — the current sysctl value, the model's architecture, and the requested
-concurrency and context. Swapping a model needs no nix change:
+inputs. Those inputs are the current sysctl value, the model's architecture,
+and the requested concurrency and context. Swapping a model needs no nix
+change:
 
 ```text
 effectiveBudget = current iogpu.wired_limit_mb × 1024²   # reads the live sysctl (mode-aware)
@@ -273,7 +278,7 @@ perTokenKvBytes = 2 × kvLayers × kvHeads × headDim × kvDtypeBytes
 poolBlocks      = floor( availableForKV / (blockSize × perTokenKvBytes) )   # GLOBAL pool, not per-sequence
 ```
 
-`--max-cache-blocks` is that global pool count — the whole paged-KV pool, shared
+`--max-cache-blocks` is that global pool count: the whole paged-KV pool, shared
 across every concurrent sequence, not a per-request budget. So the pool size
 does **not** divide by concurrency. Concurrency enters at admission instead:
 
@@ -282,19 +287,19 @@ admit if:  concurrency × ceil(context / blockSize)  ≤  poolBlocks
 ```
 
 The wrapper sets `--max-cache-blocks` to `poolBlocks` and derives
-`--gpu-memory-utilization` from the live ceiling band above. If the requested
-concurrency and context do not fit the pool, the wrapper **rejects or clamps the
-load and fails loud** — shrinking concurrency or context until the admission
-check holds. A model too big to fit even one sequence is refused, not paged to
-disk.
+`--gpu-memory-utilization` from the preceding live ceiling band. If the
+requested concurrency and context do not fit the pool, the wrapper **rejects
+or clamps the load and fails loud**. It shrinks concurrency or context until
+the admission check holds. A model too big to fit even one sequence is
+refused, not paged to disk.
 
 <Note>
   `kvLayers` is the count of layers that actually hold a KV cache, not the total
   layer count. A hybrid-attention model charges KV only for its full-attention
-  layers: `qwen3-next-80b` runs 12 full-attention layers of 48, so its KV costs
-  about 24 KiB/token — *cheaper* than a dense 30B at about 96 KiB/token, despite
-  the far larger weights. Read `kvLayers` from the model's architecture; never
-  assume it equals the depth.
+  layers. `qwen3-next-80b` runs 12 full-attention layers of 48, so its KV costs
+  about 24 KiB/token. That's cheaper than a dense 30 B at about 96 KiB/token,
+  despite the far larger weights. Read `kvLayers` from the model's
+  architecture; never assume it equals the depth.
 </Note>
 
 One function covers every case by changing only the model or the mode:
@@ -308,22 +313,23 @@ One function covers every case by changing only the model or the mode:
   shard and KV under that machine's clustered cap, and the two machines pool
   their memory across the cluster.
 
-`transientReserve` is the load's insurance. It is a measured high-water fraction
-of the budget — the load-time and first-request spikes the formula alone cannot
-see — not a slice of the weights. Re-measure it whenever the engine, model, or
-KV dtype changes.
+`transientReserve` is the load's insurance. It is a measured high-water
+fraction of the budget. It covers the load-time and first-request spikes the
+formula alone cannot see, not a slice of the weights. Re-measure it whenever
+the engine, model, or KV dtype changes.
 
 ### The build assert is only a policy check
 
 A compile-time assert stays, but demoted. It checks that the declared budgets
-are internally consistent and each leaves an OS floor free for the desktop and
-compositor — a policy sanity check, not a per-model guarantee:
+are internally consistent and that each leaves an OS floor free for the
+desktop and compositor. That's a policy sanity check, not a per-model
+guarantee:
 
 ```text
 assert standalone and clustered budgets are internally consistent and each leaves an OS floor
 ```
 
-The per-model guarantee is the runtime admission above, not this assert. You
+The per-model guarantee is the preceding runtime admission, not this assert. You
 never hand-tune the ceiling, the utilization, or the per-model caps.
 
 ## The honest guarantee
@@ -332,9 +338,9 @@ The live sysctl cap plus per-load admission make overload *virtually
 impossible* across model and mode changes with no rebuild. But "never" is a
 stronger claim, and on unified memory the GPU-wired cap is **necessary, not
 sufficient**. CPU-side tensors, memory-mapped weight pages, load-time
-conversion copies, graph and workspace compilation, and cache or queue growth
-all pressure RAM without being charged to the wired cap. Bounding wired memory
-alone leaves that hole open.
+conversion copies, graph, and workspace compilation, and cache or queue growth
+all pressure RAM. None of it is charged to the wired cap. Bounding wired
+memory alone leaves that hole open.
 
 Closing it takes seven invariants, all of them:
 
@@ -345,14 +351,14 @@ Closing it takes seven invariants, all of them:
    peaks, fault-injected, not on `weights + KV formula`. Treat unknown
    allocations as reserve, never as free capacity.
 3. **No-overlap transitions.** Unload and verify release before loading a
-   replacement — never old and new at once. On a mode downshift, quiesce and
+   replacement. Never hold old and new at once. On a mode downshift, quiesce and
    evict until observed memory fits the new envelope before trusting the lowered
    sysctl; a lowered cap does not reclaim already-wired memory.
 4. **Strict caps on every cache and queue.** Prefix cache, input queue, output
-   queue, workspace cache, mmap prefetch, CPU copies — each bounded, all counted
+   queue, workspace cache, mmap prefetch, CPU copies: each bounded, all counted
    in the budget.
 5. **Atomic distributed admission.** In clustered mode, admit per-rank on each
-   rank's measured peak, not weights split evenly — the layer split, the
+   rank's measured peak, not weights split evenly. The layer split, the
    embedding and output layers, and the communication buffers make ranks
    uneven. Two-phase: preflight and reserve all ranks, then commit all or roll
    back all. Any rank that runs out tears down every peer.
@@ -377,34 +383,48 @@ The design earns the word "never" only by passing that test.
 ## Where this applies
 
 The same arithmetic holds in both serving modes. In **standalone** mode, one
-host serves itself and the footprint is a single worker plus whatever else is
+host serves itself, and the footprint is a single worker plus whatever else is
 running on the desktop. In **clustered** mode, several hosts serve a shared
-endpoint, and each host is derived independently — a headless desktop-class
+endpoint, and each host is derived independently. A headless desktop-class
 member can carry a much higher ceiling than a laptop that also runs an
-interactive session, because the laptop must leave room for the compositor and
-the user's own work.
+interactive session. That's because the laptop must leave room for the
+compositor and the user's own work.
 
-Host-specific values — real ceilings, measured footprints, and the utilization
-figures derived from them — live in the gated operational reference, alongside
-the rest of the per-host numbers.
+Host-specific values live in the gated operational reference, alongside the
+rest of the per-host numbers. That includes real ceilings, measured
+footprints, and the utilization figures derived from them.
 
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Nix serving stack" icon="boxes-stacked" href="/local-llm/nix-serving-stack">
-    How the Nix modules ship the mode-aware budgets, the load-time admission
-    wrapper, and the link watcher — then launch the worker.
-  </Card>
-  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
-    The serving stack these knobs belong to, and the rest of the tuning playbook.
-  </Card>
-  <Card title="Models and quantization" icon="layer-group" href="/local-llm/models-and-quantization">
-    What sets the footprint side of the invariant in the first place.
-  </Card>
-  <Card title="Distributed serving" icon="network-wired" href="/local-llm/distributed">
-    How clustered mode spreads work across more than one host.
-  </Card>
-  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
-    The module that generates the serving config these flags land in.
-  </Card>
+<Card
+  title="Nix serving stack"
+  icon="boxes-stacked"
+  href="/local-llm/nix-serving-stack">
+  How the Nix modules ship the mode-aware budgets, the load-time admission wrapper, and the link watcher — then launch the worker.
+</Card>
+<Card
+  title="Apple Silicon stack"
+  icon="microchip"
+  href="/local-llm/apple-silicon">
+  The serving stack these knobs belong to, and the rest of the tuning playbook.
+</Card>
+<Card
+  title="Models and quantization"
+  icon="layer-group"
+  href="/local-llm/models-and-quantization">
+  What sets the footprint side of the invariant in the first place.
+</Card>
+<Card
+  title="Distributed serving"
+  icon="network-wired"
+  href="/local-llm/distributed">
+  How clustered mode spreads work across more than one host.
+</Card>
+<Card
+  title="nix-ai"
+  icon="bot"
+  href="/nix/nix-ai">
+  The module that generates the serving config these flags land in.
+</Card>
 </CardGroup>

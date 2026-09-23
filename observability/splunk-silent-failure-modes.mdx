@@ -1,26 +1,32 @@
 ---
 title: "Three ways Splunk reports healthy while broken"
 description: "A silence detector built on tstats cannot detect silence, the index listing hides metric indexes by default, and saved searches in the system namespace never dispatch. All three present as a clean result."
-page_type: reference
+page_type: "reference"
 ---
+{/* projected from the authoring site; do not edit here */}
+> Every failure here returns success. The alert stays quiet, the listing comes back complete, and the search shows as enabled. None of it is true.
 
-> Every failure here returns success. The alert stays quiet, the listing comes back complete, the search shows as enabled — and none of it is true.
-
-These are three separate defects with one shape in common: **an empty or partial result is indistinguishable from a healthy one.** Each was found in production, each had been in place for weeks, and each survived a review that looked at the configuration rather than the behaviour.
+These are three separate defects with one shape in common: **an empty or partial result is
+indistinguishable from a healthy one.** Each was found in production. Each had been in place for
+weeks, and each survived a review that looked at the configuration rather than the behaviour.
 
 ## 1. A `tstats` silence detector cannot detect silence
 
-Over a lookback window with zero matching events, `tstats` returns **zero result rows** — not one row with a null timestamp.
+Over a lookback window with zero matching events, `tstats` returns **zero result rows**. It does not return one row with a null timestamp.
 
-That single fact defeats the usual guard. With no row, `eval` never runs, so a `coalesce(last_seen, 0)` fallback never executes. The search returns nothing, and "no results" reads as healthy. The detector reports clean for the entire duration of the outage it exists to catch.
+That single fact defeats the usual guard. With no row, `eval` never runs, so a `coalesce(last_seen,
+0)` fallback never executes. The search returns nothing, and "no results" reads as healthy. The
+detector reports clean for the entire duration of the outage it exists to catch.
 
 This holds whether or not you group `by host`.
 
 ### How it presents
 
-A detector with this defect returns zero results on day one of an outage and zero results on day eighteen. Both readings are identical to a healthy pipeline, so nothing in the alert history distinguishes them.
+A detector with this defect returns zero results on day one of an outage and zero results on day
+eighteen. Both readings are identical to a healthy pipeline, so nothing in the alert history
+distinguishes them.
 
-Adding `coalesce(last_seen, 0)` does not help — the `eval` never runs. A detector can carry that guard, look correct in review, and still be blind.
+Adding `coalesce(last_seen, 0)` does not help, because the `eval` never runs. A detector can carry that guard, look correct in review, and still be blind.
 
 When one stanza has this defect, assume every stanza built from the same template does. A partial fix applied to one branch of a generated loop leaves the rest silent.
 
@@ -28,18 +34,25 @@ When one stanza has this defect, assume every stanza built from the same templat
 
 `stats`, unlike `tstats`, always emits one row for an ungrouped aggregate even over zero input rows. Append a sentinel:
 
-```
+```text
 | appendpipe [ stats count as _rows | where _rows == 0 | eval last_seen = 0 | fields - _rows ]
 ```
 
 ### Grepping the SPL is not a test
 
-Asserting the search *text* contains `coalesce` or `appendpipe` proves nothing — `coalesce` was present in the blind version.
+Asserting the search *text* contains `coalesce` or `appendpipe` proves nothing. `coalesce` was present in the blind version.
 
-A real test simulates zero-row `tstats` behaviour and asserts a row survives to the final `where`. Run it against the pre-fix template and confirm it **fails**, then against the fix and confirm it passes. A test never seen failing is not known to work.
+A real test simulates zero-row `tstats` behaviour and asserts a row survives to the final `where`.
+Run it against the pre-fix template and confirm it **fails**, then against the fix and confirm it
+passes. A test never seen failing is not known to work.
 
 <Warning>
-The guard test itself under-covered silently. Its selector regex was case-sensitive (`\btstats\b|\bstats\b[^|]*\bby\b`), but SPL treats command keywords case-insensitively — so `stats ... BY host` was skipped. Two correctly-guarded detectors were excluded from coverage while the test reported success.
+The guard test itself under-covered silently. Its selector regular expression was case-sensitive
+(`\btstats\b|\bstats\b[^|]*\bby\b`), but SPL treats command keywords case-insensitively, so `stats
+... BY host` was skipped.
+
+Two correctly guarded detectors were excluded from coverage while the test
+reported success.
 
 It was caught only by asserting the expected stanza **count**: 14 where 16 was expected. A green tick alone would have shipped it.
 </Warning>
@@ -48,7 +61,7 @@ Generalizable: a validator written case-sensitively against a case-insensitive l
 
 ## 2. The index listing hides metric indexes
 
-`GET /services/data/indexes` defaults to `datatype=event` and silently omits every metric-typed index. No error, no warning — they are simply absent. Verified on Splunk 10.2.0:
+`GET /services/data/indexes` defaults to `datatype=event` and silently omits every metric-typed index. No error, no warning. They are simply absent. Verified on Splunk 10.2.0:
 
 ```text
 /services/data/indexes                  -> total: 37   (all datatype=event)
@@ -61,19 +74,25 @@ Generalizable: a validator written case-sensitively against a case-insensitive l
 
 The natural defence is to prove the query works by pointing it at data you know exists. That defence fails if the control sits **inside the same narrowed query**.
 
-Running the same query shape against an event index returns millions of rows and appears to prove that an empty result means empty. It proves only that the query works for events — which is exactly the class the default filter already restricted it to. It cannot surface the omission.
+Running the same query shape against an event index returns millions of rows and appears to prove
+that an empty result means empty. It proves only that the query works for events, which is exactly
+the class the default filter already restricted it to. It cannot surface the omission.
 
 A control is only meaningful if it exercises the class you claim is absent.
 
 ### Host-scoped absence is not data loss
 
-A per-host query showing a sender last seen weeks ago does not mean the data stopped. A routing rule that reclassifies events into a different index produces exactly that reading, while the events keep flowing under a name nobody recorded.
+A per-host query showing a sender last seen weeks ago does not mean the data stopped. A routing rule
+that reclassifies events into a different index produces exactly that reading, while the events keep
+flowing under a name nobody recorded.
 
 The index-level check misleads in the opposite direction: the index shows `maxTime` = now and looks healthy, because unrelated hosts keep feeding it.
 
-**Index-level freshness cannot see a per-host gap. A per-host gap cannot see events that moved to another index.** Check both; neither answers the other's question. Before calling telemetry lost, search across all indexes:
+**Index-level freshness cannot see a per-host gap. A per-host gap cannot see events that moved to
+another index.** Check both; neither answers the other's question. Before calling telemetry lost,
+search across all indexes:
 
-```
+```text
 | tstats count where index=* by index, host
 ```
 
@@ -87,15 +106,19 @@ Use `mstats` for metrics and `tstats` for events. Querying the wrong one returns
 
 A scheduled saved search in `$SPLUNK_HOME/etc/system/local/savedsearches.conf` is **accepted and never run**. The scheduler dispatches per *app* context and does not walk the system namespace.
 
-REST reports `enableSched=1`, `is_scheduled: true`, and the configured cron. The UI shows it enabled. `fired=0` looks like "conditions healthy". There is no error, no log line, not even a skipped-search row.
+REST reports `enableSched=1`, `is_scheduled: true`, and the configured cron. The UI shows it
+enabled. `fired=0` looks like "conditions healthy." There is no error, no log line, not even a
+skipped-search row.
 
 **The only observable is `next_scheduled_time` being empty.**
 
 Verified three ways on a live instance:
 
 - `next_scheduled_time` was populated on 35/35 enabled scheduled searches across 13 real apps, and empty on 21/21 in the `system` namespace. Zero exceptions.
-- `index=_internal sourcetype=scheduler` over **90 days**: zero rows for any of them by name, and zero rows for `app=system` at any status. In the same window the scheduler dispatched 1,780 runs across 12 apps in 24 hours, so it was healthy.
-- Nobody-owned, app-scoped searches dispatch fine — one admin app ran 57 times. So `owner=nobody` is not the cause. The **app context** is.
+- `index=_internal sourcetype=scheduler` over **90 days**: zero rows for any of them by name, and
+  zero rows for `app=system` at any status. In the same window the scheduler dispatched 1,780 runs
+  across 12 apps in 24 hours, so it was healthy.
+- Nobody-owned, app-scoped searches dispatch fine. One administrator app ran 57 times. So `owner=nobody` is not the cause. The **app context** is.
 
 Alert *actions* are unaffected. A Slack action living in app `system` with `sharing=system` works normally. Only saved searches need an app.
 
@@ -103,7 +126,9 @@ Alert *actions* are unaffected. A Slack action living in app `system` with `shar
 
 Deploy to `etc/apps/<your_app>/local/savedsearches.conf` with an `app.conf`, and add `metadata/local.meta` with `export = system` to preserve the previous sharing. Remove the system-namespace file.
 
-**Standing check:** a scheduled search with an empty `next_scheduled_time` is not scheduled, whatever its configuration claims. Never conclude "the alert didn't fire, so nothing was wrong" without checking it.
+**Standing check:** a scheduled search with an empty `next_scheduled_time` is not scheduled,
+whatever its configuration claims. Never conclude "the alert didn't fire, so nothing was wrong"
+without checking it.
 
 ## The question that catches all three
 
@@ -111,6 +136,8 @@ Ask of every detector: **if the thing it watches vanished completely, would this
 
 If the answer is no, the detector is decorative. A blind detector is worse than no detector, because its presence tells the next reader the condition is covered.
 
-The same reasoning applies to absence generally. An absence proves nothing when the search space was narrowed by a default you did not set. A self-chosen range is a known risk; an implicit server-side default is worse, because nothing in the request records it.
+The same reasoning applies to absence generally. An absence proves nothing when the search space was
+narrowed by a default you did not set. A self-chosen range is a known risk; an implicit server-side
+default is worse, because nothing in the request records it.
 
-Before concluding "X does not exist," ask what the query's *unstated* defaults excluded — and prove the tool can see the class you claim is absent, not merely the class you already found.
+Before concluding "X does not exist," ask what the query's *unstated* defaults excluded. Then prove the tool can see the class you claim is absent, not merely the class you already found.

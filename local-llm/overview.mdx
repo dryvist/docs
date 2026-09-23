@@ -1,59 +1,60 @@
 ---
 title: "Local LLM"
-description: "One strategy for local inference: a fast resident model on each client laptop, and an always-on desktop-class Apple Silicon host serving the large tier to the whole LAN — laptops as clients."
-page_type: overview
+description: "One strategy for local inference: a fast resident model on each client laptop, and an always-on desktop-class Apple Silicon host serving the large tier to the whole LAN. Laptops are the clients."
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Run the model where it makes sense. Fast and resident on the laptop, big and
-> always-on for the LAN — served from a desktop-class Apple Silicon host the
+> always-on for the LAN, served from a desktop-class Apple Silicon host the
 > laptops call as clients.
 
 "Local LLM" here means two distinct stacks that answer to the same OpenAI-shaped
 API, plus the strategy that decides which one runs what. Neither is an agent.
-Both are *just the model plus a serving stack* — the agent layer (Claude Code,
+Both are *just the model plus a serving stack*. The agent layer (Claude Code,
 Antigravity, the routines) lives above them and calls in over HTTP.
 
-- **The client laptops** — `mlx-lm` workers behind `llama-swap` on a
+- **The client laptops**: `mlx-lm` workers behind `llama-swap` on a
   laptop-class M4 Max, one resident model, tuned to coexist with a working
   desktop. This is a laptop's own private model for delegated edits, drafts, and
   "don't burn cloud tokens on this" tasks.
-- **The always-on large tier** — a desktop-class Apple Silicon host, always on
+- **The always-on large tier**: a desktop-class Apple Silicon host, always on
   and reachable across the LAN, holds the big resident model the laptops call as
   clients. One place serves the large tier; everything else is a client of it.
-  This supersedes the earlier dedicated-GPU approach — see
+  This supersedes the earlier dedicated-GPU approach. See
   [Homelab GPU](/local-llm/homelab-gpu) for the path it replaces.
 
 The cloud frontier models still win on the hardest reasoning. The point of local
-isn't to beat them — it's to own the routine, private, and high-volume work
+isn't to beat them. It's to own the routine, private, and high-volume work
 without metering, and to keep a credible offline fallback.
 
 ## One gateway, one endpoint
 
-A single self-hosted, OpenAI-compatible LLM gateway unifies both stacks — the
-local models and the always-on workstation-hosted models — behind one endpoint.
+A single self-hosted, OpenAI-compatible LLM gateway unifies both stacks (the
+local models and the always-on workstation-hosted models) behind one endpoint.
 Every client speaks the same OpenAI API to one URL and one key; the gateway
 routes to whichever model answers. Model serving spans the always-on
 workstation-class host for larger models and a separate GPU host for a
-smaller, faster tier, with the gateway selecting between them automatically —
-no client needs to know which one served the request. This GPU host is
-distinct from the older dedicated-GPU approach for large models noted above,
+smaller, faster tier. The gateway selects between them automatically, so no
+client needs to know which one served the request. This GPU host is
+distinct from the older dedicated-GPU approach for large models noted earlier,
 which the second workstation superseded.
 
 The homelab's self-hosted autonomous agents run continuously and connect to
 that same endpoint as their model backend.
 
-A free hosted tier sits behind both local tiers in the fallback order — it is
+A free hosted tier sits behind both local tiers in the fallback order. It is
 reached only when local capacity is unavailable, never in front of it. See
 [Model routing](/ai-development/model-routing#delegation-the-cheapest-capable-tier)
 for the general policy this follows.
 
 ## Current shape, and what's still gated
 
-{/* Shape: linear chain. 3 nodes, one timeline. Aspect ~3:1 LR. Role via classDef. */}
+{/*Shape: linear chain. 3 nodes, one timeline. Aspect ~3:1 LR. Role via classDef.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Laptop([Laptop<br/>1× M4 Max · one resident model])
   Large([Large tier · live<br/>always-on host · 2 models concurrent])
   Shard([Gated<br/>shard one model across both])
@@ -73,7 +74,7 @@ A boot warmup LaunchAgent (`mlx-warmup`) faults model weights into memory at
 boot so the first request does not pay the cold-start cost.
 
 For what that host actually loads right now, read
-[What is actually loaded](/local-llm/mac-studio#what-is-actually-loaded) — a
+[What is actually loaded](/local-llm/mac-studio#what-is-actually-loaded), a
 dated, live-read roster. No throughput figures are quoted here on purpose:
 every earlier number was decode-only and carried no prompt regime, which makes
 it uncitable. The re-measured, regime-stated figures live in
@@ -83,55 +84,55 @@ The historical tuning report is in `nix-darwin`
 
 <Warning>
   **Why those figures were pulled, and why you should distrust any number that
-  lacks its provenance.** The swapping proxy once served the resident model's
-  weights under every other model's label — single-model collapse grafted each
-  disabled model's *physical identifier* onto the surviving entry as an alias —
-  which inflated one measurement by 7x. That defect is fixed: a disabled
-  model's physical id no longer gets aliased, and now returns HTTP 404 — but
+  lacks its provenance**. The swapping proxy once served the resident model's
+  weights under every other model's label. Single-model collapse grafted each
+  inactive model's *physical identifier* onto the surviving entry as an alias,
+  which inflated one measurement by 7x. That defect is fixed: an inactive
+  model's physical id no longer gets aliased, and now returns HTTP 404. But
   figures measured while it was live remain provisional regardless. The
   concurrency aggregate is not a general
-  result either: on a large MoE model, four streams measured *worse* than one
+  result either. On a large MoE model, four streams measured *worse* than one
   (verified 2026-07-26/27). Read
   [Verifying the instrument](/local-llm/verifying-the-instrument) before citing
   any number on this site.
 
   They were also quoted on the wrong metric, and without a regime. The headline
-  figure is **cumulative** tokens/second — prompt plus completion over total
-  wall-clock — because decode-only rates hide real prefill gains; but cumulative
+  figure is **cumulative** tokens/second: prompt plus completion over total
+  wall-clock, because decode-only rates hide real prefill gains. But cumulative
   is meaningless without its prompt size, so both must be published together.
   See [the metric definition](/tools/mlx-benchmarks#the-headline-metric-is-cumulative-not-decode-only),
   [why the regime matters](/tools/mlx-benchmarks#cumulative-is-meaningless-without-its-regime),
   and the [re-measured figures](/local-llm/mac-studio#re-measured-in-isolation).
 </Warning>
 
-Note that this does **not** turn two machines into one 256 GB pool — Apple
+Note that this does **not** turn two machines into one 256 GB pool. Apple
 Silicon unified memory can't be merged across a cable.
-The separate, still-gated direction is **combined capacity by sharding**: a
-model too big for either machine alone, run across both over a fast
+The separate, still-gated direction is **combined capacity by sharding**. It
+means a model too big for either machine alone, run across both over a fast
 interconnect, unattended, by morning. That's a capacity win, not a speed win,
-and it remains measurement-gated — covered honestly in
-[Distributed & multi-Mac](/local-llm/distributed).
+and it remains measurement-gated. See
+[Distributed & multi-Mac](/local-llm/distributed) for the honest picture.
 
 ## The principles that hold across both stacks
 
 - **A small resident set, not a rotation.** Swapping a multi-GB model evicts
-  wired GPU memory and reloads another — the slowest thing you can do. A laptop
-  holds one resident model; the serving host holds two. Capability-role aliases
-  (`default`, `coding`, `quickest`, `tool-calling`, …) resolve onto that
+  wired GPU memory and reloads another. That's the slowest thing you can do. A
+  laptop holds one resident model; the serving host holds two. Capability-role
+  aliases (`default`, `coding`, `quickest`, `tool-calling`, …) resolve onto that
   resident set, so a role never triggers a swap. How many are resident is a
   property of the host, read from the registry, not a fixed number.
 - **The registry is the source of truth.** Which physical model is resident
-  lives in one place — the AI-stack registry that `nix-ai` writes at activation,
+  lives in one place: the AI-stack registry that `nix-ai` writes at activation,
   read as `~/.config/ai-stack/registry.json`. Docs describe the *strategy*; the
   *current id* is a registry value, never hard-coded here. See
   [Models & quantization](/local-llm/models-and-quantization).
-- **Measure, don't claim — then verify the instrument.** No tuning change ships
+- **Measure, don't claim; then verify the instrument.** No tuning change ships
   on a marketing number, only a measured one. But a measurement is only as good
   as proof of which weights the process loaded, so every number carries that
   provenance. See [Verifying the instrument](/local-llm/verifying-the-instrument).
 - **MoE for throughput.** A sparse mixture-of-experts model with a few billion
   active parameters decodes far faster than a dense model of the same total
-  size — the lever that makes a big model usable on a laptop.
+  size. That's the lever that makes a big model usable on a laptop.
 - **Capacity, not speed, across machines.** Sharding one model over two Macs is
   communication-bound; reserve it for models that don't fit, and run two
   independent workers for everything that does.
@@ -139,45 +140,81 @@ and it remains measurement-gated — covered honestly in
 ## In this section
 
 <CardGroup cols={2}>
-  <Card title="Apple Silicon stack" icon="microchip" href="/local-llm/apple-silicon">
-    The M4 Max `mlx-lm` + `llama-swap` stack and every non-secret tuning knob — and *why* each one is set the way it is.
-  </Card>
-  <Card title="Mac Studio serving" icon="desktop" href="/local-llm/mac-studio">
-    The always-on LAN-shared large-tier model serving host: models, use cases, and headline performance outcomes.
-  </Card>
-  <Card title="Models & quantization" icon="layer-group" href="/local-llm/models-and-quantization">
-    One-resident posture, MoE vs dense, OptiQ / DWQ / mxfp4, and the fast-vs-overnight model tiers.
-  </Card>
-  <Card title="Backends & tool calling" icon="server" href="/local-llm/backends">
-    Why `vllm-mlx`, how it compares to Ollama / llama.cpp / mlx-lm / Rapid-MLX, and the tool-calling reliability problem.
-  </Card>
-  <Card title="Distributed & multi-Mac" icon="network-wired" href="/local-llm/distributed">
-    The honest two-Mac story: combined capacity via sharding, two-workers-vs-shard, and what's measurement-gated.
-  </Card>
-  <Card title="Homelab GPU" icon="server" href="/local-llm/homelab-gpu">
-    The always-on, LAN-shared model on a dedicated GPU — a different machine, a bigger model.
-  </Card>
-  <Card title="Verifying the instrument" icon="magnifying-glass-chart" href="/local-llm/verifying-the-instrument">
-    How a server serves the wrong weights silently, the one check that catches it, and the 7x error it hid.
-  </Card>
-  <Card title="Benchmarking" icon="gauge-high" href="/tools/mlx-benchmarks">
-    The reproducible harness and public dataset that every tuning decision is measured against.
-  </Card>
+<Card
+  title="Apple Silicon stack"
+  icon="microchip"
+  href="/local-llm/apple-silicon">
+  The M4 Max `mlx-lm` + `llama-swap` stack and every non-secret tuning knob, and *why* each one is set the way it is.
+</Card>
+<Card
+  title="Mac Studio serving"
+  icon="desktop"
+  href="/local-llm/mac-studio">
+  The always-on LAN-shared large-tier model serving host: models, use cases, and headline performance outcomes.
+</Card>
+<Card
+  title="Models & quantization"
+  icon="layer-group"
+  href="/local-llm/models-and-quantization">
+  One-resident posture, MoE vs dense, OptiQ / DWQ / mxfp4, and the fast-vs-overnight model tiers.
+</Card>
+<Card
+  title="Backends & tool calling"
+  icon="server"
+  href="/local-llm/backends">
+  Why `vllm-mlx`, how it compares to Ollama / llama.cpp / mlx-lm / Rapid-MLX, and the tool-calling reliability problem.
+</Card>
+<Card
+  title="Distributed & multi-Mac"
+  icon="network-wired"
+  href="/local-llm/distributed">
+  The honest two-Mac story: combined capacity via sharding, two-workers-vs-shard, and what's measurement-gated.
+</Card>
+<Card
+  title="Homelab GPU"
+  icon="server"
+  href="/local-llm/homelab-gpu">
+  The always-on, LAN-shared model on a dedicated GPU: a different machine, a bigger model.
+</Card>
+<Card
+  title="Verifying the instrument"
+  icon="magnifying-glass-chart"
+  href="/local-llm/verifying-the-instrument">
+  How a server serves the wrong weights silently, the one check that catches it, and the 7x error it hid.
+</Card>
+<Card
+  title="Benchmarking"
+  icon="gauge-high"
+  href="/tools/mlx-benchmarks">
+  The reproducible harness and public dataset that every tuning decision is measured against.
+</Card>
 </CardGroup>
 
 ## How it connects
 
 <CardGroup cols={2}>
-  <Card title="nix-ai" icon="bot" href="/nix/nix-ai">
-    Packages the inference stack — the MLX model-server LaunchAgent, `llama-swap`, the MLX modules, and the AI-stack registry.
-  </Card>
-  <Card title="AI development pipeline" icon="diagram-project" href="/architecture/ai-pipeline">
-    Where local models sit in the bigger picture — routed alongside Claude, Antigravity, and Copilot by task class.
-  </Card>
-  <Card title="Local AI isolation" icon="shield-halved" href="/security/local-ai-isolation">
-    Why a local model and the agents calling it still can't read protected secrets.
-  </Card>
-  <Card title="Operational reference (private)" icon="lock" href="https://docs.dryvist.com">
-    Host-specific values, real topology, and incident history live in the gated companion docs.
-  </Card>
+<Card
+  title="nix-ai"
+  icon="bot"
+  href="/nix/nix-ai">
+  Packages the inference stack: the MLX model-server LaunchAgent, `llama-swap`, the MLX modules, and the AI-stack registry.
+</Card>
+<Card
+  title="AI development pipeline"
+  icon="diagram-project"
+  href="/architecture/ai-pipeline">
+  Where local models sit in the bigger picture: routed alongside Claude, Antigravity, and Copilot by task class.
+</Card>
+<Card
+  title="Local AI isolation"
+  icon="shield-halved"
+  href="/security/local-ai-isolation">
+  Why a local model and the agents calling it still can't read protected secrets.
+</Card>
+<Card
+  title="Operational reference (private)"
+  icon="lock"
+  href="https://docs.dryvist.com">
+  Host-specific values, real topology, and incident history live in the gated companion docs.
+</Card>
 </CardGroup>

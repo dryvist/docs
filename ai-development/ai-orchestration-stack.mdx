@@ -1,9 +1,9 @@
 ---
 title: "AI orchestration stack"
-description: "Six self-hosted tools for building and running LLM workflows — n8n, Dify, LangFlow, LangGraph, CrewAI, and LangChain — and the blunt rule for which one to reach for."
-page_type: explanation
+description: "Six self-hosted tools for building and running LLM workflows (n8n, Dify, LangFlow, LangGraph, CrewAI, and LangChain), and the blunt rule for which one to reach for."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Three of these draw boxes and arrows. Two are Python libraries. Knowing which
 > is which is most of the decision.
 
@@ -17,10 +17,10 @@ six and using none of them.
 
 | Tool | What it is | Shape | Reach for it when |
 | --- | --- | --- | --- |
-| **n8n** | General workflow automation, 400+ integrations | Visual builder (service) | You need to wire an LLM into other systems — email, calendars, webhooks, databases, SaaS APIs |
-| **Dify** | Full LLMOps platform — RAG, prompts, evals, agents, model routing | Visual builder (service) | You want a production AI app with retrieval, prompt versioning, and evaluation, low-code |
+| **n8n** | General workflow automation, 400+ integrations | Visual builder (service) | You need to wire an LLM into other systems: email, calendars, webhooks, databases, SaaS APIs |
+| **Dify** | Full LLMOps platform: RAG, prompts, evals, agents, model routing | Visual builder (service) | You want a production AI app with retrieval, prompt versioning, and evaluation, low-code |
 | **LangFlow** | Visual node editor for LangChain graphs | Visual builder (service) | You want to prototype a chain by dragging nodes, then export it to Python |
-| **LangGraph** | Stateful, graph-structured agents; self-hosted here as a server + chat UI | Python library (+ self-hosted server) | You're building a durable, multi-step agent as a graph and want to run it behind a UI — with no cloud (LangSmith-free) |
+| **LangGraph** | Stateful, graph-structured agents; self-hosted here as a server + chat UI | Python library (+ self-hosted server) | You're building a durable, multi-step agent as a graph and want to run it behind a UI, with no cloud (LangSmith-free) |
 | **LangChain** | Library of composable LLM building blocks | Python library | You're writing code and want chains, tools, memory, and retrievers as primitives |
 | **CrewAI** | Framework for role-playing multi-agent "crews" | Python library | You're writing code and want agents with roles collaborating on a task |
 
@@ -30,14 +30,14 @@ The single most useful distinction:
 
 - **n8n, Dify, and LangFlow are services.** They run as containers, expose a web
   UI, and you build inside them. They are deployed and have an HTTPS front door.
-- **LangChain and CrewAI are libraries.** You do not "deploy" them — you `pip
-  install` them into application code. In this homelab they live together in one
+- **LangChain and CrewAI are libraries.** You do not "deploy" them. You `pip
+  install` them into app code. In this homelab they live together in one
   Python execution box that runs the agent code people write against them.
-- **LangGraph is a library too — but it straddles the line.** You write graphs in
-  Python against it, yet the homelab also runs its open-source server
+- **LangGraph is a library too, but it straddles the line.** You write graphs in
+  Python against it, yet the homelab also runs its open source server
   (`langgraph dev`, in-memory) with a self-hosted chat UI, so it gets an HTTPS
   front door like the visual builders. Crucially, **no LangSmith cloud account is
-  required** — the server is fully self-hosted and traces to the homelab pipeline.
+  required.** The server is fully self-hosted and traces to the homelab pipeline.
 
 A common misread is treating LangChain/CrewAI as servers to stand up, or treating
 the visual builders as interchangeable. They are not. LangGraph is the deliberate
@@ -45,17 +45,18 @@ exception: a library the homelab has chosen to also run as a service.
 
 ## How they fit together
 
-{/* Shape: layered. Builders + libs sit on serving, all trace to observability. */}
+{/*Shape: layered. Builders + libs sit on serving, all trace to observability.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart TB
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart TB
   subgraph build [Build & run]
-    N8N([n8n])
-    DIFY([Dify])
-    LF([LangFlow])
-    LG([LangGraph<br/>server + chat UI])
-    AX([agent code<br/>LangChain · CrewAI])
+  N8N([n8n])
+  DIFY([Dify])
+  LF([LangFlow])
+  LG([LangGraph<br/>server + chat UI])
+  AX([agent code<br/>LangChain · CrewAI])
   end
   MODELS([Model providers<br/>fabric router · external APIs])
   OBS([Observability<br/>OTEL traces])
@@ -83,8 +84,8 @@ flowchart TB
 ```
 
 Solid edges are model calls; coral dashed edges are telemetry. Every tool is
-configured to its **own** model provider per its standard install — the local
-OpenAI-compatible endpoint, an external API, or both — never forced onto a shared
+configured to its **own** model provider per its standard install: the local
+OpenAI-compatible endpoint, an external API, or both. It is never forced onto a shared
 backend that belongs to another stack. Each tool's call is instrumented, and the
 traces fan out to the [LLM observability](/observability/llm-observability)
 pipeline.
@@ -97,9 +98,9 @@ pipeline.
   layer beside it.
 - Want to sketch a chain visually and walk away with Python → **LangFlow**.
 - Building a durable, stateful agent as a graph and want it self-hosted behind a
-  UI with no cloud → **LangGraph** (its open-source server plus a self-hosted chat
-  UI; no LangSmith account, in-memory state — a playground, not durable storage).
-- Writing application code → **LangChain** for primitives, **CrewAI** for
+  UI with no cloud → **LangGraph** (its open source server plus a self-hosted chat
+  UI; no LangSmith account, in-memory state, a playground, not durable storage).
+- Writing app code → **LangChain** for primitives, **CrewAI** for
   role-based agent teams. Both are imports, not installs-as-a-service.
 
 LangFlow overlaps Dify's visual builder; it earns its place only for
@@ -109,16 +110,28 @@ the other four and never miss it.
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Local LLM" icon="microchip" href="/local-llm/overview">
-    The private GPU model serving these tools call.
-  </Card>
-  <Card title="LLM observability" icon="chart-line" href="/observability/llm-observability">
-    How every LLM call gets traced, costed, and evaluated.
-  </Card>
-  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
-    Why the compose-based tools run as Docker-in-LXC.
-  </Card>
-  <Card title="ansible-proxmox-ai" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox-ai">
-    Deploys Dify, LangFlow, and LangGraph. n8n stays in ansible-proxmox-apps as a general app payload.
-  </Card>
+<Card
+  title="Local LLM"
+  icon="microchip"
+  href="/local-llm/overview">
+  The private GPU model serving these tools call.
+</Card>
+<Card
+  title="LLM observability"
+  icon="chart-line"
+  href="/observability/llm-observability">
+  How every LLM call gets traced, costed, and evaluated.
+</Card>
+<Card
+  title="LXC vs Docker"
+  icon="boxes-stacked"
+  href="/infrastructure/lxc-vs-docker">
+  Why the compose-based tools run as Docker-in-LXC.
+</Card>
+<Card
+  title="ansible-proxmox-ai"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox-ai">
+  Deploys Dify, LangFlow, and LangGraph. n8n stays in ansible-proxmox-apps as a general app payload.
+</Card>
 </CardGroup>

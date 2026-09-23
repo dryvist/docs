@@ -1,29 +1,36 @@
 ---
 title: "Splunk install"
 description: "Ansible role for Splunk Enterprise deployment: HEC, indexes, storage, license. The configuration side of the Splunk stack."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Splunk Enterprise, deployed the same way every time. Indexers, search heads, license, done.
 
 <RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ansible-splunk" />
 
-`ansible-splunk` is the configuration tier for Splunk Enterprise. It deploys and configures a Splunk install onto hosts that `tofu-splunk-aws` provisioned (or onto homelab hardware that `ansible-proxmox` configured), then maintains the install through ongoing playbook runs.
+`ansible-splunk` is the configuration tier for Splunk Enterprise. It deploys and configures a Splunk
+install onto hosts that `tofu-splunk-aws` provisioned (or onto homelab hardware that
+`ansible-proxmox` configured), then maintains the install through ongoing playbook runs.
 
 ## What it does
 
 - Installs Splunk Enterprise and applies a license
-- Configures **per-index HEC inputs** — one token per index, matching Cribl Stream's per-index outputs
+- Configures **per-index HEC inputs**: one token per index, matching Cribl Stream's per-index outputs
 - Configures **indexes** (`unifi`, `firewall`, `os`, `honeypot`, `dns`, `proxy`, the AI-log indexes, and more) and **storage tiering** (hot/warm/cold)
-- Deploys **per-index silence detectors** — an alert per index that fires when the index stops receiving events within its expected cadence
+- Deploys **per-index silence detectors**: an alert per index that fires when the index stops receiving events within its expected cadence
 - Wires in conf bundles from the AI-observability Splunk apps and TAs
-- Runs idempotently — safe to re-run as a drift-correction tool
+- Runs idempotently: safe to re-run as a drift-correction tool
 
 ## HEC tokens are derived, not distributed
 
-Each index's HEC token is a **UUIDv5 of `splunk-hec-<index>` in a shared private namespace**. Cribl Stream (the only Splunk egress) and this repo's HEC input config derive the same token independently from that formula, so no token list ever needs syncing between repos. The namespace UUID is the only secret — injected at run time via Doppler, never committed — and a leaked token scopes to a single index. The family → port → index map lives on the [observability overview](/observability/overview#syslog-ingest-families).
+Each index's HEC token is a **UUIDv5 of `splunk-hec-<index>` in a shared private namespace**. Cribl
+Stream (the only Splunk egress) and this repo's HEC input config derive the same token
+independently from that formula. No token list ever needs syncing between repos. The namespace
+UUID is the only secret. Doppler injects it at run time, it is never committed, and a leaked
+token scopes to a single index. The family → port → index map lives on the [observability
+overview](/observability/overview#syslog-ingest-families).
 
 ## How it fits
 
@@ -38,33 +45,45 @@ The configuration tier for Splunk. Provisioning lives elsewhere; this owns every
 ## Getting started
 
 <Steps>
-  <Step title="Confirm hosts are ready">
-    Run `tofu-splunk-aws` (cloud) or `ansible-proxmox` (homelab) first. Hosts need OS, storage, and network in place.
-  </Step>
-  <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/dryvist/ansible-splunk && cd ansible-splunk && nix develop`
-  </Step>
-  <Step title="Provide Splunk license and HEC tokens via Doppler">
-    `DOPPLER_TOKEN` resolves the Splunk license file and any pre-shared HEC tokens at run time. No secrets in git.
-  </Step>
-  <Step title="Run the playbook">
-    `ansible-playbook -i inventory site.yml`. The first run installs Splunk; subsequent runs converge config drift.
-  </Step>
+<Step title="Confirm hosts are ready">
+Run `tofu-splunk-aws` (cloud) or `ansible-proxmox` (homelab) first. Hosts need OS, storage, and network in place.
+</Step>
+<Step title="Clone and enter the dev shell">
+`git clone https://github.com/dryvist/ansible-splunk && cd ansible-splunk && nix develop`
+</Step>
+<Step title="Provide Splunk license and HEC tokens via Doppler">
+`DOPPLER_TOKEN` resolves the Splunk license file and any pre-shared HEC tokens at run time. No secrets in git.
+</Step>
+<Step title="Run the playbook">
+`ansible-playbook -i inventory site.yml`. The first run installs Splunk; subsequent runs converge config drift.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="tofu-splunk-aws" icon="aws" href="/observability/repos/tofu-splunk-aws">
-    The AWS provisioner for Splunk hosts.
-  </Card>
-  <Card title="Observability overview" icon="chart-line" href="/observability/overview">
-    Where this fits in the OTEL → Cribl → Splunk pipeline.
-  </Card>
-  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
-    The traffic this Splunk install actually receives.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/ansible-splunk">
-    Roles, inventory examples, full README.
-  </Card>
+<Card
+  title="tofu-splunk-aws"
+  icon="aws"
+  href="/observability/repos/tofu-splunk-aws">
+  The AWS provisioner for Splunk hosts.
+</Card>
+<Card
+  title="Observability overview"
+  icon="chart-line"
+  href="/observability/overview">
+  Where this fits in the OTEL → Cribl → Splunk pipeline.
+</Card>
+<Card
+  title="Data pipelines"
+  icon="diagram-project"
+  href="/architecture/data-pipelines">
+  The traffic this Splunk install actually receives.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/dryvist/ansible-splunk">
+  Roles, inventory examples, full README.
+</Card>
 </CardGroup>

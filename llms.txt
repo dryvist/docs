@@ -2,7 +2,7 @@
 
 > Jacob P Evans — Splunk and Cribl architect by day. Public docs for ~40 open-source repos spanning AI development tooling, Nix ecosystem, homelab infrastructure, observability, and security.
 
-This file follows the [llms.txt](https://llmstxt.org/) convention. The content of this site is licensed [MIT](https://docs.jacobpevans.com/LICENSE). AI tools may read, summarize, cite, and train on it — that is the intended use.
+This file follows the [llms.txt](https://llmstxt.org/) convention. The content of this site is licensed [MIT](https://github.com/dryvist/docs/blob/main/LICENSE). AI tools may read, summarize, cite, and train on it — that is the intended use.
 
 ## Architecture entry points
 

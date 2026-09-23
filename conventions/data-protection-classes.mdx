@@ -1,29 +1,30 @@
 ---
 title: "Data protection classes"
-description: "The four protection classes every data store in the homelab is assigned to — each defined by three numbers, RPO, RTO, and recovery window, not RPO alone."
+description: "The four protection classes every data store in the homelab is assigned to, each defined by three numbers, RPO, RTO, and recovery window, not RPO alone."
 ---
-Every data store in the homelab — databases, config, object storage, ZFS
-pools — is assigned one of four protection classes. There is no fifth class
-and no per-store exception outside the exemption tier below.
+{/* projected from the authoring site; do not edit here */}
+Every data store in the homelab, including databases, config, object storage,
+and ZFS pools, is assigned one of four protection classes. There is no fifth
+class and no per-store exception outside the exemption tier below.
 
 ## Why three numbers, not one
 
 RPO alone does not describe protection. A real-time replica can have an RPO
-of seconds and still faithfully replicate a mistaken `DROP TABLE` five
-minutes after it happens — the replica is fresh and the data is still gone.
+of seconds and still faithfully replicate a mistaken `DROP TABLE`. Five
+minutes after it happens, the replica is fresh and the data is still gone.
 **Recovery window is a peer of RPO, not a footnote**: it is how far back you
 can reach, not just how current the copy is.
 
 | Class | RPO | RTO | Recovery window |
 | --- | --- | --- | --- |
-| **P0 — continuous** | ≤ 60 s | ≤ 30 min | ≥ 30 d, ≥ 7 d immutable |
-| **P1 — near-realtime** | ≤ 15 min | ≤ 4 h | ≥ 30 d |
-| **P2 — exemption** | ≤ 24 h | ≤ 24 h | ≥ 14 d |
-| **P3 — declared none** | ∞ | rebuild | none |
+| **P0: continuous** | ≤ 60 s | ≤ 30 min | ≥ 30 d, ≥ 7 d immutable |
+| **P1: near-realtime** | ≤ 15 min | ≤ 4 h | ≥ 30 d |
+| **P2: exemption** | ≤ 24 h | ≤ 24 h | ≥ 14 d |
+| **P3: declared none** | ∞ | rebuild | none |
 
-- **RPO** — how much recent data can be lost.
-- **RTO** — how long until the data is available to restore into a rebuilt guest.
-- **Recovery window** — how far back an error can still be corrected, not
+- **RPO**: how much recent data can be lost.
+- **RTO**: how long until the data is available to restore into a rebuilt guest.
+- **Recovery window**: how far back an error can still be corrected, not
   just how fast a crash can be recovered from.
 
 ## Assignment rule
@@ -34,14 +35,14 @@ the first one that applies.
 1. **Is it reproducible byte-for-byte from infrastructure-as-code, or
    re-downloadable from a public source?** → **P3.** The source of truth
    lives elsewhere; regenerating it is the recovery path.
-2. **Does anything outside the codebase — a human, an external API, a
-   sensor — write to it such that the last hour cannot be recreated?** →
+2. **Does anything outside the codebase, such as a human, an external API,
+   or a sensor, write to it such that the last hour cannot be recreated?** →
    **P0.** This is state nothing else remembers.
 3. **Otherwise** → **P1.**
 
 **P2 is unreachable by this tree.** The only way into it is a written
 exemption with a named owner and a stated reason. That asymmetry is
-deliberate — it is how "a slow cold-standby recovery is not an acceptable
+deliberate. It is how "a slow cold-standby recovery is not an acceptable
 default" gets encoded honestly. The default for anything new is P0 or P1;
 anything slower is a decision someone signed, not a default anyone drifted
 into.
@@ -50,20 +51,21 @@ into.
 **RTO is honest, not aspirational**
 
 Nothing here implies automated failover. An RTO of "≤ 30 min" means the data
-is available to restore into a rebuilt guest within 30 minutes — not that
+is available to restore into a rebuilt guest within 30 minutes, not that
 the service self-heals. A protection class is only real once a drill has
 demonstrated its RTO once; an undemonstrated RTO is a guess.
 </Warning>
 
 ## Derived vs source of truth
 
-The question underneath every class assignment: is this store a **source of
-truth** — something writes to it that cannot be recreated — or is it
-**derived** — an index, cache, or rebuild target some other source of truth
-already covers? That single distinction is what collapses dozens of
-individually-named stores down to three classes plus one exemption tier.
+Every class assignment reduces to one question. Is this store a **source of
+truth**, meaning something writes to it that cannot be recreated? Or is it
+**derived**, meaning an index, cache, or rebuild target some other source of
+truth already covers? That single distinction collapses dozens of
+individually named stores down to three classes plus one exemption tier.
+
 Search indexes, vector embeddings, session stores, and scrape caches are
-routinely P3 for this reason: the data they hold is regenerated from
+routinely P3 for this reason. The data they hold is regenerated from
 something else, not lost.
 
 ## The telemetry contract
@@ -72,7 +74,7 @@ Every protection mechanism reports one line per run, with a fixed set of
 fields (timestamp, host, mechanism, job, class, outcome, age). Three rules
 keep the signal honest:
 
-- **A job that has never run reports it explicitly** — never a value that
+- **A job that has never run reports it explicitly.** Never a value that
   could be misread as "just ran."
 - **A host with nothing to protect says so explicitly**, so silence from a
   healthy host stays distinguishable from silence from a dead one.
@@ -82,18 +84,20 @@ keep the signal honest:
 Alerting on all of this follows
 Observability and alerting:
 mechanisms emit facts; the alerting layer decides what's wrong. Absence of a
-report is caught the same way — by comparing what ran against what was
+report is caught the same way, by comparing what ran against what was
 expected to run, not by watching each mechanism individually.
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Data platform resilience" icon="database" href="/infrastructure/data-platform-resilience">
-    A worked P0 example — replication and layered backups for a shared
-    application database.
-  </Card>
-  <Card title="ZFS backup and replication" icon="server" href="/infrastructure/zfs-backup-replication">
-    A worked example at the host layer — the 3-2-1 rule built as four
-    escalating ZFS layers.
-  </Card>
+<CardGroup>
+  <Card
+    title="Data platform resilience"
+    href="/infrastructure/data-platform-resilience">
+  A worked P0 example: replication and layered backups for a shared application database.
+</Card>
+  <Card
+    title="ZFS backup and replication"
+    href="/infrastructure/zfs-backup-replication">
+  A worked example at the host layer: the 3-2-1 rule built as four escalating ZFS layers.
+</Card>
 </CardGroup>

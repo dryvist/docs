@@ -1,14 +1,14 @@
 ---
 title: "Documentation standards"
-description: "How this site is organized and written — information architecture, page naming, frontmatter, and the sources these rules derive from."
-page_type: reference
+description: "How this site is organized and written: information architecture, page naming, frontmatter, and the sources these rules derive from."
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > The rules every page on this site follows. Author to these by default; when a
 > rule and a page disagree, fix the page.
 
 This page is the canonical standard for `docs.jacobpevans.com`. It exists so new
-pages land consistently no matter who — human or model — writes them.
+pages land consistently no matter who, human or model, writes them.
 
 ## Information architecture
 
@@ -18,16 +18,16 @@ tooling, AI and agents, Security and secrets, Reference). A reader picks a domai
 first, then narrows.
 
 Document type (the [Diátaxis](https://diataxis.fr/) idea of tutorial, how-to,
-reference, explanation) is captured as page metadata — the `page_type` field below
-— **not** as navigation groups. Nesting docs under "How-to" / "Reference" headings
-suits a product with large workflows; this site is an ecosystem map for one reader,
-so domain-first navigation scans faster.
+reference, explanation) is captured as page metadata, the `page_type` field below,
+**not** as navigation groups. Nesting docs under "How-to" / "Reference" headings
+suits a product with large workflows. This site is an ecosystem map for one
+reader, so domain-first navigation scans faster.
 
 ## Page naming
 
 | Surface | Rule |
 | --- | --- |
-| Filename | Lowercase `kebab-case`. It **is** the URL slug — they never differ. |
+| Filename | Lowercase `kebab-case`. It **is** the URL slug; they never differ. |
 | `overview.mdx` | Only for a group's landing page. |
 | Title | Sentence case: capitalize the first word and proper nouns only. Never a raw slug. |
 | Ampersand | Use **"and"** in titles and labels. Keep `&` only inside an official product name. |
@@ -62,10 +62,10 @@ page_type: "reference" # one of: overview, how-to, explanation, reference, decis
 | `page_type` | Use for |
 | --- | --- |
 | `overview` | A group's landing page: mental model and route map. |
-| `explanation` | How something works and why — architecture, rationale. |
+| `explanation` | How something works and why: architecture, rationale. |
 | `how-to` | Step-by-step setup or operation. |
 | `reference` | Canonical tables, policies, naming rules, per-tool detail. |
-| `decision` | "Why this way" — the tradeoff behind a choice. |
+| `decision` | "Why this way": the tradeoff behind a choice. |
 | `repo` | A single public repo explainer with source links and contracts. |
 
 ## Navigation density

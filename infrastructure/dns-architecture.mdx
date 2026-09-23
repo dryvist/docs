@@ -1,29 +1,30 @@
 ---
 title: "DNS architecture"
 description: "How names resolve across the homelab: Technitium is authoritative for the internal subdomain and forwards everything else over encrypted DoH to Cloudflare and Google, with the client subnet withheld from upstreams."
-page_type: explanation
+page_type: "explanation"
 ---
-
-The homelab runs a single internal resolver that answers for its own names and
+{/* projected from the authoring site; do not edit here */}
+The homelab runs a single internal resolver. It answers for its own names and
 forwards everything else to the public internet over an encrypted channel. The
 goal is plain: internal names resolve locally and authoritatively, external
 names resolve privately, and nothing about the internal network leaks upstream.
 
 ## How a name resolves
 
-{/* Shape: fan-out then converge. 7 nodes. Two resolver paths reach the same encrypted upstreams. Aspect ~3:1 LR. */}
+{/*Shape: fan-out then converge. 7 nodes. Two resolver paths reach the same encrypted upstreams. Aspect ~3:1 LR.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Clients([LAN clients<br/>all VLANs])
   Tech([Technitium<br/>VLAN 53])
   Zone[(Internal subdomain<br/>authoritative zone)]
   GW([UniFi gateway<br/>Encrypted DNS])
 
   subgraph up [Encrypted upstreams · DoH]
-    CF([Cloudflare])
-    G([Google])
+  CF([Cloudflare])
+  G([Google])
   end
 
   Net([Public internet])
@@ -51,19 +52,19 @@ flowchart LR
 ```
 
 Teal is the client, ink is the resolver edge (Technitium and the gateway),
-coral is everything beyond the network boundary. Both resolver paths terminate
-at the same encrypted upstreams — Cloudflare and Google over DNS-over-HTTPS.
+coral is everything beyond the network boundary. Both resolver paths end at
+the same encrypted upstreams. Those upstreams are Cloudflare and Google, reached over DNS-over-HTTPS.
 
 ## Split-horizon resolution
 
-Technitium is **authoritative for the internal subdomain only** — a child zone
+Technitium is **authoritative for the internal subdomain only**, a child zone
 that holds every infrastructure A-record and service alias. A query for a name
 under that subdomain is answered locally and never leaves the network. That is
 what makes the [DNS-first addressing model](/infrastructure/vmid-network-tiers#dhcp-and-dns-first-addressing)
 work: guests are referenced by `{hostname}.{subdomain}` and DNS owns the actual
 DHCP-leased address.
 
-Everything else — the public apex and the open internet — is **forwarded
+Everything else, including the public apex and the open internet, is **forwarded
 upstream**. Technitium is not authoritative for those names; it caches and
 relays them. DNS sits on its own dedicated network (VLAN 53), so resolution is
 isolated from the trust-ordered service tiers it serves.
@@ -71,11 +72,11 @@ isolated from the trust-ordered service tiers it serves.
 ## Public DNS carries no internal addressing
 
 The public DNS zone never publishes an internal host's private address. Names
-under the internal subdomain resolve on the LAN only, through Technitium; the
-public zone holds no matching A records for them. Publicly-trusted TLS
-certificates for internal services are still issued normally — via a
-Let's-Encrypt DNS-01 challenge that only ever needs to write a public
-`_acme-challenge` TXT record, never the service's actual address. The
+under the internal subdomain resolve on the LAN only, through Technitium. The
+public zone holds no matching A records for them. Publicly trusted TLS
+certificates for internal services are still issued normally, via a
+Let's-Encrypt DNS-01 challenge. That challenge only ever needs to write a
+public `_acme-challenge` TXT record, never the service's actual address. The
 separate public-facing sites (the apex/`www` site and this docs site) are
 unrelated to the internal zone and unaffected by any of this.
 
@@ -90,7 +91,7 @@ External forwarding is hardened along two axes:
   so the resolver connects to it directly instead of resolving the DoH hostname
   through itself, while still validating the TLS certificate against the
   hostname.
-- **Client subnet withheld.** EDNS Client Subnet is disabled, so the resolver
+- **Client subnet withheld.** EDNS Client Subnet is turned off, so the resolver
   does not attach any client-network information to forwarded queries. Upstream
   resolvers see the query, not who or where it came from.
 
@@ -98,16 +99,16 @@ DNSSEC validation stays enabled throughout, so forwarded answers are still
 authenticated.
 
 Clients that query the **UniFi gateway directly** (rather than Technitium) take
-the dashed path: the gateway resolves them over its own Encrypted-DNS (DoH) to
-the same upstreams. That path is managed on the gateway itself — see the
+the dashed path. The gateway resolves them over its own Encrypted-DNS (DoH) to
+the same upstreams. That path is managed on the gateway itself; see the
 [tofu-unifi repo](/infrastructure/repos/tofu-unifi) for how the gateway-side
 intent is tracked.
 
 ## What this connects to
 
-- [VMID & network tier model](/infrastructure/vmid-network-tiers) — DNS-first
+- [VMID & network tier model](/infrastructure/vmid-network-tiers): DNS-first
   addressing and where the DNS network (VLAN 53) sits among the tiers.
-- [Self-hosted ChatGPT](/local-llm/homelab-gpu) — an example of a service
+- [Self-hosted ChatGPT](/local-llm/homelab-gpu): an example of a service
   name that resolves through Technitium and is fronted by Traefik over TLS.
-- [tofu-unifi](/infrastructure/repos/tofu-unifi) — the gateway, WAN, and zone
+- [tofu-unifi](/infrastructure/repos/tofu-unifi): the gateway, WAN, and zone
   configuration that surrounds the resolver.

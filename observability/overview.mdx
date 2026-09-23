@@ -1,21 +1,24 @@
 ---
 title: "Observability"
 description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by purpose-built dashboards."
-page_type: overview
+page_type: "overview"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > If an AI agent touched code, there's a trace.
 
-Every AI coding interaction emits OpenTelemetry — IDE events, model calls, token counts, latency, cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it. Purpose-built Splunk apps make it readable.
+Every AI coding interaction emits OpenTelemetry, covering IDE events, model calls, token counts,
+latency, and cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it.
+Purpose-built Splunk apps make it readable.
 
 ## AI telemetry pipeline
 
-{/* Shape: parallel convergence (4 tools → 4 packs → Stream → Splunk → apps). */}
-{/* Boundary crossings: 0. Total nodes: 11 (≤12). Aspect: ~3:1 LR. Pass. */}
+{/*Shape: parallel convergence (4 tools → 4 packs → Stream → Splunk → apps). */}
+{/* Boundary crossings: 0. Total nodes: 11 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Claude([Claude Code])
   Copilot([Copilot])
   Gemini([Antigravity])
@@ -47,8 +50,8 @@ flowchart LR
   click SP "/observability/repos/ansible-splunk" "Splunk install + indexes"
   %% Cribl Edge pack repos (CCO/CCP/CAG/CCV) intentionally NOT clickable —
   %% Mermaid drops the _blank target attribute on flowchart clicks
-  %% (https://github.com/mermaid-js/mermaid/issues/3077,
-  %% https://github.com/mermaid-js/mermaid/issues/5550). The pack repo links
+  %% ([https://github.com/mermaid-js/mermaid/issues/3077](https://github.com/mermaid-js/mermaid/issues/3077),
+  %% [https://github.com/mermaid-js/mermaid/issues/5550](https://github.com/mermaid-js/mermaid/issues/5550)). The pack repo links
   %% are listed in the table below this diagram, where Mintlify
   %% auto-applies target="_blank" to external markdown links.
 
@@ -56,13 +59,16 @@ flowchart LR
   linkStyle 8,9 stroke:#4FB3A9,stroke-width:2px;
 ```
 
-Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated — a Copilot schema change doesn't break the Claude pipeline.
+Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated. A Copilot schema change doesn't break the Claude pipeline.
 
-Diagram walkthroughs for every ingest path — syslog families, AI-CLI shipping, the LLM stack, OTLP fan-out, NetFlow, HEC fan-in — live on [Pipeline flows](/observability/pipeline-flows).
+Diagram walkthroughs for every intake path live on [Pipeline flows](/observability/pipeline-flows). That
+covers syslog families, AI command-line tool shipping, the LLM stack, OTLP fan-out, NetFlow, and HEC fan-in.
 
 ## Syslog ingest families
 
-Syslog ingest is **one port per source family**, fronted by the ingress load balancers (HAProxy for TCP, nginx for UDP). Each family routes to its own Splunk index with a family sourcetype, so a misbehaving sender is isolated at the port and visible at the index.
+Syslog intake is **one port per source family**, fronted by the ingress load balancers (HAProxy for
+TCP, nginx for UDP). Each family routes to its own Splunk index with a family sourcetype. A
+misbehaving sender is isolated at the port and visible at the index.
 
 | Family | Standard port | High port | Index | Sourcetype |
 | --- | --- | --- | --- | --- |
@@ -77,7 +83,7 @@ Syslog ingest is **one port per source family**, fronted by the ingress load bal
 | `dns_query` | 522 | — | `dns` | `dns_query` |
 | `proxy` | 523 | — | `proxy` | `proxy` |
 
-Port numbers are pipeline constants defined once in the infrastructure repo and surfaced to every consumer through the published inventory — no repo hardcodes them.
+Port numbers are pipeline constants defined once in the infrastructure repo and surfaced to every consumer through the published inventory. No repo hardcodes them.
 
 Two family notes:
 
@@ -93,8 +99,8 @@ Two family notes:
 
 ## Timestamps: UTC at the source
 
-Every host except the workstation Macs runs **and logs** UTC — enforced by
-configuration management, not assumed. This is doctrine, not preference: the
+Every host except the workstation Macs runs **and logs** UTC, enforced by
+configuration management, not assumed. This is doctrine, not preference. The
 pipeline's config normalizer strips per-source timezone overrides on restart,
 so a source that stamps local time cannot be corrected downstream. A skewed
 source is fixed at the source. Skew is measured with index-time
@@ -103,27 +109,35 @@ mis-stamped events instead of surfacing them.
 
 ## AI log ports (tcpjson)
 
-AI-side logs skip syslog entirely: Cribl Edge tails the local log files and ships them as **tcpjson** over Cribl S2S to Cribl Stream, one port per source.
+AI-side logs skip syslog entirely. Cribl Edge tails the local log files and ships them as **tcpjson** over Cribl S2S to Cribl Stream, one port per source.
 
 | Port range | Source |
 | --- | --- |
-| 10300 | Shared S2S — sources that stamp their index locally (Mac firewall unified-log, host metrics) |
-| 10311–10315 | AI CLI logs (one port per CLI — Claude Code and friends) |
+| 10300 | Shared S2S, sources that stamp their index locally (Mac firewall unified-log, host metrics) |
+| 10311–10315 | AI command-line tool logs (one port per command-line tool: Claude Code and friends) |
 | 10321–10323 | Local LLM stack logs (gate, router, workers) |
 | 10331 | OpenBao audit log |
 
 The Mac firewall leg tails the unified log (application firewall, network
-extension, packet filter subsystems) as ndjson via a launch daemon, and the
-local Edge ships it with `index=firewall` stamped at the source — unified-log
+extension, packet filter subsystems) as ndjson via a launch daemon. The
+local Edge ships it with `index=firewall` stamped at the source. Unified-log
 timestamps carry a UTC offset, so a local-time workstation stays skew-safe.
 
 Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cribl_s2s` service port from the same pipeline constants.
 
 ## Per-index HEC outputs and derived tokens
 
-Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per index**, each with its own token. Tokens are never distributed: both sides derive the same value as a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a single index.
+Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per
+index**, each with its own token. Tokens are never distributed. Both sides derive the same value as
+a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC
+inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a
+single index.
 
-Each index also has a **silence detector** — a per-index alert that fires when the index stops receiving events within its expected cadence. A broken port, token, or sender surfaces as "index went quiet" instead of a silent gap discovered weeks later. Detectors on structurally-empty indexes ship disabled (currently `netflow`, whose gateway never exports despite the receive chain being armed) — an alert that fires on every cycle only trains fatigue.
+Each index also has a **silence detector**, a per-index alert that fires when the index stops
+receiving events within its expected cadence. A broken port, token, or sender surfaces as "index
+went quiet" instead of a silent gap discovered weeks later. Detectors on structurally empty indexes
+ship off (currently `netflow`, whose gateway never exports despite the receive chain being
+armed). An alert that fires on every cycle only trains fatigue.
 
 ## Splunk apps
 
@@ -153,32 +167,52 @@ The AI-observability apps and TAs live under a separate organization at
 
 ## Why per-tool packs
 
-Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM mapping in the TA is where the normalization happens.
+Each AI coding tool emits slightly different telemetry shapes. Per-tool packs keep the parsing and
+enrichment isolated; a Copilot schema change shouldn't break the Claude pipeline. The shared CIM
+mapping in the TA is where the normalization happens.
 
 ## Where Splunk runs
 
 <CardGroup cols={2}>
-  <Card title="tofu-splunk-aws" icon="aws" href="/observability/repos/tofu-splunk-aws">
-    OpenTofu for the AWS-side Splunk footprint. VPC, KMS, EC2, IAM — DR-ready.
-  </Card>
-  <Card title="ansible-splunk" icon="screwdriver-wrench" href="/observability/repos/ansible-splunk">
-    The configuration tier. Splunk install, indexes, HEC tokens, storage tiering.
-  </Card>
+<Card
+  title="tofu-splunk-aws"
+  icon="aws"
+  href="/observability/repos/tofu-splunk-aws">
+  OpenTofu for the AWS-side Splunk footprint. VPC, KMS, EC2, IAM, DR-ready.
+</Card>
+<Card
+  title="ansible-splunk"
+  icon="screwdriver-wrench"
+  href="/observability/repos/ansible-splunk">
+  The configuration tier. Splunk install, indexes, HEC tokens, storage tiering.
+</Card>
 </CardGroup>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Mac Pack" icon="apple" href="/observability/repos/cc-edge-the-mac-pack">
-    The macOS host telemetry pack — unified logs, system metrics, power.
-  </Card>
-  <Card title="Monitoring agents" icon="chart-line" href="/observability/monitoring-agents">
-    Cross-stack map of every collector and where it runs.
-  </Card>
-  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
-    Log and NetFlow ingest — the non-AI side of the pipeline.
-  </Card>
-  <Card title="Configuration" icon="screwdriver-wrench" href="/infrastructure/configuration/overview">
-    Ansible playbooks that deploy the Cribl tier this pipeline runs on.
-  </Card>
+<Card
+  title="Mac Pack"
+  icon="apple"
+  href="/observability/repos/cc-edge-the-mac-pack">
+  The macOS host telemetry pack: unified logs, system metrics, power.
+</Card>
+<Card
+  title="Monitoring agents"
+  icon="chart-line"
+  href="/observability/monitoring-agents">
+  Cross-stack map of every collector and where it runs.
+</Card>
+<Card
+  title="Data pipelines"
+  icon="diagram-project"
+  href="/architecture/data-pipelines">
+  Log and NetFlow intake, the non-AI side of the pipeline.
+</Card>
+<Card
+  title="Configuration"
+  icon="screwdriver-wrench"
+  href="/infrastructure/configuration/overview">
+  Ansible playbooks that deploy the Cribl tier this pipeline runs on.
+</Card>
 </CardGroup>

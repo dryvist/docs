@@ -1,15 +1,15 @@
 ---
 title: "aws-vault"
 description: "A retired local AWS session tool. No static AWS key backs it here — OpenTofu workspaces and local access alike are brokered through the runtime manager."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Active IaC workspaces do not use aws-vault. Neither does local/manual AWS access anymore.
 
 `aws-vault` can store long-lived AWS access keys in an operating-system
 keychain and mint bounded subprocess sessions. That is the pattern this estate
-retired: there is no static AWS access key on a workstation for it to hold, and
-no keychain-backed profile in the AWS access path, automated or manual. Do not
+retired. There is no static AWS access key on a workstation for it to hold. There is
+also no keychain-backed profile in the AWS access path, whether automated or manual. Do not
 add aws-vault profiles, wrapper commands, or long-lived operator keys to an
 active IaC repo or a laptop.
 
@@ -26,27 +26,27 @@ No static aws-vault base key mints local `tf-<project>` sessions.
 too, on two layers:
 
 - **A dedicated broker identity** whose only IAM permission is `sts:AssumeRole`
-  into broker-managed roles — it holds no direct resource access itself. Its
+  into broker-managed roles. It holds no direct resource access itself. Its
   own base key is seeded into OpenBao once, write-once; rotating it is a
-  deliberate operator action (mint a fresh key on an independent admin path,
+  deliberate operator action (mint a fresh key on an independent administrator path,
   re-seed), not an automatic process, so no long-lived AWS key sits anywhere
   routine automation can reach it.
-- **Purpose roles behind it** — a role per OpenTofu root (for
-  example `role/tf-<project>`), plus a broader admin-purpose identity for
+- **Purpose roles behind it**: a role per OpenTofu root (for
+  example `role/tf-<project>`), plus a broader administrator-purpose identity for
   AI and general IaC use. That identity is capped by an AWS permissions
   boundary that blocks privilege self-escalation, credential/identity
   persistence (no new IAM users, keys, or login profiles), and audit/org/
-  billing tampering — it is not `AdministratorAccess`.
+  billing tampering. It is not `AdministratorAccess`.
 
-A local AWS CLI profile (`credential_process`) resolves each identity on
-demand: it reads the profile's OpenBao AppRole — whose secret-zero the
-run-wrapper supplies from the human-approved bootstrap tier — and mints a
+A local AWS command-line-tool profile (`credential_process`) resolves each identity on
+demand. It reads the profile's OpenBao AppRole, whose secret-zero the
+run-wrapper supplies from the human-approved bootstrap tier. It then mints a
 short-lived STS session per call. The run-wrapper delivers the AppRole
 promptlessly and carries nothing else, and no credential is ever written to the
 AWS credentials file.
 
 ## See also
 
-- [OpenBao](/security/tools/openbao) — the AWS secrets engine and RBAC.
-- [macOS Keychain](/security/tools/macos-keychain) — why no automated path reads a keychain any more.
-- [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo) — the Terrakube-workspace path.
+- [OpenBao](/security/tools/openbao): the AWS secrets engine and RBAC.
+- [macOS Keychain](/security/tools/macos-keychain): why no automated path reads a keychain any more.
+- [Consuming AWS workspace setup](/infrastructure/tofu-aws/consuming-repo): the Terrakube-workspace path.

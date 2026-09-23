@@ -1,12 +1,20 @@
 ---
 title: "Dependency automation"
 description: "Renovate scheduling, trust-tier automerge, and version-pinning policy across every dryvist repo."
-page_type: reference
+page_type: "reference"
 ---
+{/* projected from the authoring site; do not edit here */}
+> Never ship a stale version. Never auto-merge a stranger's major release. Minor and patch updates
+> auto-merge for any package, ecosystem, or publisher once they clear a 3-day stabilization window
+> and pass CI. Trust tiers no longer gate minor and patch updates. They only decide how reviewers
+> handle a major update and how often Renovate opens PRs.
 
-> Never ship a stale version, never auto-merge a stranger's major. Minor and patch updates auto-merge publisher-agnostically — any package, any ecosystem, any publisher — once they clear a 3-day stabilization window and green CI. Trust tiers no longer gate minor/patch; they only decide how a major gets reviewed and how often PRs get created.
-
-Every dryvist and JacobPEvans repo inherits one Renovate policy from [`dryvist/.github` → `renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json) — the master preset that extends nothing external. The model is a single global weekly `schedule` (the untrusted cadence) with per-tier overrides layered on top. [SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md) carries the same table from the security angle.
+Every dryvist and JacobPEvans repo inherits one Renovate policy from [`dryvist/.github` →
+`renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json). This
+master preset extends nothing external. The model uses a single global weekly `schedule` (the
+untrusted cadence) with per-tier overrides layered on top.
+[SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md) carries the same table from
+the security angle.
 
 ## Trust tiers gate majors and cadence
 
@@ -17,62 +25,117 @@ Every dryvist and JacobPEvans repo inherits one Renovate policy from [`dryvist/.
 | **Untrusted** | everything else | weekly (Mon) | 3 days | held 30 days, then opens a review PR |
 | **Security / CVE** | any vulnerability alert | immediate (bypasses the schedule via `vulnerabilityAlerts`) | 0 days | minor/patch auto-merges fast; a security major still opens for review |
 
-Minor and patch updates auto-merge the same way in every scope above — publisher-agnostically, any package, any ecosystem — once they clear the scope's minimum age and pass CI. Trust tier no longer decides whether minor/patch auto-merges; it only decides how a **major** gets reviewed and how often PRs are created.
+Minor and patch updates auto-merge the same way in every scope in the preceding table. Any package
+or ecosystem qualifies, once it clears the scope's minimum age and passes CI. Trust tier no longer
+decides whether minor or patch updates auto-merge. It only decides how reviewers handle a
+**major** update and how often Renovate creates PRs.
 
 ## Why these tiers
 
-**Freshness first.** The default is to move, not to freeze. Stale dependencies accrete their own risk — unpatched CVEs, drifting APIs, harder upgrades later. Every scope auto-merges minor and patch the same way; the tier only decides how fast a PR opens and how a major gets reviewed.
+**Freshness first.** The default is to move, not to freeze. Stale dependencies build their own
+risk: unpatched CVEs, drifting APIs, and harder upgrades later. Every scope auto-merges minor and
+patch updates the same way. The tier only decides how fast a PR opens and how reviewers handle a
+major update.
 
-**A compatible-looking version is not a compatible API — for majors.** Semver's promise of non-breaking minor/patch releases is trusted publisher-agnostically, so minor/patch clears a 3-day soak plus green CI everywhere. A *major* is a deliberate break regardless of who published it: first-party majors auto-merge immediately because we control both ends of the API, a trusted-org major still opens a `dep:review` PR for a human, and every other major is held 30 days before a review PR opens. Trust buys review speed on majors, never a pass on breaking changes.
+**A compatible-looking version is not always a compatible API for majors.** Semver promises
+non-breaking minor and patch releases, and Renovate trusts that promise regardless of publisher. So
+minor and patch updates clear a 3-day soak plus green CI everywhere. A *major* update is a
+deliberate break, regardless of who published it. First-party majors auto-merge immediately because
+dryvist controls both ends of the API. A trusted-org major still opens a `dep:review` PR for a
+human. Every other major waits 30 days before a review PR opens. Trust buys review speed on majors,
+never a pass on breaking changes.
 
-**The 3-day buffer is a supply-chain tripwire.** `minimumReleaseAge: 3 days` is the compromise-detection window, applied to every external minor/patch auto-merge and to the trusted-org major review clock alike. The xz backdoor was caught within ~3 days of the malicious release; npm allows unpublish under 72 hours. Waiting three days lets a poisoned release get pulled before we adopt it — and under twice-weekly batching the wait is effectively free. First-party and CVE fixes skip it (0 days): our own code needs no soak, and a known-exploited CVE is more dangerous than an unvetted release.
+**The 3-day buffer is a supply chain tripwire.** `minimumReleaseAge: 3 days` is the
+compromise-detection window. It applies to every external minor and patch auto-merge and to the
+trusted-org major review clock alike. The xz backdoor was caught within about 3 days of the
+malicious release. npm allows unpublish under 72 hours. Waiting three days lets Renovate skip a
+poisoned release before it lands. Under twice-weekly batching, the wait costs nothing extra.
+First-party and CVE fixes skip it (0 days). First-party code needs no soak, and a known-exploited
+CVE is more dangerous than an unvetted release.
 
 ## First-party propagates immediately
 
-Inside the org, release-please cuts and auto-merges every release in the *source* repo the moment its checks pass. Consumers then pick it up with zero delay: either the first-party tier (0-day, auto-merge all update types) bumps the pinned version, or the consumer rides an `@main` reference and gets the change on its next run. No human sits in the propagation path for our own code.
+Inside the org, release-please cuts and auto-merges every release in the *source* repo the moment
+its checks pass. Consumers pick it up with zero delay. Either the first-party tier (0-day,
+auto-merge all update types) bumps the pinned version. Or the consumer rides an `@main` reference
+and gets the change on its next run. No human sits in the propagation path for first-party code.
 
 ## AI review is advisory, not the merge gate
 
-Supply-chain safety for the publisher-agnostic minor/patch lane comes from a deterministic gate, not an AI judgment call. [`actions/dependency-review-action`](https://github.com/actions/dependency-review-action) runs inside the **Merge Gate** — a required, non-AI check on every public repo — and fails closed on vulnerable or disallowed transitive dependencies before anything merges.
+Supply chain safety for the publisher-agnostic minor/patch lane comes from a deterministic gate, not
+an AI judgment call.
+[`actions/dependency-review-action`](https://github.com/actions/dependency-review-action) runs
+inside the **Merge Gate**, a required, non-AI check on every public repo. It fails closed on
+vulnerable or disallowed transitive dependencies before anything merges.
 
-[`dryvist/ai-workflows` → `cc-dep-review.yml`](https://github.com/dryvist/ai-workflows) runs separately, under its own **AI Merge Gate**, on every Renovate/Dependabot PR — the inverse of the usual "skip dependency bots" rule. It is advisory only:
+[`dryvist/ai-workflows` → `cc-dep-review.yml`](https://github.com/dryvist/ai-workflows) runs
+separately, under its own **AI Merge Gate**, on every Renovate/Dependabot PR. This is the inverse
+of the usual "skip dependency bots" rule. It is advisory only:
 
-- Claude reviews the diff and changelog with an injection-resistant prompt — read-only, no secrets — and applies a low/medium/high risk label.
+- Claude reviews the diff and changelog with an injection-resistant prompt. The review is read-only and uses no secrets. Claude applies a low, medium, or high risk label.
 - The label informs human reviewers on majors and review PRs. It does not decide whether the minor/patch lane auto-merges, and it cannot override the deterministic Merge Gate.
-- The Merge Gate and the AI Merge Gate are always two distinct required checks on public repos — the AI signal never substitutes for the deterministic one.
+- The Merge Gate and the AI Merge Gate are always two distinct required checks on public repos. The AI signal never substitutes for the deterministic one.
 
 ## Grouping and scheduling
 
-Related updates batch into ecosystem groups (Terraform, AWS SDK, HuggingFace, OpenTelemetry, pytest, ESLint/TypeScript) plus a `.nix` version-pins group, so one review covers a coherent set instead of a PR per package. All trusted updates land in the same Monday/Thursday window — the same day and time across every repo. Renovate coordinates *schedules*, not cross-repo transactions: it cannot emit one PR spanning multiple repos, so each repo still gets its own PR in that shared window.
+Related updates batch into ecosystem groups (Terraform, AWS SDK, HuggingFace, OpenTelemetry, pytest,
+ESLint/TypeScript) plus a `.nix` version-pins group. One review then covers a coherent set instead
+of a PR per package. All trusted updates land in the same Monday/Thursday window, the same day and
+time across every repo. Renovate coordinates *schedules*, not cross-repo transactions. It cannot emit one
+PR spanning multiple repos, so each repo still gets its own PR in that shared window.
 
 ## Nix flake locks are outside Renovate
 
-`flake.lock` is the one file Renovate does not touch. Its `nix` manager is disabled org-wide, and each nix repo instead calls a shared workflow that runs a bare `nix flake update` — every input in the lock moves together, onto one branch, as one pull request. Triggers are a weekly schedule, a `repository_dispatch` when an upstream repo releases, and manual dispatch; all three amend the same pull request rather than opening a second.
+`flake.lock` is the one file Renovate does not touch. Its `nix` manager is turned off org-wide. Each
+nix repo instead calls a shared workflow that runs a bare `nix flake update`. Every input in the
+lock moves together, onto one branch, as one pull request. Triggers are a weekly schedule, a
+`repository_dispatch` event when an upstream repo releases, and manual dispatch. All three amend
+the same pull request rather than opening a second.
 
-The reason is structural, not preference. Renovate advances an input when the input's *reference* changes. Nix repos pin `nixpkgs` to a moving channel branch, whose reference never changes — new commits simply land on the same branch — so Renovate has nothing to diff and the locked revision would freeze permanently. Advancing it needs `nix flake update`, which in Renovate terms is `lockFileMaintenance`; that stays on for every other ecosystem, but on nix it resolves to absolute-latest, ignores `minimumReleaseAge`, and once looped roughly 60 pull requests a week.
+The reason is structural, not a preference. Renovate advances an input when the input's *reference*
+changes. Nix repos pin `nixpkgs` to a moving channel branch, and that branch's reference never
+changes; new commits simply land on the same branch. So Renovate has nothing to diff, and the
+locked revision would freeze permanently. Advancing it needs `nix flake update`, which in Renovate
+terms is `lockFileMaintenance`. That setting stays on for every other ecosystem. On nix it resolves
+to absolute-latest, ignores `minimumReleaseAge`, and once looped roughly 60 pull requests a week.
 
-Staleness here is expensive rather than cosmetic: a pin that drifts off the Hydra-evaluated channel head loses binary-cache coverage and forces builds from source. The workflow reports that drift by comparing the locked revision against the published channel revision.
+Staleness here is expensive, not cosmetic. A pin that drifts off the Hydra-evaluated channel head
+loses binary-cache coverage and forces builds from source. The workflow reports that drift by
+comparing the locked revision against the published channel revision.
 
-Auto-merge on those pull requests is withheld whenever a `nixpkgs*` input moved, since a channel jump rebuilds the world on a machine configuration; a release bump of any other input still merges hands-off on green CI.
+The workflow withholds auto-merge on those pull requests whenever a `nixpkgs*` input moved, since a
+channel jump rebuilds the world on a machine configuration. A release bump of any other input still
+merges hands-off on green CI.
 
 ## Version pinning
 
 | Source | Pin |
 | --- | --- |
-| dryvist self-references | `@main` — ride upstream, never a SHA or tag |
-| Third-party GitHub Actions (trusted or untrusted) | Full commit SHA, with the released version tag as a trailing comment — `uses: actions/checkout@<sha> # v4.2.2` |
+| dryvist self-references | `@main`: ride upstream, never a SHA or tag |
+| Third-party GitHub Actions (trusted or untrusted) | Full commit SHA, with the released version tag as a trailing comment: `uses: actions/checkout@<sha> # v4.2.2` |
 
-A `uses:` pin resolves its version tag automatically for Renovate and for anyone reading the diff. A non-`uses:` pin (a container digest, a downloaded binary, anything Renovate can't infer the source of) needs an explicit hint comment instead: `# renovate: datasource=... depName=... versioning=...`.
+A `uses:` pin resolves its version tag automatically for Renovate and for anyone reading the diff. A
+non-`uses:` pin (a container digest, a downloaded binary, anything Renovate can't infer the source
+of) needs an explicit hint comment instead: `# renovate: datasource=... depName=... versioning=...`.
 
-`platformAutomerge` stays **false**: GitHub's merge queue has a known bug where a PR passes every check but the merge never executes, stalling for days. Renovate merges via its own API path with retry instead. The per-scanner rationale for the `@main` self-reference allowance lives in [CI/CD policy → scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
+`platformAutomerge` stays **false**. GitHub's merge queue has a known bug where a PR passes every
+check but the merge never executes, stalling for days. Renovate merges via its own API path with
+retry instead. The per-scanner rationale for the `@main` self-reference allowance lives in [CI/CD
+policy → scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
-    Marketplace actions, release-please conventions, the scanner posture for `@main` self-references, the runner-label catalog.
-  </Card>
-  <Card title="ai-workflows" icon="robot" href="/automation/repos/ai-workflows">
-    The reusable workflows behind the AI dependency reviewer and the App-token signing they use.
-  </Card>
+<Card
+  title="CI/CD policy"
+  icon="scale-balanced"
+  href="/infrastructure/cicd/policy">
+  Marketplace actions, release-please conventions, the scanner posture for `@main` self-references, the runner-label catalog.
+</Card>
+<Card
+  title="ai-workflows"
+  icon="robot"
+  href="/automation/repos/ai-workflows">
+  The reusable workflows behind the AI dependency reviewer and the App-token signing they use.
+</Card>
 </CardGroup>

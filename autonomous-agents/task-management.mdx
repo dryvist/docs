@@ -1,9 +1,9 @@
 ---
 title: "Task management"
 description: "A self-hosted task and project tracker that autonomous agents read and write through an MCP server, so agent and operator share one board."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **live.** The tracker and its MCP server are deployed; agents read and
 write it today.
@@ -13,15 +13,15 @@ write it today.
 > to-do list the other can't see.
 
 Autonomous agents need somewhere durable to record what they are doing and what is
-left to do — a store that survives a restart, a new session, or a handoff to a
-person. A self-hosted task tracker fills that role: projects, tasks, labels, and
-status, shared by every agent and every human on the homelab.
+left to do. They need a store that survives a restart, a new session, or a handoff
+to a person. A self-hosted task tracker fills that role: projects, tasks, labels,
+and status, shared by every agent and every human on the homelab.
 
 ## What the agent can do
 
 Agents reach the tracker through an [MCP](/ai-development/ai-orchestration-stack)
-server that exposes project and task operations — create, read, update, close,
-and organize — as tools. The agent plans work as tasks, records progress, and
+server that exposes project and task operations as tools: create, read, update,
+close, and organize. The agent plans work as tasks, records progress, and
 closes items it finishes, the same way a person would from the web UI.
 
 | Capability | Who uses it |
@@ -33,13 +33,13 @@ closes items it finishes, the same way a person would from the web UI.
 
 ## Credentials, not prompts
 
-The MCP server authenticates with a **scoped service-account token** (a read-write
-tier, distinct from any human account) that is injected at process launch by the
-[secrets path for agents](/autonomous-agents/secrets) — never typed, never stored
-in the clone. An operator opts a host into the integration deliberately; it is off
-by default everywhere else.
+The MCP server authenticates with a **scoped service-account token**, a read-write
+tier distinct from any human account. The
+[secrets path for agents](/autonomous-agents/secrets) injects it at process
+launch. It is never typed and never stored in the clone. An operator opts a host
+into the integration deliberately; it is off by default everywhere else.
 
 ## Known limits
 
-Listing every task across all projects in one call is unreliable — agents list per
+Listing every task across all projects in one call is unreliable, so agents list per
 project instead. This is a client-side quirk, not a data limit.

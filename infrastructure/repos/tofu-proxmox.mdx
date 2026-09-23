@@ -1,9 +1,9 @@
 ---
 title: "Proxmox provisioning"
 description: "OpenTofu provisioning for Proxmox VMs and LXC containers through Terrakube and OpenBao."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Provision VMs and LXCs from one reviewed Terrakube workspace apply.
@@ -14,11 +14,11 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
-- Reads its desired-state from the [`deployment.json` contract](/infrastructure/deployment-state-contract) — one versioned S3 object, fetched fail-loud, single-writer via the state lock
+- Reads its desired-state from the [`deployment.json` contract](/infrastructure/deployment-state-contract): one versioned S3 object, fetched fail-loud, single-writer via the state lock
 - Defines compute, network, and storage for every homelab guest
 - Wraps the [`bpg/proxmox`](https://registry.terraform.io/providers/bpg/proxmox/latest) provider
 - Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)
-- Declares per-node ZFS storage (`node_storage`) that Ansible provisions — OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
+- Declares per-node ZFS storage (`node_storage`) that Ansible provisions. OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses typed HCL inputs and locals to share values without generated configuration
 - Outputs a list of provisioned hosts that Ansible inventories consume directly
 - Provisions the **object_storage** module: RustFS LXC (S3-compatible, active)
@@ -36,38 +36,52 @@ Provisioning only. Anything that runs *inside* a host belongs in `ansible-proxmo
 
 ## Object storage
 
-The homelab uses **RustFS** for S3-compatible object storage. The `object_storage` module declares the RustFS LXC, which serves data flows and Splunkbase sync. `ansible-proxmox` backs up the RustFS data volume via `sanoid`/`syncoid`.
+The homelab uses **RustFS** for S3-compatible object storage. The `object_storage` module declares
+the RustFS LXC, which serves data flows and Splunkbase sync. `ansible-proxmox` backs up the RustFS
+data volume via `sanoid`/`syncoid`.
 
 ## Getting started
 
 <Steps>
-  <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/dryvist/tofu-proxmox && cd tofu-proxmox && nix develop`
-  </Step>
-  <Step title="Authenticate to Terrakube">
-    Run `tofu login` for the repo's Terrakube host. The workspace obtains Proxmox credentials from OpenBao.
-  </Step>
-  <Step title="Apply">
-    Run `tofu plan`, review the remote plan, then `tofu apply`.
-  </Step>
-  <Step title="Hand off to Ansible">
-    Outputs are written to the file Ansible reads as its inventory. Run `ansible-proxmox` next.
-  </Step>
+<Step title="Clone and enter the dev shell">
+`git clone https://github.com/dryvist/tofu-proxmox && cd tofu-proxmox && nix develop`
+</Step>
+<Step title="Authenticate to Terrakube">
+Run `tofu login` for the repo's Terrakube host. The workspace obtains Proxmox credentials from OpenBao.
+</Step>
+<Step title="Apply">
+Run `tofu plan`, review the remote plan, then `tofu apply`.
+</Step>
+<Step title="Hand off to Ansible">
+Outputs are written to the file Ansible reads as its inventory. Run `ansible-proxmox` next.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
-    Configures the host once OpenTofu has provisioned it.
-  </Card>
-  <Card title="ansible-proxmox-apps" icon="boxes-stacked" href="/infrastructure/repos/ansible-proxmox-apps">
-    Deploys HAProxy, Cribl Edge, Cribl Stream on top.
-  </Card>
-  <Card title="tofu-splunk-aws" icon="chart-line" href="/observability/repos/tofu-splunk-aws">
-    The AWS-side equivalent for Splunk's DR footprint.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/dryvist/tofu-proxmox">
-    Modules, examples, full README.
-  </Card>
+<Card
+  title="ansible-proxmox"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox">
+  Configures the host once OpenTofu has provisioned it.
+</Card>
+<Card
+  title="ansible-proxmox-apps"
+  icon="boxes-stacked"
+  href="/infrastructure/repos/ansible-proxmox-apps">
+  Deploys HAProxy, Cribl Edge, Cribl Stream on top.
+</Card>
+<Card
+  title="tofu-splunk-aws"
+  icon="chart-line"
+  href="/observability/repos/tofu-splunk-aws">
+  The AWS-side equivalent for Splunk's DR footprint.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/dryvist/tofu-proxmox">
+  Modules, examples, full README.
+</Card>
 </CardGroup>

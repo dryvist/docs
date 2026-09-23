@@ -1,23 +1,26 @@
 ---
 title: "Data pipelines"
 description: "Log and NetFlow ingest paths: UniFi gear and network devices to Splunk indexers, via HAProxy and Cribl Edge."
-page_type: explanation
+page_type: "explanation"
 ---
-
-Two pipelines move data from the homelab edge to Splunk. The architecture is intentional: HAProxy load-balances toward Cribl Edge, which routes, transforms, and reduces volume before forwarding to Splunk over HEC.
+{/* projected from the authoring site; do not edit here */}
+Two pipelines move data from the homelab edge to Splunk. The architecture is intentional. HAProxy
+load-balances toward Cribl Edge, which routes, transforms, and reduces volume before forwarding to
+Splunk over HEC.
 
 The goal: 30–50% ingest reduction without losing security signal.
 
 ## Log pipeline
 
-UniFi network gear and application logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
+UniFi network gear and app logs land in Splunk via Cribl Edge. HAProxy fronts the Cribl Edge cluster for high availability.
 
-{/* Shape: parallel convergence (HAProxy fans to A+B, both converge on Splunk). */}
-{/* Boundary crossings: 0. Ranks: 4. Aspect: ~3:1 LR. Pass. */}
+{/*Shape: parallel convergence (HAProxy fans to A+B, both converge on Splunk). */}
+{/* Boundary crossings: 0. Ranks: 4. Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Net([UniFi gear<br/>syslog tcp/1514])
   HA([HAProxy<br/>tcp/1514])
   EA([Cribl Edge A])
@@ -40,17 +43,20 @@ flowchart LR
   linkStyle 1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Coral dashed edges carry the data; the solid green edge is the physical syslog hop. Cribl Edge drops verbose fields, routes by `event_type`, enriches and masks — the indexer takes a smaller, cleaner payload.
+Coral dashed edges carry the data; the solid green edge is the physical syslog hop. Cribl Edge drops
+verbose fields, routes by `event_type`, and enriches and masks the rest. The indexer takes a smaller,
+cleaner payload.
 
 ## NetFlow pipeline
 
 NetFlow v9 / IPFIX from network devices follows the same shape on a different port. UDP is loss-tolerant by design, so HAProxy distributes rather than fails over.
 
-{/* Shape: parallel convergence. Identical topology to log pipeline, udp/2055. */}
+{/*Shape: parallel convergence. Identical topology to log pipeline, udp/2055.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Net([Network devices<br/>NetFlow udp/2055])
   HA([HAProxy<br/>udp/2055])
   EA([Cribl Edge A])
@@ -88,4 +94,6 @@ Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before 
 
 ## DR posture
 
-Splunk Cloud failover is provisioned via `tofu-aws` (private) — AWS resources (EC2, S3, Route 53) that come up cold and accept the same HEC traffic if the home cluster is offline. Cribl Edge routes can be flipped to point at the AWS endpoint with a single config change.
+Splunk Cloud failover is provisioned via `tofu-aws` (private). It brings up cold AWS resources
+(EC2, S3, Route 53) that accept the same HEC traffic if the home cluster is offline. Cribl Edge
+routes can be flipped to point at the AWS endpoint with a single config change.

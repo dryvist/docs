@@ -1,16 +1,18 @@
 ---
 title: "Apps on Proxmox"
 description: "Ansible roles that deploy the application stack on top of configured Proxmox hosts: HAProxy, Cribl Edge, Cribl Stream."
-page_type: repo
+page_type: "repo"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The third tier. By the time this runs, the host is ready and the apps just need to land on it.
 
 <RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox-apps" />
 
-`ansible-proxmox-apps` deploys the application stack onto VMs and LXC containers that `tofu-proxmox` provisioned and `ansible-proxmox` configured. This is where the data-plane services that move traffic between sources and Splunk actually appear on disk.
+`ansible-proxmox-apps` deploys the application stack onto VMs and LXC containers that `tofu-proxmox`
+provisioned and `ansible-proxmox` configured. This is where the data-plane services that move
+traffic between sources and Splunk actually appear on disk.
 
 ## What it does
 
@@ -33,33 +35,45 @@ This is the deploy tier. Anything that's stateful and long-running on a homelab 
 ## Getting started
 
 <Steps>
-  <Step title="Confirm the hosts are configured">
-    Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring agents in place before apps land on them.
-  </Step>
-  <Step title="Clone and enter the dev shell">
-    `git clone https://github.com/JacobPEvans/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
-  </Step>
-  <Step title="Provide Doppler credentials">
-    Cribl tokens, HAProxy stats password, and Splunk HEC tokens all come from Doppler via `DOPPLER_TOKEN`.
-  </Step>
-  <Step title="Run the playbook">
-    `ansible-playbook -i inventory site.yml`. Re-runs converge drift only — safe to run on a schedule.
-  </Step>
+<Step title="Confirm the hosts are configured">
+Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring agents in place before apps land on them.
+</Step>
+<Step title="Clone and enter the dev shell">
+`git clone https://github.com/JacobPEvans/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
+</Step>
+<Step title="Provide Doppler credentials">
+Cribl tokens, HAProxy stats password, and Splunk HEC tokens all come from Doppler via `DOPPLER_TOKEN`.
+</Step>
+<Step title="Run the playbook">
+`ansible-playbook -i inventory site.yml`. Re-runs converge drift only. Safe to run on a schedule.
+</Step>
 </Steps>
 
 ## Related repos
 
 <CardGroup cols={2}>
-  <Card title="ansible-proxmox" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox">
-    Host config. Must run first.
-  </Card>
-  <Card title="Observability" icon="chart-line" href="/observability/overview">
-    Where the data this stack delivers ends up.
-  </Card>
-  <Card title="Data pipelines" icon="diagram-project" href="/architecture/data-pipelines">
-    End-to-end view of the log and NetFlow paths.
-  </Card>
-  <Card title="Source on GitHub" icon="github" href="https://github.com/JacobPEvans/ansible-proxmox-apps">
-    Roles, packs, full README.
-  </Card>
+<Card
+  title="ansible-proxmox"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox">
+  Host config. Must run first.
+</Card>
+<Card
+  title="Observability"
+  icon="chart-line"
+  href="/observability/overview">
+  Where the data this stack delivers ends up.
+</Card>
+<Card
+  title="Data pipelines"
+  icon="diagram-project"
+  href="/architecture/data-pipelines">
+  End-to-end view of the log and NetFlow paths.
+</Card>
+<Card
+  title="Source on GitHub"
+  icon="github"
+  href="https://github.com/JacobPEvans/ansible-proxmox-apps">
+  Roles, packs, full README.
+</Card>
 </CardGroup>

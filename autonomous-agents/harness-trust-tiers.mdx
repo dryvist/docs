@@ -1,9 +1,9 @@
 ---
 title: "Harness trust tiers"
-description: "Two classes of AI coding harness — trusted and untrusted — separated by the capabilities each one is granted, not by policy text."
-page_type: explanation
+description: "Two classes of AI coding harness, trusted and untrusted, separated by the capabilities each one is granted, not by policy text."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > A harness is trusted when the estate can prove what it did. Everything else is untrusted, and the difference is enforced by what each class can reach.
 
 Several AI coding harnesses run against this estate. They are not equally
@@ -19,19 +19,19 @@ instructions say.
 | Operating-system identity | A dedicated automation account, separate from the human operator | The operator's own interactive account |
 | Unattended privilege escalation | Permitted, scoped to one exact command | None |
 | Central secret store | Read through its own bounded role; write only through a human-gated, single-use grant | Read-only, and only the leaf paths a task needs |
-| Forge (code hosting) writes | Yes, through short-lived tokens minted per call | No — read access only |
+| Forge (code hosting) writes | Yes, through short-lived tokens minted per call | No, read access only |
 | Infrastructure convergence | Yes, under a maintenance window | No |
 
-Trusted today: Claude Code and Codex. Untrusted today: Cursor, OpenCode, and
-Gemini/Antigravity. These are public products; naming them is what makes the
-tier assignment auditable.
+Trusted today are Claude Code and Codex. Untrusted today are Cursor, OpenCode,
+and Gemini/Antigravity. These are public products; naming them is what makes
+the tier assignment auditable.
 
 ## Why the identity is the boundary
 
 The trusted class runs as its own operating-system account. That account is the
-only identity allowed to escalate privilege without a human present, and its
-grant is scoped to a single exact command rather than a general one. The human
-operator's interactive account keeps a biometric gate on every escalation, so
+only identity allowed to escalate privilege without a human present. Its grant
+is scoped to a single exact command rather than a general one. The human
+operator's interactive account keeps a biometric gate on every escalation. So
 an agent that has strayed into that account still cannot converge a machine.
 
 This puts the boundary somewhere an audit log can see it. A run either happened
@@ -43,29 +43,42 @@ Untrusted does not mean unusable. An untrusted harness reads code, writes files
 in a working tree, runs tests, and reads the specific leaf secrets a task needs.
 What it does not get is a path to change shared state: no forge write, no
 credential minting, no convergence, no privilege escalation. A change it
-produces reaches the estate the same way a human's does — reviewed, through a
-pull request opened by an identity that is allowed to open one.
+produces reaches the estate the same way a human's does. It gets reviewed,
+through a pull request opened by an identity that is allowed to open one.
 
 ## Moving a harness between tiers
 
 Promotion is a change to capability grants, not to a document. A harness joins
-the trusted class when it has its own operating-system account, its own bounded
-role in the central store, and a minted-per-call path to forge writes. Until all
-three exist, it is untrusted regardless of how it is described.
+the trusted class only when three things are true. It has its own
+operating-system account. It has its own bounded role in the central store.
+And it has a minted-per-call path to forge writes. Until all three exist, it
+is untrusted regardless of how it is described.
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Agent secrets" icon="key" href="/autonomous-agents/secrets">
-    The headless credential path both classes read through, and the identity rule.
-  </Card>
-  <Card title="GitHub access" icon="github" href="/autonomous-agents/github-access">
-    Minted-per-call forge tokens — the capability that separates the classes.
-  </Card>
-  <Card title="Local AI isolation" icon="shield-halved" href="/security/local-ai-isolation">
-    The scoping that keeps a harness from reading what it was not granted.
-  </Card>
-  <Card title="Tools comparison" icon="table-cells" href="/security/comparison">
-    The four-tier secrets model each class reads against.
-  </Card>
+<Card
+  title="Agent secrets"
+  icon="key"
+  href="/autonomous-agents/secrets">
+  The headless credential path both classes read through, and the identity rule.
+</Card>
+<Card
+  title="GitHub access"
+  icon="github"
+  href="/autonomous-agents/github-access">
+  Minted-per-call forge tokens — the capability that separates the classes.
+</Card>
+<Card
+  title="Local AI isolation"
+  icon="shield-halved"
+  href="/security/local-ai-isolation">
+  The scoping that keeps a harness from reading what it was not granted.
+</Card>
+<Card
+  title="Tools comparison"
+  icon="table-cells"
+  href="/security/comparison">
+  The four-tier secrets model each class reads against.
+</Card>
 </CardGroup>

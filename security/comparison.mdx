@@ -1,52 +1,67 @@
 ---
 title: "Secrets tools comparison"
 description: "The four-tier secrets model that organizes every tool in this suite — repo-local SOPS, a self-hosted runtime manager as the primary machine interface, a strict cloud tier, and a never-AI human tier — with the tool-by-tool matrix and the bootstrap, read-path, and DR flows."
-page_type: reference
+page_type: "reference"
 ---
+{/* projected from the authoring site; do not edit here */}
+> Four tiers, one rule each. A tool earns its tier by *who* can read it and *how*, not by what it happens to store today.
 
-> Four tiers, one rule each. A tool earns its tier by *who* can read it and *how* — not by what it happens to store today.
-
-Seven tools show up across this section, and on their own they read like a grab-bag. The organizing idea is a **four-tier model**: every secret lives in exactly one tier, and the tier — not the tool's feature list — decides whether an AI agent, a machine, or only a human can reach it. This page is the map; the per-tool pages are the detail.
+Seven tools show up across this section, and on their own they read like a grab-bag. The organizing
+idea is a **four-tier model**: every secret lives in exactly one tier. The tier, not the tool's
+feature list, decides whether an AI agent, a machine, or only a human can reach it. This page is
+the map; the per-tool pages are the detail.
 
 ## The four tiers
 
 | Tier | Role | Canonical tool | Who reads it |
 | --- | --- | --- | --- |
-| **T1 — Repo-local** | Encrypted-at-rest config that travels *with* the code it configures | SOPS + age | AI and machines, via a path-gated local age key |
-| **T2 — Runtime manager** | The self-hosted source of truth for live machine credentials, and the **primary AI/machine interface** | OpenBao | AI and machines, via AppRole / signed SSH cert — no human in the loop |
-| **T3 — Bootstrap cloud** | *Secret-zero* that bootstraps T2, plus the few values an external service consumes directly | Doppler | Machines for that narrow set; AI only under **explicit, per-use human approval** |
-| **T4 — Never-AI human** | Break-glass and crown jewels — recovery shares, master keys, account passwords | Bitwarden | Humans only, at a keyboard, with a second factor |
+| **T1: Repo-local** | Encrypted-at-rest config that travels *with* the code it configures | SOPS + age | AI and machines, via a path-gated local age key |
+| **T2: Runtime manager** | The self-hosted source of truth for live machine credentials, and the **primary AI/machine interface** | OpenBao | AI and machines, via AppRole or signed SSH cert, with no human in the loop |
+| **T3: Bootstrap cloud** | *Secret-zero* that bootstraps T2, plus the few values an external service consumes directly | Doppler | Machines for that narrow set; AI only under **explicit, per-use human approval** |
+| **T4: Never-AI human** | Break-glass and crown jewels: recovery shares, master keys, account passwords | Bitwarden | Humans only, at a keyboard, with a second factor |
 
 Two properties make the model hold:
 
-- **The primary path is T2.** An always-on agent authenticates to the self-hosted runtime manager as itself (AppRole) and gets scoped, expiring credentials with zero interactive prompts. That is the default read path for automation — not the cloud tier, not the keychain.
-- **Secret-zero lives one tier up.** T2 cannot bootstrap itself from nothing: its static seal key and the AppRole `secret_id` that agents use to authenticate are held in T3. That, plus the handful of values an external service reads on its own, is the whole of T3 — everything else lives in T2 or is minted by an engine on demand. T3 is therefore small, tightly scoped, and only AI-reachable under human approval. T4 holds the human-only recovery material that can rebuild everything if both T2 and T3 are lost.
+- **The primary path is T2.** An always-on agent authenticates to the self-hosted runtime manager as
+  itself (AppRole) and gets scoped, expiring credentials with zero interactive prompts. That is the
+  default read path for automation, not the cloud tier, not the keychain.
+- **Secret-zero lives one tier up.** T2 cannot bootstrap itself from nothing: its static seal key
+  and the AppRole `secret_id` that agents use to authenticate are held in T3. That, plus the handful
+  of values an external service reads on its own, is the whole of T3. Everything else lives in T2
+  or is minted by an engine on demand. T3 is therefore small, tightly scoped, and only AI-reachable
+  under human approval. T4 holds the human-only recovery material that can rebuild everything if
+  both T2 and T3 are lost.
 
 ## The tool matrix
 
-Every tool this section documents, scored on the axes that decide its tier. "AI tier" is where the tool sits in the model above; several tools are transitional and are folding into T2.
+Every tool this section documents, scored on the axes that decide its tier. "AI tier" is where the tool sits in the preceding model; several tools are transitional and are folding into T2.
 
 | Tool | Self-hosted | Offline reads | Machine auth | RBAC granularity | Rotation | AI tier | Cost model |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **SOPS + age** | Yes — files in git | Yes — local age key | age keypair | Per file / path | Manual re-encrypt | **T1** | Free (OSS) |
-| **OpenBao** | Yes — homelab service | LAN-only (needs the service) | AppRole, SSH-CA cert, TLS cert | Fine — per-path policy × per-role | Native leases + scheduled rotation | **T2 — primary** | Free (MPL fork of Vault 1.14) |
-| **Doppler** | No — SaaS | No | Service token | Project / config / env | Scheduled token rotation | **T3 — secret-zero + external consumers, human-approved** | Free tier + paid seats |
-| **Bitwarden** | No — SaaS (Vaultwarden self-host on roadmap) | No — needs unlock | None — human unlock only | Collections | Manual | **T4 — never-AI** | Free / paid |
-| **macOS Keychain** | Yes — local, OS-backed | Yes | None — GUI / login unlock | Human-only, locked | Manual | Human break-glass only; the automation tier is retired to T2 | Free (OS) |
-| **aws-vault** | Yes — local, keychain-backed | Yes — cached STS | MFA session | Per AWS profile | STS auto-expiry | Interactive convenience; automated STS retires to T2 | Free (OSS) |
-| **BWS** | No — SaaS (Bitwarden Secrets Manager) | No | Access token | Per project | Manual | Programmatic AI tokens; folds into T2 / T3 | Free / paid |
+| **SOPS + age** | Yes: files in git | Yes: local age key | age keypair | Per file / path | Manual re-encrypt | **T1** | Free (OSS) |
+| **OpenBao** | Yes: homelab service | LAN-only (needs the service) | AppRole, SSH-CA cert, TLS cert | Fine: per-path policy × per-role | Native leases + scheduled rotation | **T2: primary** | Free (MPL fork of Vault 1.14) |
+| **Doppler** | No: SaaS | No | Service token | Project / config / env | Scheduled token rotation | **T3: secret-zero + external consumers, human-approved** | Free tier + paid seats |
+| **Bitwarden** | No: SaaS (Vaultwarden self-host on roadmap) | No: needs unlock | None: human unlock only | Collections | Manual | **T4: never-AI** | Free / paid |
+| **macOS Keychain** | Yes: local, OS-backed | Yes | None: GUI / login unlock | Human-only, locked | Manual | Human break-glass only; the automation tier is retired to T2 | Free (OS) |
+| **aws-vault** | Yes: local, keychain-backed | Yes: cached STS | MFA session | Per AWS profile | STS auto-expiry | Interactive convenience; automated STS retires to T2 | Free (OSS) |
+| **BWS** | No: SaaS (Bitwarden Secrets Manager) | No | Access token | Per project | Manual | Programmatic AI tokens; folds into T2 / T3 | Free / paid |
 
-**aws-vault** and the automated use of **macOS Keychain** are retired from the machine path. T2's AWS secrets engine and token-file reads replaced them; a human at a laptop may still keep a local session, headless agents have none.
+**aws-vault** and the automated use of **macOS Keychain** are retired from the machine path. T2's
+AWS secrets engine and token-file reads replaced them. A human at a laptop may still keep a local
+session, but headless agents have none.
 
 ## How the tiers bootstrap — root of trust to runtime creds
 
-T2 is the primary interface, but it cannot start sealed-and-empty on its own. The automated path unseals it from secret-zero in T3; the human recovery shares in T4 are the break-glass fallback, never the routine path.
+T2 is the primary interface, but it cannot start sealed-and-empty on its own. The automated path
+unseals it from secret-zero in T3; the human recovery shares in T4 are the break-glass fallback,
+never the routine path.
 
-{/* Shape: parallel convergence. Two origins → OpenBao → creds → consumer. Ranks ≤3 wide. Boundary crossings: 0. Pass. */}
+{/*Shape: parallel convergence. Two origins → OpenBao → creds → consumer. Ranks ≤3 wide. Boundary crossings: 0. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   DZ[(T3 · secret-zero<br/>seal key + secret_id)]
   BW((T4 · recovery shares))
   Bao([T2 · OpenBao unseal])
@@ -77,20 +92,23 @@ flowchart LR
 
 ## An AI agent's read path, by tier
 
-The same agent reaches different tiers by different means. T2 is the default and needs no human. T3 is reachable only when a human approves that specific keys-to-the-kingdom operation. T4 is structurally unreachable — there is no programmatic bridge to it at all.
+The same agent reaches different tiers by different means. T2 is the default and needs no human. T3
+is reachable only when a human approves that specific keys-to-the-kingdom operation. T4 is
+structurally unreachable. There is no programmatic bridge to it at all.
 
-{/* Shape: hub and spokes. 1 hub + 4 leaves in one subgraph. Each edge crosses 1 boundary. Pass. */}
+{/*Shape: hub and spokes. 1 hub + 4 leaves in one subgraph. Each edge crosses 1 boundary. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Agent((ai agent))
   subgraph Tiers[Secret tiers]
-    direction TB
-    T1[(T1 · SOPS+age)]
-    T2([T2 · OpenBao])
-    T3[(T3 · Doppler)]
-    T4((T4 · Bitwarden))
+  direction TB
+  T1[(T1 · SOPS+age)]
+  T2([T2 · OpenBao])
+  T3[(T3 · Doppler)]
+  T4((T4 · Bitwarden))
   end
 
   Agent -->|local age key| T1
@@ -117,13 +135,16 @@ flowchart LR
 
 ## Rotation and disaster recovery
 
-T2's value is only as good as its recoverability. Rotation is native — leases expire and re-issue on their own — and durability comes from periodic **Raft snapshots** shipped off-box, restorable onto a fresh node and unsealed from the same secret-zero the routine bootstrap uses.
+T2's value is only as good as its recoverability. Rotation is native: leases expire and re-issue on
+their own. Durability comes from periodic **Raft snapshots** shipped off-box. The snapshots restore
+onto a fresh node and unseal from the same secret-zero the routine bootstrap uses.
 
-{/* Shape: linear chain. 6 nodes, one timeline. Aspect ~3:1 LR. Pass. */}
+{/*Shape: linear chain. 6 nodes, one timeline. Aspect ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Bao([OpenBao])
   Snap[(Raft snapshot)]
   Store[(encrypted<br/>off-box store)]
@@ -165,24 +186,42 @@ second, estate-wide mutex.
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="OpenBao" icon="lock" href="/security/tools/openbao">
-    The T2 runtime manager — AppRole auth, SSH CA, and the lease authority.
-  </Card>
-  <Card title="Doppler" icon="cloud" href="/security/tools/doppler">
-    The T3 strict cloud tier and secret-zero holder.
-  </Card>
-  <Card title="Bitwarden vault" icon="shield-halved" href="/security/tools/bitwarden">
-    The T4 never-AI human tier.
-  </Card>
-  <Card title="SOPS" icon="file-shield" href="/security/tools/sops">
-    The T1 repo-local encrypted-config layer.
-  </Card>
-  <Card title="Agent secrets" icon="robot" href="/autonomous-agents/secrets">
-    The headless read path — zero interactive prompts for always-on agents.
-  </Card>
-  <Card title="Security overview" icon="scale-balanced" href="/security/overview">
-    Where the four-tier model sits in the whole secrets story.
-  </Card>
+<Card
+  title="OpenBao"
+  icon="lock"
+  href="/security/tools/openbao">
+  The T2 runtime manager — AppRole auth, SSH CA, and the lease authority.
+</Card>
+<Card
+  title="Doppler"
+  icon="cloud"
+  href="/security/tools/doppler">
+  The T3 strict cloud tier and secret-zero holder.
+</Card>
+<Card
+  title="Bitwarden vault"
+  icon="shield-halved"
+  href="/security/tools/bitwarden">
+  The T4 never-AI human tier.
+</Card>
+<Card
+  title="SOPS"
+  icon="file-shield"
+  href="/security/tools/sops">
+  The T1 repo-local encrypted-config layer.
+</Card>
+<Card
+  title="Agent secrets"
+  icon="robot"
+  href="/autonomous-agents/secrets">
+  The headless read path — zero interactive prompts for always-on agents.
+</Card>
+<Card
+  title="Security overview"
+  icon="scale-balanced"
+  href="/security/overview">
+  Where the four-tier model sits in the whole secrets story.
+</Card>
 </CardGroup>
 
 For dryvist-internal specifics (host topology, policy paths, lease TTLs), see [`docs.dryvist.com`](https://docs.dryvist.com).

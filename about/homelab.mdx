@@ -1,20 +1,22 @@
 ---
 title: "Homelab"
-description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl — all managed with OpenTofu, Ansible, and Nix."
-page_type: explanation
+description: "Proxmox cluster, UniFi networking, Home Assistant, Splunk, Cribl: all managed with OpenTofu, Ansible, and Nix."
+page_type: "explanation"
 ---
+{/* projected from the authoring site; do not edit here */}
+> The goal: fault-tolerant infrastructure that rebuilds from a single `nix build`.
 
-> The goal: fault-tolerant infrastructure I can rebuild from a single `nix build`.
-
-The homelab is a real production environment, just for one person. Proxmox cluster on bare metal, UniFi networking, Splunk indexers, Cribl Edge collectors, Home Assistant, a docker-host VM for the necessary evil of vendor-locked containers.
+The homelab is a real production environment, just for one person. Proxmox cluster on bare metal,
+UniFi networking, Splunk indexers, and Cribl Edge collectors keep the core running. Home Assistant
+and a docker-host VM cover the necessary evil of vendor-locked containers.
 
 ## Hardware footprint
 
 | Layer | What's there | Notes |
 | --- | --- | --- |
-| Compute | A 4-node Proxmox VE cluster | Heterogeneous mix — single-engineer homelab, parts opportunistically combined; 4 nodes give natural majority quorum. Two of the oldest nodes are being consolidated onto a single newer 2U chassis |
+| Compute | A 4-node Proxmox VE cluster | Heterogeneous mix: single-engineer homelab, parts opportunistically combined; 4 nodes give natural majority quorum. Two of the oldest nodes are being consolidated onto a single newer 2U chassis |
 | Local LLM | Model library shared across cluster nodes and a dedicated Apple Silicon Mac | The GPU-bound former standalone LLM box has since joined the Proxmox cluster as its fourth node |
-| Storage | ZFS on Proxmox hosts; SAS backplane on one node for cluster bulk storage; NVMe for hot tiers | Mixed-tier by accident, kept by design — bulk on SAS, working sets on NVMe |
+| Storage | ZFS on Proxmox hosts; SAS backplane on one node for cluster bulk storage; NVMe for hot tiers | Mixed-tier by accident, kept by design: bulk on SAS, working sets on NVMe |
 | Networking | UniFi end-to-end: gateway, switches (with 10G SFP+ uplinks), APs | Single-pane management; 10G fiber backbone where it matters |
 | Power | Rack UPS for servers; separate UPS for the Home Assistant Pi | Active NUT monitoring planned once the LLM box is built |
 | Rack management | Raspberry Pi running Home Assistant; BMC jump VM in cluster for legacy console access | Only the oldest BMCs still need a Java Web Start client, and the jump VM keeps Java off the laptop. Newer BMC generations expose an HTML5 console and a Redfish API, so both remote console and headless OS install work straight from the browser and the command line |
@@ -23,7 +25,7 @@ The homelab is a real production environment, just for one person. Proxmox clust
 
 Most of the rack is second-hand, so every arrival is audited against its
 listing before it is trusted. The BMC gives that away for free over Redfish
-and the vendor CLI, and the useful checks are rarely the advertised specs:
+and the vendor command-line tool, and the useful checks are rarely the advertised specs:
 
 - **Remaining write endurance on every SSD.** Used enterprise drives are sold
   on the life left in them, and a listing almost never quotes it.
@@ -37,51 +39,55 @@ and the vendor CLI, and the useful checks are rarely the advertised specs:
 - **Prior-owner remnants.** Hostnames and retained logs survive a drive-level
   secure erase, so their presence shows the erase was narrower than advertised.
 - **Firmware currency, before anything else.** An old BMC doesn't just lack
-  niceties — it can drop entire management API surfaces: no memory or storage
+  niceties. It can drop entire management API surfaces: no memory or storage
   inventory, no virtual media, no remote power control. Treat a firmware
   update as required onboarding, not optional hygiene.
 - **The chassis's CPU thermal ceiling, not the socket's.** Entry-tier 2U
   chassis often share a cooling design with smaller siblings and cap TDP well
   below what the socket supports. A bigger heatsink doesn't raise that
-  ceiling — it only changes which drive-count and ambient-temperature
+  ceiling. It only changes which drive-count and ambient-temperature
   combinations are certified. Check the ceiling, and whether a newer CPU
   generation needs a BIOS update first, before buying an upgrade chip.
 - **Warranty matters most on drives and power supplies, least on CPUs.**
   Server CPUs rarely fail once burned in, and datacenters retire
-  previous-generation chips in bulk — that's where the price-per-performance
+  previous-generation chips in bulk. That's where the price-per-performance
   is. Put the warranty budget toward drives and PSUs instead, and burn in
   every drive before trusting it.
 
-Firmware age has a second, sharper edge: the upgrade path itself can be long
+Firmware age has a second, sharper edge. The upgrade path itself can be long
 and mandatory, since a vendor often gates later versions behind a minimum
 earlier version. Read the release notes for the full prerequisite chain, not
-just the latest release, before scheduling the maintenance window — a single
+just the latest release, before scheduling the maintenance window. A single
 update can turn out to require several sequential ones first.
 
 Don't trust a used server's reported hardware inventory until POST has
-completed cleanly at least once. Hardware inventory is collected during POST,
-so a BMC that never sees a clean POST can keep serving a stale snapshot —
-identical across every management API and unchanged by a BMC reset or a cold
-power cycle — with nothing to flag it except its own collection timestamp.
-Check that timestamp before trusting any drive or memory listing from a used
-machine's BMC; a stale one means everything reported about installed hardware
-is potentially fiction.
+completed cleanly at least once. Hardware inventory is collected during POST.
+A BMC that never sees a clean POST can keep serving a stale snapshot. That
+snapshot looks identical across every management API and survives a BMC
+reset or a cold power cycle. Nothing flags it except its own collection
+timestamp. Check that timestamp before trusting any drive or memory listing
+from a used machine's BMC. A stale one means everything reported about
+installed hardware is potentially fiction.
 
-A stalled POST is often diagnostic, not electrical: a single unhealthy
-component — a failing drive, a RAID controller flagging it in UEFI — can halt
-POST at an interactive prompt with no visible symptom on a headless machine,
-and firmware jobs queued behind that prompt never get a window to run. Modern
-BMCs can export a screenshot of the console over the management API, turning
-an unexplained hang into a one-line diagnosis — a capability the oldest
-firmware generations lack.
+A stalled POST is often diagnostic, not electrical. A single unhealthy
+component can cause it, such as a failing drive or a RAID controller
+flagging an issue in UEFI. That component can halt POST at an interactive
+prompt with no visible symptom on a headless machine. Firmware jobs queued
+behind that prompt never get a window to run. Modern BMCs can export a
+screenshot of the console over the management API, turning an unexplained
+hang into a one-line diagnosis. The oldest firmware generations lack that
+capability.
 
-Findings become tickets and follow-up tasks rather than remembered caveats,
-and the recorded inventory always reflects what the hardware reported — never
+Findings become tickets and follow-up tasks rather than remembered caveats.
+The recorded inventory always reflects what the hardware reported, never
 what the listing claimed.
 
 ## Network topology
 
-The UniFi gateway sits at the centre of the LAN; the Proxmox cluster, personal devices, and the bare-metal LLM box all hang off it. WireGuard tunnels traverse the Internet → UniFi edge. Per-service VLANs encode workload tier. Diagram and the network-as-code that defines it: [`tofu-unifi`](/infrastructure/repos/tofu-unifi).
+The UniFi gateway sits at the center of the LAN; the Proxmox cluster, personal devices, and the
+bare-metal LLM box all hang off it. WireGuard tunnels traverse the Internet → UniFi edge.
+Per-service VLANs encode workload tier. Diagram and the network-as-code that defines it:
+[`tofu-unifi`](/infrastructure/repos/tofu-unifi).
 
 ## Data flow
 
@@ -89,23 +95,34 @@ UniFi gear and host telemetry feed HAProxy → Cribl Edge → Splunk → AWS DR.
 
 ## Container philosophy
 
-LXC is the default for production homelab services; Docker is the exception, fenced off to a dedicated `docker-host` VM whenever a vendor ships Docker-only images. The four-question decision tree: [LXC vs Docker](/infrastructure/lxc-vs-docker).
+LXC is the default for production homelab services; Docker is the exception, fenced off to a
+dedicated `docker-host` VM whenever a vendor ships Docker-only images. The four-question decision
+tree: [LXC vs Docker](/infrastructure/lxc-vs-docker).
 
 ## What runs where
 
-Most workloads run as LXC on the Proxmox cluster — HAProxy, Cribl Edge, Home Assistant, Qdrant. Splunk Enterprise gets a bare-metal-ish VM for network volume. Docker is fenced off to a single `docker-host` VM. Local LLM inference runs bare-metal on NixOS to dodge passthrough overhead. Full per-workload inventory: [Infrastructure overview](/infrastructure/overview).
+Most workloads run as LXC on the Proxmox cluster, including HAProxy, Cribl Edge, Home Assistant, and Qdrant.
+Splunk Enterprise gets a bare-metal-ish VM for network volume. Docker is fenced off to a single
+`docker-host` VM. Local LLM inference runs bare-metal on NixOS to dodge passthrough overhead. Full
+per-workload inventory: [Infrastructure overview](/infrastructure/overview).
 
 ## Provisioning + configuration
 
-[`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) builds VMs and LXCs. [`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host. [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The macOS counterpart that runs the monitoring stack as Kubernetes is [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
+[`tofu-proxmox`](/infrastructure/repos/tofu-proxmox) builds VMs and LXCs.
+[`ansible-proxmox`](/infrastructure/repos/ansible-proxmox) configures the host.
+[`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) layers the apps on top. The
+macOS counterpart that runs the monitoring stack as Kubernetes is
+[`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes).
 
 ## High availability
 
 Core infrastructure services (DNS, secrets, ingress) run as redundant pairs
-across separate Proxmox nodes, managed by Proxmox HA: a node failure triggers
-automatic restart of the affected service elsewhere in the cluster, no manual
-intervention required.
+across separate Proxmox nodes, managed by Proxmox HA. A node failure triggers
+automatic restart of the affected service elsewhere in the cluster, with no
+manual intervention required.
 
 ## DR plan
 
-`tofu-aws` (private) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes can be flipped to the AWS HEC endpoint via config change. Details: [tofu-splunk-aws](/observability/repos/tofu-splunk-aws).
+`tofu-aws` (private) defines a cold AWS footprint sized to take a Splunk failover. Cribl Edge routes
+can be flipped to the AWS HEC endpoint via config change. Details:
+[tofu-splunk-aws](/observability/repos/tofu-splunk-aws).

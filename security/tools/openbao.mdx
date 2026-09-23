@@ -1,32 +1,37 @@
 ---
 title: "OpenBao"
 description: "The self-hosted T2 runtime manager — the primary AI/machine credential interface, Terrakube dynamic provider credentials, the SSH certificate authority, and Raft-snapshot DR."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
-Status: **live core; AWS engine live, GitHub engine in rollout.** A 2-node Raft
-cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) is running. The Ansible
-role provisions the KV hierarchy, domain-split RBAC, snapshot daemon, and the
-AWS and GitHub plugin configuration. The AWS engine now brokers automation's
-AWS access, replacing the static aws-vault base key; the GitHub engine remains
-in rollout until its live issuance and revocation checks pass. A 3rd Raft
-voter is planned.
+Status: **live core; AWS engine live, GitHub engine in rollout**. A 2-node Raft
+cluster (OpenBao 2.5.5, on-prem static-key auto-unseal) runs today. The Ansible
+role provisions the KV hierarchy, domain-split RBAC, and snapshot daemon. It
+also provisions the AWS and GitHub plugin configuration. The AWS engine now
+brokers automation's AWS access. It replaced the static aws-vault base key.
+The GitHub engine remains in rollout until its live issuance and revocation
+checks pass. A third Raft voter is planned.
 </Note>
 
-> The day the homelab needs more than per-host SOPS, this is what catches it — and it is what an always-on agent talks to instead of a human at a keyboard.
+> The day the homelab needs more than per-host SOPS, this is what catches it. It is what an always-on agent talks to instead of a human at a keyboard.
 
 ## Its job in the four-tier model
 
-OpenBao is **T2** in the [four-tier secrets model](/security/comparison): the self-hosted source of truth for live machine credentials, and the **primary AI/machine interface**. An always-on agent authenticates to it as itself and gets scoped, expiring credentials with **zero interactive prompts** — the property the macOS keychain can never offer a headless process. It does three jobs:
+OpenBao is **T2** in the [four-tier secrets model](/security/comparison): the self-hosted source
+of truth for live machine credentials, and the **primary AI/machine interface**. An always-on agent
+authenticates to it as itself and gets scoped, expiring credentials with **zero interactive
+prompts**. The macOS keychain can never offer that to a headless process. It does three jobs:
 
 - **Dynamic credential issuer.** AppRole (and, for the most sensitive services, TLS cert) auth methods issue short-lived, per-service credentials from a KV v2 engine and dynamic secrets engines.
-- **SSH certificate authority.** It signs short-TTL SSH certificates for automation principals (`ai-agent`, `ansible`, `ci`) — a hybrid model where machines carry expiring certs and humans keep their static keys. No long-lived automation key sits on disk waiting to be stolen.
+- **SSH certificate authority.** It signs short-TTL SSH certificates for automation principals
+  (`ai-agent`, `ansible`, `ci`), a hybrid model where machines carry expiring certs and humans keep
+  their static keys. No long-lived automation key sits on disk waiting to be stolen.
 - **Terrakube dynamic credentials.** Each workspace authenticates to a scoped
   native path and receives only the short-lived provider credentials it needs.
   Terrakube owns per-workspace run locking; OpenBao does not duplicate it.
 
-It is the MPL-licensed fork of HashiCorp Vault 1.14.x — the last release before HashiCorp's BSL transition in 1.15.
+It is the MPL-licensed fork of HashiCorp Vault 1.14.x, the last release before HashiCorp's BSL transition in 1.15.
 
 ## Independent service secrets engines
 
@@ -38,11 +43,24 @@ boundary. They are not one combined service.
 | AWS | [`openbao/openbao-plugins` `secrets-aws-v0.3.0`](https://github.com/openbao/openbao-plugins/releases/tag/secrets-aws-v0.3.0) | `aws/` | Assume a narrow AWS IAM role and lease short-lived STS credentials |
 | GitHub | [`martinbaillie/vault-plugin-secrets-github` v2.3.2](https://github.com/martinbaillie/vault-plugin-secrets-github/releases/tag/v2.3.2) | `github/` | Exchange a protected GitHub App private key for one-hour installation tokens |
 
-**AWS engine, two layers.** A dedicated broker IAM identity holds one permission only — `sts:AssumeRole` into broker-managed roles — and its own base key is seeded into OpenBao's AWS engine root config once at bootstrap, write-once (a routine converge never overwrites it). Rotating it is a deliberate, separate operator action — minting a fresh key on an independent admin path and re-seeding, never OpenBao's own `rotate-root` call — so no long-lived AWS key sits anywhere routine automation can reach it. Behind it, one purpose role per consumer: a `tf-<project>` role per OpenTofu root, one `terrakube-<workspace>` role per Terrakube workspace, and a broader admin-purpose role for AI and general IaC use. That broader role carries an AWS permissions boundary that blocks privilege self-escalation, credential/identity persistence (no new IAM users, keys, or login profiles), and audit/org/billing tampering — it is not `AdministratorAccess`. Local and AI-agent callers reach these roles through a `credential_process` AWS profile backed by an AppRole whose `role_id`/`secret_id` the runtime secret injector supplies (below); Terrakube workspaces reach their own role directly through their workspace JWT identity, never through a local profile.
+**AWS engine, two layers.** A dedicated broker IAM identity holds one permission only:
+`sts:AssumeRole` into broker-managed roles. Its own base key is seeded into OpenBao's AWS
+engine root config once at bootstrap, write-once (a routine converge never overwrites it). Rotating
+it is a deliberate, separate operator action: minting a fresh key on an independent administrator
+path and re-seeding, never OpenBao's own `rotate-root` call. This way, no long-lived AWS key sits
+anywhere routine automation can reach it. Behind it sits one purpose role per consumer. There's
+a `tf-<project>` role per OpenTofu root, one `terrakube-<workspace>` role per Terrakube workspace,
+and a broader administrator-purpose role for AI and general IaC use. That broader role carries an
+AWS permissions boundary. It blocks privilege self-escalation, credential/identity persistence
+(no new IAM users, keys, or login profiles), and audit/org/billing tampering. It is not
+`AdministratorAccess`. Local and AI-agent callers reach these roles through a `credential_process`
+AWS profile backed by an AppRole whose `role_id`/`secret_id` the runtime secret injector supplies
+(below). Terrakube workspaces reach their own role directly through their workspace JWT identity,
+never through a local profile.
 
 Each engine has its own catalog entry, mount, service configuration, OpenBao
 policy, consumer endpoints, and leases. Normal API access to one engine does not
-grant access to the other. Both engines still share the OpenBao root and admin
+grant access to the other. Both engines still share the OpenBao root and administrator
 control plane, Raft storage boundary, hosts, plugin runtime, signature-verified
 release artifacts, and outbound HTTPS. A compromise of that shared boundary can
 affect both engines.
@@ -59,13 +77,13 @@ GitHub plugin receives the same compatibility, issuance, and revocation gates.
 ## Optional Slack OAuth proof of concept
 
 The OpenBao role includes an isolated Slack OAuth proof of concept. It is
-disabled by default and does not change the active authentication path. When an
-operator deliberately enables it, the role requires an exact callback route,
-requests only the bot scope needed to send messages, and gives its reader a
+turned off by default and does not change the active authentication path. When
+an operator deliberately enables it, the role requires an exact callback route.
+It requests only the bot scope needed to send messages, and gives its reader a
 short-lived, read-only identity.
 
 The reverse proxy may publish the exact callback path while the engine remains
-disabled. That route returns a no-content response and strips query parameters
+turned off. That route returns a no-content response and strips query parameters
 from access logs, so OAuth authorization data does not enter routine proxy logs.
 
 ## Architecture
@@ -76,38 +94,41 @@ A single OpenBao service holds the truth; one lightweight agent per consumer ren
 | --- | --- | --- |
 | OpenBao host (privileged) | Raft storage encrypted at rest, AppRole / cert auth methods, KV v2 + dynamic engines, SSH CA | Privileged is acceptable for the vault host; `mlock`/`memlock` need it |
 | Consumer: agent | Holds the consumer's own AppRole role-id + secret-id | Each consumer authenticates as itself; the server never pushes |
-| Consumer: `/run/openbao/*.env` (tmpfs) | Rendered secrets used by the service binary | tmpfs is memory-only — destroyed on reboot, never persists to disk |
+| Consumer: `/run/openbao/*.env` (tmpfs) | Rendered secrets used by the service binary | tmpfs is memory-only: destroyed on reboot, never persists to disk |
 
 ## Auth model
 
-- **AppRole per service.** Each consumer has a role ID (durable) and a secret ID (rotating). The Ansible role distributes role IDs in cleartext but obtains secret IDs from OpenBao — ideally as a **response-wrapped, single-use, short-TTL token** at provision time, so an intercepted bootstrap is self-evident.
+- **AppRole per service.** Each consumer has a role ID (durable) and a secret ID (rotating). The
+  Ansible role distributes role IDs in cleartext but obtains secret IDs from OpenBao, ideally as a
+  **response-wrapped, single-use, short-TTL token** at provision time, so an intercepted bootstrap
+  is self-evident.
 - **SSH CA for automation.** Automation principals present a public key and receive a short-TTL signed certificate; the target host trusts the CA, not a pile of `authorized_keys`.
 - **Periodic tokens** for long-running services where re-authentication would be operationally heavy.
 - **TLS cert-based auth** for the most sensitive services as a defense-in-depth layer.
 
 ## RBAC — split by resource domain
 
-Access is split into one least-privilege AppRole **per resource domain**, so a
+Access is split into one least-privilege AppRole **per resource domain**. A
 compromise of any single credential is scoped to that domain's secrets, not the
-whole tree. Each AppRole is confined to its own path prefix: it can read (and,
+whole tree. Each AppRole is confined to its own path prefix. It can read (and,
 for the small set of identities that need to write, write) only the secrets
 its domain owns.
 
 The sharpest boundary is between the two IaC identities that touch the same
-underlying infrastructure secrets: an apply-scoped identity, human-triggered
-and permitted to write, versus a plan-scoped identity that runs VCS-driven —
-potentially untrusted — plans and is therefore strictly narrower: read-only,
-and confined to its own plan-time path, never the apply identity's write
-scope. That asymmetry means a malicious plan cannot rewrite secrets a
+underlying infrastructure secrets. One is scoped for apply: human-triggered
+and permitted to write. The other is scoped for plan: it runs potentially
+untrusted, VCS-driven plans, and is therefore strictly narrower. It is
+read-only, and confined to its own plan-time path, never the apply identity's
+write scope. That asymmetry means a malicious plan cannot rewrite secrets a
 later apply step trusts.
 
-The same domain-isolation pattern repeats for every other consumer class —
-configuration-management convergence, observability tooling, self-hosted
-cloud services, monitoring/media apps, the local LLM serving stack, and AI
-agent identities (kept read-only and walled off from the infrastructure
-domains) — each with its own AppRole scoped to only the path prefix that
-consumer needs, plus a narrow break-glass identity for the vault's own
-snapshot/backup operation.
+The same domain-isolation pattern repeats for every other consumer class. It
+covers configuration-management convergence, observability tooling, and
+self-hosted cloud services. It also covers monitoring/media apps, the local
+LLM serving stack, and AI agent identities (kept read-only and walled off
+from the infrastructure domains). Each has its own AppRole scoped to only the
+path prefix that consumer needs. It also gets a narrow break-glass identity
+for the vault's own snapshot/backup operation.
 
 Each AppRole additionally carries a `secret_id_bound_cidrs` scoped to its
 consumer's subnet, so even a leaked `secret_id` is unusable outside that
@@ -115,13 +136,28 @@ consumer's network segment.
 
 ## Secret-zero — what bootstraps the bootstrapper
 
-OpenBao cannot start sealed-and-empty on its own. Its *secret-zero* lives one tier up, in the [Doppler bootstrap tier](/security/tools/doppler) (T3): the **static seal key** that auto-unseals the service, and the **AppRole `role_id`/`secret_id`** pairs that consumers present to authenticate. That material, plus the few values an external service reads directly, is all T3 holds — everything else lives here or is minted by an engine on demand. The human-only **recovery shares** live in the [Bitwarden vault](/security/tools/bitwarden) (T4) as the break-glass path if both T2 and T3 are lost.
+OpenBao cannot start sealed-and-empty on its own. Its *secret-zero* lives one tier up, in the
+[Doppler bootstrap tier](/security/tools/doppler) (T3). That tier holds the **static seal key**
+that auto-unseals the service, and the **AppRole `role_id`/`secret_id`** pairs that consumers
+present to authenticate. That material, plus the few values an external service reads directly, is
+all T3 holds. Everything else lives here or is minted by an engine on demand. The human-only **recovery shares** live in the
+[Bitwarden vault](/security/tools/bitwarden) (T4) as the break-glass path if both T2 and T3 are
+lost.
 
-On an **always-on Mac agent host**, the **run-wrapper** publishes each domain's AppRole `role_id`/`secret_id` into the agent process's environment, and publishes nothing else. It is **promptless**: an agent reads its AppRole as a plain environment value, never through an interactive unlock — so the "zero prompts at 3 a.m." property holds because no per-read gate sits in the path. Every other value the agent needs it fetches from here, with that AppRole.
+On an **always-on Mac agent host**, the **run-wrapper** publishes each domain's AppRole
+`role_id`/`secret_id` into the agent process's environment, and publishes nothing else. It is
+**promptless**: an agent reads its AppRole as a plain environment value, never through an
+interactive unlock. The "zero prompts at 3 AM" property holds because no per-read gate sits in
+the path. Every other value the agent needs it fetches from here, with that AppRole.
 
 ### Autonomous Agent API Authentication
 
-Agents provisioned with an OpenBao AppRole `role_id` and `secret_id` (placed in the agent environment by the run-wrapper) must exchange them for a short-lived `client_token` via the OpenBao API before reading secrets or running pipelines that require OpenBao data (such as the infrastructure inventory). In practice, an agent exchanges its AppRole `role_id`/`secret_id` for that token by calling the vault's standard AppRole login endpoint, then uses the returned token for subsequent reads.
+Agents are provisioned with an OpenBao AppRole `role_id` and `secret_id`, placed in the agent
+environment by the run-wrapper. They must exchange these for a short-lived `client_token` via the
+OpenBao API. This happens before reading secrets or running pipelines that require OpenBao data, such as
+the infrastructure inventory. In practice, an agent exchanges its AppRole `role_id`/`secret_id` for
+that token by calling the vault's standard AppRole login endpoint. It then uses the returned token
+for subsequent reads.
 
 ## Boundary with the other tiers
 
@@ -131,19 +167,25 @@ Agents provisioned with an OpenBao AppRole `role_id` and `secret_id` (placed in 
 
 The tiers compose; OpenBao is the primary machine path, not a replacement for the layers around it.
 
-
-
 ## Sealed posture, audit trail, and recovery
 
-- **Sealed at rest.** OpenBao restarts sealed. Routine restarts auto-unseal from the seal key held in the bootstrap tier; a full recovery from N-of-M shares is a [Golden law #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action) human-in-the-loop event.
+- **Sealed at rest.** OpenBao restarts sealed. Routine restarts auto-unseal from the seal key held
+  in the bootstrap tier; a full recovery from N-of-M shares is a [Golden law
+  #3](/security/golden-laws#3-human-approval-gates-every-potentially-destructive-action)
+  human-in-the-loop event.
 - **Audit log to Splunk.** Every read, write, and policy change appears in Splunk via the standard OpenBao audit-device → file → Cribl Edge path.
-- **Raft-snapshot DR.** An on-box systemd timer snapshots the active node on a schedule (leader-gated at runtime, authenticated with the least-privilege `snapshot` AppRole), integrity-checks each snapshot, and keeps them on a ZFS/PBS-backed volume that replicates off-box; a second copy to an encrypted S3 bucket is a tracked follow-up. Recovery is: restore the snapshot onto a fresh node, auto-unseal from secret-zero, and let the leases re-issue. Rehearsed with a drill on a non-production instance ([Golden law #15](/security/golden-laws#15-backup-the-vault-itself-and-test-recovery)).
+- **Raft-snapshot DR.** An on-box systemd timer snapshots the active node on a schedule
+  (leader-gated at runtime, authenticated with the least-privilege `snapshot` AppRole),
+  integrity-checks each snapshot, and keeps them on a ZFS/PBS-backed volume that replicates off-box;
+  a second copy to an encrypted S3 bucket is a tracked follow-up. Recovery is: restore the snapshot
+  onto a fresh node, auto-unseal from secret-zero, and let the leases re-issue. Rehearsed with a
+  drill on a non-production instance ([Golden law #15](/security/golden-laws)).
 
 ## See also
 
-- [SSH access](/security/ssh-access) — the certificate-first access ladder this CA implements, and why host-key checking is never disabled.
-- [Tools comparison](/security/comparison) — where T2 sits, and the bootstrap / read-path / DR flows drawn out.
-- [Agent secrets](/autonomous-agents/secrets) — the headless read path that makes OpenBao the primary interface.
-- [Golden laws](/security/golden-laws) — every posture above maps to a law.
-- [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps) — the bring-up role.
-- [`docs.dryvist.com`](https://docs.dryvist.com) — dryvist-internal specifics (topology, policy paths, lease TTLs) live there once this lands.
+- [SSH access](/security/ssh-access): the certificate-first access ladder this CA implements, and why host-key checking is never turned off.
+- [Tools comparison](/security/comparison): where T2 sits, and the bootstrap / read-path / DR flows drawn out.
+- [Agent secrets](/autonomous-agents/secrets): the headless read path that makes OpenBao the primary interface.
+- [Golden laws](/security/golden-laws): every preceding posture maps to a law.
+- [`dryvist/ansible-proxmox-apps`](https://github.com/dryvist/ansible-proxmox-apps): the bring-up role.
+- [`docs.dryvist.com`](https://docs.dryvist.com): dryvist-internal specifics (topology, policy paths, lease TTLs) live there once this lands.

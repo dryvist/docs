@@ -1,14 +1,16 @@
 ---
 title: "No scripts in non-script files"
 description: "Scripts live in dedicated files. YAML, Markdown, and heredocs never carry control flow."
-page_type: reference
+page_type: "reference"
 ---
-
-{/* TIER-GUARD: reference page — the iron law, four-tier search, and worked examples belong together. */}
+{/* projected from the authoring site; do not edit here */}
+{/*TIER-GUARD: reference page — the iron law, four-tier search, and worked examples belong together.*/}
 
 > Search first. Script only when every search tier is empty and the 10-line gate passes. Then put the script in a real file with a real extension.
 
-Inlined logic in a YAML `run:` step, a Markdown copy-paste block, or a heredoc smuggling a Bash loop is the worst of every world: untestable, unlintable, undiscoverable. The rules below apply to every repo across the org.
+Inlined logic in a YAML `run:` step, a Markdown copy-paste block, or a heredoc smuggling a Bash loop
+is the worst of every world. It is untestable, unlintable, and undiscoverable. The rules below apply
+to every repo across the org.
 
 ## Iron law
 
@@ -71,7 +73,7 @@ Wrong:
     done
 ```
 
-Right — extract to a script file, or use a native action:
+Right: extract to a script file, or use a native action:
 
 ```yaml
 - run: .github/scripts/merge-if-quiet.sh
@@ -110,13 +112,22 @@ Right: `jq -r .key x.json`
 ## What this connects to
 
 <CardGroup cols={2}>
-  <Card title="Commit conventions" icon="code-commit" href="/conventions/commit-conventions">
-    How commit and PR shapes interact with release-please.
-  </Card>
-  <Card title="CI/CD policy" icon="scale-balanced" href="/infrastructure/cicd/policy">
-    Marketplace actions and reusable workflows that replace most ad-hoc scripts.
-  </Card>
-  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    The canonical example of the four-tier search applied to a real domain.
-  </Card>
+<Card
+  title="Commit conventions"
+  icon="code-commit"
+  href="/conventions/commit-conventions">
+  How commit and PR shapes interact with release-please.
+</Card>
+<Card
+  title="CI/CD policy"
+  icon="scale-balanced"
+  href="/infrastructure/cicd/policy">
+  Marketplace actions and reusable workflows that replace most ad-hoc scripts.
+</Card>
+<Card
+  title="OpenTofu check placement"
+  icon="list-check"
+  href="/infrastructure/tofu-check-placement">
+  The canonical example of the four-tier search applied to a real domain.
+</Card>
 </CardGroup>

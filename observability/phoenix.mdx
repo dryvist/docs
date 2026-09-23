@@ -1,9 +1,9 @@
 ---
 title: "Arize Phoenix"
-description: "Arize Phoenix is the second OTLP trace sink on the Cribl fan-out — a peer of Langfuse that adds evals, datasets, experiments, and a prompt playground, self-hosted with no license key."
-page_type: explanation
+description: "Arize Phoenix is the second OTLP trace sink on the Cribl fan-out, a peer of Langfuse that adds evals, datasets, experiments, and a prompt playground, self-hosted with no license key."
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Same spans, second viewer. Langfuse shows what a call cost; Phoenix lets you score it, replay it, and run experiments against it.
 
 [LLM observability](/observability/llm-observability) sends every LLM trace through
@@ -48,21 +48,22 @@ managed-service one, which applies if you offer your instance to other people.
 This page is a summary, not legal advice.
 
 <Note>
-Why not Helicone? It is Apache 2.0 and unlimited too, but it is proxy-based: it
-only sees traffic that passes through its own gateway or SDK, and it has no OTLP
-ingest. Cribl cannot fan out to it, so it would need every producer re-pointed
-at a second front door. Its standalone gateway repository had no feature commits
+Why not Helicone? It is Apache 2.0 and unlimited too, but it is proxy-based.
+It only sees traffic that passes through its own gateway or SDK, and it has
+no OTLP intake. Cribl cannot fan out to it, so it would need every producer
+re-pointed at a second front door. Its standalone gateway repository had no feature commits
 after July 2025 and was relicensed to GPL-3 that November (checked September
 2026). Phoenix fits the existing pipeline; Helicone would replace part of it.
 </Note>
 
 ## Where it sits
 
-{/* Shape: fan-out. Cribl Stream -> three sinks. Total nodes: 5. */}
+{/*Shape: fan-out. Cribl Stream -> three sinks. Total nodes: 5.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   Apps([Orchestration stack<br/>+ router tier])
   Stream([Cribl Stream<br/>in_otel])
   LF([Langfuse<br/>trace · cost])
@@ -89,11 +90,11 @@ flowchart LR
 ```
 
 The Phoenix leg runs its own Cribl pipeline. It keeps the same guards as the
-Langfuse leg (drop non-trace signals, drop plumbing spans, trim noise, redact
-credentials) and skips the Langfuse-specific attribute rewrites, because Phoenix
-reads the emitted GenAI attributes as they are. Both pipelines loop over the same
-lists in the Cribl role, so there is one place to add a span name or a redaction
-pattern.
+Langfuse leg: drop non-trace signals, drop plumbing spans, trim noise, and
+redact credentials. It skips the Langfuse-specific attribute rewrites,
+because Phoenix reads the emitted GenAI attributes as they are. Both
+pipelines loop over the same lists in the Cribl role, so there is one place
+to add a span name or a redaction pattern.
 
 ## Reaching it
 
@@ -107,23 +108,35 @@ every service in this stack follows.
   in Phoenix. That path sits outside the Authelia gate, so an unauthenticated
   call gets Phoenix's own `401`, never a login redirect.
 
-The ingest key is the one manual step. Phoenix mints it after first boot, and it
+That API key is the one manual step. Phoenix mints it after first boot, and it
 goes into OpenBao where the Cribl role reads it. Until it is seeded, the Cribl
 converge fails loudly rather than rendering an empty credential.
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="LLM observability" icon="microchip" href="/observability/llm-observability">
-    The OTLP pipeline Phoenix hangs off.
-  </Card>
-  <Card title="Pipeline flows" icon="diagram-project" href="/observability/pipeline-flows">
-    Every ingest leg, including the OTLP fan-out.
-  </Card>
-  <Card title="ansible-proxmox-ai" icon="screwdriver-wrench" href="/infrastructure/repos/ansible-proxmox-ai">
-    Deploys Phoenix beside Langfuse.
-  </Card>
-  <Card title="AI orchestration stack" icon="diagram-project" href="/ai-development/ai-orchestration-stack">
-    The tools whose calls both viewers trace.
-  </Card>
+<Card
+  title="LLM observability"
+  icon="microchip"
+  href="/observability/llm-observability">
+  The OTLP pipeline Phoenix hangs off.
+</Card>
+<Card
+  title="Pipeline flows"
+  icon="diagram-project"
+  href="/observability/pipeline-flows">
+  Every ingest leg, including the OTLP fan-out.
+</Card>
+<Card
+  title="ansible-proxmox-ai"
+  icon="screwdriver-wrench"
+  href="/infrastructure/repos/ansible-proxmox-ai">
+  Deploys Phoenix beside Langfuse.
+</Card>
+<Card
+  title="AI orchestration stack"
+  icon="diagram-project"
+  href="/ai-development/ai-orchestration-stack">
+  The tools whose calls both viewers trace.
+</Card>
 </CardGroup>

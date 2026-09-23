@@ -1,47 +1,77 @@
 ---
 title: "SSH access"
 description: "The access ladder for reaching infrastructure over SSH — certificate-first, why host-key verification is never disabled, and what a break-glass path should look like."
-page_type: decision
+page_type: "decision"
 ---
-
-> Three rungs, tried in order, never skipped, never inverted. The normal path leaves no static key on disk; every fallback below it is a documented, deliberately-narrower exception.
+{/* projected from the authoring site; do not edit here */}
+> Three rungs, tried in order, never skipped, never inverted. The normal path leaves no static key on disk; every fallback below it is a documented, deliberately narrower exception.
 
 ## The access ladder
 
-1. **Certificate authority (the normal path).** A short-lived SSH keypair is generated on demand, signed by the [runtime credential manager's](/security/tools/openbao) SSH certificate authority, used once, and discarded. Nothing durable sits on disk waiting to be stolen — this is [Golden law #6](/security/golden-laws#6-time-bound-every-credential) applied to host access specifically.
-2. **Legacy shared key.** Exists only while a fleet-wide CA rollout is unfinished, and only on hosts old enough to still carry it. Assume it is **absent** on anything rebuilt after the CA went live — a rebuilt host gets provisioned with CA trust from day one, never a legacy key.
-3. **Break-glass admin key.** The last resort, for when both of the above are unavailable — the CA is unreachable *and* no legacy key exists on the target. This path does not exist yet in this estate; when it does, its defining properties are below.
+1. **Certificate authority (the normal path).** A short-lived SSH keypair is generated on demand,
+   signed by the [runtime credential manager's](/security/tools/openbao) SSH certificate
+   authority, used once, and discarded. Nothing durable sits on disk waiting to be stolen. This is
+   [Golden law #6](/security/golden-laws#6-time-bound-every-credential) applied to host access
+   specifically.
+2. **Legacy shared key.** Exists only while a fleet-wide CA rollout is unfinished, and only on hosts
+   old enough to still carry it. Assume it is **absent** on anything rebuilt after the CA went live.
+   A rebuilt host gets provisioned with CA trust from day one, never a legacy key.
+3. **Break-glass administrator key.** The last resort, for when both of the preceding are unavailable.
+   The CA is unreachable *and* no legacy key exists on the target. This path does not exist yet in this
+   estate; when it does, its defining properties are below.
 
-Never skip a rung to save a step, and never reach for rung 3 because rung 1 was merely inconvenient — the ladder only works as a guarantee if every use of a lower rung means the higher ones were actually tried and failed.
+Never skip a rung to save a step, and never reach for rung 3 because rung 1 was merely inconvenient.
+The ladder only works as a guarantee if every use of a lower rung means the higher ones were
+actually tried and failed.
 
 ## Why certificate-first
 
-A static SSH key is a long-lived secret with no natural expiry: once it exists, it exists everywhere it was copied, for as long as nobody remembers to rotate it. A signed certificate inverts that — the **signing authority** is the durable thing (backed up, access-controlled, audited), and every certificate it issues is disposable: short TTL, single use, no revocation list to maintain because there is nothing left to revoke by the time anyone would think to look.
+A static SSH key is a long-lived secret with no natural expiry. Once it exists, it exists everywhere
+it was copied, for as long as nobody remembers to rotate it. A signed certificate inverts that. The
+**signing authority** is the durable thing (backed up, access-controlled, audited). Every
+certificate it issues is disposable: short TTL, single use, with no revocation list to maintain.
+There is nothing left to revoke by the time anyone would think to look.
 
-This is the same shape as every other [golden law](/security/golden-laws) about credentials: [ephemeral over durable](/security/golden-laws#6-time-bound-every-credential), [audited over silent](/security/golden-laws#9-audit-trail-for-every-privileged-action), one source of truth for who is allowed to sign what.
+This is the same shape as every other [golden law](/security/golden-laws) about credentials. It
+follows the same principles: [ephemeral over durable](/security/golden-laws#6-time-bound-every-credential), [audited over
+silent](/security/golden-laws#9-audit-trail-for-every-privileged-action), one source of truth for
+who is allowed to sign what.
 
 ## Host trust must be verified, never disabled
 
-The other half of an SSH connection is host trust — the client verifying it is actually talking to the host it thinks it is, not something on the path pretending to be it. The convenient-looking fixes for a churning fleet are all the same mistake:
+The other half of an SSH connection is host trust. It's the client verifying it is actually
+talking to the host it thinks it is, not something on the path pretending to be it. The
+convenient-looking fixes for a churning fleet are all the same mistake:
 
 - `StrictHostKeyChecking=no`
 - `-o UserKnownHostsFile=/dev/null`
 - blanket `accept-new` treated as a permanent setting rather than a named, temporary gap
 
-Each of these trades real protection against a spoofed or on-path host for the convenience of never being interrupted by a changed key. On an estate built to be rebuilt often, that trade gets exercised constantly — which is exactly backwards: the hosts most likely to legitimately present a new key are also the ones where skipping verification does the most damage if the "new key" is not legitimate.
+Each of these trades real protection against a spoofed or on-path host for the convenience of never
+being interrupted by a changed key. On an estate built to be rebuilt often, that trade gets
+exercised constantly, which is exactly backwards. The hosts most likely to legitimately present a
+new key are also the ones most harmed by skipped verification if that key is not legitimate.
 
-**The correct fix is a host certificate authority** — the mirror image of the client CA above. The signing authority issues a short-lived certificate to each host's own key, clients trust the authority once (`@cert-authority` in `known_hosts`), and a rebuilt host is trusted immediately on presenting a freshly-signed certificate, while a host presenting an *unsigned* key is rejected outright. That is strictly stronger than first-contact trust-on-first-use, not a relaxation of it: TOFU trusts blindly on the first connection and only detects a problem on the second; a host CA never trusts blindly at all.
+**The correct fix is a host certificate authority**, the mirror image of the preceding client CA.
+The signing authority issues a short-lived certificate to each host's own key. Clients trust the
+authority once (`@cert-authority` in `known_hosts`). A rebuilt host is trusted immediately on
+presenting a freshly signed certificate, while a host presenting an *unsigned* key is rejected
+outright. That is strictly stronger than first-contact trust-on-first-use, not a relaxation of it.
+TOFU trusts blindly on the first connection and only detects a problem on the second; a host CA
+never trusts blindly at all.
 
 ## What a break-glass path should look like
 
-Rung 3 does not exist yet in this estate, but its shape is decided in advance so it is not designed under pressure during an actual outage:
+Rung 3 does not exist yet in this estate. Its shape is decided in advance, so it is not designed under pressure during an actual outage:
 
-- **Last resort, not a shortcut.** Used only after the CA and any legacy key were actually attempted and failed — never reached for because it is one command instead of two.
-- **Every use recorded.** A break-glass credential that works silently is indistinguishable from a compromise in progress; the access itself has to leave a trail, not just the fact that break-glass material exists.
+- **Last resort, not a shortcut.** Used only after the CA and any legacy key were actually attempted and failed. Never reached for because it is one command instead of two.
+- **Every use recorded.** A break-glass credential that works silently is indistinguishable from a
+  compromise in progress; the access itself has to leave a trail, not just the fact that break-glass
+  material exists.
 - **Narrower than what it replaces, never broader.** A break-glass path that grants more than the CA it stands in for defeats the entire point of layering it underneath.
 
 ## See also
 
-- [OpenBao](/security/tools/openbao) — the certificate authority rung 1 depends on.
-- [Golden laws](/security/golden-laws) — the general principles this page applies to host access specifically.
-- [`docs.dryvist.com`](https://docs.dryvist.com) — dryvist-internal operational detail (principal-to-login-user mapping, live troubleshooting, host-CA rollout tracking) lives there.
+- [OpenBao](/security/tools/openbao): the certificate authority rung 1 depends on.
+- [Golden laws](/security/golden-laws): the general principles this page applies to host access specifically.
+- [`docs.dryvist.com`](https://docs.dryvist.com): dryvist-internal operational detail (principal-to-login-user mapping, live troubleshooting, host-CA rollout tracking) lives there.

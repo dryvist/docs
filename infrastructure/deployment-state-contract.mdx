@@ -1,9 +1,9 @@
 ---
 title: "Deployment state contract"
 description: "deployment.json is one versioned desired-state object, read fail-loud by OpenTofu, edited with conditional writes, and applied through a Terrakube workspace lock."
-page_type: decision
+page_type: "decision"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Keep one desired-state object, reject stale edits, and let the IaC platform own state and locking.
 
 `deployment.json` is the input to `tofu-proxmox`. It is not state and it is not
@@ -18,8 +18,9 @@ authoritative; local files are temporary.
 | Terrakube workspace | OpenTofu state versions, run queue, and lock | Terrakube |
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
   DJ[(deployment.json)]
   TK([Terrakube workspace])
   ST[(state + lock)]

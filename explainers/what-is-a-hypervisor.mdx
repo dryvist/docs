@@ -1,20 +1,26 @@
 ---
 title: "What a hypervisor is"
 description: "How one physical machine safely runs many isolated computers, and why that is the foundation everything else sits on."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > A hypervisor is software whose entire job is convincing other software that it has a computer to itself.
 
-Buy a server and you get one machine. Install a hypervisor on it and you get as many machines as its memory will allow — each with its own operating system, its own network address, its own reboot button. They cannot see each other's files. One crashing does not disturb the others.
+Buy a server and you get one machine. Install a hypervisor on it, and you get as many machines as
+its memory allows. Each one has its own operating system, its own network address, and its own
+reboot button. They cannot see each other's files. One crashing does not disturb the others.
 
 This is not a trick of naming. The isolation is enforced by the processor itself, which has instructions designed for exactly this.
 
 ## Why bother
 
-Because software is territorial. Two applications that each want to own port 443, or each want a different version of the same library, will fight forever on one operating system and coexist happily on two.
+Because software is territorial. Two applications that each want to own port 443, or each want a
+different version of the same library, fight forever on one operating system. They coexist happily
+on two.
 
-The alternative — one physical machine per application — wastes almost everything. A typical service uses a few percent of a modern CPU. Running twenty of them on twenty machines means twenty power supplies, twenty sets of fans, and nineteen machines' worth of idle capacity.
+The alternative, one physical machine per app, wastes almost everything. A typical service
+uses a few percent of a modern CPU. Running twenty of them on twenty machines means twenty power
+supplies, twenty sets of fans, and nineteen machines' worth of idle capacity.
 
 ## Two kinds of guest
 
@@ -23,25 +29,28 @@ The slices are called **guests**, and they come in two flavours that are easy to
 | | Virtual machine | Container |
 | --- | --- | --- |
 | What it virtualizes | The whole computer, down to fake hardware | Just the operating system's view of itself |
-| Runs its own kernel | Yes | No — shares the host's |
+| Runs its own kernel | Yes | No: shares the host's |
 | Boot time | Tens of seconds | Under a second |
 | Memory overhead | Hundreds of MB before your app starts | Almost none |
 | Isolation | Stronger | Strong, but a shared kernel is a shared risk |
 | Use when | You need a different OS, or a hard security boundary | You want density and speed, same OS family |
 
-Most guests here are containers, because most of what runs is Linux software on a Linux host and the overhead of a full virtual machine buys nothing. Virtual machines are used where something genuinely needs its own kernel, or where a vendor supports nothing else.
+Most guests here are containers, because most of what runs is Linux software on a Linux host. The
+overhead of a full virtual machine buys nothing. Virtual machines are used where something genuinely
+needs its own kernel, or where a vendor supports nothing else.
 
-{/* Shape: hierarchy. One host, two guest types, three leaf apps. 8 nodes. */}
-{/* Subgraph is a physical machine, which is a real co-location. Boundary crossings: 1 per edge max. */}
+{/*Shape: hierarchy. One host, two guest types, three leaf apps. 8 nodes. */}
+{/* Subgraph is a physical machine, which is a real co-location. Boundary crossings: 1 per edge max.*/}
 
 ```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart TB
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart TB
   subgraph Node["node-a"]
-    direction LR
-    Hv([Hypervisor])
-    Vm([Virtual machine])
-    Ct([Container])
+  direction LR
+  Hv([Hypervisor])
+  Vm([Virtual machine])
+  Ct([Container])
   end
 
   Db[(Database)]
@@ -66,28 +75,40 @@ flowchart TB
 Three things, and knowing which layer owns what saves hours of misdirected debugging:
 
 <Steps>
-  <Step title="Carving up hardware">
-    How much memory and how many CPU cores each guest may use. Overcommitting is allowed — guests can be promised more memory in total than physically exists, on the bet that they won't all want it at once. That bet occasionally loses.
-  </Step>
-  <Step title="Storage">
-    Each guest gets a virtual disk. The hypervisor decides where that really lives — local drives, a shared array, or a filesystem that can snapshot it instantly.
-  </Step>
-  <Step title="Networking">
-    A virtual switch inside the host. Guests plug into it and get addresses as though they were physical machines on a real network, which is why a guest can sit on a different network segment from its own host.
-  </Step>
+<Step title="Carving up hardware">
+How much memory and how many CPU cores each guest may use. Overcommitting is allowed. Guests can
+be promised more memory in total than physically exists, on the bet that they won't all want it
+at once. That bet occasionally loses.
+</Step>
+<Step title="Storage">
+Each guest gets a virtual disk. The hypervisor decides where that really lives: local drives, a shared array, or a filesystem that can snapshot it instantly.
+</Step>
+<Step title="Networking">
+A virtual switch inside the host. Guests plug into it and get addresses as though they were
+physical machines on a real network. That's why a guest can sit on a different network segment
+from its own host.
+</Step>
 </Steps>
 
 <Tip>
-When something breaks, identify the layer first. A guest that won't start is a hypervisor problem. A guest that starts but serves nothing is an application problem. They look identical from a browser showing a connection error.
+When something breaks, identify the layer first. A guest that won't start is a hypervisor problem. A
+guest that starts but serves nothing is an app problem. They look identical from a browser
+showing a connection error.
 </Tip>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Clusters and quorum" icon="circle-nodes" href="/explainers/clusters-and-quorum">
-    What happens when you join several of these hosts together.
-  </Card>
-  <Card title="Containers vs virtual machines" icon="box" href="/infrastructure/lxc-vs-docker">
-    The technical version of the comparison above.
-  </Card>
+<Card
+  title="Clusters and quorum"
+  icon="circle-nodes"
+  href="/explainers/clusters-and-quorum">
+  What happens when you join several of these hosts together.
+</Card>
+<Card
+  title="Containers vs virtual machines"
+  icon="box"
+  href="/infrastructure/lxc-vs-docker">
+  The technical version of the comparison above.
+</Card>
 </CardGroup>

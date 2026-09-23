@@ -1,31 +1,34 @@
 ---
 title: "Docs automation"
 description: "How this site keeps itself in sync with ~40 public repos: the mintlify-docs-update skill, plus the five planned improvements."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > The docs build themselves. Almost.
 
-`mintlify-docs-update` is a Claude Code skill that scans `JacobPEvans` (and `dryvist`), diffs the result against this site, and proposes the missing pages. It lives in `.claude/skills/mintlify-docs-update/` and is invoked manually via `/mintlify-docs-update` or on a cadence by the global `auto-maintain` orchestrator.
+`mintlify-docs-update` is a Claude Code skill that scans `JacobPEvans` (and `dryvist`), diffs the
+result against this site, and proposes the missing pages. It lives in
+`.claude/skills/mintlify-docs-update/` and is invoked manually via `/mintlify-docs-update` or on a
+cadence by the global `auto-maintain` orchestrator.
 
 ## How the skill works
 
 <Steps>
-  <Step title="Enumerate repos">
-    `gh repo list` against `JacobPEvans` and `dryvist`.
-  </Step>
-  <Step title="Filter">
-    Keep public, non-archived, non-fork.
-  </Step>
-  <Step title="Diff">
-    Compare the filtered list against pages already on this site.
-  </Step>
-  <Step title="Scaffold">
-    For each missing repo, copy `template-repo-page.mdx` and update `docs.json` sidebar.
-  </Step>
-  <Step title="Validate">
-    Run the page-length guard and `mint broken-links` before reporting back.
-  </Step>
+<Step title="Enumerate repos">
+`gh repo list` against `JacobPEvans` and `dryvist`.
+</Step>
+<Step title="Filter">
+Keep public, non-archived, non-fork.
+</Step>
+<Step title="Diff">
+Compare the filtered list against pages already on this site.
+</Step>
+<Step title="Scaffold">
+For each missing repo, copy `template-repo-page.mdx` and update `docs.json` sidebar.
+</Step>
+<Step title="Validate">
+Run the page-length guard and `mint broken-links` before reporting back.
+</Step>
 </Steps>
 
 The skill is **conservative**: it only scaffolds *missing* pages. Existing pages are never overwritten. The author edits in detail, then commits.
@@ -48,39 +51,69 @@ Every page declares a tier in frontmatter. The skill enforces caps:
 These five skills are filed as GitHub issues and tracked in the `enhancement` + `skill` labels.
 
 <CardGroup cols={2}>
-  <Card title="mintlify-page-author" icon="pen-nib" href="https://github.com/JacobPEvans/docs/issues/2">
-    Author a single page from a repo URL or topic. Enforces Reef Green theme, house voice, the tier cap, and standard components (Card grid + Steps + Frame + Mermaid).
-  </Card>
-  <Card title="mintlify-visual-audit" icon="chart-bar" href="https://github.com/JacobPEvans/docs/issues/3">
-    Grade every page on tier-aware word count, component variety, theme compliance, dead-link risk. Output: red/amber/green report with a prioritized fix list.
-  </Card>
-  <Card title="mintlify-mermaid-theme" icon="diagram-project" href="https://github.com/JacobPEvans/docs/issues/4">
-    Generate Reef Green-themed Mermaid with pinned theme variables and house shape conventions. Wraps `obsidian-visual-skills:mermaid-visualizer` with project-specific defaults.
-  </Card>
-  <Card title="mintlify-nav-sync" icon="bars-staggered" href="https://github.com/JacobPEvans/docs/issues/5">
-    Keep `docs.json` sidebar in sync with the filesystem. Detect orphan pages, missing files, and propose ordered group structures.
-  </Card>
-  <Card title="mintlify-build-guard" icon="shield-halved" href="https://github.com/JacobPEvans/docs/issues/6">
-    Pre-commit + CI validator. `mint dev` + `mint broken-links` + frontmatter check + image refs + tiered word cap + Mermaid parse. Pass/fail report with line numbers.
-  </Card>
-  <Card title="All open issues" icon="github" href="https://github.com/JacobPEvans/docs/issues?q=is%3Aissue+is%3Aopen+label%3Askill">
-    The live tracker for skill improvements.
-  </Card>
+<Card
+  title="mintlify-page-author"
+  icon="pen-nib"
+  href="https://github.com/JacobPEvans/docs/issues/2">
+  Author a single page from a repo URL or topic. Enforces Reef Green theme, house voice, the tier cap, and standard components (Card grid + Steps + Frame + Mermaid).
+</Card>
+<Card
+  title="mintlify-visual-audit"
+  icon="chart-bar"
+  href="https://github.com/JacobPEvans/docs/issues/3">
+  Grade every page on tier-aware word count, component variety, theme compliance, dead-link risk. Output: red/amber/green report with a prioritized fix list.
+</Card>
+<Card
+  title="mintlify-mermaid-theme"
+  icon="diagram-project"
+  href="https://github.com/JacobPEvans/docs/issues/4">
+  Generate Reef Green-themed Mermaid with pinned theme variables and house shape conventions. Wraps `obsidian-visual-skills:mermaid-visualizer` with project-specific defaults.
+</Card>
+<Card
+  title="mintlify-nav-sync"
+  icon="bars-staggered"
+  href="https://github.com/JacobPEvans/docs/issues/5">
+  Keep `docs.json` sidebar in sync with the filesystem. Detect orphan pages, missing files, and propose ordered group structures.
+</Card>
+<Card
+  title="mintlify-build-guard"
+  icon="shield-halved"
+  href="https://github.com/JacobPEvans/docs/issues/6">
+  Pre-commit + CI validator. `mint dev` + `mint broken-links` + frontmatter check + image refs + tiered word cap + Mermaid parse. Pass/fail report with line numbers.
+</Card>
+<Card
+  title="All open issues"
+  icon="github"
+  href="https://github.com/JacobPEvans/docs/issues?q=is%3Aissue+is%3Aopen+label%3Askill">
+  The live tracker for skill improvements.
+</Card>
 </CardGroup>
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Tools overview" icon="screwdriver-wrench" href="/tools/overview">
-    The rest of the developer-utility surface.
-  </Card>
-  <Card title="claude-code-plugins" icon="plug" href="/ai-development/claude-code-plugins">
-    The broader plugin ecosystem this skill draws from.
-  </Card>
-  <Card title="Automation overview" icon="route" href="/automation/overview">
-    The other half of the automation story — the issue → mergeable PR pipeline that runs across every JacobPEvans repo.
-  </Card>
-  <Card title="/ship and /finalize-pr" icon="ship" href="/ai-development/skills/ship-and-finalize">
-    The Claude Code skill that takes a PR through CI, CodeQL, threads, and the final merge gate.
-  </Card>
+<Card
+  title="Tools overview"
+  icon="screwdriver-wrench"
+  href="/tools/overview">
+  The rest of the developer-utility surface.
+</Card>
+<Card
+  title="claude-code-plugins"
+  icon="plug"
+  href="/ai-development/claude-code-plugins">
+  The broader plugin ecosystem this skill draws from.
+</Card>
+<Card
+  title="Automation overview"
+  icon="route"
+  href="/automation/overview">
+  The other half of the automation story — the issue → mergeable PR pipeline that runs across every JacobPEvans repo.
+</Card>
+<Card
+  title="/ship and /finalize-pr"
+  icon="ship"
+  href="/ai-development/skills/ship-and-finalize">
+  The Claude Code skill that takes a PR through CI, CodeQL, threads, and the final merge gate.
+</Card>
 </CardGroup>

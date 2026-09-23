@@ -1,20 +1,35 @@
 ---
 title: "SOPS for IaC"
 description: "SOPS + age for low-blast-radius repo-local config: randomly generated passwords, sensitive-but-not-mission-critical values committed inside the one repo that owns them."
-page_type: explanation
+page_type: "explanation"
 ---
-
-> OpenBao (T2) is the default runtime store — anything a service, human, or agent might ever need lives there. SOPS is the narrow exception: a value used by exactly one repo that is neither mission-critical nor a public-service credential. Doppler holds secret-zero and cloud/SaaS keys; Keychain holds anything that must never touch disk. See the [four-tier model](/security/comparison) for the canonical policy.
+{/* projected from the authoring site; do not edit here */}
+> OpenBao (T2) is the default runtime store: anything a service, human, or agent might ever need
+> lives there. SOPS is the narrow exception: a value used by exactly one repo that is neither
+> mission-critical nor a public-service credential. Doppler holds secret-zero and cloud/SaaS keys;
+> Keychain holds anything that must never touch disk. See the [four-tier
+> model](/security/comparison) for the canonical policy.
 
 This page is the IaC-flavored cut. For the broader posture (every tool, every tier), see [Security overview](/security/overview) and the dedicated [SOPS tool page](/security/tools/sops).
 
 ## When SOPS is the right answer
 
-SOPS-encrypted files live inside a single repo and decrypt with that repo's age recipient. The question to ask before reaching for it is **blast radius**: if an AI agent (or a hostile reviewer, or a careless paste into a Slack channel) decrypted this file and posted it publicly, what would actually break?
+SOPS-encrypted files live inside a single repo and decrypt with that repo's age recipient. The
+question to ask before reaching for it is **blast radius**. Consider an AI agent, a hostile
+reviewer, or a careless paste into a Slack channel. If any of them decrypted this file and posted
+it publicly, what would actually break?
 
-- **If the answer is "nothing meaningful" AND the value is used by only this one repo** — a per-host Ansible variable that names an internal interface, structured config the same repo consumes — SOPS is a fine fit. But do **not** default to SOPS: the moment another service, a human, or an agent might need the value, it belongs in OpenBao (T2), not a repo-local file. SOPS is the exception, not the reach-for-first tool.
-- **If the answer is "an attacker can now hit AWS / Doppler / a third-party SaaS"** — API tokens, OAuth keys, HEC tokens, license keys, anything an external service treats as a bearer credential — that value does **not** belong in SOPS. It goes in Doppler.
-- **If the answer is "an attacker can now move laterally inside the homelab"** — the master Proxmox root password, an iDRAC admin credential, anything that grants control-plane access if exposed — it goes in Keychain, not committed at all.
+- **If the answer is "nothing meaningful" AND the value is used by only this one repo** (a per-host
+  Ansible variable that names an internal interface, structured config the same repo consumes), SOPS
+  is a fine fit. But do **not** default to SOPS: the moment another service, a human, or an agent
+  might need the value, it belongs in OpenBao (T2), not a repo-local file. SOPS is the exception,
+  not the reach-for-first tool.
+- **If the answer is "an attacker can now hit AWS / Doppler / a third-party SaaS"** (API tokens,
+  OAuth keys, HEC tokens, license keys, anything an external service treats as a bearer credential),
+  that value does **not** belong in SOPS. It goes in Doppler.
+- **If the answer is "an attacker can now move laterally inside the homelab"** (the master Proxmox
+  root password, an iDRAC administrator credential, anything that grants control-plane access if exposed),
+  it goes in Keychain, not committed at all.
 
 The mental model is "would a one-time public leak of this exact string be a paper cut, or would it be an incident?" SOPS is for paper cuts.
 
@@ -22,24 +37,32 @@ The mental model is "would a one-time public leak of this exact string be a pape
 
 | Tier | Holds | Mechanism |
 | --- | --- | --- |
-| **Runtime store (default)** | Anything a service, human, or agent might ever need: app/DB passwords, admin passwords, service tokens | **OpenBao** (per-domain AppRole RBAC) |
+| **Runtime store (default)** | Anything a service, human, or agent might ever need: app/DB passwords, administrator passwords, service tokens | **OpenBao** (per-domain AppRole RBAC) |
 | Encrypted-at-rest in git (single-repo exception) | Values used by exactly one repo that are neither mission-critical nor public-service creds: per-host vars, structured config the same repo consumes | SOPS + age |
 | Secret-zero + cloud/SaaS | External API tokens, license keys, GitHub-Actions distribution, the AppRole secret-zero that bootstraps OpenBao | Doppler |
-| Local-only material (control-plane / never-on-disk) | macOS-side AI tool secrets, master/admin credentials, anything that must never reach a shell history | macOS Keychain |
+| Local-only material (control-plane / never-on-disk) | macOS-side AI tool secrets, master/administrator credentials, anything that must never reach a shell history | macOS Keychain |
 
 ## Cross-repo: SOPS is for one repo, not many
 
-A single secret should have exactly one source of truth. SOPS works cleanly when the value is consumed only by the repo it's committed in. Ansible may decrypt its own `secrets.sops.yml`; Terrakube workspaces obtain runtime secrets from OpenBao instead.
+A single secret should have exactly one source of truth. SOPS works cleanly when the value is
+consumed only by the repo it's committed in. Ansible may decrypt its own `secrets.sops.yml`;
+Terrakube workspaces obtain runtime secrets from OpenBao instead.
 
-When two repos both need the same value, do **not** SOPS-encrypt it twice. That's a DRY violation — the two copies will drift the first time one repo rotates without notifying the other, and the only signal you get is a production failure. The decision tree:
+When two repos both need the same value, do **not** SOPS-encrypt it twice. That's a DRY violation.
+The two copies drift the first time one repo rotates without notifying the other, and the only
+signal you get is a production failure. The decision tree:
 
-- **Repo A is fully dependent on Repo B** (B publishes a value, A consumes it, A never rewrites it) → SOPS in repo B is fine; repo A pulls it through B's output, or through Doppler if the dependency is loose.
+- **Repo A is fully dependent on Repo B** (B publishes a value, A consumes it, A never rewrites it)
+  → SOPS in repo B is fine; repo A pulls it through B's output, or through Doppler if the dependency
+  is loose.
 - **Repos A and B can both update the value independently** → SOPS in neither. Promote the value to Doppler. Both repos read it at runtime; rotation is a single Doppler write.
 - **The value is genuinely local to one repo's CI/test/bootstrap** → SOPS in that one repo. No cross-repo concern exists.
 
 ## How it shows up in Ansible repos
 
-[`ansible-proxmox`](/infrastructure/repos/ansible-proxmox), [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps), and [`ansible-splunk`](/observability/repos/ansible-splunk) all follow the same pattern:
+[`ansible-proxmox`](/infrastructure/repos/ansible-proxmox),
+[`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps), and
+[`ansible-splunk`](/observability/repos/ansible-splunk) all follow the same pattern:
 
 ```yaml
 # secrets.sops.yml.example — committed
@@ -52,11 +75,15 @@ sops --encrypt --in-place secrets.sops.yml   # encrypts in place
 git add secrets.sops.yml                     # safe: values are ciphertext now
 ```
 
-At runtime, `sops exec-env secrets.sops.yml -- ansible-playbook ...` decrypts into a subprocess env only; nothing persists to disk. Rotating values stay in Doppler, accessed through `doppler run -- ansible-playbook ...`. The two wrappers compose cleanly — Doppler outermost, sops inside.
+At runtime, `sops exec-env secrets.sops.yml -- ansible-playbook ...` decrypts into a subprocess env
+only; nothing persists to disk. Rotating values stay in Doppler, accessed through `doppler run --
+ansible-playbook ...`. The two wrappers compose cleanly. Doppler is outermost; sops is inside.
 
 ## How it shows up in OpenTofu repos
 
-Active OpenTofu repos do not use SOPS to inject provider credentials. Terrakube supplies workload identity, and OpenBao mints short-lived, workspace-scoped credentials. Terrakube owns remote state and workspace locking; sensitive provider values are ephemeral wherever the provider supports them.
+Active OpenTofu repos do not use SOPS to inject provider credentials. Terrakube supplies workload
+identity, and OpenBao mints short-lived, workspace-scoped credentials. Terrakube owns remote state
+and workspace locking; sensitive provider values are ephemeral wherever the provider supports them.
 
 ## The `.sops.yaml` configuration
 
@@ -69,47 +96,65 @@ creation_rules:
       age1aaaa... # public age recipient
 ```
 
-Only the public half of the age key appears here. The private half lives at `~/.config/sops/age/keys.txt` (local convenience) and is escrowed in Bitwarden (canonical backup). The example shown is a placeholder — real public recipients live in each repo's `.sops.yaml`.
+Only the public half of the age key appears here. The private half lives at
+`~/.config/sops/age/keys.txt` (local convenience) and is escrowed in Bitwarden (canonical backup).
+The example shown is a placeholder. Real public recipients live in each repo's `.sops.yaml`.
 
 ## What you must never commit
 
-Per the secrets policy: no real IPv4 addresses, no real internal hostnames, no real domain names, no AWS account IDs, no SSH keys, no user-specific paths. Use placeholders or variables for anything tied to one user; every committed value should work for any person who clones the repo right now. The committed scrubbed-value table is `192.168.0.*`, `example.com`, `example.local`, `your-token-here`, generic role-based usernames.
+Per the secrets policy, never commit real IPv4 addresses, internal hostnames, domain names,
+AWS account IDs, SSH keys, or user-specific paths. Use placeholders or variables for anything
+tied to one user; every committed value should work for any person who clones the repo right now.
+The committed scrubbed-value table is `192.168.0.*`, `example.com`, `example.local`,
+`your-token-here`, generic role-based usernames.
 
 ## Rotating the age key
 
 The five-step dance is the same across every repo that uses SOPS:
 
 <Steps>
-  <Step title="Generate the new key">
-    `age-keygen -o ~/.config/sops/age/keys.txt.new`. Read-only file, not a service.
-  </Step>
-  <Step title="Add the new public recipient to every .sops.yaml">
-    Keep the old recipient until cutover so neither party loses access mid-rotation.
-  </Step>
-  <Step title="Re-encrypt every SOPS file with both recipients">
-    `sops updatekeys .sops.json` per file. The encrypted file changes; the plaintext doesn't.
-  </Step>
-  <Step title="Remove the old recipient">
-    Re-run `sops updatekeys` once more. Now only the new key can decrypt.
-  </Step>
-  <Step title="Escrow + revoke">
-    New key goes into Bitwarden the moment it's generated. Revoke the old key in any tooling that referenced it.
-  </Step>
+<Step title="Generate the new key">
+`age-keygen -o ~/.config/sops/age/keys.txt.new`. Read-only file, not a service.
+</Step>
+<Step title="Add the new public recipient to every .sops.yaml">
+Keep the old recipient until cutover so neither party loses access mid-rotation.
+</Step>
+<Step title="Re-encrypt every SOPS file with both recipients">
+`sops updatekeys .sops.json` per file. The encrypted file changes; the plaintext doesn't.
+</Step>
+<Step title="Remove the old recipient">
+Re-run `sops updatekeys` once more. Now only the new key can decrypt.
+</Step>
+<Step title="Escrow + revoke">
+New key goes into Bitwarden the moment it's generated. Revoke the old key in any tooling that referenced it.
+</Step>
 </Steps>
 
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Security overview" icon="lock" href="/security/overview">
-    Which tool for which secret, across every surface.
-  </Card>
-  <Card title="SOPS tool page" icon="key" href="/security/tools/sops">
-    Tool-level docs on SOPS itself — encrypt/decrypt cycle, anti-patterns, escrow.
-  </Card>
-  <Card title="Doppler" icon="rotate" href="/security/tools/doppler">
-    Where rotating runtime secrets live. The other half of this split.
-  </Card>
-  <Card title="macOS Keychain" icon="apple" href="/security/tools/macos-keychain">
-    Where local-only secrets live. The third tier.
-  </Card>
+<Card
+  title="Security overview"
+  icon="lock"
+  href="/security/overview">
+  Which tool for which secret, across every surface.
+</Card>
+<Card
+  title="SOPS tool page"
+  icon="key"
+  href="/security/tools/sops">
+  Tool-level docs on SOPS itself — encrypt/decrypt cycle, anti-patterns, escrow.
+</Card>
+<Card
+  title="Doppler"
+  icon="rotate"
+  href="/security/tools/doppler">
+  Where rotating runtime secrets live. The other half of this split.
+</Card>
+<Card
+  title="macOS Keychain"
+  icon="apple"
+  href="/security/tools/macos-keychain">
+  Where local-only secrets live. The third tier.
+</Card>
 </CardGroup>

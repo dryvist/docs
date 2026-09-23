@@ -1,16 +1,16 @@
 ---
 title: "How an agent instruction stack works"
-description: "The layered instruction, memory, and prompt model behind a multi-agent engineering setup — and the behavioral principles it encodes."
-page_type: explanation
+description: "The layered instruction, memory, and prompt model behind a multi-agent engineering setup, plus the behavioral principles it encodes."
+page_type: "explanation"
 ---
+{/* projected from the authoring site; do not edit here */}
+> Contains no infrastructure topology by design: see [Scope and sources](#scope-and-sources).
 
-> Contains no infrastructure topology by design — see [Scope and sources](#scope-and-sources).
-
-When you run more than one AI agent — a coding assistant, an unattended operations
-agent, a chat surface — each one needs to know how to behave. Copy the same rules into
-every agent and they drift apart the first time you edit one. This page describes the
-alternative: a single layered instruction stack that every agent reads from, and the
-small set of behavioral principles worth putting in it.
+You might run more than one AI agent: a coding assistant, an unattended operations
+agent, a chat surface. Each one needs to know how to behave. Copy the same rules into
+every agent, and they drift apart the first time you edit one. This page describes the
+alternative: a single layered instruction stack that every agent reads from. It also
+holds a small set of behavioral principles worth including.
 
 The model here is not novel research. It is the pattern Anthropic documents for Claude
 and Claude Code, applied to a mixed fleet that includes open-weight local models. The
@@ -26,32 +26,34 @@ Each layer answers a different question.
 | **Global rules** | How should *any* agent here behave? | Rarely |
 | **Workspace conventions** | How is *this workspace* laid out and operated? | Occasionally |
 | **Scoped rules** | What extra rules apply *when touching this kind of file*? | Per domain |
-| **Skills** | How do I perform *this specific procedure*? | Per task |
-| **Memory** | What did we establish *in past sessions*? | Continuously |
+| **Skills** | How is *this specific procedure* performed? | Per task |
+| **Memory** | What was established *in past sessions*? | Continuously |
 | **Session state** | What is true *right now* (mode, permissions, tools)? | Per turn |
 
 Two properties make the stack work:
 
 - **One canonical home per fact.** A rule lives in exactly one layer. Higher layers
-  point to it; they never restate it. Duplication is how instruction sets rot — two
+  point to it; they never restate it. Duplication is how instruction sets rot. Two
   copies of a rule become two *different* rules the moment one is edited.
 - **A pointer file, not a copy.** The entry point each agent reads (`CLAUDE.md`,
-  `AGENTS.md`, `GEMINI.md`) is a thin pointer to the canonical rules, so every agent —
-  not just one vendor's — resolves to the same source of truth.
+  `AGENTS.md`, `GEMINI.md`) is a thin pointer to the canonical rules. Every agent, not
+  just one vendor's, resolves to the same source of truth.
 
 ## Progressive disclosure beats one big prompt
 
 The instinct is to write one large system prompt with every rule in it. Production
 harnesses do the opposite. Claude Code, for example, assembles each session's prompt
-from a library of roughly 500 fragments — agent definitions, reference templates,
-behavioral components — and loads a fragment only when it is relevant to the current
+from a library of roughly 500 fragments: agent definitions, reference templates,
+behavioral components. It loads a fragment only when the fragment fits the current
 session (Piebald-AI's extraction tracks this across 233+ releases).
 
-This is **just-in-time context**, and Anthropic's context-engineering guidance argues
-for it directly: context is a finite attention budget, and the goal is "the smallest
+This is **just-in-time context**. Anthropic's context-engineering guidance argues for
+it directly. Context is a finite attention budget. The goal is "the smallest
 possible set of high-signal tokens that maximize the likelihood of some desired
-outcome." A rule that isn't relevant to the current task is not neutral — it spends
-budget and dilutes the signal of the rules that *are* relevant.
+outcome."
+
+A rule that isn't relevant to the current task is not neutral. It spends budget and
+dilutes the signal of the rules that *are* relevant.
 
 Practically, that means:
 
@@ -69,68 +71,70 @@ for a rule library. Sort every rule into one of three tiers by how often it chan
 behavior.
 
 - **Always-on core.** One file, loaded every session, holds only the rules that shape
-  *every* task — how to verify work, when to ask before acting, how to tell hard truths.
+  *every* task: how to verify work, when to ask before acting, how to tell hard truths.
   Keep it small. A measured budget beats a vague "keep it short": cap the core at roughly
   4,000 characters. Anything that does not change behavior on every task drops to a lower
   tier.
-- **Path-scoped rules.** A rule that only matters when you touch a certain kind of file
-  carries a glob in its frontmatter — a `paths:` list. The harness loads it only when a
+- **Path-scoped rules.** A rule that only matters when you edit a certain kind of file
+  carries a glob in its frontmatter: a `paths:` list. The harness loads it only when a
   matching file is in the session's context. Shell conventions load when you edit a shell
   script; a README standard loads when you edit a README. Off-task, they cost nothing.
 - **On-demand rules.** The rest live in an opt-in directory and are read by path when an
   activity starts, not delivered automatically. A monitor-agent discipline, a release
-  runbook, a delegation contract — the agent pulls each one in when the work calls for it.
+  runbook, a delegation contract. The agent pulls each one in when the work calls for it.
 
 The test for which tier a rule belongs in is one question: *does deleting this line change
 what the model does on the next task?* If yes on every task, it is core. If yes only when
 a certain file is open, it is path-scoped. If yes only when a certain activity starts, it
 is on-demand.
 
-This split matters most for smaller open-weight models. On a 30B-class local model the
-always-on core is the biggest lever you have — every token of irrelevant standing context
+This split matters most for smaller open-weight models. On a 30B-class local model, the
+always-on core is the biggest lever you have. Every token of irrelevant standing context
 costs more there than it does on a frontier model, so a shorter core measurably improves
 results. The tiers are how you keep the core short without losing the rest of the rules.
 
 ## One base prompt, per-surface deltas
 
 Behavior is shared; identity and environment are not. A coding assistant, an unattended
-operations agent, and a chat surface should think the same way but know different things
-about who they are and what they can reach.
+operations agent, and a chat surface should think the same way. But they know different
+things about who they are and what they can reach.
 
 Encode that split as a versioned base prompt plus one delta file per surface. The base
-holds the shared behavioral core. Each variant states only what *differs* for its surface
-— the extra tools, the tighter autonomy, the surface-specific scope — never a full copy.
-A variant is a diff, not a fork. When the shared behavior changes, you edit the base once
-and every surface inherits it; the variants stay small because they carry only their own
-exceptions.
+holds the shared behavioral core. Each variant states only what *differs* for its surface:
+the extra tools, the tighter autonomy, the surface-specific scope. It never carries a full
+copy. A variant is a diff, not a fork. When the shared behavior changes, you edit the base
+once and every surface inherits it. The variants stay small because they carry only their
+own exceptions.
 
 ## A size gate keeps the core honest
 
 A character budget that nothing enforces drifts upward one "just this once" at a time. Put
-the budget in CI. A small check counts the always-on core and the base prompt block, and
-fails the build if either exceeds its cap — here, 4,000 characters each.
+the budget in CI. A small check counts the always-on core and the base prompt block. It
+fails the build if either exceeds its cap: here, 4,000 characters each.
 
 The gate does two things. It makes "shorter wins" a rule the pipeline enforces, not a
-preference a reviewer has to remember. And it forces the demote decision: when the core
+preference a reviewer has to remember. And it forces the demote decision. When the core
 grows past budget, someone has to move a rule to a lower tier instead of letting the
-always-on context bloat silently. Pair the gate with an evaluation scaffold — a small set
-of probe tasks you can re-run — so a change to the core is judged by whether it helps the
-model, not only by whether it fits.
+always-on context bloat silently.
+
+Pair the gate with an evaluation scaffold, a small set of probe tasks you can re-run. A
+change to the core is then judged by whether it helps the model, not only by whether it
+fits.
 
 ## Typed memory, with an index
 
 Memory that persists across sessions works best when it is *typed* rather than kept as
 one undifferentiated blob:
 
-- **User** — who the person is: role, preferences, expertise.
-- **Feedback** — corrections and confirmed approaches, each with the reason it was given.
-- **Project** — ongoing work and constraints not derivable from the code or git history.
-- **Reference** — pointers to external resources.
+- **User**: who the person is, covering role, preferences, and expertise.
+- **Feedback**: corrections and confirmed approaches, each with the reason it was given.
+- **Project**: ongoing work and constraints not derivable from the code or git history.
+- **Reference**: pointers to external resources.
 
-One fact per file, each with a one-line description used to judge relevance on recall,
-and a single index file loaded each session that carries one line per memory. The index
-is the always-loaded layer; the individual memories load only when relevant — the same
-just-in-time principle applied to what the agent remembers.
+One fact lives in one file. Each file carries a one-line description used to judge
+relevance on recall. A single index file, loaded each session, carries one line per
+memory. The index is the always-loaded layer. The individual memories load only when
+relevant, the same just-in-time principle applied to what the agent remembers.
 
 Two disciplines keep memory honest:
 
@@ -142,17 +146,17 @@ Two disciplines keep memory honest:
 
 ## How the agent is told to think
 
-The layers above are architecture. The content that matters most is a short set of
-behavioral principles — and the governing finding is that **shorter wins**. When Cline
-tuned their system prompt for the open-weight GLM-4.6 model, cutting it 57% (56,499 →
-24,111 characters) *improved* task success, latency, and cost at once. What they removed
-was generic advice the model already followed by default; what they added was explicit
-scope for where it went wrong. The rule that falls out: **every line must change
-behavior. If deleting a line wouldn't change what the model does, delete it.**
+The preceding layers are architecture. The content that matters most is a short set of
+behavioral principles. The governing finding is that **shorter wins**. Cline tuned
+their system prompt for the open-weight GLM-4.6 model. Cutting it 57% (56,499 → 24,111
+characters) *improved* task success, latency, and cost at once. What they removed was
+generic advice the model already followed by default; what they added was explicit scope
+for where it went wrong. The rule that falls out: **every line must change behavior. If
+deleting a line wouldn't change what the model does, delete it.**
 
-With that constraint, the principles worth encoding — each drawn from Anthropic's
-prompting and context-engineering docs, the Qwen and GLM model documentation, and real
-integrations — are these:
+With that constraint, these are the principles worth encoding. Each is drawn from
+Anthropic's prompting and context-engineering docs, the Qwen and GLM model documentation,
+and real integrations:
 
 - **Ground truth before claims.** Never assert something about a file, config, or system
   state you have not read or run this session. If a claim is checkable with a tool, run
@@ -160,75 +164,75 @@ integrations — are these:
 - **Explore, then plan, then act.** For any change touching more than one file or an
   unfamiliar area, read first, state a short plan, then implement. Cline arrived at this
   same `explore → summarize → implement` shape independently for GLM-4.6.
-- **Verify before "done."** Run the check that proves a task complete — the test, the
-  build, the diff — and state what you ran and what it returned. "Looks done" is not
+- **Verify before "done."** Run the check that proves a task complete: the test, the
+  build, the diff. State what you ran and what it returned. "Looks done" is not
   evidence.
 - **Tools: explicit scope, no guessing.** Call a tool only when its preconditions hold.
   Never invent a parameter value to fill a required field. Issue independent calls
-  together; issue dependent calls one at a time. Tightening tool *scope* — not removing
-  tools — is what fixed hallucinated tool calls in practice.
+  together; issue dependent calls one at a time. Tightening tool *scope*, not removing
+  tools, is what fixed hallucinated tool calls in practice.
 - **Reversibility gates autonomy.** Reversible, local actions (read, edit, test) proceed
-  without asking. Destructive or externally-visible actions (delete, force-push, drop
+  without asking. Destructive or externally visible actions (delete, force-push, drop
   data, post to a shared system) require confirmation. Never route around a blocker with
-  a destructive shortcut — fix what the check caught; never disable the check.
+  a destructive shortcut. Fix what the check caught; never turn off the check.
 - **Minimum sufficient complexity.** Change only what was asked. No abstraction or error
   handling for a case that can't occur. Fix a bug at the shared call site, not at every
-  caller. Solve the general case, not the one test case — and if a test looks wrong, say
+  caller. Solve the general case, not the one test case. If a test looks wrong, say
   so rather than coding around it.
 - **Reasoning has a budget, not just a floor.** Use extended reasoning for genuinely
   multi-step problems; answer directly otherwise. If reasoning loops without converging,
   stop and give the best current answer with the uncertainty flagged. Output that
-  degrades into repetition is a decoding or context problem — stop generating and flag
+  degrades into repetition is a decoding or context problem. Stop generating and flag
   it; don't think harder through it. Qwen documents this failure mode explicitly and
   fixes it with non-greedy sampling, not more reasoning.
 - **Persist state outside your context.** For long or resumable work, keep
   machine-checkable status in a structured file and narrative progress in a plain note,
   and use commits as checkpoints. On resume, reconstruct state from those files and the
-  git log — not from assumed memory.
+  git log, not from assumed memory.
 - **Honest uncertainty over confident fabrication.** If you are not certain, say so and
   name what would resolve it. A wrong guess costs more than the question.
 
 The meta-decision behind the list: it encodes *behavior*, not *identity or environment*.
-Who the agent is, what tools it has, and what machines it talks to change independently
-and belong in a per-surface layer on top — matching the fragment-library architecture
-above, not a monolith.
+Who the agent is, what tools it has, and what machines it talks to change independently.
+They belong in a per-surface layer on top, matching the fragment-library architecture
+described earlier, not a monolith.
 
 ## Open-weight models need serving correctness, not more prose
 
-One lesson specific to running local models (Qwen3, GLM-4.x) rather than a hosted API:
-many "prompt" failures are actually *serving-layer* failures, and no amount of prompt
+One lesson is specific to running local models (Qwen3, GLM-4.x) rather than a hosted API.
+Many "prompt" failures are actually *serving-layer* failures, and no amount of prompt
 text fixes them.
 
 - **Reasoning models loop when decoded greedily.** Qwen's own fix is Temperature 0.6,
-  TopP 0.95, TopK 20 — not a prompt change.
+  TopP 0.95, TopK 20, not a prompt change.
 - **Tool-call parsing is fragile.** A serving stack's tool-call parser can silently fail
   to emit calls for a newer chat-template variant it doesn't recognize. Verify a tool
   call round-trips before trusting a model in an agent role.
 - **Qualify a new model in four steps:** load → plain chat → tool call → tiny agent task.
   Don't jump to a full benchmark before confirming the stack can round-trip a tool call.
 
-The takeaway: keep the prompt about behavior, and keep decoding parameters, tool-call
-parsers, and reasoning toggles where they belong — in the serving configuration, tested
+The takeaway: keep the prompt about behavior. Keep decoding parameters, tool-call
+parsers, and reasoning toggles where they belong: in the serving configuration, tested
 independently.
 
 ## Scope and sources
 
 This page describes an *architecture and a set of principles*. It deliberately contains
-no infrastructure topology — no hostnames, no network layout, no description of which
+no infrastructure topology: no hostnames, no network layout, no description of which
 internal systems exist or how they connect. That mapping, where it exists, lives outside
 this public site.
 
 Primary (official) sources:
 
-- Anthropic — Claude prompting best practices (platform docs)
-- Anthropic — Effective context engineering for AI agents
-- Anthropic — Claude Code best practices
-- Piebald-AI/claude-code-system-prompts — extraction of Claude Code's fragment library
-- Qwen official docs — chat template and function-calling guides; the Hugging Face Qwen-3
+- Anthropic: Claude prompting best practices (platform docs)
+- Anthropic: Effective context engineering for AI agents
+- Anthropic: Claude Code best practices
+- Piebald-AI/claude-code-system-prompts: extraction of Claude Code's fragment library
+- Qwen official docs: chat template and function-calling guides; the Hugging Face Qwen-3
   chat-template deep-dive
-- Z.ai — GLM-4.6 and GLM-4.7 docs
-- Cline — engineering write-up of the GLM-4.6 integration and the 57% prompt cut
+- Z.ai: GLM-4.6 and GLM-4.7 docs
+- Cline: engineering write-up of the GLM-4.6 integration and the 57% prompt cut
 
 Secondary (analysis of unverified leaks, treated as direction only): published analyses
 of claimed Claude system prompts. Structural claims from these are consistent with the
-official docs above but are not independently confirmed.
+official docs listed earlier but are not independently confirmed.

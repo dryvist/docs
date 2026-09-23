@@ -1,46 +1,51 @@
 ---
 title: "Doppler"
 description: "The T3 bootstrap cloud tier — secret-zero for the T2 runtime manager, plus the few values an external service consumes directly."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 > Doppler holds secret-zero, and nothing else that another tier can hold instead.
 
 ## Its job in the four-tier model
 
 Doppler is **T3**, the bootstrap cloud tier of the [four-tier secrets model](/security/comparison). Its role has narrowed to one job with a small exception attached:
 
-- **Secret-zero for T2.** Doppler holds the material that bootstraps the [OpenBao runtime manager](/security/tools/openbao): its static seal key (for auto-unseal), the AppRole `role_id`/`secret_id` pairs an agent presents to authenticate, and the GitHub App key material the token engine exchanges. This is why T3 is kept small and tightly scoped.
-- **Values an external service consumes directly.** A hosted service that reads a credential on its own — a remote CI runner, a vendor integration — cannot go through T2 to get it. That explicit, listed set stays here. Nothing joins it by default.
+- **Secret-zero for T2.** Doppler holds the material that bootstraps the [OpenBao runtime
+  manager](/security/tools/openbao): its static seal key (for auto-unseal), the AppRole
+  `role_id`/`secret_id` pairs an agent presents to authenticate, and the GitHub App key material the
+  token engine exchanges. This is why T3 is kept small and tightly scoped.
+- **Values an external service consumes directly.** A hosted service that reads a credential on its
+  own (a remote CI runner, a vendor integration) cannot go through T2 to get it. That explicit,
+  listed set stays here. Nothing joins it by default.
 
-Everything else lives in T2, where credentials are self-hosted, short-lived, and readable with zero interactive prompts, or is minted on demand by an engine and never stored at all.
+Everything else lives in T2, where credentials are self-hosted, short-lived, and readable with zero interactive prompts. Or it is minted on demand by an engine and never stored at all.
 
 ## What goes in Doppler
 
 - Secret-zero: the runtime manager's address, its static seal key, and the bounded AppRole pairs that let a consumer authenticate.
 - The App key material and installation identifiers the GitHub token engine exchanges for short-lived tokens.
-- The listed set of credentials an external service reads directly — hosted CI licensing and vendor-integration keys, kept in their own project.
+- The listed set of credentials an external service reads directly: hosted CI licensing and vendor-integration keys, kept in their own project.
 
 ## What does not go in Doppler
 
-- Anything a consumer can read from the runtime manager instead. Self-hosted app-service credentials — database passwords, vector-store keys, and the like — live in OpenBao (T2).
+- Anything a consumer can read from the runtime manager instead. Self-hosted app-service credentials (database passwords, vector-store keys, and the like) live in OpenBao (T2).
 - Anything an engine can mint: GitHub tokens, AWS sessions, SSH certificates. They are issued per call and never stored (see [GitHub access](/autonomous-agents/github-access)).
 - SSH keys for git auth (lives in Bitwarden + ssh-agent).
 - Recovery codes, account passwords, age-key escrow (Bitwarden).
 - Anything an AI tool must never read (Bitwarden vault).
 
-A value that lands here by habit rather than by one of the two reasons above is
-drift. It is migrated out, and the migration counts as finished only when a live
+A value that lands here by habit rather than by one of the two preceding reasons is
+drift. It is migrated out. The migration counts as finished only when a live
 consumer has been proven against the central store and this copy is deleted.
 
 ## Project / config layout
 
-Three Doppler projects, three delivery modes — each lands in a different consumer.
+Three Doppler projects, three delivery modes: each lands in a different consumer.
 
 | Doppler project | Delivery mode | Consumer |
 | --- | --- | --- |
 | `secrets-sync` | Auto-sync → GitHub Actions secrets on the `secrets-sync` repo | [`secrets-sync`](/security/secrets-sync) workflow fans out (Tier 1) |
-| `infra-project/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2 — values never sit in GitHub) |
+| `infra-project/prd` | Runtime fetch via `dopplerhq/secrets-fetch-action` | Infra CI jobs (Tier 2: values never sit in GitHub) |
 | Locally selected AI project/config | `doppler run --` wrapper at subprocess launch, carrying secret-zero only | Local dev and agent sessions |
 
 ## Runtime fetch via GitHub Actions
@@ -64,16 +69,18 @@ copy an IaC credential from Doppler into a Terrakube workspace variable.
 
 ## Anti-patterns and best practices
 
-- Do not export `DOPPLER_TOKEN` in a shell profile. Use `doppler login` interactive auth or a per-user service token configured once. A token persisted in the shell environment is reachable by every later command.
+- Do not export `DOPPLER_TOKEN` in a shell profile. Use `doppler login` interactive auth or a
+  per-user service token configured once. A token persisted in the shell environment is reachable by
+  every later command.
 - Do not store the same value in two places. One source of truth per secret, and for anything but secret-zero that source is the runtime manager.
-- Rotate the service tokens at 90 days. The rotation runbook lives in [secrets-sync](/security/secrets-sync#rotation-cadence-best-practice).
+- Rotate the service tokens at 90 days. The rotation runbook lives in [secrets-sync](/security/secrets-sync#best-practice-rotation-cadence).
 - Audit log: enable Doppler's per-project audit log; review on every key rotation.
 
 ## See also
 
-- [Tools comparison](/security/comparison) — the four-tier model and where T3 sits.
-- [OpenBao](/security/tools/openbao) — the T2 runtime manager Doppler bootstraps.
-- [secrets-sync](/security/secrets-sync) — Tier 1 distribution.
-- [IaC tooling](/infrastructure/iac-tooling) — the Terrakube and OpenBao execution path.
-- [BWS](/security/tools/bws) — alternative for AI-specific OAuth tokens where Doppler is not yet wired up.
-- [`docs.dryvist.com`](https://docs.dryvist.com) — dryvist-internal project / config names.
+- [Tools comparison](/security/comparison): the four-tier model and where T3 sits.
+- [OpenBao](/security/tools/openbao): the T2 runtime manager Doppler bootstraps.
+- [secrets-sync](/security/secrets-sync): Tier 1 distribution.
+- [IaC tooling](/infrastructure/iac-tooling): the Terrakube and OpenBao execution path.
+- [BWS](/security/tools/bws): alternative for AI-specific OAuth tokens where Doppler is not yet wired up.
+- [`docs.dryvist.com`](https://docs.dryvist.com): dryvist-internal project / config names.

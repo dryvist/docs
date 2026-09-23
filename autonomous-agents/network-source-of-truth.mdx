@@ -1,17 +1,17 @@
 ---
 title: "Network source of truth"
 description: "A self-hosted inventory platform that becomes the single authoritative model of the homelab's network and hosts, imported read-only from existing state before it drives anything."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **partly live.** Read-only import and reconciliation are live for the
-platform's core domains — devices, addressing, and VLANs — holding zero drift
+platform's core domains: devices, addressing, and VLANs. They hold zero drift
 against the live estate. Remaining domains and the inventory-serving phase are
 still ahead.
 </Note>
 
-> One authoritative model of what exists — so agents and automation stop guessing
+> One authoritative model of what exists, so agents and automation stop guessing
 > from three half-current lists.
 
 Infrastructure state lives in several places at once: the IaC that provisions it,
@@ -24,18 +24,20 @@ devices, addresses, and their relationships that both people and agents can quer
 The platform earns trust before it holds any, in three deliberate phases:
 
 <Steps>
-
-1. **Read-only import.** The platform imports existing state from the IaC and
-   current inventory and presents it for review. It is a mirror at this stage —
-   authoritative of nothing, safe to compare against reality.
-
-2. **Reconcile.** Drift between the imported model and the live estate is resolved
-   in the model, so it becomes the accurate picture rather than another stale one.
-
-3. **Serve.** Only once the model is trusted does automation read *from* it —
-   dynamic inventory for configuration runs, and answers for agents that would
-   otherwise scrape several sources.
-
+<Step title="Read-only import">
+The platform imports existing state from the IaC and
+current inventory and presents it for review. It is a mirror at this stage,
+authoritative of nothing and safe to compare against reality.
+</Step>
+<Step title="Reconcile">
+Drift between the imported model and the live estate is resolved
+in the model, so it becomes the accurate picture rather than another stale one.
+</Step>
+<Step title="Serve">
+Only once the model is trusted does automation read *from* it:
+dynamic inventory for configuration runs, and answers for agents that would
+otherwise scrape several sources.
+</Step>
 </Steps>
 
 <Note>

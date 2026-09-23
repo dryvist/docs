@@ -1,40 +1,40 @@
 ---
 title: "Goal-statement component library"
 description: "Mix-and-match blocks that assemble into a sub-4,000-character goal statement for an autonomous agent run, plus three fully assembled examples."
-page_type: reference
+page_type: "reference"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 A goal statement is the contract pasted at the start of an autonomous
-session: mission, guardrails, failure protocol, and definition of done, in
-under 4,000 characters. This page is a component library — pick **one variant
-per category**, fill every placeholder, and assemble in the order the
-categories appear here.
+session. It covers mission, guardrails, failure protocol, and definition of
+done, in under 4,000 characters. This page is a component library. Pick
+**one variant per category**, fill every placeholder, and assemble in the
+order the categories appear here.
 
 The structure reflects what real run contracts need. The strongest predictor of a
-reliable run is not model size — it is a goal statement where every guardrail
+reliable run is not model size. It is a goal statement where every guardrail
 is a hard number and every "done" has a named check.
 
 <Tip>
-**Why under 4,000 characters.** A goal statement that needs more space is
-either restating the base prompt (delete the restatement) or scoping more
-than one run's worth of work (split it). Shorter contracts also survive the
-trip to small local models — see
+**Why under 4,000 characters.** A goal statement that needs more space has
+one of two problems. It either restates the base prompt (delete the
+restatement) or scopes more than one run's worth of work (split it).
+Shorter contracts also survive the trip to small local models. See
 [writing prompts for small models](/agent-ops/small-model-prompts).
 </Tip>
 
 <Warning>
-**Compatibility — not every pick is safe.** Same-numbered variants are the
-tested pairings (M1+H1+F1+…, M2+H2+F2+…, M3+H3+F3+…) — the assembled examples
+**Compatibility: not every pick is safe.** Same-numbered variants are the
+tested pairings (M1+H1+F1+…, M2+H2+F2+…, M3+H3+F3+…), the assembled examples
 below. When mixing across rows:
 
 - H1 requires write authority. Never pair it with a read-only or PR-only
   mission.
 - H3 pairs only with a read-only mission (M3).
 - Any composition that delegates (D1/D3) or writes must include the
-  [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials) —
+  [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials),
   filled in, or explicitly "(none this session)".
 
-These rules are prose, not yet a machine-checkable matrix — a small
+These rules are prose, not yet a machine-checkable matrix. A small
 compatibility lint/checklist is a future follow-up.
 </Warning>
 
@@ -43,7 +43,7 @@ compatibility lint/checklist is a future follow-up.
 One paragraph. Name the primary objective, the decisive metric or question,
 the secondary lanes, the time budget, and the authority level.
 
-**M1 — timed multi-lane run:**
+**M1: timed multi-lane run:**
 
 ```text
 ## Mission
@@ -53,7 +53,7 @@ metrics or answers this run must produce>. Finish the leftover lanes:
 full write authority / PR-only / read-only>.
 ```
 
-**M2 — single focused build/fix task:**
+**M2: single focused build/fix task:**
 
 ```text
 ## Mission
@@ -62,7 +62,7 @@ or evidence the failure before changing anything. Deliver one PR against
 <target branch>, CI green.
 ```
 
-**M3 — research/mining sweep:**
+**M3: research/mining sweep:**
 
 ```text
 ## Mission
@@ -76,7 +76,7 @@ nothing.
 Numbered, each independently checkable, each with a consequence. The header
 carries the enforcement rule so the agent cannot treat conditions as advice.
 
-**H1 — disruptive-change window** (for runs that take a serving system down):
+**H1: disruptive-change window** (for runs that take a serving system down):
 
 ```text
 ## Hard conditions (violate any -> stop that lane and restore)
@@ -98,7 +98,7 @@ carries the enforcement rule so the agent cannot treat conditions as advice.
    retry, never re-route the same effect through another tool.
 ```
 
-**H2 — change safety** (for code/config work):
+**H2: change safety** (for code/config work):
 
 ```text
 ## Hard conditions
@@ -113,7 +113,7 @@ carries the enforcement rule so the agent cannot treat conditions as advice.
    report it.
 ```
 
-**H3 — read-only:**
+**H3: read-only:**
 
 ```text
 ## Hard conditions
@@ -135,9 +135,9 @@ carries the enforcement rule so the agent cannot treat conditions as advice.
 
 State what a failed attempt costs, what happens between attempts, and when
 to stop. The two live failure modes are blind retry storms and silent
-abandonment — the protocol must exclude both.
+abandonment. The protocol must exclude both.
 
-**F1 — keep-trying cycles** (durable objective, expensive attempts):
+**F1: keep-trying cycles** (durable objective, expensive attempts):
 
 ```text
 ## Failure protocol (keep trying, never blind-retry)
@@ -150,7 +150,7 @@ cycles. Cycling ends at the run deadline: the final cycle restores, then
 reports — the objective goes to the report as BLOCKED, not to another retry.
 ```
 
-**F2 — fail fast** (bounded task, cheap to hand back):
+**F2: fail fast** (bounded task, cheap to hand back):
 
 ```text
 ## Failure protocol (fail fast)
@@ -163,7 +163,7 @@ check is not. On this exit the write-up replaces the end state below — do
 not chase the remaining end-state items.
 ```
 
-**F3 — degrade, never abort** (sweeps and multi-lane runs):
+**F3: degrade, never abort** (sweeps and multi-lane runs):
 
 ```text
 ## Failure protocol
@@ -179,7 +179,7 @@ abort.
 Numbered deliverables. The closing clause "or documented why not" converts
 an incomplete run from a silent failure into a report.
 
-**E1 — multi-deliverable:**
+**E1: multi-deliverable:**
 
 ```text
 ## End state (each item done, or documented why not)
@@ -190,7 +190,7 @@ an incomplete run from a silent failure into a report.
    failed / skipped, every failure with root cause.
 ```
 
-**E2 — single artifact:**
+**E2: single artifact:**
 
 ```text
 ## End state (definition of done)
@@ -204,7 +204,7 @@ an incomplete run from a silent failure into a report.
    negative case proving the safety net actually fires.
 ```
 
-**E3 — report only:**
+**E3: report only:**
 
 ```text
 ## End state (definition of done)
@@ -222,7 +222,7 @@ an incomplete run from a silent failure into a report.
 The per-run behavioral deltas. Anything true of every run belongs in the
 shared base prompt, not here.
 
-**O1 — full autonomy:**
+**O1: full autonomy:**
 
 ```text
 ## Operating rules
@@ -234,7 +234,7 @@ path. Address every host by FQDN, never IP. Use the project's canonical
 service names in prose and identifiers.
 ```
 
-**O2 — focused solo work:**
+**O2: focused solo work:**
 
 ```text
 ## Operating rules
@@ -244,7 +244,7 @@ before "done": run the test/build/repro and quote the output. Ask nothing
 that a tool call can answer.
 ```
 
-**O3 — sweep discipline:**
+**O3: sweep discipline:**
 
 ```text
 ## Operating rules
@@ -257,11 +257,11 @@ source when a second source is in scope — correlate or mark unconfirmed.
 ## 6. Verification contract
 
 What "done" costs. This is the category small models skip first, so it names
-mechanical checks, not judgment — see the
+mechanical checks, not judgment. See the
 [evidence blocks](/agent-ops/prompt-blocks#verification-and-evidence-blocks)
 for the longer task-level forms.
 
-**V1 — evidence per claim:**
+**V1: evidence per claim:**
 
 ```text
 ## Verification contract
@@ -271,7 +271,7 @@ logged. End-of-run gate: every end-state item is done-with-evidence or
 documented-why-not in the final report.
 ```
 
-**V2 — repro before/after:**
+**V2: repro before/after:**
 
 ```text
 ## Verification contract
@@ -281,7 +281,7 @@ an assumption. Never assert state from memory — re-run the command against
 live state.
 ```
 
-**V3 — grader-facing:**
+**V3: grader-facing:**
 
 ```text
 ## Verification contract
@@ -295,7 +295,7 @@ are documented with the query that produced them — they are evidence too.
 Whether subagents exist, how many, and what happens when the spawn substrate
 fails. Every plan built on delegation states its solo fallback.
 
-**D1 — probe, bound, fall back:**
+**D1: probe, bound, fall back:**
 
 ```text
 ## Delegation contract
@@ -307,7 +307,7 @@ Substrate failure mid-run -> go solo; never restart shared infrastructure
 the session itself depends on.
 ```
 
-**D2 — solo:**
+**D2: solo:**
 
 ```text
 ## Delegation contract
@@ -316,7 +316,7 @@ balloons past <threshold, e.g. 10 files>, stop and report scope growth
 instead of fanning out.
 ```
 
-**D3 — fan-out with a result contract:**
+**D3: fan-out with a result contract:**
 
 ```text
 ## Delegation contract
@@ -334,7 +334,7 @@ They are frontier-targeted: a 30B target gets one lane per session and a
 rewrite per [writing prompts for small models](/agent-ops/small-model-prompts).
 Compositions that delegate (A and C) get the
 [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials)
-appended at fill time — filled in, or explicitly "(none this session)".
+appended at fill time, filled in, or explicitly "(none this session)".
 
 ### Example A — unattended infrastructure run (3,423 chars)
 
@@ -509,10 +509,10 @@ the orchestrator. Broken -> serial sweep in priority order <order>.
 
 ## See also
 
-- [Prompt block library](/agent-ops/prompt-blocks) — task-level blocks
+- [Prompt block library](/agent-ops/prompt-blocks): task-level blocks
   (roles, budgets, denials, evidence contracts) that pair with these
   goal statements.
-- [Writing prompts for small models](/agent-ops/small-model-prompts) —
+- [Writing prompts for small models](/agent-ops/small-model-prompts):
   how to rewrite these components for a ~30 GB local model.
-- [Self-hosted AI agent](/autonomous-agents/hermes-agent) — the autonomous
+- [Self-hosted AI agent](/autonomous-agents/hermes-agent): the autonomous
   agent these contracts were exercised against.

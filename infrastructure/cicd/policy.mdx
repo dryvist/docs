@@ -1,14 +1,16 @@
 ---
 title: "CI/CD policy"
 description: "Marketplace actions over scripts, release-please for versioning, version-pinned dependencies, runner choice by workload."
-page_type: reference
+page_type: "reference"
 ---
-
-{/* TIER-GUARD: reference page — runner catalogs and release rules need to live together. */}
+{/* projected from the authoring site; do not edit here */}
+{/*TIER-GUARD: reference page — runner catalogs and release rules need to live together.*/}
 
 > The CI tier is whatever the workload actually needs. Build it from marketplace actions, version-pin every dependency, and treat releases as permanent.
 
-The policy on this page applies to every workflow under `JacobPEvans/*` and `dryvist/*`. The companion page [`git-signing`](/infrastructure/cicd/git-signing) covers identity and signed-commit attribution; this page covers everything else.
+The policy on this page applies to every workflow under `JacobPEvans/*` and `dryvist/*`. The
+companion page [`git-signing`](/infrastructure/cicd/git-signing) covers identity and
+signed-commit attribution. This page covers everything else.
 
 ## Prefer native CI/CD constructs
 
@@ -17,45 +19,66 @@ The policy on this page applies to every workflow under `JacobPEvans/*` and `dry
 | CI/CD automation | Marketplace actions, reusable workflows, composite actions | Custom shell script |
 | GitHub Actions logic | Expressions, `fromJSON()`, matrix strategies | Python or bash in a `run:` step |
 
-Scripts belong in dedicated files (`.github/scripts/*.sh`, `scripts/*.py`), not inlined into YAML — see [No scripts in non-script files](/conventions/no-scripts) for the full rule.
+Scripts belong in dedicated files (`.github/scripts/*.sh`, `scripts/*.py`), not inlined into YAML. See [No scripts in non-script files](/conventions/no-scripts) for the full rule.
 
 ## GitHub Releases
 
-Treat published releases as permanent. Once a release is promoted from draft to published, do not modify or delete it — ever. GitHub technically allows edits and deletions; the policy here forbids it. If a correction is needed, create a new release.
+Treat published releases as permanent. Once a release is promoted from draft to published, do not
+modify or delete it, ever. GitHub technically allows edits and deletions. The policy here forbids
+it. If a correction is needed, create a new release.
 
 - Open releases as **drafts** until fully complete (all assets uploaded, notes finalized).
 - Promote draft to published only when everything is ready.
 - Every repo uses [release-please](https://github.com/googleapis/release-please) for automated version bumps:
   - **Patch** bumps come from `fix:` commits
   - **Minor** bumps come from `feat:` commits
-  - **Major** bumps are **human-initiated only** — edit `.release-please-manifest.json` manually. Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release workflow
+  - **Major** bumps are **human-initiated only**: edit `.release-please-manifest.json` manually. The release workflow blocks automated major bumps, including from `BREAKING CHANGE:` footers
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
-- Reusable workflows are homed in [`dryvist/.github`](https://github.com/dryvist/.github) (the canonical org home) — see [Reusable workflow ownership](#reusable-workflow-ownership) for the few still being relocated
+- Reusable workflows are homed in [`dryvist/.github`](https://github.com/dryvist/.github) (the
+  canonical org home). See [Reusable workflow ownership](#reusable-workflow-ownership) for the few
+  still being relocated
 
 Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
 
 ## Dependency versioning
 
-See [Dependency automation](/infrastructure/cicd/dependency-automation) for the full trust-tier, scheduling, automerge, and version-pinning policy — including which action sources ride `@main` and which are SHA-pinned.
+See [Dependency automation](/infrastructure/cicd/dependency-automation) for the full trust-tier,
+scheduling, automerge, and version-pinning policy, including which action sources ride `@main` and
+which are SHA-pinned.
 
 ### Scanner posture for self-references
 
-`@main` on a self-owned workflow is deliberate — consumers ride upstream fixes the moment they land, with no per-repo Renovate PR. SemVer tags still exist and release-please keeps bumping them for the changelog and the per-run resolved-SHA audit trail, but callers ride `@main`. Every org scanner is configured to allow it for `dryvist/*` action sources:
+`@main` on a self-owned workflow is deliberate. Consumers ride upstream fixes the moment they land,
+with no per-repo Renovate PR. SemVer tags still exist, and release-please keeps bumping them for the
+changelog and the per-run resolved-SHA audit trail, but callers ride `@main`. Every org scanner is
+configured to allow it for `dryvist/*` action sources:
 
-- **Renovate** — `pinDigests: false` for `dryvist/**` overrides the global digest-pinning, so `@main` is never rewritten to a SHA.
-- **zizmor** — `unpinned-uses` policy `dryvist/*: ref-pin`.
-- **CodeQL** — code scanning default setup on public repos only (free; private repos excluded to avoid the paid Code Security charge), managed as IaC in [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource). No committed query-filter config; same-org `@main` false positives ([github/codeql#18316](https://github.com/github/codeql/issues/18316)) are dismissed in the code scanning UI.
-- **OSV-Scanner** — reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
+- **Renovate.** `pinDigests: false` for `dryvist/**` overrides the global digest-pinning, so `@main` is never rewritten to a SHA.
+- **zizmor.** `unpinned-uses` policy `dryvist/*: ref-pin`.
+- **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
+  avoid the paid Code Security charge), managed as IaC in
+  [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).
+  No committed query-filter config. Same-org `@main` false positives
+  ([github/codeql#18316](https://github.com/github/codeql/issues/18316)) are dismissed in the code
+  scanning UI.
+- **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
 
-Third-party actions — trusted or untrusted — are unaffected and stay SHA-pinned, each with its released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github` → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
+Third-party actions, trusted or untrusted, are unaffected and stay SHA-pinned, each with its
+released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github`
+→ SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
 
 ## Reusable workflow ownership
 
-Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `uses:` — GitHub allows no variables there and does not follow repository move or rename redirects for those references. So when a shared-CI repository changes ownership, every consumer's `uses:` must be updated at the same time.
+Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `uses:`. GitHub
+allows no variables there, and it does not follow repository move or rename redirects for those
+references. So when a shared-CI repository changes ownership, every consumer must update its
+`uses:` reference at the same time.
 
-**dryvist is the canonical home for everything dryvist uses** — `JacobPEvans-personal/*` may depend on `dryvist/*`, never the reverse. Reference each workflow by its literal current owner below until a pending relocation lands:
+**dryvist is the canonical home for everything dryvist uses.** `JacobPEvans-personal/*` may depend
+on `dryvist/*`, never the reverse. Reference each workflow by its literal current owner below until
+a pending relocation lands:
 
 | Workflow set | Current home | Status |
 | --- | --- | --- |
@@ -65,51 +88,75 @@ Reusable GitHub Actions workflows are referenced by a literal `owner/repo` in `u
 
 ## Runner choice
 
-RunsOn (AWS EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on)) is the default for Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume; once it is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to be spent.
+RunsOn (AWS EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on)) is the default for
+Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume. Once it
+is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to
+be spent.
 
-On-prem self-hosted is the documented exception for jobs that genuinely need local hardware — not a routine choice.
+On-prem self-hosted is the documented exception for jobs that genuinely need local hardware. It is not a routine choice.
 
 | Workload | Runner |
 | --- | --- |
-| Linux job (lint, validate, build, test) | RunsOn — `runs-on=${{ github.run_id }}/runner=2cpu-linux-x64` |
-| Nix `flake check` (Linux) | RunsOn with more RAM — `runs-on=${{ github.run_id }}/cpu=4/ram=16/family=m7+c7/extras=s3-cache` |
-| `macos-latest` | GitHub-hosted — RunsOn EC2 Mac has a 24-hour minimum allocation; for short jobs `macos-latest` is cheaper despite the 10× billing multiplier |
-| `windows-latest` | RunsOn — supports Windows; case-by-case |
-| Disabled-schedule workflow (manual `workflow_dispatch` only) | GitHub-hosted — migration saves nothing |
-| Job requiring the always-on Mac Studio (LAN, local MLX, Apple-container Linux ARM64) | **mac-fleet** — `[self-hosted, Linux, ARM64, apple-container]`. GitHub runner group is still named `llm-runners`. This is **not** `macos-latest` and **not** the laptop |
-| Job requiring OrbStack on a powered-on laptop | **on-prem self-hosted** — `[self-hosted, Linux, ARM64]` in `orbstack-kubernetes`; do not confuse with mac-fleet |
-| Job requiring Proxmox LAN / Docker on the homelab Linux x64 runner host | **proxmox-fleet** — `[self-hosted, Linux, X64, proxmox]` (`ansible-proxmox-apps`); see "On-prem runner requirements" below |
+| Linux job (lint, validate, build, test) | RunsOn: `runs-on=${{ github.run_id }}/runner=2cpu-linux-x64` |
+| Nix `flake check` (Linux) | RunsOn with more RAM: `runs-on=${{ github.run_id }}/cpu=4/ram=16/family=m7+c7/extras=s3-cache` |
+| `macos-latest` | GitHub-hosted: RunsOn EC2 Mac has a 24-hour minimum allocation. For short jobs `macos-latest` is cheaper despite the 10× billing multiplier |
+| `windows-latest` | RunsOn: supports Windows, case-by-case |
+| Disabled-schedule workflow (manual `workflow_dispatch` only) | GitHub-hosted: migration saves nothing |
+| Job requiring the always-on Mac Studio (LAN, local MLX, Apple-container Linux ARM64) | **mac-fleet**: `[self-hosted, Linux, ARM64, apple-container]`. GitHub runner group is still named `llm-runners`. This is **not** `macos-latest` and **not** the laptop |
+| Job requiring OrbStack on a powered-on laptop | **on-prem self-hosted**: `[self-hosted, Linux, ARM64]` in `orbstack-kubernetes`. Do not confuse with mac-fleet |
+| Job requiring Proxmox LAN / Docker on the homelab Linux x64 runner host | **proxmox-fleet**: `[self-hosted, Linux, X64, proxmox]` (`ansible-proxmox-apps`). See "On-prem runner requirements" below |
 
-The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can correlate the GitHub Actions `workflow_job` webhook back to the originating run — without it, the job hangs in `queued`. The shared reusable workflows accept a `runner_label` input (default `ubuntu-latest`); callers opt in by passing the RunsOn label string.
+The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can
+correlate the GitHub Actions `workflow_job` webhook back to the originating run. Without it, the
+job hangs in `queued`. The shared reusable workflows accept a `runner_label` input (default
+`ubuntu-latest`). Callers opt in by passing the RunsOn label string.
 
-Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps live in [`tofu-runs-on/docs/migration-guide.md`](https://github.com/dryvist/tofu-runs-on/blob/main/docs/migration-guide.md).
+Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps
+live in
+[`tofu-runs-on/docs/migration-guide.md`](https://github.com/dryvist/tofu-runs-on/blob/main/docs/migration-guide.md).
 
 ### On-prem runner requirements
 
 On-prem self-hosted runners are a single point of failure when the job has E2E coverage and the runner is broken or stale. Every on-prem runner must:
 
-1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`) — never a personal access token. App installation tokens auto-refresh; PATs silently expire and break the runner with no upstream visibility.
+1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`), never a personal access token.
+   App installation tokens auto-refresh. PATs silently expire and break the runner with no upstream
+   visibility.
 2. **Pin the runner image (or VM template) by digest**, with Renovate tracking the digest. No floating tags.
 3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
 4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
 5. **Pre-flight check the secret-injection step** so it fails loud when required secrets are missing.
-6. **Build the runner image off-node** — build it on a dedicated build host and `docker load` it onto the runner host, never build it in-place on a hypervisor node. A heavy image build can overload the node that also runs production guests.
+6. **Build the runner image off-node.** Build it on a dedicated build host and `docker load` it
+   onto the runner host. Never build it in-place on a hypervisor node. A heavy image build can
+   overload the node that also runs production guests.
 
-Reference implementation: `orbstack-kubernetes/docker/actions-runner/` — see that repo's `Makefile` `runner-*` targets and `TESTING.md`.
+Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that repo's `Makefile` `runner-*` targets and `TESTING.md`.
 
 ## Where to go next
 
 <CardGroup cols={2}>
-  <Card title="Git signing" icon="signature" href="/infrastructure/cicd/git-signing">
-    Identity per execution context and the App-token pattern that signs every AI-authored commit.
-  </Card>
-  <Card title="tofu-runs-on" icon="play" href="/infrastructure/cicd/tofu-runs-on">
-    The RunsOn runner pool itself — provisioning, OIDC trust, migration guide.
-  </Card>
-  <Card title="OpenTofu check placement" icon="list-check" href="/infrastructure/tofu-check-placement">
-    Static checks in pre-commit, credentialed operations in CI via OIDC.
-  </Card>
-  <Card title="CI/CD overview" icon="server" href="/infrastructure/cicd/overview">
-    Runner tiers in context, plan/apply gating, branch rulesets.
-  </Card>
+<Card
+  title="Git signing"
+  icon="signature"
+  href="/infrastructure/cicd/git-signing">
+  Identity per execution context and the App-token pattern that signs every AI-authored commit.
+</Card>
+<Card
+  title="tofu-runs-on"
+  icon="play"
+  href="/infrastructure/cicd/tofu-runs-on">
+  The RunsOn runner pool itself — provisioning, OIDC trust, migration guide.
+</Card>
+<Card
+  title="OpenTofu check placement"
+  icon="list-check"
+  href="/infrastructure/tofu-check-placement">
+  Static checks in pre-commit, credentialed operations in CI via OIDC.
+</Card>
+<Card
+  title="CI/CD overview"
+  icon="server"
+  href="/infrastructure/cicd/overview">
+  Runner tiers in context, plan/apply gating, branch rulesets.
+</Card>
 </CardGroup>

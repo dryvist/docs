@@ -1,9 +1,9 @@
 ---
 title: "GitHub access"
 description: "How the independent OpenBao GitHub service engine issues short-lived GitHub App installation tokens without exposing the App private key."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **live.** No personal access token sits in the macOS keychain, and no
 shell function switches between token tiers.
@@ -12,10 +12,10 @@ shell function switches between token tiers.
 > An agent gets an installation token that dies in an hour. It never sees the
 > GitHub App private key that minted it.
 
-A design that keeps several token tiers in the macOS keychain, with a shell
-function selecting a tier and an interactive password gating the dangerous
-ones, assumes a human at the keyboard and leaves long-lived credentials at
-rest — the opposite of what an unattended agent needs.
+A design that keeps several token tiers in the macOS keychain assumes a
+human at the keyboard. A shell function selects a tier, and an interactive
+password gates the dangerous ones. It leaves long-lived credentials at rest,
+the opposite of what an unattended agent needs.
 
 The replacement is a dedicated GitHub App installed on the accounts where
 automation runs. The
@@ -45,15 +45,15 @@ boundary.
 
 | Tier | Scope | How it mints | Gate |
 | --- | --- | --- | --- |
-| Read | All repositories of an account installation, read-only | A named read permission set that stores a read-only permission map | Ambient — reading is pre-authorized |
+| Read | All repositories of an account installation, read-only | A named read permission set that stores a read-only permission map | Ambient: reading is pre-authorized |
 | Write | Exactly one named repository per request, at the App ceiling on that repo | The raw mint endpoint, with an OpenBao policy that requires and allowlists the repository parameter | Ambient for allowlisted repositories |
 | Admin | An account installation's full ceiling across every repository | A named full-automation permission set | Human-only: an interactive, single-use grant per elevation |
 
 Read and admin tiers mint from named permission sets, whose stored scope the
 request body cannot widen. The write tier is the one identity allowed to use the
-raw mint endpoint, and its policy pins the request: the repository parameter is
-required and drawn from a reviewed allowlist, while the parameters that would
-name a whole installation or an arbitrary permission map are denied. So a write
+raw mint endpoint. Its policy pins the request: the repository parameter is
+required and drawn from a reviewed allowlist. The parameters that would name
+a whole installation or an arbitrary permission map are denied. So a write
 token carries write access to a single named repository, not an account.
 
 Adding a repository to the write allowlist is a reviewed configuration change,
@@ -63,12 +63,12 @@ the App installation itself holds.
 
 ### Where the write allowlist lives
 
-The allowlist is a single variable in the runtime secret store, read by the
-OpenBao configuration role and rendered into the write policy when that role
-converges. Two consequences follow:
+The allowlist is a single variable in the runtime secret store. The OpenBao
+configuration role reads it and renders it into the write policy when that
+role converges. Two consequences follow:
 
 - **A grant is not live until the converge runs.** Adding a repository to the
-  variable changes nothing on its own — the policy is only rewritten at converge
+  variable changes nothing on its own: the policy is only rewritten at converge
   time. A write mint that fails right after an allowlist edit usually means the
   converge has not happened yet.
 - **The list is deliberately not in any public repository.** The installations
@@ -82,11 +82,11 @@ defeats the entire model.
 ### What the read tier can see
 
 The read permission set is deliberately wider than "clone and read code." It
-also carries read on security events and on dependency vulnerability alerts, so
-code-scanning findings and dependency alerts are queryable under the ambient
-read token — no elevation, no claim. Security triage is a read-shaped activity,
-and making it require a write token would have pushed routine triage onto the
-privileged path.
+also carries read on security events and on dependency vulnerability alerts.
+So code-scanning findings and dependency alerts are queryable under the
+ambient read token, with no elevation and no claim required. Security triage
+is a read-shaped activity. Requiring a write token for it would have pushed
+routine triage onto the privileged path.
 
 ### Concurrency: agent runs take no lease
 
@@ -94,21 +94,21 @@ Agent runs take no exclusive lease on a repository before minting a write
 token, by design.
 
 A GitHub App installation issues as many simultaneously valid tokens for one
-repository as callers ask for, so two write tokens on one repository is a
-normal state and not a conflict. Two runs racing on one branch does not
-arise: every run clones fresh and pushes its own uniquely named branch, and
-the remote rejects a stale push anyway. A lease would guard nothing here,
+repository as callers ask for. So two write tokens on one repository is a
+normal state, not a conflict. Two runs racing on one branch does not arise.
+Every run clones fresh and pushes its own uniquely named branch, and the
+remote rejects a stale push anyway. A lease would guard nothing here,
 while its deadman expiry and check-and-set refusal would block legitimate
 concurrent runs.
 
-Write scope is still narrow. The narrowing is structural rather than temporal: a
-write token names exactly one allowlisted repository, and it is minted
-launcher-side, so an agent can never widen its own reach.
+Write scope is still narrow. The narrowing is structural rather than
+temporal. A write token names exactly one allowlisted repository, and it is
+minted launcher-side, so an agent can never widen its own reach.
 
 The interactive workstation helper is the exception that stayed. `gh-claim`
-still takes a repository lease, because a human shell is long-lived and mutable
-in a way a run is not — the same working tree, over hours, with pushes that do
-not each start from a fresh clone.
+still takes a repository lease, because a human shell is long-lived and
+mutable in a way a run is not. It's the same working tree, over hours, with
+pushes that do not each start from a fresh clone.
 
 ## Separation from AWS
 
@@ -132,8 +132,8 @@ both engines.
 
 | Old access path | New mechanism |
 | --- | --- |
-| Routine read of any account repository | Ambient read tier — a read-only permission set |
-| Automation that writes to a repository | Per-repository write tier — one allowlisted repository per request |
+| Routine read of any account repository | Ambient read tier: a read-only permission set |
+| Automation that writes to a repository | Per-repository write tier: one allowlisted repository per request |
 | Access outside the App permission ceiling | Human-only, interactive break-glass admin tier |
 
 The service engine does not add a generic admin-verb broker. Routine reads and
@@ -147,13 +147,19 @@ The password-gated human credential is never injected into automation.
 
 OpenBao becomes the path to the GitHub App private key. A caller that can use a
 mint endpoint can mint tokens up to that tier's scope until its OpenBao access is
-revoked. The controls are layered: the App installation ceiling, the tier's
-scope (a read-only map, or a single allowlisted repository), path- and
-parameter-scoped OpenBao policy, one-hour GitHub expiry, explicit lease
-revocation, and OpenBao audit logs. Per-repository write keeps a leaked write
-token's blast radius to one repository; the installation-wide admin tier stays
-human-gated precisely because it is the broad one, which makes the shared
-OpenBao boundary the target that matters.
+revoked. The controls are layered:
+
+- The App installation ceiling.
+- The tier's scope (a read-only map, or a single allowlisted repository).
+- Path- and parameter-scoped OpenBao policy.
+- One-hour GitHub expiry.
+- Explicit lease revocation.
+- OpenBao audit logs.
+
+Per-repository write keeps a leaked write token's blast radius to one
+repository. The installation-wide admin tier stays human-gated precisely
+because it is the broad one. That makes the shared OpenBao boundary the
+target that matters.
 
 The GitHub plugin is a third-party Apache-2.0 component. Its signed checksum
 manifest, binary checksum, compatibility with the deployed OpenBao version, token
@@ -161,15 +167,16 @@ use, and revocation behavior were verified before the rollout was marked live.
 
 ## Why `gh` needed its own cutover
 
-Routing `git` through a credential helper did not cover the `gh` CLI, and the
-gap is structural rather than an oversight. `gh` reads its token from the
-environment and does not consult git's credential helpers at all. A credential
-helper can therefore be perfectly wired and `gh` will still never call it.
+Routing `git` through a credential helper did not cover the `gh`
+command-line tool, and the gap is structural rather than an oversight. `gh`
+reads its token from the environment and does not consult git's credential
+helpers at all. A credential helper can therefore be perfectly wired, and
+`gh` still never calls it.
 
-Left alone, `gh` authenticates from whatever credential it has stored. That is
-the failure worth naming plainly: a stored token can quietly satisfy a
+Left alone, `gh` authenticates from whatever credential it has stored. That
+is the failure worth naming plainly. A stored token can quietly satisfy a
 `gh pr create` against a repository whose write claim the secrets engine had
-just refused. The deny was real, and the outcome was a write anyway — by a
+just refused. The deny was real, and the outcome was a write anyway, by a
 different door.
 
 Requiring an explicit mint before every `gh` invocation would close the gap on
@@ -180,7 +187,7 @@ paper, but "forgot to run it" is the same failure again. So the shell routes
   the account inferred from the `origin` remote, caches it in shell memory only,
   and refreshes it well inside its lifetime.
 - A mutating call under a read token fails closed at GitHub with a 403. That is
-  the signal to take a lease with `gh-claim` — a read is never silently widened
+  the signal to take a lease with `gh-claim`. A read is never silently widened
   into a write.
 - If minting fails, the call **fails**. It does not fall back to a stored
   credential. There is no configuration that re-enables such a fallback, and
@@ -188,45 +195,45 @@ paper, but "forgot to run it" is the same failure again. So the shell routes
 
 ## Getting a token in a dev shell
 
-Most of the time you need no token at all — `git` and `gh` reads both resolve
+Most of the time you need no token at all: `git` and `gh` reads both resolve
 one for you. Reach for a helper when you need a write, or when some other tool
 reads `GITHUB_TOKEN` from the environment.
 
 <Steps>
-  <Step title="For git, do nothing">
-    `git` needs no token of its own. A credential helper answers every HTTPS
-    credential request by minting one scoped to that request, so `clone`,
-    `fetch`, and `pull` just work. A `push` needs a claim first — see below.
-  </Step>
-  <Step title="Never export a token from .envrc">
-    The directory-environment loader caches its environment dump on disk. A token
-    exported at load time would be written to disk and would outlive the shell —
-    the one thing this model exists to prevent. Mint at call time instead.
-  </Step>
-  <Step title="For gh, reads need nothing; writes need a claim">
-    A plain `gh` read works with no ceremony — the shell mints a read token for
-    you. Reach for a helper when you need a write, or when another tool reads
-    `GITHUB_TOKEN` from the environment. All three infer the account and
-    repository from the `origin` remote, so the bare form usually suffices:
+<Step title="For git, do nothing">
+`git` needs no token of its own. A credential helper answers every HTTPS
+credential request by minting one scoped to that request, so `clone`,
+`fetch`, and `pull` just work. A `push` needs a claim first: see below.
+</Step>
+<Step title="Never export a token from .envrc">
+The directory-environment loader caches its environment dump on disk. A token
+exported at load time would be written to disk and would outlive the shell:
+the one thing this model exists to prevent. Mint at call time instead.
+</Step>
+<Step title="For gh, reads need nothing; writes need a claim">
+A plain `gh` read works with no ceremony: the shell mints a read token for
+you. Reach for a helper when you need a write, or when another tool reads
+`GITHUB_TOKEN` from the environment. All three infer the account and
+repository from the `origin` remote, so the bare form usually suffices:
 
-    ```bash
-    gh-read                  # ambient read token for this repo's account
-    gh-claim                 # per-repo write lease + write token
-    gh-release               # drop the lease early
-    ```
+```bash
+gh-read                  # ambient read token for this repo's account
+gh-claim                 # per-repo write lease + write token
+gh-release               # drop the lease early
+```
 
-    Pass an explicit target when you are outside the repo, or when the remote is
-    ambiguous: `gh-read <owner>`, `gh-claim <owner>/<repo>`.
+Pass an explicit target when you are outside the repo, or when the remote is
+ambiguous: `gh-read <owner>`, `gh-claim <owner>/<repo>`.
 
-    A claim takes an exclusive lease on that one repository and installs a trap
-    that releases it when the shell exits. You do not have to remember
-    `gh-release`; run it only to free the repository sooner.
-  </Step>
-  <Step title="Secret-zero is ambient">
-    The address and identity material the helper needs to authenticate are
-    injected by the runtime secret injector (`doppler run`). Nothing about
-    bootstrapping is stored locally, and nothing is passed on the command line.
-  </Step>
+A claim takes an exclusive lease on that one repository and installs a trap
+that releases it when the shell exits. You do not have to remember
+`gh-release`; run it only to free the repository sooner.
+</Step>
+<Step title="Secret-zero is ambient">
+The address and identity material the helper needs to authenticate are
+injected by the runtime secret injector (`doppler run`). Nothing about
+bootstrapping is stored locally, and nothing is passed on the command line.
+</Step>
 </Steps>
 
 Whatever you mint lives in that shell only. No token is written to disk at any
@@ -235,16 +242,28 @@ point in this flow.
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
-    Where GitHub installation tokens sit on the credential security ladder.
-  </Card>
-  <Card title="Roadmap" icon="map" href="/autonomous-agents/roadmap">
-    How the service-engine rollout fits the wider agent program.
-  </Card>
-  <Card title="Golden laws" icon="scale-balanced" href="/security/golden-laws">
-    The human-approval law that keeps destructive verbs out of the catalog.
-  </Card>
-  <Card title="Git transport" icon="lock" href="/conventions/git-transport">
-    The SSH/HTTPS split, and why the credential lookup gates private writes.
-  </Card>
+<Card
+  title="Secrets"
+  icon="key"
+  href="/autonomous-agents/secrets">
+  Where GitHub installation tokens sit on the credential security ladder.
+</Card>
+<Card
+  title="Roadmap"
+  icon="map"
+  href="/autonomous-agents/roadmap">
+  How the service-engine rollout fits the wider agent program.
+</Card>
+<Card
+  title="Golden laws"
+  icon="scale-balanced"
+  href="/security/golden-laws">
+  The human-approval law that keeps destructive verbs out of the catalog.
+</Card>
+<Card
+  title="Git transport"
+  icon="lock"
+  href="/conventions/git-transport">
+  The SSH/HTTPS split, and why the credential lookup gates private writes.
+</Card>
 </CardGroup>

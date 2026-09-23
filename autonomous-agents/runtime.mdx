@@ -1,14 +1,14 @@
 ---
 title: "Runtime"
 description: "Two places an agent runs: a Nix-built OCI image on the Mac, and a static pool of LXC guests on Proxmox that pull work from a queue behind an allowlisting egress proxy."
-page_type: explanation
+page_type: "explanation"
 ---
-
+{/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **partly live.** The Mac path (`agent-image`, `agent-cli`) is in use.
 The pool's firewall profile and its egress proxy guest are declared in
-infrastructure code, and the Ansible role that converges a pool guest is
-written; the first end-to-end canary run has not happened yet. See the
+infrastructure code. The Ansible role that converges a pool guest is
+written. The first end-to-end canary run has not happened yet. See the
 [roadmap](/autonomous-agents/roadmap).
 </Note>
 
@@ -31,41 +31,41 @@ The `nix-agent-sandbox` repo owns this surface:
 
 | Package / artifact | What it is |
 | --- | --- |
-| `packages.agent-image` | The OCI image — `dockerTools.streamLayeredImage` |
-| `packages.agent-cli` | `agent run\|sweep\|shell` — the single entry point that replaced the per-credential launcher wrappers in [nix-darwin](/nix/nix-darwin) |
+| `packages.agent-image` | The OCI image: `dockerTools.streamLayeredImage` |
+| `packages.agent-cli` | `agent run\|sweep\|shell`: the single entry point that replaced the per-credential launcher wrappers in [nix-darwin](/nix/nix-darwin) |
 
 Image contents:
 
 - The agent CLIs, `git`, `gh`, `nix`, `cacert`, `jq`, `ripgrep`.
 - The baked `autonomous` profile configs rendered by
-  [nix-ai](/nix/nix-ai)'s formatter layer — the only place these configs exist.
+  [nix-ai](/nix/nix-ai)'s formatter layer, the only place these configs exist.
 - A non-root `agent` user (uid 1000), no sudo.
 - An entrypoint that refuses uid 0 or a missing `AGENT_SANDBOX=1`, then runs the
   lifecycle: clone → `nix develop -c <agent>` → push branch → `gh pr create` → exit.
 
 Per-repo toolchains are **not** baked in. Each target repo's own flake devShell
-provides its compilers, linters, and tools via `nix develop` — the image stays
-generic and the repo stays the source of truth for its own environment.
+provides its compilers, linters, and tools via `nix develop`. The image stays
+generic, and the repo stays the source of truth for its own environment.
 
 ## The Proxmox path: a static pool, pull dispatch
 
 The pool is **N identical long-lived LXC guests, declared once in infrastructure
-code**. Growing the pool is one more entry with the next id; the guests are
+code**. Growing the pool is one more entry with the next id. The guests are
 interchangeable, so pool size is a capacity knob and not a design change.
 
 Guests do not receive work. They **pull** it. A poller on each guest claims a
 job from the shared task queue, and one job runs as one instance of a systemd
-**template unit** — `agent-task@<job-id>`. The unit carries the isolation:
+**template unit**: `agent-task@<job-id>`. The unit carries the isolation:
 
-- `RuntimeMaxSec` — a per-job wall clock. A wedged CLI dies with its whole
-  control group instead of holding its queue claim forever.
-- `PrivateTmp` — the unit gets its own memory-backed `/tmp`. The job's checkout
+- `RuntimeMaxSec`: a per-job wall clock. A wedged command-line tool dies with
+  its whole control group instead of holding its queue claim forever.
+- `PrivateTmp`: the unit gets its own memory-backed `/tmp`. The job's checkout
   lives there and cannot outlive the unit.
 - `NoNewPrivileges`, `ProtectSystem`, and a narrow set of writable paths.
 
 The unit's `ExecStart` is the secrets agent in process-supervisor mode, not the
 job script. It authenticates, renders the job's credentials into the child
-environment, then execs the runner — so there is no code path where a job runs
+environment, then execs the runner. So there is no code path where a job runs
 with credentials that were not scoped and leased for it. See
 [Secrets](/autonomous-agents/secrets).
 
@@ -80,68 +80,68 @@ that the wrong shape here:
 
 **Provisioning is not free, and it is paid on every task.** Creating a guest,
 waiting for it to boot, and converging it costs minutes of wall clock before
-any work starts — on every job, forever. A static pool pays that cost once. The
+any work starts, on every job, forever. A static pool pays that cost once. The
 guest is the slow thing; the job is the fast thing, and only the job should be
 per-task.
 
 **Per-run provisioning puts the queue inside the state file.** If a task creates
-and destroys a guest, then infrastructure state churns at task rate, and an
-ordinary run of the infrastructure plan has to reason about resources that exist
-only because something is briefly busy. Pull dispatch keeps the two separate:
+and destroys a guest, then infrastructure state churns at task rate. An
+ordinary run of the infrastructure plan then has to reason about resources that
+exist only because something is briefly busy. Pull dispatch keeps the two separate:
 infrastructure state describes the pool, which changes rarely, and the queue
 describes the work, which changes constantly. The plan stays quiet, and starting
 a task needs no infrastructure change at all.
 
-The isolation lost by not rebuilding the guest is bought back at the job level
-by the template unit — private tmpfs, a wall clock, and a cgroup kill — which is
-where the untrusted thing actually lives.
+The isolation lost by not rebuilding the guest is bought back at the job
+level, by the template unit. That means private tmpfs, a wall clock, and a
+cgroup termination: where the untrusted thing actually lives.
 
 The prior generation of this path ran agents in Docker on a shared VM. It still
 exists and still runs its legacy guests. Retiring it is gated on the LXC pool
-carrying real load through its canary; two runtimes must never converge the same
-guest, so the swap happens after the canary, not before it.
+carrying real load through its canary. Two runtimes must never converge the
+same guest, so the swap happens after the canary, not before it.
 
 ## Run lifecycle
 
 <Steps>
-  <Step title="Claim">
-    Mac: `agent run <repo> <prompt>` wraps `container run --rm` with a tmpfs
-    workspace and injected env. Pool: the poller claims a queue job and starts
-    `agent-task@<job-id>`.
-  </Step>
-  <Step title="Clone">
-    The job clones the target repo into its private tmpfs using a short-lived
-    scoped token (see [GitHub access](/autonomous-agents/github-access)).
-  </Step>
-  <Step title="Work">
-    `nix develop -c <agent>` enters the repo's own devShell and runs the agent
-    headless with the autonomous profile. Zero prompts by construction.
-  </Step>
-  <Step title="Ship">
-    Push a branch, scan for leaked secrets, `gh pr create`, exit. Nothing
-    persists. The PR is the only output, and PR review is the human gate.
-  </Step>
+<Step title="Claim">
+Mac: `agent run <repo> <prompt>` wraps `container run --rm` with a tmpfs
+workspace and injected env. Pool: the poller claims a queue job and starts
+`agent-task@<job-id>`.
+</Step>
+<Step title="Clone">
+The job clones the target repo into its private tmpfs using a short-lived
+scoped token (see [GitHub access](/autonomous-agents/github-access)).
+</Step>
+<Step title="Work">
+`nix develop -c <agent>` enters the repo's own devShell and runs the agent
+headless with the autonomous profile. Zero prompts by construction.
+</Step>
+<Step title="Ship">
+Push a branch, scan for leaked secrets, `gh pr create`, exit. Nothing
+persists. The PR is the only output, and PR review is the human gate.
+</Step>
 </Steps>
 
 ## Operator interface
 
-A Mac run is launched by the `agent` CLI:
+A Mac run is launched by the `agent` command-line tool:
 
 ```bash
 agent run [--tool claude|codex|gemini] [--profile <name>] \
           [--repo <owner/name>] [--host <fqdn>] [--no-oauth] <prompt...>
 ```
 
-Two flags carry two **independent** credential axes — read-secret scope and
+Two flags carry two **independent** credential axes. Read-secret scope and
 repository-write scope are orthogonal, and a run gets only the axes it names:
 
 | Flag | Grants | How it is minted |
 | --- | --- | --- |
-| `--profile <name>` | Read access to one task profile's secret group | The profile is baked into the image; its OpenBao KV group is fetched by an AppRole login — ambient read-tier material by default, or a human-minted single-use wrapped secret ID for apply-tier profiles. Read-only. |
+| `--profile <name>` | Read access to one task profile's secret group | The profile is baked into the image; its OpenBao KV group is fetched by an AppRole login: ambient read-tier material by default, or a human-minted single-use wrapped secret ID for apply tier profiles. Read-only. |
 | `--repo <owner/name>` | Write to exactly one repository, this run only | The launcher mints a per-run, single-repo-scoped GitHub App token via the write identity. See [GitHub access](/autonomous-agents/github-access). |
 
-The split is the point: a `--profile` run with no `--repo` can read its secrets
-but can never push, and a `--repo` run's write reach is exactly one repository —
+The split is the point. A `--profile` run with no `--repo` can read its secrets
+but can never push. A `--repo` run's write reach is exactly one repository,
 never an account. **The token is minted launcher-side; the container can never
 mint a write token itself.** A caller-supplied token already in the environment
 always wins over the mint.
@@ -149,9 +149,9 @@ always wins over the mint.
 A pool job names the same two axes in its queue entry instead of on a command
 line. The mint path is identical.
 
-Host targets, egress network names, and the apply-tier grant procedure are
-operational detail that lives in the internal ops runbooks, not in this public
-overview.
+Host targets, egress network names, and the apply tier grant procedure are
+operational detail. That detail lives in the internal ops runbooks, not in
+this public overview.
 
 ## Network boundary
 
@@ -161,17 +161,18 @@ allowlist therefore lives one layer up, in a **forward proxy** that terminates
 `CONNECT` and matches on domain.
 
 The pool's firewall profile is built around that split. A pool guest gets
-outbound access to internal services only — DNS, NTP, the secrets API, the log
-receivers — plus the proxy. It has **no rule permitting 443 to anywhere**. Every
-outbound web request the agent makes has exactly one path off the guest, and
-that path is the proxy, where the domain allowlist is enforced. Per-agent
-variations are allowlist groups keyed off the client address, not separate
-firewall profiles: at the address-and-port layer they would be identical rule
-sets, so duplicating them there would buy nothing and drift.
+outbound access to internal services only, such as DNS, NTP, the secrets API,
+and the log receivers, plus the proxy. It has **no rule permitting 443 to
+anywhere**. Every outbound web request the agent makes has exactly one path
+off the guest. That path is the proxy, where the domain allowlist is
+enforced. Per-agent variations are allowlist groups keyed off the client
+address, not separate firewall profiles. At the address-and-port layer they
+would be identical rule sets, so duplicating them there would buy nothing and
+drift.
 
-The proxy guest itself is the one member of the plane holding general outbound
-web access, and its inbound reach is scoped to the agent network alone so
-nothing else on the estate can borrow it as an open relay.
+The proxy guest itself is the one member of the plane holding general
+outbound web access. Its inbound reach is scoped to the agent network alone,
+so nothing else on the estate can borrow it as an open relay.
 
 A representative allowlist:
 
@@ -184,13 +185,13 @@ A representative allowlist:
 | Named internal services | per-profile, explicit, never a CIDR |
 
 <Warning>
-On the **Mac**, Apple `container` cannot fully null-route a container's network
-yet, so the proxy is enforced by environment (`HTTPS_PROXY` plus the baked
-configs) — policy, not physics. A misbehaving process inside the container could
-ignore the env and reach the LAN. This asymmetry is accepted deliberately: local
-Mac runs are for development convenience; **the Proxmox pool is the
-high-assurance path** for anything sensitive or scheduled, because there the
-missing route is the control.
+On the **Mac**, Apple `container` cannot fully null-route a container's
+network yet. So the proxy is enforced by environment (`HTTPS_PROXY` plus the
+baked configs): policy, not physics. A misbehaving process inside the
+container could ignore the env and reach the LAN. This asymmetry is accepted
+deliberately. Local Mac runs are for development convenience. **The Proxmox
+pool is the high-assurance path** for anything sensitive or scheduled,
+because there the missing route is the control.
 </Warning>
 
 ## Rejected alternatives
@@ -204,16 +205,28 @@ missing route is the control.
 ## See also
 
 <CardGroup cols={2}>
-  <Card title="Overview" icon="shield" href="/autonomous-agents/overview">
-    Why the boundary inverted and what the profiles are.
-  </Card>
-  <Card title="Secrets" icon="key" href="/autonomous-agents/secrets">
-    How credentials get into a job without living on the guest.
-  </Card>
-  <Card title="LXC vs Docker" icon="boxes-stacked" href="/infrastructure/lxc-vs-docker">
-    The decision tree this runtime slots into.
-  </Card>
-  <Card title="Roadmap" icon="map" href="/autonomous-agents/roadmap">
-    What is shipped, and what the canary still gates.
-  </Card>
+<Card
+  title="Overview"
+  icon="shield"
+  href="/autonomous-agents/overview">
+  Why the boundary inverted and what the profiles are.
+</Card>
+<Card
+  title="Secrets"
+  icon="key"
+  href="/autonomous-agents/secrets">
+  How credentials get into a job without living on the guest.
+</Card>
+<Card
+  title="LXC vs Docker"
+  icon="boxes-stacked"
+  href="/infrastructure/lxc-vs-docker">
+  The decision tree this runtime slots into.
+</Card>
+<Card
+  title="Roadmap"
+  icon="map"
+  href="/autonomous-agents/roadmap">
+  What is shipped, and what the canary still gates.
+</Card>
 </CardGroup>
