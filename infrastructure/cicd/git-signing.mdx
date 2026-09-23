@@ -1,6 +1,6 @@
 ---
 title: "Git signing"
-description: "Every commit lands GitHub-verified. The mechanism is uniform — Contents API web-flow signing — but the identity depends on who's making the call."
+description: "Every commit lands GitHub-verified. Every path signs through the Contents API web flow. Only the identity changes with the caller."
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -16,10 +16,10 @@ only ways to land a commit that satisfies the ruleset.
 
 | Context | Identity | Auth | Signing path |
 | --- | --- | --- | --- |
-| Local Mac | `JacobPEvans` | local user | GPG (key `31652F22BF6AC286`); nix-home reads identity from `$XDG_CONFIG_HOME/nix-home/local.nix` |
-| GitHub Actions: deterministic (snake, 3d-contrib, `peter-evans/create-pull-request`, release-please) | `JacobPEvans-github-actions[bot]` | default `GITHUB_TOKEN` | web-flow via the action's Contents API call |
+| Local Mac | `JacobPEvans` | local user | GPG (key `31652F22BF6AC286`); nix-home reads identity from a gitignored local file |
+| GitHub Actions: deterministic (snake, `3d-contrib`, `peter-evans/create-pull-request`, release-please) | `JacobPEvans-github-actions[bot]` | default `GITHUB_TOKEN` | web-flow via the action's Contents API call |
 | GitHub Actions: AI workflows | `JacobPEvans-claude[bot]` | `JacobPEvans-claude` App installation token (`actions/create-github-app-token@v2`) | web-flow via `anthropics/claude-code-action@v1` with `use_commit_signing: true` and `github_token` set to the App token |
-| Native cloud-routine workflows (`claude-code-routines`) | `JacobPEvans-claude[bot]` | same App installation token | same Contents API path; routine bodies run inside a regular GHA workflow (not the Anthropic Cloud Routines sandbox, which cannot mint App-class tokens) |
+| Native cloud-routine workflows (`claude-code-routines`) | `JacobPEvans-claude[bot]` | same App installation token | same Contents API path; routine bodies run inside a regular GHA workflow (not the Anthropic cloud routines sandbox, which cannot mint App-class tokens) |
 | GitHub bots (Renovate, release-please releases, dependabot) | the bot's GitHub identity | managed by GitHub | web-flow |
 
 Verification for any commit:
@@ -71,7 +71,7 @@ runner-side `git commit`.
 
 | Producer | Action | Notes |
 | --- | --- | --- |
-| `JacobPEvans/JacobPEvans` snake / 3d-contrib | `peter-evans/create-pull-request@v8` with `sign-commits: true`, then `gh pr merge --squash` | The action wraps the Contents API for arbitrary file updates |
+| `JacobPEvans/JacobPEvans` snake / `3d-contrib` | `peter-evans/create-pull-request@v8` with `sign-commits: true`, then `gh pr merge --squash` | The action wraps the Contents API for arbitrary file updates |
 | Release commits (release-please) | `googleapis/release-please-action@v5` | Native web-flow signing |
 | Built-in commit modes | for example, `lowlighter/metrics` with `output_action: commit` | Action handles signing itself |
 
@@ -79,7 +79,7 @@ Never build a custom Contents-API or Git-Data-API helper for content the runner 
 
 ## Adding a new context
 
-Pick a real identity: App, user, or bot. Never anonymous. Decide auth:
+Pick a real identity, never an anonymous one: a GitHub App, a user, or a bot. Then pick the auth method:
 
 - **App installation token** (`actions/create-github-app-token@v2`) when commits must be attributed to `JacobPEvans-claude[bot]`.
 - **Default `GITHUB_TOKEN`** when commits should be attributed to `JacobPEvans-github-actions[bot]`.
@@ -92,8 +92,8 @@ Add a row to the preceding identity table. Document operator setup in the consum
 Single source of truth. Link from other repos rather than duplicating prose.
 
 - Architecture: this page
-- Cloud-routine operator setup: `docs/CLOUD_ROUTINES_AUTH.md` in [`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines)
-- Local Mac identity values: `$XDG_CONFIG_HOME/nix-home/local.nix` (gitignored, out-of-tree)
+- Operator setup for cloud routines: `docs/CLOUD_ROUTINES_AUTH.md` in [`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines)
+- Local Mac identity values: a gitignored local file outside the repo, read by nix-home
 - AI-action App-token pattern: the reusable workflows in
   [`JacobPEvans/ai-workflows/.github/workflows/`](https://github.com/JacobPEvans/ai-workflows/tree/main/.github/workflows)
   (issue-resolver, ci-fix, code-simplifier, post-merge-tests, post-merge-docs-review,
