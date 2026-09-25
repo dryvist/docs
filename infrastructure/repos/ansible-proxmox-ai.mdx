@@ -10,6 +10,33 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="Python" status="active" lastActive="today" repoUrl="https://github.com/dryvist/ansible-proxmox-ai" />
 
+
+{/*Shape: four capability groups feeding downstream consumers. 5 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Hosts([ansible-proxmox<br/>configured hosts])
+  Serving([LLM serving<br/>Ollama, LiteLLM])
+  RAG([RAG<br/>LlamaIndex, Qdrant])
+  Agents([Agents<br/>Hermes gateway])
+  Apps([LLM app platforms<br/>Dify, Langfuse])
+
+  Hosts --> Serving
+  Hosts --> RAG
+  Hosts --> Agents
+  Hosts --> Apps
+
+  classDef up fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef role fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+
+  class Hosts up
+  class Serving,RAG,Agents,Apps role
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 `ansible-proxmox-ai` deploys the homelab's AI/LLM stack onto VMs and LXC containers that
 [tofu-proxmox](/infrastructure/repos/tofu-proxmox) provisioned and
 [ansible-proxmox](/infrastructure/repos/ansible-proxmox) configured. The AI-specific roles grew

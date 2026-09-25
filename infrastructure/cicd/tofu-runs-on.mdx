@@ -10,6 +10,29 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-runs-on" />
 
+
+{/*Shape: linear, job to runner to teardown. 4 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Job([Workflow job<br/>runs-on: label])
+  Control([RunsOn control plane<br/>Lambda + API Gateway])
+  Spot([EC2 spot runner<br/>3 AZs, us-east-2])
+  Done([Job finishes<br/>runner terminates])
+
+  Job --> Control --> Spot --> Done
+
+  classDef trigger fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef infra   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class Job trigger
+  class Control,Spot,Done infra
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 `tofu-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS: API Gateway,
 Lambda, and ECS/Fargate. It also provisions the IAM and networking needed to spin up EC2 spot
 runners on demand. Workflows opt in with a `runs-on:` label. Runners launch in seconds, run the

@@ -1,10 +1,24 @@
 ---
 title: "Model routing"
-description: "Why a multi-agent setup routes every model call through one endpoint, how work gets delegated to the cheapest capable tier, and the difference between a cost control that is enforced and one that is merely advised."
+description: "Why every model call routes through one endpoint, how work delegates to the cheapest capable tier, and what makes a cost control enforced."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 > The cheapest capable model that can do the job, chosen per task, and one place where that choice can actually be governed.
+
+{/*Shape: fan-in then decision. One endpoint, ordered tiers below it.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart LR
+  A1([Agent A]) --> EP([Shared endpoint<br/>stateless · config-as-code])
+  A2([Agent B]) --> EP
+  A3([Agent C]) --> EP
+  EP --> L([Local tier<br/>default: no cost, no data leaves])
+  EP -.explicit only.-> X([External provider<br/>opt-in by model id])
+  EP -.fallback.-> S([Agent's own model<br/>last resort])
+```
 
 Running several AI agents at once creates a problem that does not exist with one.
 Every agent has its own model, its own credential, and its own bill. Nobody can

@@ -1,10 +1,24 @@
 ---
 title: "MCP tool plane"
-description: "Model Context Protocol servers give agents their tools. Registering them once behind a shared gateway, rather than per agent, is the same consolidation the model endpoint applies to inference, with the same failure mode when it is a single instance."
+description: "MCP servers give agents their tools. Registering them once behind a shared gateway avoids the single-instance failure mode of per-agent registration."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 > Every agent needs the same tools. Configuring them once beats configuring them five times, and it is the only version you can actually govern.
+
+{/*Shape: fan-in then fan-out. Agents share one gateway to many servers.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart LR
+  A1([CLI agent]) --> GW([Tool plane gateway<br/>stateless · config-as-code])
+  A2([Background agent]) --> GW
+  A3([Editor integration]) --> GW
+  GW --> S1([MCP server: search])
+  GW --> S2([MCP server: monitoring])
+  GW --> S3([MCP server: tickets])
+```
 
 **MCP**, the Model Context Protocol, is the open standard by which an AI agent
 discovers and calls tools. Examples include searching an index, querying a

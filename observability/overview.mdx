@@ -141,13 +141,21 @@ armed). An alert that fires on every cycle only trains fatigue.
 
 ## Splunk apps
 
-The AI-observability apps and TAs live under a separate organization at
-[github.com/visicore](https://github.com/visicore). Two pieces matter on this site:
+The AI-observability apps and TAs live in a separate organization's
+repositories. Two pieces matter on this site:
 
 | Component | What it does |
 | --- | --- |
 | Dashboards (app) | Dashboard Studio v2. Cost, usage, performance per model, per project, per developer. |
 | Technology add-on (TA) | Field aliases, CIM mappings, lookups, search-time transforms. The normalization layer. |
+
+**Where to check it live:**
+
+- **Live**: your Splunk instance's Dashboard Studio, and its silence-detector
+  alerts under Settings → Searches, reports, and alerts.
+- **Config**: the Dashboards app and TA repositories.
+- **Owner doc**: [ansible-splunk](/observability/repos/ansible-splunk) for
+  the indexes and HEC tokens these dashboards read.
 
 ## Cribl Edge packs (collectors)
 

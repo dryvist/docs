@@ -8,6 +8,38 @@ page_type: "how-to"
 > OpenTofu repo now applies through Terrakube; there is no local wrapper
 > step and no long-lived cloud key on the operator's machine.
 
+
+{/*Shape: linear pipeline. 5 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Op([Operator or agent<br/>tofu apply])
+  TK([Terrakube workspace<br/>queues the run])
+  Bao[(OpenBao<br/>short-lived token)]
+  Prov([Provider API<br/>Proxmox / AWS / GitHub])
+  State[(Workspace state<br/>versioned)]
+
+  Op --> TK
+  TK --> Bao
+  Bao --> Prov
+  TK --> State
+
+  classDef actor    fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef control   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef store     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+
+  class Op actor
+  class TK,Bao control
+  class Prov,State store
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
+The operator never holds a provider credential. Terrakube mints one from OpenBao per run and
+discards it when the run ends.
+
 ## How an apply actually works
 
 Every OpenTofu root repo carries a `cloud {}` backend block naming its

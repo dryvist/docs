@@ -6,6 +6,21 @@ page_type: "explanation"
 {/* projected from the authoring site; do not edit here */}
 > Contains no infrastructure topology by design: see [Scope and sources](#scope-and-sources).
 
+{/*Shape: layered stack, general to specific, top to bottom.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart TB
+  G([Global rules<br/>any agent, any task])
+  W([Workspace conventions])
+  S([Scoped rules<br/>per file kind])
+  K([Skills<br/>per procedure])
+  M([Memory<br/>past sessions])
+  T([Session state<br/>right now])
+  G --> W --> S --> K --> M --> T
+```
+
 You might run more than one AI agent: a coding assistant, an unattended operations
 agent, a chat surface. Each one needs to know how to behave. Copy the same rules into
 every agent, and they drift apart the first time you edit one. This page describes the

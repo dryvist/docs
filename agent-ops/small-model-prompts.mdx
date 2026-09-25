@@ -1,6 +1,6 @@
 ---
 title: "Writing prompts for small models"
-description: "How to tune goal statements and prompt blocks for a ~30 GB local model. Covers short imperatives, explicit checklists, hard STOP conditions, and verification the model cannot skip."
+description: "How to tune goal statements and prompt blocks for a ~30 GB local model: short imperatives, explicit checklists, and hard STOP conditions."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -25,7 +25,7 @@ the one hard rule buried inside it. The fix is structural, not rhetorical.
 ## Rewrite rules
 
 1. **Short imperative sentences.** One idea each. "Run the check. Quote the
-   output." — not "it would be advisable to validate the result before
+   output."—not "it would be advisable to validate the result before
    proceeding."
 2. **One action per line.** A numbered checklist where each line is a single
    tool-sized step. A small model executes checklists reliably; it plans
@@ -34,8 +34,8 @@ the one hard rule buried inside it. The fix is structural, not rhetorical.
    the decision a step: "2. If the file exists, go to step 4. If not, go to
    step 3." Never assume the model infers the branch.
 4. **Hard-coded STOP conditions.** Numbers, not judgment: "at most 30
-   turns", "never retry a failing tool more than twice", "three probes with
-   no new evidence -> stop". A small model cannot be trusted to notice it is
+   turns," "never retry a failing tool more than twice," "three probes with
+   no new evidence -> stop." A small model cannot be trusted to notice it is
    looping. The prompt must count for it. Use the
    [T1 hard-stops block](/agent-ops/prompt-blocks#stop-and-escalation-conditions)
    verbatim.
@@ -71,9 +71,9 @@ When shrinking a frontier-targeted goal statement to small-model size:
 | Cut | Keep (verbatim) |
 | --- | --- |
 | Rationale and "why" prose: the model does not need convincing | Hard numbers: budgets, deadlines, crash limits, retry caps |
-| Restatements of default competence ("write clean code", "be thorough") | STOP conditions, one per line |
+| Restatements of default competence ("write clean code," "be thorough") | STOP conditions, one per line |
 | Multi-lane missions: one lane per session for a small model | The deliverable format contract (table shape, required columns) |
-| Judgment-based guardrails ("be careful with…") | Mechanical guardrails ("never run X", "always quote output") |
+| Judgment-based guardrails ("be careful with…") | Mechanical guardrails ("never run X," "always quote output") |
 | Delegation contracts: small models orchestrate poorly; a frontier model orchestrates, small models execute | The denial list: verbatim, it is load-bearing at every tier |
 
 ## Worked example
@@ -92,14 +92,14 @@ careful to verify claims and avoid duplicates.
 before dispatch, per rule 7):
 
 ```text
-Scope — do each step, in order:
+Scope—do each step, in order:
 1. Run ONE bounded error survey: <exact query, with time window and cap>.
 2. List the top 5 services by error count. Quote the counts.
 3. For each of the 5: search open issues in <repo> for that service name.
 4. Classify each: KNOWN (cite the issue #) or NEW.
 5. For NEW only, and at most 3: file an issue containing the count, one
    sample log line, and the time window.
-6. Deliverable: a table — service | error count | KNOWN/NEW | issue #.
+6. Deliverable: a table—service | error count | KNOWN/NEW | issue #.
 
 STOP conditions: 30 turns max. A query that fails twice -> mark the row
 UNAVAILABLE with the exact error and continue. More than 3 NEW findings ->
@@ -108,8 +108,8 @@ Grading: a checker re-runs your query and opens every cited issue. A cited
 issue that does not exist scores the whole job 0.
 ```
 
-Every judgment call in the first version ("recent", "actionable",
-"well-evidenced", "avoid duplicates") became something concrete in the
+Every judgment call in the first version ("recent," "actionable,"
+"well-evidenced," "avoid duplicates") became something concrete in the
 second. Each became a number, an exact query, a named classification, or a
 format contract.
 

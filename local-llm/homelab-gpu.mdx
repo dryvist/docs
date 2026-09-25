@@ -1,6 +1,6 @@
 ---
 title: "Self-hosted ChatGPT"
-description: "A private multi-tier LLM fabric on the homelab. One routed OpenAI-compatible endpoint sits in front of a GPU fast tier, a heavy Apple-Silicon backend, and a CPU standby. Reach it from the browser, the terminal, or any OpenAI client."
+description: "A private multi-tier LLM fabric on the homelab, reachable from a browser, a terminal, or any OpenAI client through one routed endpoint."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -108,9 +108,9 @@ All guests are DHCP-first LXCs on the `ai` VLAN with deterministic MAC
 reservations, so every address is a DNS name. `llm-fast` is a privileged LXC
 with the GPU passed through (`/dev/kfd` + `/dev/dri`); models live on a 120 GB
 fast-pool volume. The LXCs, firewall groups, and the Traefik pool entries are
-provisioned by [tofu-proxmox](/infrastructure/repos/tofu-proxmox). llama.cpp,
-llama-swap, the routers, and Open WebUI are configured by
-[ansible-proxmox-ai](/infrastructure/repos/ansible-proxmox-ai).
+provisioned by [tofu-proxmox](/infrastructure/repos/tofu-proxmox).
+[ansible-proxmox-ai](/infrastructure/repos/ansible-proxmox-ai) configures
+llama.cpp, llama-swap, the routers, and Open WebUI.
 
 <Note>
   **This is not the same "local AI" as the

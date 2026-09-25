@@ -32,7 +32,7 @@ below. When mixing across rows:
 - H3 pairs only with a read-only mission (M3).
 - Any composition that delegates (D1/D3) or writes must include the
   [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials),
-  filled in, or explicitly "(none this session)".
+  filled in, or explicitly "(none this session)."
 
 These rules are prose, not yet a machine-checkable matrix. A small
 compatibility lint/checklist is a future follow-up.
@@ -90,7 +90,7 @@ carries the enforcement rule so the agent cannot treat conditions as advice.
    all services back to their pre-run state, verified by a real request to
    each (an HTTP 200 on a health route is not proof; a real
    completion/transaction is).
-4. "Process running" is not "healthy" — prove health with a real completion
+4. "Process running" is not "healthy"—prove health with a real completion
    and log which backend answered.
 5. Crash budget <N> per component. On the last allowed crash, disable every
    auto-restarter first, then stop the lane.
@@ -105,7 +105,7 @@ carries the enforcement rule so the agent cannot treat conditions as advice.
 1. Work only in a fresh worktree off <default branch>; never edit the
    default branch directly.
 2. One concern per commit, Conventional Commits. No drive-by refactoring.
-3. Fix the root cause at the shared call site — never patch the symptom at
+3. Fix the root cause at the shared call site—never patch the symptom at
    one caller, never disable the check that caught it.
 4. Every warning or lint error that fires gets fixed in this change,
    pre-existing or not.
@@ -145,9 +145,9 @@ Never abandon the primary objective. Each cycle: diagnose from logs and live
 state -> ONE attempt under the hard conditions -> on failure restore the
 previous state, notify <channel> with findings AND options, wait >= <N> min
 (durable cadence marker; back off to <2N> if evidence says the failure is
-resource exhaustion — say so plainly) -> retry. Other lanes continue between
+resource exhaustion—say so plainly) -> retry. Other lanes continue between
 cycles. Cycling ends at the run deadline: the final cycle restores, then
-reports — the objective goes to the report as BLOCKED, not to another retry.
+reports—the objective goes to the report as BLOCKED, not to another retry.
 ```
 
 **F2: fail fast** (bounded task, cheap to hand back):
@@ -159,7 +159,7 @@ verification, STOP. Commit the failing state to the branch with a WIP
 marker, write up what was tried, the evidence gathered, and the best
 remaining hypothesis, and end with a named blocker.
 Blocked-with-a-named-blocker is a valid terminal state; a routed-around
-check is not. On this exit the write-up replaces the end state below — do
+check is not. On this exit the write-up replaces the end state below—do
 not chase the remaining end-state items.
 ```
 
@@ -170,7 +170,7 @@ not chase the remaining end-state items.
 A source that errors twice is recorded as UNAVAILABLE with the exact error,
 and the sweep continues. Three consecutive probes yielding no new evidence
 -> stop that thread and write up what exists. If the subagent substrate
-fails, degrade to serial execution — the mission degrades, it does not
+fails, degrade to serial execution—the mission degrades, it does not
 abort.
 ```
 
@@ -195,12 +195,12 @@ an incomplete run from a silent failure into a report.
 ```text
 ## End state (definition of done)
 1. The failing behavior is reproduced (or its absence is evidenced) BEFORE
-   the fix, and demonstrably gone AFTER — both with quoted command output.
+   the fix, and demonstrably gone AFTER—both with quoted command output.
 2. Branch pushed; PR open against <target branch> with the evidence in the
    body.
 3. All CI checks green. Every review-blocking lint/type/test issue resolved
    for real.
-4. A regression check exists that fails if the bug returns — including one
+4. A regression check exists that fails if the bug returns—including one
    negative case proving the safety net actually fires.
 ```
 
@@ -213,7 +213,7 @@ an incomplete run from a silent failure into a report.
    cheapest test that would falsify it | owner | safe next action.
 2. Ranked top-<N> findings, each naming the exact object (PR #, service,
    file:line), the recommended action, and the justification.
-3. Coverage statement: what was swept, what was skipped, and why — gaps
+3. Coverage statement: what was swept, what was skipped, and why—gaps
    declared, never papered over.
 ```
 
@@ -228,7 +228,7 @@ shared base prompt, not here.
 ## Operating rules
 Explore -> plan -> act. Verify before "done": run the check, quote its
 output. Denials attach to actions and propagate into every subagent prompt.
-Post a routine status to <channel> every hour — never run silent. Durable
+Post a routine status to <channel> every hour—never run silent. Durable
 checkpoints only: artifacts go on git branches or <run-dir>, never a tmp
 path. Address every host by FQDN, never IP. Use the project's canonical
 service names in prose and identifiers.
@@ -251,7 +251,7 @@ that a tool call can answer.
 Plan the sweep before the first query: list sources, order, and per-source
 budget. One source at a time; summarize each before opening the next.
 Prefer counting queries before detail queries. No conclusions from a single
-source when a second source is in scope — correlate or mark unconfirmed.
+source when a second source is in scope—correlate or mark unconfirmed.
 ```
 
 ## 6. Verification contract
@@ -277,7 +277,7 @@ documented-why-not in the final report.
 ## Verification contract
 "Fixed" requires: the repro command failing before, passing after, both
 outputs quoted in the PR body. "CI green" requires the check-run list, not
-an assumption. Never assert state from memory — re-run the command against
+an assumption. Never assert state from memory—re-run the command against
 live state.
 ```
 
@@ -287,7 +287,7 @@ live state.
 ## Verification contract
 Spot-checkable by a grader: every cited object must exist and match its
 description. Fabricated citations score the whole report zero. Dead ends
-are documented with the query that produced them — they are evidence too.
+are documented with the query that produced them—they are evidence too.
 ```
 
 ## 7. Delegation contract
@@ -334,14 +334,14 @@ They are frontier-targeted: a 30B target gets one lane per session and a
 rewrite per [writing prompts for small models](/agent-ops/small-model-prompts).
 Compositions that delegate (A and C) get the
 [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials)
-appended at fill time, filled in, or explicitly "(none this session)".
+appended at fill time, filled in, or explicitly "(none this session)."
 
-### Example A — unattended infrastructure run (3,423 chars)
+### Example A—unattended infrastructure run (3,423 chars)
 
 M1 + H1 + F1 + E1 + O1 + V1 + D1.
 
 ```text
-# Goal statement — unattended infrastructure run, <START>–<END>
+# Goal statement—unattended infrastructure run, <START>–<END>
 
 ## Mission
 Run <primary objective: e.g. bring up cluster mode, measure aggregate throughput under
@@ -357,7 +357,7 @@ autonomous, <authority level: full write authority / read-only / PR-only>.
 3. Reserve the final <N> minutes for restoration + report. After teardown: all services back
    to their pre-run state, verified by a real request to each (an HTTP 200 on a health route
    is not proof; a real completion/transaction is).
-4. "Process running" is not "healthy" — prove health with a real completion and log which
+4. "Process running" is not "healthy"—prove health with a real completion and log which
    backend answered.
 5. Crash budget <N> per component. On the last allowed crash, disable every auto-restarter
    first, then stop the lane.
@@ -368,7 +368,7 @@ autonomous, <authority level: full write authority / read-only / PR-only>.
 Never abandon the primary objective. Each cycle: diagnose from logs and live state -> ONE
 attempt under conditions 2+5 -> on failure restore the previous state, notify <channel> with
 findings AND options, wait >= <N> min (durable cadence marker; back off to <2N> if evidence
-says the failure is resource exhaustion — say so plainly) -> retry. Other lanes continue
+says the failure is resource exhaustion—say so plainly) -> retry. Other lanes continue
 between cycles. Cycling ends at the run deadline: the final cycle restores, then reports —
 the objective goes to the report as BLOCKED, not to another retry.
 
@@ -382,7 +382,7 @@ the objective goes to the report as BLOCKED, not to another retry.
 ## Operating rules
 Explore -> plan -> act. Verify before "done": run the check, quote its output. Denials attach
 to actions and propagate into every subagent prompt. Post a routine status to <channel> every
-hour — never run silent. Durable checkpoints only: artifacts go on git branches or
+hour—never run silent. Durable checkpoints only: artifacts go on git branches or
 <run-dir>, never a tmp path. Address every host by FQDN, never IP. Use the project's
 canonical service names in prose and identifiers.
 
@@ -399,12 +399,12 @@ subagent prompt. Substrate failure mid-run -> go solo; never restart shared infr
 the session itself depends on.
 ```
 
-### Example B — single focused build/fix task (2,499 chars)
+### Example B—single focused build/fix task (2,499 chars)
 
 M2 + H2 + F2 + E2 + O2 + V2 + D2.
 
 ```text
-# Goal statement — single focused build/fix task
+# Goal statement—single focused build/fix task
 
 ## Mission
 Fix <one-sentence problem statement, e.g. "the converge daemon stays penalty-boxed after a
@@ -415,7 +415,7 @@ changing anything. Deliver one PR against <target branch>, CI green.
 1. Work only in a fresh worktree off <default branch>; never edit the default branch
    directly.
 2. One concern per commit, Conventional Commits. No drive-by refactoring.
-3. Fix the root cause at the shared call site — never patch the symptom at one caller, never
+3. Fix the root cause at the shared call site—never patch the symptom at one caller, never
    disable the check that caught it.
 4. Every warning or lint error that fires gets fixed in this change, pre-existing or not.
 5. A permission denial is final: record it verbatim, stop that path, report it.
@@ -425,15 +425,15 @@ Attempt budget: 2 full approaches. If the second approach also fails verificatio
 Commit the failing state to the branch with a WIP marker, write up what was tried, the
 evidence gathered, and the best remaining hypothesis, and end with a named blocker.
 Blocked-with-a-named-blocker is a valid terminal state; a routed-around check is not. On
-this exit the write-up replaces the end state below — do not chase the remaining end-state
+this exit the write-up replaces the end state below—do not chase the remaining end-state
 items.
 
 ## End state (definition of done)
 1. The failing behavior is reproduced (or its absence is evidenced) BEFORE the fix, and
-   demonstrably gone AFTER — both with quoted command output.
+   demonstrably gone AFTER—both with quoted command output.
 2. Branch pushed; PR open against <target branch> with the evidence in the body.
 3. All CI checks green. Every review-blocking lint/type/test issue resolved for real.
-4. A regression check exists that fails if the bug returns — including one negative case
+4. A regression check exists that fails if the bug returns—including one negative case
    proving the safety net actually fires.
 
 ## Operating rules
@@ -444,19 +444,19 @@ test/build/repro and quote the output. Ask nothing that a tool call can answer.
 ## Verification contract
 "Fixed" requires: the repro command failing before, passing after, both outputs quoted in
 the PR body. "CI green" requires the check-run list, not an assumption. Never assert state
-from memory — re-run the command against live state.
+from memory—re-run the command against live state.
 
 ## Delegation contract
 None. This task runs solo; its scope fits one context. If discovery balloons past
 <threshold, e.g. 10 files>, stop and report scope growth instead of fanning out.
 ```
 
-### Example C — research/mining sweep (2,699 chars)
+### Example C—research/mining sweep (2,699 chars)
 
 M3 + H3 + F3 + E3 + O3 + V3 + D3.
 
 ```text
-# Goal statement — research/mining sweep (read-only)
+# Goal statement—research/mining sweep (read-only)
 
 ## Mission
 Sweep <corpus: e.g. the last 72 h of run transcripts / all open PRs across <org> / index=*
@@ -478,7 +478,7 @@ questions the sweep must answer>. Read-only: this run mutates nothing.
 ## Failure protocol
 A source that errors twice is recorded as UNAVAILABLE with the exact error, and the sweep
 continues. Three consecutive probes yielding no new evidence -> stop that thread and write
-up what exists. If the subagent substrate fails, degrade to serial sweeping — the mission
+up what exists. If the subagent substrate fails, degrade to serial sweeping—the mission
 degrades, it does not abort.
 
 ## End state (definition of done)
@@ -487,7 +487,7 @@ degrades, it does not abort.
    would falsify it | owner | safe next action.
 2. Ranked top-<N> findings, each naming the exact object (PR #, service, file:line), the
    recommended action, and the justification.
-3. Coverage statement: what was swept, what was skipped, and why — gaps declared, never
+3. Coverage statement: what was swept, what was skipped, and why—gaps declared, never
    papered over.
 
 ## Operating rules
@@ -499,7 +499,7 @@ correlate or mark unconfirmed.
 ## Verification contract
 Spot-checkable by a grader: every cited object must exist and match its description.
 Fabricated citations score the whole report zero. Dead ends are documented with the query
-that produced them — they are evidence too.
+that produced them—they are evidence too.
 
 ## Delegation contract
 Probe one trivial subagent first. Healthy -> fan out per-source readers (<= 4 in flight),
