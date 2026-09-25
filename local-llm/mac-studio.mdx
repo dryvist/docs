@@ -16,9 +16,8 @@ overview](/infrastructure/cicd/overview).
 
 ## What is actually loaded
 
-Read from the serving host on 2026-08-15 (`/v1/models` and `/running` on its llama-swap proxy).
-This is the section that goes stale fastest, and a roster nobody re-measured is worse than no
-roster at all:
+This roster is a snapshot, taken on 2026-08-15. A roster nobody re-measures goes stale, and a stale
+roster is worse than none, so treat it as a point-in-time record, not a live source:
 
 | Model | State |
 | --- | --- |
@@ -32,23 +31,34 @@ That last row is the easiest thing on this page to misread. The host runs a two-
 catalogued model is deliberately demoted, so the registry below records models that were
 **evaluated**, not models that are **loaded**.
 
+<Tip>
+**Where to check it live**
+
+Ask the router instead of trusting this table. Its `/v1/models` endpoint lists every alias the fabric
+currently serves, and the serving host's own proxy UI shows which weights actually answer.
+</Tip>
+
 ## Model Registry & Verdicts
 
 The homelab runs a curated set of local models on the Mac Studio. Through systematic dogfooding and
-structured evaluations, each model has been assigned specific roles and capability boundaries. **The
-size/config column records the profile each model was evaluated under. See the preceding section for
-what is deployed.**
+structured evaluations, each model has been assigned specific roles and capability boundaries. See the
+preceding section for what is deployed.
 
-| Model | Size & Config | Role | Verdict / Best Used For |
+Weight sizes live in one place: the
+[`cluster-models.json`](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json)
+catalog. The table below links to it instead of repeating a number that can drift. Two evaluated models
+have no catalog entry yet; their size shows inline until one is added.
+
+| Model | Size | Role | Verdict / Best Used For |
 | --- | --- | --- | --- |
-| **`Qwen3-Next-80B-A3B-Instruct-4bit`** | ~42 GB | Agentic | **The agentic tool-calling brain.** Selected as the agentic-bench winner for reliable multi-turn tool calling. **Runs with thinking ON** and carries sampling guardrails tuned for the quantized brain. |
-| **`Qwen3-Next-80B-A3B-Thinking-4bit`** | ~45 GB | Deep escalation | **The larger reasoning brain, for deep-escalation work.** Loaded on demand for tasks that need a second-order pass, for example, catching a failure a smaller model only mentions in passing. Thinking-native. |
-| **`Qwen3-Coder-30B-A3B-4bit`** | 17.1 GB | Coding | **Best for boilerplate and Terraform/HCL generation.** Extremely strong at syntax, but carries a precision liability (for example, minor query typos or dropping keys). Route templated codegen only. |
-| **`gpt-oss-120b-MXFP4-Q8`** | 63.3 GB | Reasoning | **Best for constrained prose and SPL query authoring.** Loaded on demand and idle-unloaded after 900s rather than held resident. Highly capable on complex reasoning, but weak at code review (confident false positives). **Held back from agent work by a serving-layer gap, not by the model:** it emits semantically correct calls in its own channel markup, the server ships no parser for that format, so `tool_calls` returns empty and the markup leaks into `content` (verified 2026-07-26/27). The missing parser landed as a declarative patch with a per-model toggle, and remains correct and worth having. The leakage is real and measured. The throughput argument once attached to it does not survive: see the re-measured figures below. See [Backends & tool calling](/local-llm/backends). Requires high `max_tokens` for JSON. `reasoning_effort=low` by default. |
-| **`Qwen3.6-35B-A3B-4bit`** | 20.4 GB | Structured fallback | **The uniform-4bit structured-output baseline.** Passes strict JSON port-allocation tests. It was once judged inferior to the 80B agentic brain on multi-turn tool calling (uniform 4-bit degrades earlier), but it later won the 2026-07-27 standalone throughput bench outright while being the smallest candidate. Thinking off by default. |
-| **`Qwen3.6-27B-4bit`** | 16.1 GB | Retired (2026-07-07) | **Retired after evals.** Decoded at 23–27 tok/s (4× slower than the 35B MoE), produced low-effort code reviews, and filled no unique capability niche. Removed from the swap tier. |
-| **`Qwen3.8-27B-4bit`** | 16.1 GB (Swap tier) | Trialled as default, reverted (2026-08-14) | **A newer generation does not beat the architecture.** Promoted to serving default on release, then reverted the same day on throughput: 37.1 cumulative / 27.7 decode tok/s against the 35B MoE's **138.8 / 106.5**, both measured minutes apart on the same host with the same harness. That is the same ~4× dense-vs-MoE penalty the retired `Qwen3.6-27B` showed one generation earlier. 27B dense parameters activate per token against roughly 3B for an A3B MoE. Kept cached in the swap tier for a quality-led re-trial; the throughput case is settled. |
-| **`Qwen3.5-9B-MLX-4bit`** | Unmeasured (4-bit, ~9B params) | Unevaluated | **No formal verdict recorded.** Has not yet been run through the 5-task battery below. See "What is actually loaded" earlier for its current serving state. |
+| **`Qwen3-Next-80B-A3B-Instruct-4bit`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Agentic | **The agentic tool-calling brain.** Selected as the agentic-bench winner for reliable multi-turn tool calling. **Runs with thinking ON** and carries sampling guardrails tuned for the quantized brain. |
+| **`Qwen3-Next-80B-A3B-Thinking-4bit`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Deep escalation | **The larger reasoning brain, for deep-escalation work.** Loaded on demand for tasks that need a second-order pass, for example, catching a failure a smaller model only mentions in passing. Thinking-native. |
+| **`Qwen3-Coder-30B-A3B-4bit`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Coding | **Best for boilerplate and Terraform/HCL generation.** Extremely strong at syntax, but carries a precision liability (for example, minor query typos or dropping keys). Route templated codegen only. |
+| **`gpt-oss-120b-MXFP4-Q8`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Reasoning | **Best for constrained prose and SPL query authoring.** Loaded on demand and idle-unloaded after 900s rather than held resident. Highly capable on complex reasoning, but weak at code review (confident false positives). **Held back from agent work by a serving-layer gap, not by the model:** it emits semantically correct calls in its own channel markup, the server ships no parser for that format, so `tool_calls` returns empty and the markup leaks into `content` (verified 2026-07-26/27). The missing parser landed as a declarative patch with a per-model toggle, and remains correct and worth having. The leakage is real and measured. The throughput argument once attached to it does not survive: see the re-measured figures below. See [Backends & tool calling](/local-llm/backends). Requires high `max_tokens` for JSON. `reasoning_effort=low` by default. |
+| **`Qwen3.6-35B-A3B-4bit`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Structured fallback | **The uniform-4bit structured-output baseline.** Passes strict JSON port-allocation tests. It was once judged inferior to the 80B agentic brain on multi-turn tool calling (uniform 4-bit degrades earlier), but it later won the 2026-07-27 standalone throughput bench outright while being the smallest candidate. Thinking off by default. |
+| **`Qwen3.6-27B-4bit`** | 16.1 GB (not yet cataloged) | Retired (2026-07-07) | **Retired after evals.** Decoded at 23–27 tok/s (4× slower than the 35B MoE), produced low-effort code reviews, and filled no unique capability niche. Removed from the swap tier. |
+| **`Qwen3.8-27B-4bit`** | 16.1 GB, swap tier (not yet cataloged) | Trialled as default, reverted (2026-08-14) | **A newer generation does not beat the architecture.** Promoted to serving default on release, then reverted the same day on throughput: 37.1 cumulative / 27.7 decode tok/s against the 35B MoE's **138.8 / 106.5**, both measured minutes apart on the same host with the same harness. That is the same ~4× dense-vs-MoE penalty the retired `Qwen3.6-27B` showed one generation earlier. 27B dense parameters activate per token against roughly 3B for an A3B MoE. Kept cached in the swap tier for a quality-led re-trial; the throughput case is settled. |
+| **`Qwen3.5-9B-MLX-4bit`** | [catalog](https://github.com/dryvist/docs-starlight/blob/main/src/data/cluster-models.json) | Unevaluated | **No formal verdict recorded.** Has not yet been run through the 5-task battery below. See "What is actually loaded" earlier for its current serving state. |
 
 ### Evaluation Methodology
 

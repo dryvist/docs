@@ -11,8 +11,40 @@ This site is the single public source of truth for the secrets-management story.
 ## The four-tier model
 
 Every secret lives in exactly one of four tiers, and the tier, not the tool, decides who can read
-it and how. This is the organizing frame for everything below; the [tools
-comparison](/security/comparison) has the full matrix and the bootstrap, read-path, and DR flows.
+it and how. Lower tiers depend on higher ones: T2 is the daily interface, but T3 holds the
+secret-zero that unseals it, and T4 is the human-only fallback if both fail.
+
+{/*Shape: linear chain, T1..T4 by trust level. 4 nodes. Aspect: ~4:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
+  T1[(T1 · repo-local<br/>SOPS + age)]
+  T2([T2 · runtime manager<br/>OpenBao])
+  T3([T3 · bootstrap cloud<br/>Doppler])
+  T4((T4 · human-only<br/>Bitwarden))
+
+  T1 -.->|no dependency| T2
+  T3 -->|secret-zero unseals| T2
+  T4 -.->|break-glass only| T2
+
+  classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+
+  class T1 src
+  class T2 hop
+  class T3 hop
+  class T4 external
+
+  linkStyle 0 stroke:#4FB3A9,stroke-width:1.5px,stroke-dasharray:2 4;
+  linkStyle 1 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 2 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+The [tools comparison](/security/comparison) has the full matrix and the bootstrap, read-path,
+and DR flows.
 
 | Tier | Role | Tool | Who reads it |
 | --- | --- | --- | --- |
@@ -90,4 +122,5 @@ are interactive-convenience paths whose machine side folds into T2.
 </Card>
 </CardGroup>
 
-For dryvist-internal specifics (workspace names, account IDs, internal topology), see [`docs.dryvist.com`](https://docs.dryvist.com).
+Internal specifics — workspace names, account IDs, and topology — stay in the private
+operational knowledge base and are out of scope for this public site.

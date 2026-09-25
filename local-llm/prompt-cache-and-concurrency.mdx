@@ -1,6 +1,6 @@
 ---
 title: "Prompt cache and serving concurrency"
-description: "How the prompt cache, concurrency and the paged KV pool compete for one memory budget on a local MLX server. It covers why KV quantization and concurrency are mutually exclusive on the serving path, why one number must feed both the admission cap and the engine's batch width, and why an over-long context window fails on cache starvation rather than on RAM."
+description: "How the prompt cache, concurrency, and the paged KV pool share one memory budget on an MLX server, and why long context starves the cache."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}

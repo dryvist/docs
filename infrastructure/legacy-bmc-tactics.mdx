@@ -22,6 +22,37 @@ This page describes patterns for working with this gear without a VGA
 monitor. These patterns also avoid lowering the security posture of the
 daily driver workstation used to reach it.
 
+
+{/*Shape: decision tree, pick a pattern by need. 6 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Need{What do you<br/>need to do?}
+  Monitor([Just watch the screen])
+  Interact([Click / type into<br/>BIOS or GRUB])
+  Install([Install an OS,<br/>no VGA at all])
+  P1([Pattern 1<br/>HTTP screenshot API])
+  P2([Pattern 2<br/>wrapped Java applet])
+  P34([Pattern 3/4<br/>USB or PXE boot])
+
+  Need --> Monitor --> P1
+  Need --> Interact --> P2
+  Need --> Install --> P34
+
+  classDef decision fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+  classDef path     fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+
+  class Need decision
+  class Monitor,Interact,Install,P1,P2,P34 path
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
+Pattern 1 covers most needs at the lowest cost. Reach for Pattern 2 or 3/4 only when Pattern 1
+can't do the job.
+
 ## Pattern 1 — Reverse-engineer the hidden HTTP API
 
 Before fighting the Java applet, look at what its parent web UI is doing

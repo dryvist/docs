@@ -14,6 +14,30 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 provisioned and `ansible-proxmox` configured. This is where the data-plane services that move
 traffic between sources and Splunk actually appear on disk.
 
+
+{/*Shape: linear data path, 5 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Gear([Source gear<br/>syslog / NetFlow])
+  HA([HAProxy<br/>front door])
+  Edge([Cribl Edge<br/>collection])
+  Stream([Cribl Stream<br/>routing])
+  Splunk[(Splunk Enterprise<br/>HEC)]
+
+  Gear --> HA --> Edge --> Stream --> Splunk
+
+  classDef svc fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
+
+  class Gear,HA,Edge,Stream svc
+  class Splunk sink
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 ## What it does
 
 - Deploys **HAProxy** as the front door for syslog and NetFlow traffic

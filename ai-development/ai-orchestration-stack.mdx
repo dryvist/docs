@@ -1,111 +1,103 @@
 ---
 title: "AI orchestration stack"
-description: "Six self-hosted tools for building and running LLM workflows (n8n, Dify, LangFlow, LangGraph, CrewAI, and LangChain), and the blunt rule for which one to reach for."
+description: "The homelab's current orchestration substrate for LLM workflows and agents: scheduled event automation, an agent intake service, and a self-hosted LangGraph server."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Three of these draw boxes and arrows. Two are Python libraries. Knowing which
-> is which is most of the decision.
+> The stack started as five self-hosted tools. Only one still carries
+> production work. The other four earned a demotion the hard way: they were
+> deployed and never used.
 
 The homelab runs a self-hosted layer for building LLM workflows and agents on top
-of its [private model serving](/local-llm/overview). Six tools cover the
-range from "connect an LLM to 400 other apps" to "write a multi-agent crew in
-Python." They overlap on purpose at the edges; the trick is not deploying all
-six and using none of them.
+of its [private model serving](/local-llm/overview). Three pieces carry
+production work today:
 
-## The six, at a glance
+- **Scheduled event automation** for repository events: a pull request opened or
+  updated, a review comment, a merge, or a timed sweep.
+- **An agent intake service** for scheduled and agentic work: signed webhooks and
+  a job API queue the work, and a self-hosted agent runs it. See
+  [the self-hosted agent](/autonomous-agents/hermes-agent).
+- **A self-hosted LangGraph server** for a stateful, multi-step agent that needs
+  to carry state between steps, behind a self-hosted chat UI. No cloud tracing
+  account is required.
 
-| Tool | What it is | Shape | Reach for it when |
-| --- | --- | --- | --- |
-| **n8n** | General workflow automation, 400+ integrations | Visual builder (service) | You need to wire an LLM into other systems: email, calendars, webhooks, databases, SaaS APIs |
-| **Dify** | Full LLMOps platform: RAG, prompts, evals, agents, model routing | Visual builder (service) | You want a production AI app with retrieval, prompt versioning, and evaluation, low-code |
-| **LangFlow** | Visual node editor for LangChain graphs | Visual builder (service) | You want to prototype a chain by dragging nodes, then export it to Python |
-| **LangGraph** | Stateful, graph-structured agents; self-hosted here as a server + chat UI | Python library (+ self-hosted server) | You're building a durable, multi-step agent as a graph and want to run it behind a UI, with no cloud (LangSmith-free) |
-| **LangChain** | Library of composable LLM building blocks | Python library | You're writing code and want chains, tools, memory, and retrievers as primitives |
-| **CrewAI** | Framework for role-playing multi-agent "crews" | Python library | You're writing code and want agents with roles collaborating on a task |
+<Note>
+**What else is deployed but not load-bearing**
 
-## Services vs libraries
-
-The single most useful distinction:
-
-- **n8n, Dify, and LangFlow are services.** They run as containers, expose a web
-  UI, and you build inside them. They are deployed and have an HTTPS front door.
-- **LangChain and CrewAI are libraries.** You do not "deploy" them. You `pip
-  install` them into app code. In this homelab they live together in one
-  Python execution box that runs the agent code people write against them.
-- **LangGraph is a library too, but it straddles the line.** You write graphs in
-  Python against it, yet the homelab also runs its open source server
-  (`langgraph dev`, in-memory) with a self-hosted chat UI, so it gets an HTTPS
-  front door like the visual builders. Crucially, **no LangSmith cloud account is
-  required.** The server is fully self-hosted and traces to the homelab pipeline.
-
-A common misread is treating LangChain/CrewAI as servers to stand up, or treating
-the visual builders as interchangeable. They are not. LangGraph is the deliberate
-exception: a library the homelab has chosen to also run as a service.
+Two visual workflow builders are running as platforms, for prototyping only: no
+authored production workflow is committed to either. A general workflow
+automation tool is declared in infrastructure but has no deployment role
+configured, so nothing runs on it. A separate execution host still runs a small
+multi-agent Python framework as a seed script; it is not the primary agent
+runtime. None of the four carry production traffic today.
+</Note>
 
 ## How they fit together
 
-{/*Shape: layered. Builders + libs sit on serving, all trace to observability.*/}
+{/*Shape: build-time vs run-time. TB, two subgraphs.*/}
 
 ```mermaid
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart TB
-  subgraph build [Build & run]
-  N8N([n8n])
-  DIFY([Dify])
-  LF([LangFlow])
-  LG([LangGraph<br/>server + chat UI])
-  AX([agent code<br/>LangChain · CrewAI])
+  subgraph buildtime [Build-time: declared and provisioned]
+  IAC([Infra-as-code<br/>guests · firewall · ACME])
   end
+  subgraph runtime [Run-time: actually carries traffic]
+  EVT([Scheduled event automation<br/>repo events + sweeps])
+  INTAKE([Agent intake<br/>signed webhooks + job API])
+  AGENT([Self-hosted agent])
+  LG([LangGraph server<br/>+ chat UI])
   MODELS([Model providers<br/>fabric router · external APIs])
   OBS([Observability<br/>OTEL traces])
+  end
 
-  N8N --> MODELS
-  DIFY --> MODELS
-  LF --> MODELS
+  IAC -.provisions.-> LG
+
+  EVT --> AGENT
+  INTAKE --> AGENT
+  AGENT --> MODELS
   LG --> MODELS
-  AX --> MODELS
-  N8N -.-> OBS
-  DIFY -.-> OBS
-  LF -.-> OBS
+  AGENT -.-> OBS
   LG -.-> OBS
-  AX -.-> OBS
 
   classDef svc fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef core fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef obs fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
+  classDef build fill:#0B1D2A,stroke:#4FB3A9,stroke-width:1.5px,color:#F4EFE6,stroke-dasharray: 4 3;
 
-  class N8N,DIFY,LF,LG,AX svc
+  class EVT,INTAKE,AGENT,LG svc
   class MODELS core
   class OBS obs
+  class IAC build
 
-  linkStyle 5,6,7,8,9 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 5,6 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Solid edges are model calls; coral dashed edges are telemetry. Every tool is
-configured to its **own** model provider per its standard install: the local
-OpenAI-compatible endpoint, an external API, or both. It is never forced onto a shared
-backend that belongs to another stack. Each tool's call is instrumented, and the
-traces fan out to the [LLM observability](/observability/llm-observability)
-pipeline.
+Build-time is infrastructure-as-code declaring and provisioning the guest, its
+firewall rules, and its ACME certificate. Run-time is the actual request path:
+an event or a signed webhook lands, the agent runs, and its model calls and
+traces flow to the shared fabric and the observability pipeline the same way
+every other tool's do.
+
+Every piece is configured to its **own** model provider per its standard
+install: the local OpenAI-compatible endpoint, an external API, or both. It is
+never forced onto a shared backend that belongs to another stack. Each call is
+instrumented, and traces fan out to the
+[LLM observability](/observability/llm-observability) pipeline.
 
 ## Picking one — the blunt version
 
-- One tool only, and it has to be one → **Dify**. It covers RAG, prompts, evals,
-  and agents without a separate automation tool.
-- Already automating with workflows → keep **n8n** and add **Dify** as the AI
-  layer beside it.
-- Want to sketch a chain visually and walk away with Python → **LangFlow**.
-- Building a durable, stateful agent as a graph and want it self-hosted behind a
-  UI with no cloud → **LangGraph** (its open source server plus a self-hosted chat
-  UI; no LangSmith account, in-memory state, a playground, not durable storage).
-- Writing app code → **LangChain** for primitives, **CrewAI** for
-  role-based agent teams. Both are imports, not installs-as-a-service.
-
-LangFlow overlaps Dify's visual builder; it earns its place only for
-lightweight, Python-export prototyping. If that workflow isn't yours, you can run
-the other four and never miss it.
+- Repository events (a PR opened, a review comment, a merge) → scheduled event
+  automation. That is what it exists for.
+- Scheduled or externally triggered agent work → the agent intake service. Send
+  it a signed webhook or a job, and the self-hosted agent runs it.
+- A durable, stateful, multi-step agent that needs to carry state between
+  steps, behind a UI, with no cloud tracing account → the self-hosted LangGraph
+  server.
+- A visual workflow builder for prototyping only → either of the two deployed
+  platforms. Neither carries a committed production workflow today, so treat
+  time spent there as throwaway.
 
 ## Where to go next
 

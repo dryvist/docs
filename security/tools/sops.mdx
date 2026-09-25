@@ -20,7 +20,7 @@ file](#sops-configuration-file) below).
 It is **not** a vault. OpenBao (T2) is. SOPS is checked-in, encrypted-at-rest configuration for the
 narrow single-repo case. Examples include OpenTofu variables that name internal networks, and
 Ansible variables that vary per host but aren't truly secret-secret. Control-plane credentials
-(Proxmox/iDRAC/network) are **not** SOPS material. They live in OpenBao `secret/infra/*` (or,
+(Proxmox/iDRAC/network) are **not** SOPS material. They live in OpenBao `secret-store/PATH*` (or,
 human-only, the Keychain).
 
 ## What does not belong in SOPS

@@ -1,11 +1,23 @@
 ---
 title: "Models and quantization"
-description: "How the resident model is chosen: one-resident posture, MoE over dense for throughput, sensitivity-aware quantization, and a fast-vs-overnight tiering that the registry, not this page, pins."
+description: "How the resident model is chosen: one-resident posture, MoE over dense, sensitivity-aware quantization, and a fast-vs-overnight tier the registry pins."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 > Pick one model to keep resident, quantize it well, and let a registry, not a
 > doc, name the exact id. Everything else is a tier you reach for on purpose.
+
+{/*Shape: decision tree over three tiers.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart TB
+  Q{What does the task need?}
+  Q -->|interactive, everyday| I([Resident tier<br/>held warm, low latency])
+  Q -->|latency-tolerant, larger| B([Batch tier<br/>fits with cache headroom])
+  Q -->|too large for one box| A([Aspirational tier<br/>needs a second machine])
+```
 
 Model choice on a 128 GB laptop is a budgeting problem, not a leaderboard. The
 constraint is memory pressure over time, and the lever is sparsity. The rule is

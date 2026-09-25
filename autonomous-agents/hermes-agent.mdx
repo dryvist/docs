@@ -1,6 +1,6 @@
 ---
 title: "Self-hosted AI agent"
-description: "Running the NousResearch Hermes Agent autonomously in the homelab: a self-improving agent with persistent memory, driven by a local GPU model. Distinct from the chat-only Self-hosted ChatGPT stack."
+description: "The NousResearch Hermes Agent runs autonomously in the homelab: a self-improving agent with persistent memory, driven by a local GPU model."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -25,7 +25,7 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
   runs with **thinking ON** and carries sampling guardrails for quantized brains.
 - **Memory:** the built-in `MEMORY.md` / `USER.md`, stored under `$HERMES_HOME`
   on a dedicated volume that is snapshotted and replicated off-node, plus the
-  **Hindsight** provider (knowledge-graph recall) — a separate self-hosted
+  **Hindsight** provider (knowledge-graph recall): a separate self-hosted
   service the agent reaches over the network rather than an in-process store.
 - **Containment:** the LXC is the blast-radius boundary, with deliberately narrow
   egress. Within one agent, named *profiles* scope which tools and credentials a
@@ -47,13 +47,13 @@ agent's tools/credentials are further scoped by profile underneath that.
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart TB
-  subgraph HermesC["hermes — own container, Slack app, memory"]
+  subgraph HermesC["hermes: own container, Slack app, memory"]
   HD[default]
   HS[splunk-admin]
   HH[homelab-admin]
   HG[github-maint]
   end
-  subgraph DonnaC["donna — own container, Slack app, memory"]
+  subgraph DonnaC["donna: own container, Slack app, memory"]
   DD[default]
   end
 
@@ -92,7 +92,7 @@ model:
 memory:
   provider: hindsight         # separate self-hosted service, reached over the network
 agent:
-  max_turns: 90               # budget — caps a runaway loop
+  max_turns: 90               # budget: caps a runaway loop
 ```
 
 Switch models anytime with `hermes model`; check memory with `hermes memory status`.
@@ -112,7 +112,7 @@ agent client) ever decides to give up.
 
 ```text
 serving-model timeout  >  router per-attempt timeout  >  agent client stream timeout
-        (largest)                                              (smallest — decides)
+        (largest)                                              (smallest: decides)
 ```
 
 The design principle: guards exist to reap *genuinely orphaned* work, such as

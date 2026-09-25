@@ -1,6 +1,6 @@
 ---
 title: "Pipeline flows"
-description: "The monitoring pipeline as diagrams: syslog families, AI-CLI shipping, the local LLM stack, OTLP fan-out, NetFlow, and the per-index HEC fan-in. One diagram zooms into each concern."
+description: "One diagram per concern: syslog families, AI command-line shipping, the local LLM stack, OTLP fan-out, NetFlow, and HEC fan-in."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -119,12 +119,14 @@ from the pipeline constants in the infrastructure repo; the pipeline never hardc
 ```
 
 The full family → port → index → sourcetype table lives on the [observability
-overview](/observability/overview#syslog-ingest-families). Hypervisor firewall drops ride the
-`linux` family. The node firewall logs to a file rather than the journal, so each node's rsyslog
-tails it with `imfile` and forwards it on the same port. Search for it as `index=os
-process=pve-firewall`.
+overview](/observability/overview#syslog-ingest-families).
 
-## AI-CLI log shipping
+Hypervisor firewall drops ride the `linux` family. The node firewall logs to
+a file rather than the journal. So each node's rsyslog tails it with
+`imfile` and forwards it on the same port. Search for it as
+`index=os process=pve-firewall`.
+
+## AI command-line log shipping
 
 AI command-line tool logs never reach syslog. Each command-line tool writes local JSONL log files. The MacBook's standalone
 Cribl Edge tails them with file inputs and ships them as tcpjson (one port per command-line tool, 10311–10315).
@@ -220,11 +222,12 @@ host's Cribl Edge on tcpjson ports 10321–10323.
 ## OTLP fan-out
 
 Orchestration apps emit OpenTelemetry to Cribl Edge's OTLP HTTP source. They never emit it to a
-backend directly. Edge fans out: traces to Langfuse and [Phoenix](/observability/phoenix) (live),
-everything to Splunk (**planned**: the leg is wired but not yet enabled).
+backend directly. Edge fans traces out to Langfuse and [Phoenix](/observability/phoenix) — never
+Splunk, which does not fit the trace format. See [Data pipelines](/architecture/data-pipelines#fan-out-every-source-to-every-destination)
+for the fan-out default this follows.
 
 {/*Shape: parallel convergence (fan-out). Boundary crossings: 0. */}
-{/* Ranks: ≤2. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass.*/}
+{/* Ranks: ≤2. Total nodes: 4 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
 %%{init:
@@ -234,12 +237,10 @@ everything to Splunk (**planned**: the leg is wired but not yet enabled).
   Edge([Cribl Edge<br/>OTLP HTTP])
   LF([Langfuse])
   PX([Phoenix])
-  SP[(Splunk · planned)]
 
   Apps --> Edge
   Edge -->|traces| LF
   Edge -->|traces| PX
-  Edge -.planned.-> SP
 
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
@@ -247,16 +248,15 @@ everything to Splunk (**planned**: the leg is wired but not yet enabled).
 
   class Apps ai
   class Edge hop
-  class LF,PX,SP sink
+  class LF,PX sink
 
   click LF "/observability/llm-observability" "Langfuse and the OTLP path"
   click PX "/observability/phoenix" "Arize Phoenix: evals and experiments"
 
   linkStyle 0,1,2 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-## NetFlow *(gateway export gap — parked)*
+## NetFlow *(gateway export gap: parked)*
 
 Flow records from the gateway and switches would take the UDP side of the ingress tier. The whole
 receive chain (UDP LB, Edge NetFlow pipeline, dedicated index) is built, armed, and idle. The
