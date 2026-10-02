@@ -1,6 +1,6 @@
 ---
 title: "LLM observability"
-description: "Every LLM call from the orchestration stack emits OpenTelemetry, routes through Cribl, and lands in Langfuse (trace UX), Arize Phoenix (evals + experiments), and Splunk (archival + SIEM)."
+description: "Every LLM call emits OpenTelemetry and lands in Langfuse and Arize Phoenix after routing through Cribl."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -11,10 +11,11 @@ its sibling for the AI component tier. Every component, including `dify`,
 `langflow`, `agent-exec`, `hermes-agent`, and `open-webui`, now emits
 OpenTelemetry for every LLM call. So does the proxy and router tier that
 those components call through. Cribl Edge collects on the endpoint, Cribl Stream
-tags and fans out, and the spans land in Langfuse, [Arize Phoenix](/observability/phoenix),
-and Splunk. There are zero direct-to-backend paths.
+tags and fans out, and the spans land in Langfuse and [Arize Phoenix](/observability/phoenix).
+There are zero direct-to-backend paths. Splunk gets the same estate's other telemetry, but never
+traces — traces don't fit its event model; see the [fan-out default](/architecture/data-pipelines#fan-out-every-source-to-every-destination).
 
-## Emitting traces — OpenLLMetry + OTEL GenAI
+## Emitting traces: OpenLLMetry and OTEL GenAI
 
 Apps are instrumented with [OpenLLMetry](https://github.com/traceloop/openllmetry)
 (the Traceloop SDK). It wraps LLM providers, vector stores, and frameworks
@@ -35,7 +36,7 @@ OpenTelemetry sources**, one per signal type on its own port, so it can route by
 type without parsing payloads. Edge relays to Cribl Stream, which tags each span
 with its producer and forks it in parallel:
 
-{/*Shape: fan-out. Apps -> Cribl -> three sinks.*/}
+{/*Shape: fan-out. Apps -> Cribl -> two sinks.*/}
 
 ```mermaid
 %%{init:
@@ -45,12 +46,10 @@ with its producer and forks it in parallel:
   Cribl([Cribl<br/>Edge collects · Stream routes])
   LF([Langfuse<br/>trace · cost])
   PX([Phoenix<br/>evals · experiments])
-  SP[(Splunk<br/>archival · SIEM)]
 
   Apps -->|OTLP per type| Cribl
   Cribl -->|traces| LF
   Cribl -->|traces| PX
-  Cribl -->|all signals| SP
 
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
@@ -58,12 +57,12 @@ with its producer and forks it in parallel:
 
   class Apps ai
   class Cribl hop
-  class LF,PX,SP sink
+  class LF,PX sink
 
   click PX "/observability/phoenix" "Arize Phoenix: evals and experiments"
 
   linkStyle 0 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 1,2,3 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 1,2 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 - **Langfuse** gets the traces. It is the LLM-native view: trace waterfalls per
@@ -72,12 +71,13 @@ with its producer and forks it in parallel:
 - **Phoenix** gets the same traces on its own pipeline leg. It is where a trace
   becomes a test case: datasets, experiments, LLM-as-judge evals, and a
   playground that replays a captured call. See [Arize Phoenix](/observability/phoenix).
-- **Splunk** gets everything, for archival and correlation with the rest of the
-  homelab's telemetry. It's the same indexer the AI-coding pipeline already feeds.
+- **Splunk never gets traces.** The fan-out default routes every format to every
+  destination it fits, and a trace does not fit Splunk's event model. Splunk
+  still gets this estate's other telemetry (metrics, logs) over its own legs.
 
 Apps never talk to a trace store directly, and they never reach across into the
 monitoring tier. They emit to the collector, and the collector decides where it
-goes. One intake point, three sinks, no second collector to run.
+goes. One intake point, two trace sinks, no second collector to run.
 
 ## Reaching the pipeline: subdomains, TLS, and who gets gated
 

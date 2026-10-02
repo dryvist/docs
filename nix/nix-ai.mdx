@@ -1,6 +1,6 @@
 ---
 title: "AI tooling"
-description: "Every AI coding tool, packaged. Claude Code, Antigravity, Copilot, MLX modules, a catalog of MCP servers — declarative, reproducible, version-pinned."
+description: "Every AI coding tool, packaged declaratively and version-pinned: Claude Code, Antigravity, Copilot, MLX modules, and a catalog of MCP servers."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -26,7 +26,8 @@ reusable packaging public and environment topology private.
 - Tracks the operator command-line tool sources through the flake lock, so consumers can gate their
   installation to workstation hosts
 - Provides MLX module derivations for Apple Silicon
-- Pins a catalog of MCP servers and exposes them as reusable Nix attributes
+- Pins a catalog of MCP servers and exposes them as reusable Nix attributes;
+  most of the catalog is on-demand, not always-on (see below)
 - Exports an overlay so `nix-darwin` and `nix-home` can include AI tools without duplicating logic
 - Includes a shell module (`devShells.default`) for a ready-made AI sandbox
 
@@ -83,6 +84,26 @@ agents.
 The variable catalog (required vs optional, purpose, source) lives in `.env.example` at the repo
 root. A real `.env` is an opt-in convenience; direct injection is preferred. The local injection
 runbook is `AGENTS.local.md` (gitignored).
+
+### On-demand MCP servers
+
+MCP tool schemas are the largest addressable per-session token cost. So most
+local servers stay out of the always-on profile: `apple-events`, `zammad`,
+`fabric`, `grep`, `time`, and `token-meter` render to
+`~/.claude/mcp-available/<name>.json` instead of loading at session start.
+The always-on profile carries only what the gateway routes (`context7`,
+`memory`) plus `vikunja`. Codex was removed from the catalog entirely. See
+[Multi-model review](/ai-development/multi-model-review) for how it's
+invoked now.
+
+A repository attaches on-demand servers through its skill groups instead of listing
+them by hand: `programs.agentSkills.groupMcpServers` maps a group to server names
+(default `homelab` → `zammad`; `ai` → `fabric`, `grep`, `time`, `token-meter`), and the
+direnv linker unions those with any `AGENTS.md` `mcp-servers:` frontmatter into the
+managed part of an untracked `.mcp.json`. Ten rarely used Zammad tools stay denied by
+bare-name permission rules so their schemas never reach context even when the server
+attaches. The curated on-demand list is a config-level definition, so a consuming host
+can append a server without losing the default set.
 
 ## Getting started
 

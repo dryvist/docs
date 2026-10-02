@@ -8,6 +8,33 @@ page_type: "how-to"
 
 > Every commit is signed. The path is always Contents API web-flow; the identity changes with the execution context.
 
+
+{/*Shape: fan-in, every context signs through one path. 5 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Local([Local Mac<br/>GPG])
+  Bot([GitHub bot<br/>GITHUB_TOKEN])
+  AI([AI workflow<br/>App token])
+  API([Contents API<br/>web-flow signs])
+  Verified([Verified commit<br/>on protected branch])
+
+  Local --> API
+  Bot --> API
+  AI --> API
+  API --> Verified
+
+  classDef ctx fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class Local,Bot,AI ctx
+  class API,Verified gate
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 `required_signatures` is enforced org-wide by Repository Rulesets on every protected branch. A
 commit without a valid web-flow or GPG signature is rejected at the API. The five rows below are the
 only ways to land a commit that satisfies the ruleset.

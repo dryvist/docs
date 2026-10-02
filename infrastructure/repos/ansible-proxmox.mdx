@@ -10,6 +10,29 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox" />
 
+
+{/*Shape: linear chain, this repo's position. 3 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  TP([tofu-proxmox<br/>provision])
+  AP([ansible-proxmox<br/>configure])
+  APA([ansible-proxmox-apps<br/>deploy])
+
+  TP --> AP --> APA
+
+  classDef done fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef here fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class TP done
+  class AP here
+  class APA done
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 `ansible-proxmox` is the middle tier of the Proxmox stack. It owns everything that needs to be true
 about a Proxmox host *before* any workload runs on it. That includes ZFS, networking, swap and CPU
 tuning, users, hardening, and monitoring agents.

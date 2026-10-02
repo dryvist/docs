@@ -8,6 +8,28 @@ page_type: "reference"
 
 > The CI tier is whatever the workload actually needs. Build it from marketplace actions, version-pin every dependency, and treat releases as permanent.
 
+
+{/*Shape: linear release lifecycle. 3 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Commit([fix: / feat: commit])
+  Draft([release-please<br/>opens a draft])
+  Published([Published release<br/>permanent, never edited])
+
+  Commit --> Draft --> Published
+
+  classDef step fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef done fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class Commit,Draft step
+  class Published done
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 The policy on this page applies to every workflow under `JacobPEvans/*` and `dryvist/*`. The
 companion page [`git-signing`](/infrastructure/cicd/git-signing) covers identity and
 signed-commit attribution. This page covers everything else.

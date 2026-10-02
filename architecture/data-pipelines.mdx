@@ -1,6 +1,6 @@
 ---
 title: "Data pipelines"
-description: "Log and NetFlow ingest paths: UniFi gear and network devices to Splunk indexers, via HAProxy and Cribl Edge."
+description: "Cribl is the ingest hub for every signal; the fan-out default sends each format to every destination it fits, and consumers read their entity set from config, never from what happened to arrive."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -9,6 +9,57 @@ load-balances toward Cribl Edge, which routes, transforms, and reduces volume be
 Splunk over HEC.
 
 The goal: 30–50% ingest reduction without losing security signal.
+
+## Cribl is the hub, native first
+
+Every new data need is met from what already flows into Cribl Stream or Edge first: a native
+transform (Aggregations, Publish Metrics, Lookup, Eval), then a route. A data need never gets its
+own exporter, poller, proxy, or credential; a native flag on an agent that already runs is the
+preferred fix (for example a `node_exporter` collector flag, or loading a kernel module).
+
+When the data genuinely is not in Cribl yet, it's added by the path with the least new software, in
+order:
+
+1. A native Cribl source — REST Collector (e.g. Redfish), SNMP, NetFlow/IPFIX, or a Prometheus scrape.
+2. Cribl Edge system metrics.
+3. A single tool Cribl scrapes, only when the vendor offers no stream of its own. [unpoller](/observability/monitoring-agents)
+   is the approved case, because UniFi controller stats are API-only.
+
+Producers emit once, to Cribl. A producer wired straight to a single sink is the pattern this
+architecture exists to replace.
+
+## Fan-out: every source to every destination
+
+The default is that every source goes to every destination whose format fits, especially for
+low-volume data — a source never gets its own one-off destination:
+
+| Signal | Destinations |
+| --- | --- |
+| Metrics | the metrics store **and** the Splunk metrics index |
+| Events / logs | Splunk, plus any other event store that applies |
+| Traces | Langfuse and [Phoenix](/observability/phoenix) — never Splunk; a trace does not fit Splunk's event model |
+
+A route to a single destination needs a stated reason in its pull request. Data is duplicated
+across these systems on purpose, so the same signal can be compared between them. A feed is never
+removed because another sink already carries the same data — a failing feed gets fixed, not
+dropped. See [LLM observability](/observability/llm-observability) and
+[Pipeline flows](/observability/pipeline-flows) for the live OTLP fan-out and its current
+Langfuse/Phoenix legs.
+
+## Consumers read their entity set from config
+
+A dashboard or other consumer draws its entity set (nodes, VLANs, apps) from configuration, never
+from whichever series happen to come back from a query. A missing series shows as stale data with
+its age, then "no data since …" — it never silently disappears from the view. An entity is removed
+from a dashboard only by removing it from config, never by a query that stops returning it.
+
+## Versions: Renovate only
+
+Every dependency and pipeline-component version bump comes from Renovate; see
+Dependency automation coverage for the manager-by-pin-shape
+table, the annotation contract, and the gate a version needs when a hash rides beside it. No
+hand-written bump, no hand-pinned hash, and no hand `nix flake update` of a Renovate-managed input in
+this pipeline's repos.
 
 ## Log pipeline
 
@@ -94,6 +145,8 @@ Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before 
 
 ## DR posture
 
-Splunk Cloud failover is provisioned via `tofu-aws` (private). It brings up cold AWS resources
-(EC2, S3, Route 53) that accept the same HEC traffic if the home cluster is offline. Cribl Edge
-routes can be flipped to point at the AWS endpoint with a single config change.
+`tf-splunk-aws` provisions an on-demand Splunk and/or Cribl environment on AWS with plain OpenTofu,
+started or stopped on demand, that accepts the same HEC traffic if the home cluster is offline.
+Cribl Stream's output can be flipped from the homelab HEC to the AWS HEC by a routing-rule change.
+See Observability stack for the
+current toggle and schedule.

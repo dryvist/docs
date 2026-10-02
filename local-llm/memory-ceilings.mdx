@@ -1,6 +1,6 @@
 ---
 title: "Memory ceilings on Apple Silicon"
-description: "Why GPU memory utilization is a cap and not a reservation, how a live mode-aware wired ceiling and per-model load-time admission control keep a local LLM from paging the host with no rebuild, and the honest limits of that guarantee."
+description: "Why GPU memory utilization is a cap, not a reservation, and how runtime admission control stops a local model from paging the host."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -276,6 +276,18 @@ availableForKV  = effectiveBudget
                 − transientReserveBytes                   # ~10-20% of budget, from measured peaks
 perTokenKvBytes = 2 × kvLayers × kvHeads × headDim × kvDtypeBytes
 poolBlocks      = floor( availableForKV / (blockSize × perTokenKvBytes) )   # GLOBAL pool, not per-sequence
+```
+
+The budget breaks down into four pieces, in the order the wrapper subtracts them:
+
+{/*Shape: waterfall. One bar split into stacked, ordered deductions.*/}
+
+```mermaid
+flowchart LR
+  B["Wired ceiling budget"] --> W["Model weights<br/>fixed by the model"]
+  B --> C["Buffer + prefix cache"]
+  B --> T["Transient reserve<br/>~10-20% of budget"]
+  B --> K["What's left: live KV pool<br/>concurrency x window"]
 ```
 
 `--max-cache-blocks` is that global pool count: the whole paged-KV pool, shared

@@ -1,6 +1,6 @@
 ---
 title: "Agent context: llms.txt, registry, and RAG"
-description: "How a local-LLM agent loads project context without a human in the loop. It uses the llms.txt exports for whole-site reading, a machine-readable model and endpoint registry, and a retrieval index over the docs for targeted questions."
+description: "How a local-LLM agent loads project context: whole-site llms.txt exports, a model and endpoint registry, and a retrieval index for targeted questions."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -8,6 +8,17 @@ page_type: "explanation"
 > the whole site as one file, resolve a model or endpoint from a registry, or
 > ask a retrieval index a single question. They compose. The same docs feed all
 > three.
+
+{/*Shape: one source, three consumption paths.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart LR
+  D([Docs site]) --> A([llms.txt / llms-full.txt<br/>whole corpus])
+  D --> B([Registry JSON<br/>resolve a model or endpoint])
+  D --> C([RAG index<br/>answer one question])
+```
 
 Docs written for humans are also the raw material an agent runs on. Three small,
 boring conventions make that work without bespoke scraping, and none of them

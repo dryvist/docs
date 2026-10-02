@@ -5,6 +5,7 @@ page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 <Note>
+
 Status: **live.** No personal access token sits in the macOS keychain, and no
 shell function switches between token tiers.
 </Note>
@@ -22,13 +23,43 @@ automation runs. The
 [`martinbaillie/vault-plugin-secrets-github` v2.3.2](https://github.com/martinbaillie/vault-plugin-secrets-github/releases/tag/v2.3.2)
 plugin runs as an OpenBao service secrets engine at `github/`. OpenBao protects
 the App private key and performs GitHub's installation-token exchange. Consumer
-agents and runners cannot retrieve the private key from OpenBao. A privileged
-provisioning controller briefly supplies it during bootstrap or rotation.
+agents and runners cannot retrieve the private key from OpenBao. A human
+supplies it from Bitwarden at one gated provisioning converge, during bootstrap
+or rotation.
+
+<Warning>
+**Live gap: the key is also in Doppler**
+
+
+Today a copy of the App private key also sits in the operator's Doppler config,
+and the credential helper's `break-glass` and `repo-create` verbs read it. Any
+process launched as the operator can reach it. Removing it is tracked on
+Agent identity and access.
+The planned three-App split is on that page too.
+</Warning>
 
 This is a service secrets engine, not GitHub authentication for OpenBao. Agents
 still authenticate to OpenBao with their existing AppRole identity.
 
 ## Token flow
+
+{/*Shape: linear chain. Nodes: 5. Aspect: ~3:1 LR. Pass.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
+  A([Agent authenticates to OpenBao])
+  R([Requests tier-scoped token])
+  O([OpenBao calls GitHub with App key])
+  G([GitHub returns installation token])
+  L([Token returned with lease])
+
+  A --> R --> O --> G --> L
+
+  classDef n fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class A,R,O,G,L n
+```
 
 1. The agent authenticates to OpenBao as itself.
 2. It requests a token at the tier its OpenBao identity allows.
@@ -49,7 +80,7 @@ boundary.
 | Write | Exactly one named repository per request, at the App ceiling on that repo | The raw mint endpoint, with an OpenBao policy that requires and allowlists the repository parameter | Ambient for allowlisted repositories |
 | Admin | An account installation's full ceiling across every repository | A named full-automation permission set | Human-only: an interactive, single-use grant per elevation |
 
-Read and admin tiers mint from named permission sets, whose stored scope the
+Read and administrator tiers mint from named permission sets, whose stored scope the
 request body cannot widen. The write tier is the one identity allowed to use the
 raw mint endpoint. Its policy pins the request: the repository parameter is
 required and drawn from a reviewed allowlist. The parameters that would name
@@ -124,7 +155,7 @@ logical engines inside one OpenBao security boundary:
 
 They have separate mounts, configuration, policies, and leases. Normal API
 access to one mount does not authorize access to the other. They still share the
-OpenBao root and admin control plane, Raft storage boundary, hosts, plugin
+OpenBao root and administrator control plane, Raft storage boundary, hosts, plugin
 runtime, and outbound HTTPS. A compromise of that shared boundary can affect
 both engines.
 
@@ -134,9 +165,9 @@ both engines.
 | --- | --- |
 | Routine read of any account repository | Ambient read tier: a read-only permission set |
 | Automation that writes to a repository | Per-repository write tier: one allowlisted repository per request |
-| Access outside the App permission ceiling | Human-only, interactive break-glass admin tier |
+| Access outside the App permission ceiling | Human-only, interactive break-glass administrator tier |
 
-The service engine does not add a generic admin-verb broker. Routine reads and
+The service engine does not add a generic administrator-verb broker. Routine reads and
 per-repository writes are available to the agent within the reviewed allowlist.
 An installation-wide token, or a repository outside the allowlist, stays on a
 human-only, interactive break-glass path under
@@ -157,7 +188,7 @@ revoked. The controls are layered:
 - OpenBao audit logs.
 
 Per-repository write keeps a leaked write token's blast radius to one
-repository. The installation-wide admin tier stays human-gated precisely
+repository. The installation-wide administrator tier stays human-gated precisely
 because it is the broad one. That makes the shared OpenBao boundary the
 target that matters.
 
