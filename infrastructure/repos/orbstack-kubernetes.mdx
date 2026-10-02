@@ -11,9 +11,41 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 <RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/orbstack-kubernetes" />
 
 `orbstack-kubernetes` is the Kustomize-based manifest set for a local Kubernetes cluster on
-[OrbStack](https://orbstack.dev/). It runs the AI-development monitoring stack as five StatefulSets
-in a single `monitoring` namespace: an OTEL Collector, two Cribl Edges (one cloud-managed, one
-standalone), a local Cribl Stream, and a Cribl MCP server.
+[OrbStack](https://orbstack.dev/). It runs the AI-development monitoring stack in a single
+`monitoring` namespace, as five StatefulSets: an OTEL Collector, two Cribl Edges (one cloud-managed,
+one standalone), a local Cribl Stream, and a Cribl MCP server.
+
+
+{/*Shape: component/hub, two egresses. 5 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  subgraph orb["OrbStack · monitoring namespace"]
+  Otel(["otel-collector"])
+  Edge(["cribl-edge-standalone"])
+  Stream(["cribl-stream-standalone"])
+  Managed(["cribl-edge-managed"])
+  end
+  Splunk[("Splunk HEC")]
+  Cloud[("Cribl Cloud")]
+
+  Edge --> Stream
+  Otel --> Stream
+  Stream --> Splunk
+  Managed --> Cloud
+
+  classDef src fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
+
+  class Edge src
+  class Otel,Stream,Managed hop
+  class Splunk,Cloud sink
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
 
 ## Architecture invariant
 

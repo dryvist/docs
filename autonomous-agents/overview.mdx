@@ -23,6 +23,35 @@ boundary**, and tool permissions inside it become maximally lenient. The agent g
 `--dangerously-skip-permissions` precisely because there is nothing dangerous left
 to skip into.
 
+## The agent loop
+
+{/*Shape: linear loop. Boundary crossings: 1 (container). Nodes: 5. Aspect: ~3:1 LR. Pass.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
+  T([Trigger])
+  subgraph C[Container boundary]
+    A([Agent])
+    L([LLM])
+  end
+  O([Outcome])
+
+  T --> A --> L --> A --> O
+
+  classDef ext   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef inner fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+
+  class T,O ext
+  class A,L inner
+```
+
+An event fires the agent (an issue, a schedule, an alert). Inside the
+container, the agent calls the LLM and acts on its own tools. It loops until
+it reaches an outcome: a PR, a commit, a report. Nothing in that loop needs a
+human, because the boundary, not a human, is the safety control.
+
 ## The vendors all converged on this
 
 All three command-line tool vendors publish the same guidance. Bypass flags belong

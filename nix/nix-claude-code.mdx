@@ -20,10 +20,16 @@ rules are all declared as Nix data. Nix pins the version in `flake.lock`, rolls 
 - **Every marketplace, wired up.** Anthropic's official marketplaces (`claude-plugins-official`, `anthropic-agent-skills`) plus 15+ curated community marketplaces, refreshing automatically.
 - **Plugins as data.** Every plugin you enable lands in `programs.claude.enabledPlugins`, pinned by `flake.lock`, rolled back with the rest of your generation.
 - **Permissions you can read.** Auto-approved tools, deny lists, and the WebFetch allowlist live as structured Nix data. The same data feeds Codex, Antigravity, and any other AI agent you wire up.
+  Codex runs through its own CLI runtime now, not an MCP tool, so `mcp__codex__*` is
+  no longer in the allow list.
 - **Statusline themes.** Pick `powerline`, `ccstatusline`, or `daniel3303` with a single option.
 - **MCP plumbing.** Surface `programs.claude.mcpServers` from your favorite MCP runtime; they wire
   into Claude's `settings.json` exactly as the [official plugin
-  reference](https://code.claude.com/docs/en/plugins-reference) specifies.
+  reference](https://code.claude.com/docs/en/plugins-reference) specifies. Most of the
+  catalog is on-demand rather than always-on. See [AI tooling](/nix/nix-ai).
+- **Tool discovery pinned on.** `ENABLE_TOOL_SEARCH` defaults to `true`, the always-defer
+  setting, rather than the `auto:N` threshold that never deferred on a large context
+  window.
 - **Built on Anthropic's spec.** Reads `.claude-plugin/marketplace.json` and `.claude-plugin/plugin.json` per the upstream contract, with no proprietary formats.
 
 ## How it fits

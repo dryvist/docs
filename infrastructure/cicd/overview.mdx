@@ -6,6 +6,29 @@ page_type: "overview"
 {/* projected from the authoring site; do not edit here */}
 > CI validates code. Terrakube plans, locks, and applies OpenTofu inside the homelab.
 
+
+{/*Shape: linear pipeline, 4 stages. 4 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  PR([pull_request<br/>static validation])
+  Plan([Remote plan<br/>Terrakube executor])
+  Review([Review<br/>approval gate])
+  Apply([Apply<br/>workspace queue + lock])
+
+  PR --> Plan --> Review --> Apply
+
+  classDef ci      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef control fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class PR ci
+  class Plan,Review,Apply control
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do. Credentialed OpenTofu runs are a separate control-plane concern owned by Terrakube.
 
 For how secrets reach a workflow regardless of tier, read [Security](/security/overview). This page does not duplicate that material.

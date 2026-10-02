@@ -1,6 +1,6 @@
 ---
 title: "Local AI isolation"
-description: "Why AI tools (Claude Code, Antigravity, Codex) structurally cannot view protected secret values — no token at rest, scoped credential tiers, and explicit deny lists."
+description: "Why AI tools (Claude Code, Antigravity, Codex) structurally cannot view protected secret values—no token at rest, scoped credential tiers, and explicit deny lists."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -10,7 +10,17 @@ This page is the proof, not just the claim. AI tools running on this workstation
 values behind the locked keychain. They cannot obtain a GitHub write credential without taking a
 visible lease, and they cannot read the file paths where keys live at rest.
 
-## Layer 1 — nothing is stored, so there is nothing to steal
+<Warning>
+**Live gap**
+
+These layers hold for the target identities, not for today. Every agent
+session still runs as the operator. The operator's Doppler config holds GitHub
+write AppRole pairs and the App private key, and `token write` takes no lease.
+Live status is on
+Agent identity and access.
+</Warning>
+
+## Layer 1—nothing is stored, so there is nothing to steal
 
 There is no GitHub token at rest on the workstation. Every GitHub credential is an ephemeral GitHub
 App installation token minted at the moment of use and discarded with the process that asked for it.
@@ -54,7 +64,7 @@ persist that credential, exactly the property this layer exists to remove. Mint
 at call time instead.
 </Warning>
 
-## Layer 2 — three credential tiers, and only one is ambient
+## Layer 2—three credential tiers, and only one is ambient
 
 The credential an agent can obtain without ceremony is deliberately the least useful one. Escalation
 is not a matter of reading a different secret; it is a different minting path with a different gate.
@@ -68,14 +78,14 @@ is not a matter of reading a different secret; it is a different minting path wi
 This is a stronger boundary than "which secret can you read." A read credential cannot be widened
 into a write credential. The write tier mints from a different endpoint under a policy that
 pins the repository parameter server-side. An agent that claims write on one repository still cannot
-touch a second one with that token. And the administrator tier has no non-interactive path at all.
+tap a second one with that token. And the administrator tier has no non-interactive path at all.
 There is nothing for an agent to read, unlock, or guess.
 
 The lease is the visibility mechanism: a write claim is recorded, exclusive, and self-expiring.
 Two agents cannot silently both hold write on one repository. See [GitHub
 access](/autonomous-agents/github-access) for the full model.
 
-## Layer 3 — the keychain holds nothing an agent needs
+## Layer 3—the keychain holds nothing an agent needs
 
 There is no AI-readable keychain tier. Every automated read moved to the runtime
 manager, and what stays on the keychain is human-only break-glass material in a
@@ -84,7 +94,7 @@ The boundary that matters here is that an AI subprocess cannot satisfy the unloc
 prompt. There is no unlocked database holding a credential it could use
 instead.
 
-## Layer 4 — explicit allow / deny lists in Claude Code
+## Layer 4—explicit allow / deny lists in Claude Code
 
 The Claude Code permission system bakes a deny list into the build. Even if the previous layers were bypassed, the harness refuses the file paths that would yield secret material.
 
@@ -97,7 +107,7 @@ The Claude Code permission system bakes a deny list into the build. Even if the 
 
 The allow list lets the AI inspect *metadata*, such as whether a keychain entry with a given service name exists, without ever returning the value.
 
-## Layer 5 — unattended convergence belongs to one identity
+## Layer 5—unattended convergence belongs to one identity
 
 The interactive human account has no password-less escalation. Every `sudo` it
 runs is biometrically gated, convergence included. Unattended convergence runs

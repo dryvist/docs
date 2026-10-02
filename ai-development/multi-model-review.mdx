@@ -1,6 +1,6 @@
 ---
 title: "Running plan and diff reviews through Codex, Gemini, and local MLX"
-description: "How to fan a plan or diff out to three independent model families: the Codex CLI, the Antigravity (agy) CLI for Gemini, and a local MLX model, for adversarial review, plus the gotcha each one hits."
+description: "How to fan a plan or diff out to three model families for adversarial review, and the gotcha each one hits."
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -11,10 +11,13 @@ This is the working recipe for fanning a plan or diff out to **Codex**,
 different invocation paths, plus the one gotcha each hits, so the fan-out is
 repeatable instead of rediscovered every time.
 
-## Codex — via the Codex CLI
+## Codex — via the codex plugin, not MCP
 
-Use the Codex MCP tool (the Codex CLI runtime), not a raw API call. It reads
-the repository itself instead of needing file contents pasted into the prompt.
+Use the `codex` Claude Code plugin's `/codex-review` or
+`/codex-adversarial-review` command, which shells out to the Codex CLI
+runtime directly. There is no `codex` MCP tool any more. It was removed
+from the nix-ai catalog. The plugin reads the repository itself instead of
+needing file contents pasted into the prompt.
 
 - **Sandbox**: `read-only`; **approval-policy**: `never`; **cwd**: the repo under review.
 - Point it at the plan or diff path in the prompt.
@@ -108,7 +111,7 @@ Gemini CLI are all real, current tools."* This keeps the review grounded.
 
 | Family | Path that works | Top gotcha |
 | --- | --- | --- |
-| Codex | Codex MCP/CLI | ChatGPT-backed sessions reject explicit model overrides: omit the parameter |
+| Codex | `codex` plugin (`/codex-review`) | ChatGPT-backed sessions reject explicit model overrides: omit the parameter |
 | Gemini | Antigravity `agy` CLI, `-p` + `--add-dir` | Flash tiers hallucinate on factual review: use the strongest reasoning tier |
 | Local model | Direct HTTP call to the OpenAI-compatible endpoint | Confirm the serving daemon is up; use the real served model id |
 

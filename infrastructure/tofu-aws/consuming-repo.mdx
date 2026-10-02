@@ -6,6 +6,29 @@ page_type: "how-to"
 {/* projected from the authoring site; do not edit here */}
 > The repo declares resources. Terrakube owns execution and state. OpenBao mints the AWS session.
 
+
+{/*Shape: linear credential chain. 4 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Repo([Repo<br/>cloud block])
+  Terrakube([Terrakube<br/>OpenBao identity])
+  Bao[(OpenBao<br/>ephemeral STS role)]
+  AWS([AWS provider<br/>scoped session])
+
+  Repo --> Terrakube --> Bao --> AWS
+
+  classDef edge fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sec  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class Repo,Terrakube edge
+  class Bao,AWS sec
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
 ## Repo shape
 
 ```text

@@ -11,6 +11,38 @@ engine inside is `tofu` (see [IaC tooling](/infrastructure/iac-tooling)). Every 
 opinionated about deployment shape. It uses LXC for production homelab workloads, Docker on a
 dedicated VM only when vendor-locked, and AWS for disaster recovery and managed services.
 
+## How the pieces fit together
+
+{/*Shape: three-lane pipeline plus two supporting planes. 6 nodes. Aspect ~3:1 LR.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+  Provision([Provision<br/>OpenTofu])
+  Configure([Configure<br/>Ansible])
+  Deploy([Deploy<br/>apps + services])
+  CICD([CI/CD<br/>validates every change])
+  AWS([AWS<br/>DR + managed services])
+
+  Provision --> Configure --> Deploy
+  CICD -.->|gates| Provision
+  AWS -.->|failover target| Deploy
+
+  classDef stage fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef support fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+
+  class Provision,Configure,Deploy stage
+  class CICD,AWS support
+
+  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
+```
+
+Every guest follows the same three-stage pipeline: OpenTofu provisions it, Ansible configures it,
+then the app stack deploys on top. CI/CD gates every change before it reaches provisioning, and the
+AWS module map exists mainly as a failover target and for managed services the homelab doesn't run
+itself.
+
 ## The Proxmox stack
 
 {/*Shape: linear chain. 3 nodes. Boundary crossings: 0. Aspect: ~3:1 LR. Pass.*/}

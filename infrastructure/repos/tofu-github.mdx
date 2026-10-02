@@ -1,6 +1,6 @@
 ---
 title: "GitHub org governance"
-description: "OpenTofu-managed GitHub organization governance for the dryvist org: push-protection, branch-protection, and review-gate rulesets, plus the org-wide markdown-lint required workflow — as code instead of click-ops repeated per repo."
+description: "OpenTofu-managed GitHub org rulesets: push protection, branch protection, and review gates, applied once instead of click-ops per repo."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -22,6 +22,10 @@ Team plan) let dryvist define this once and apply it to every repo automatically
 - **Branch protection.** Required commit signatures, a branch-name pattern, a strict Conventional
   Commits regex, and PR thread resolution on every default branch, with no bypass for anyone,
   including org admins.
+- **Upstream forks.** A fork of a third-party project sets `upstream_fork: true` in
+  `config/repos.yml`. Upstream history can't meet the signature and commit-format rules, so the
+  fork is exempt from them. Its default branch still requires a PR, allows merge commits only, and
+  blocks deletion and force-push.
 - **Review gate.** One approving review plus a CODEOWNER review on every default branch, with an
   admin-only bypass so admins can merge their own PRs while bots and other contributors still need
   the review.

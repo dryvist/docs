@@ -10,6 +10,18 @@ The AI development surface is opinionated, not magical. Each model has a sweet s
 role. Universal configuration lives in one place so every IDE, every agent, every command-line tool
 reads the same rules.
 
+{/*Shape: layered. Config feeds tools, tools route to models. TB, small.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
+  flowchart TB
+  CFG([Universal config<br/>CLAUDE.md · AGENTS.md])
+  TOOLS([Cloud models + local inference<br/>Claude Code · Antigravity · Copilot · MLX])
+  ROUTE([Model routing<br/>one endpoint, cheapest capable tier])
+  CFG --> TOOLS --> ROUTE
+```
+
 ## The tools landscape
 
 | Layer | Repo / tool | What it owns |
