@@ -125,13 +125,10 @@ timestamps carry a UTC offset, so a local-time workstation stays skew-safe.
 
 Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cribl_s2s` service port from the same pipeline constants.
 
-## Per-index HEC outputs and derived tokens
+## Per-index HEC outputs
 
 Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per
-index**, each with its own token. Tokens are never distributed. Both sides derive the same value as
-a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC
-inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a
-single index.
+index**, each with its own token scoped to a single index.
 
 Each index also has a **silence detector**, a per-index alert that fires when the index stops
 receiving events within its expected cadence. A broken port, token, or sender surfaces as "index

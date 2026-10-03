@@ -60,7 +60,7 @@ egress, and git.
 
 | Vendor | Bypass mechanism | Isolation guidance |
 | --- | --- | --- |
-| **Anthropic** | `--dangerously-skip-permissions` | Only inside a [devcontainer](https://code.claude.com/docs/en/devcontainer) or [sandbox](https://code.claude.com/docs/en/sandbox-environments); hard-rejected when running as root. Agent SDK secure deployment: never mount host secrets, inject credentials from outside, credential-injecting proxy as the end-state. |
+| **Agent SDK** | `--dangerously-skip-permissions` | Only inside an isolated container or sandbox; hard-rejected when running as root. Never mount host secrets. |
 | **OpenAI Codex** | `approval_policy` + `sandbox_mode` axes | [`--yolo`](https://developers.openai.com/codex/) (`danger-full-access` + `never`) only inside a container; network is off by default even in `workspace-write`. |
 | **Antigravity (`agy`)** | `--dangerously-skip-permissions` | Its own sandbox is turned off and the posture is not coupled to it: the weakest pairing of the three, and the only tool that cannot carry the posture as a settings key at all, so the coupling is enforced by the launcher and the sandbox around it. |
 
@@ -69,7 +69,7 @@ The convergent model:
 - The container is the boundary.
 - Bypass flags work only inside it.
 - Default-deny egress.
-- Short-lived, scoped credentials injected from outside.
+- Short-lived, scoped credentials.
 - Git is the safety net.
 
 ## Three profiles

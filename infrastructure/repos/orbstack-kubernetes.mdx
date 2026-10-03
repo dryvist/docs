@@ -78,11 +78,9 @@ The design makes a session on the laptop produce the same telemetry as one on a 
 the homelab Edge.
 </RepoFit>
 
-## Secrets and overlays
+## Overlays
 
-Nix and direnv pre-inject secrets into the Claude Code session (SOPS-decrypted env vars).
-`secrets.enc.yaml` is the source of truth. `secrets.enc.yaml.example` is the template. Base
-manifests in `k8s/monitoring/` use the literal string `PLACEHOLDER_HOME_DIR` for hostPath volumes;
+Base manifests in `k8s/monitoring/` use the literal string `PLACEHOLDER_HOME_DIR` for hostPath volumes;
 the base never replaces it. `scripts/generate-overlay.sh` produces the gitignored
 `k8s/overlays/local/` at deploy time.
 
@@ -92,11 +90,8 @@ the base never replaces it. `scripts/generate-overlay.sh` produces the gitignore
 <Step title="Activate the dev shell">
 `cd ~/git/orbstack-kubernetes/main && direnv allow`. Provides kubectl, kubectx, helm, kustomize, kubeconform, kube-linter, conftest, pluto, k9s, stern, kind, jq, yq.
 </Step>
-<Step title="Seed the secrets file">
-`cp secrets.enc.yaml.example secrets.enc.yaml && sops secrets.enc.yaml`. Encrypt-on-save; never commit a plaintext copy.
-</Step>
-<Step title="Deploy">
-`make deploy-doppler`. Generates the overlay, creates secrets, applies the kustomize bundle. Verify with `make status`.
+<Step title="Verify deployment">
+Run `make status`.
 </Step>
 <Step title="Run the tests">
 `make test-all` chains unit → smoke → pipeline → forwarding → sourcetypes. CI enforces the same chain on every PR.
@@ -109,8 +104,7 @@ E2E tests run on a self-hosted ARM64 runner **on the laptop** while it is
 powered on. The runner is a stock `myoung34/github-runner:ubuntu-jammy` container with
 `EPHEMERAL=1`, managed by `docker/actions-runner/docker-compose.yml`. A macOS
 LaunchAgent invokes `make runner-foreground` for boot persistence.
-`make runner-doctor` is the deep health check. The runner requires OrbStack
-running and Doppler authenticated.
+`make runner-doctor` is the deep health check. The runner requires OrbStack.
 
 That laptop runner is **not** the always-on Mac Studio fleet (**mac-fleet**,
 GitHub group still named `llm-runners`). Studio jobs are Linux ARM64 inside

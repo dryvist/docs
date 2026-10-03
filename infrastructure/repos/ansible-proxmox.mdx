@@ -65,8 +65,8 @@ Run once per host after OpenTofu finishes. Re-running is safe. Every role is ide
 <Step title="Point at the OpenTofu inventory">
 Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
 </Step>
-<Step title="Resolve secrets via Doppler">
-`DOPPLER_TOKEN` lets the playbook fetch host passwords, SSH keys, and monitoring tokens at run time. No secrets in git.
+<Step title="Required environment">
+The playbook reads `DOPPLER_TOKEN`.
 </Step>
 <Step title="Run the playbook">
 `ansible-playbook -i inventory site.yml`. The first run is the slow one; subsequent runs only converge what's drifted.

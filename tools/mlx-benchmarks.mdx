@@ -281,7 +281,8 @@ From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .
 serve` directly if you're not on the Nix stack.
 </Step>
 <Step title="Install and authenticate">
-`git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
+Run `uv sync` in the repository checkout.
+The benchmark workflow reads `HF_TOKEN` with write scope on the dataset namespace.
 </Step>
 <Step title="Run a smoke benchmark">
 Point `lm-eval` at the local endpoint:

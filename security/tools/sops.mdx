@@ -1,6 +1,6 @@
 ---
 title: "SOPS"
-description: "Encrypted-at-rest configuration committed directly to git — age keys, .sops.json files, and the editor / decrypt workflow."
+description: "Encrypted-at-rest configuration committed to git, with age recipients and an editor workflow."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -12,8 +12,7 @@ page_type: "reference"
 
 SOPS encrypts the *values* in a structured config file (YAML, JSON, TOML, dotenv, INI) while leaving
 the keys readable. The encrypted output is a regular file with structured contents, for example
-`terraform.sops.json` or `secrets.enc.yaml`. It lives in git and is decrypted at runtime by the age
-private key. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells
+`terraform.sops.json` or `secrets.enc.yaml`. The repo-root `.sops.yaml` is a separate, unencrypted *configuration* file that tells
 SOPS which paths to encrypt and with which keys (see [SOPS configuration
 file](#sops-configuration-file) below).
 
@@ -26,12 +25,11 @@ human-only, the Keychain).
 ## What does not belong in SOPS
 
 - Live API keys that rotate frequently. `git log` keeps the encrypted history forever, and
-  "encrypted today" is only as strong as the age key. Use the runtime manager, or an engine that
-  mints them per call.
+  "encrypted today" is only as strong as the age key.
 - SSH keys, recovery codes. These are human-only material; Bitwarden.
 - Anything you cannot afford to have in a public-fork forever. Encryption is not deletion.
 
-## The encrypt / commit / decrypt cycle
+## The encrypt / commit cycle
 
 <Steps>
 <Step title="Edit plaintext">
@@ -43,12 +41,7 @@ The author edits the plaintext source.
 <Step title="Commit the encrypted file">
 The committed `.sops.json` keeps metadata (key fingerprints, file hash) readable; values stay encrypted in git history forever.
 </Step>
-<Step title="Decrypt at runtime">
-`sops -d` (often via OpenTofu/Ansible glue) yields plaintext into a subprocess only. Nothing persists to disk.
-</Step>
 </Steps>
-
-The age private key lives in the SOPS age key path, passphrase-protected at rest; the canonical backup is escrowed in Bitwarden.
 
 ## SOPS configuration file
 
@@ -61,7 +54,7 @@ creation_rules:
       age1aaaa... # public age recipient
 ```
 
-Only the public half of the age key appears here. The private half stays local and passphrase-protected, and is escrowed in Bitwarden (canonical backup).
+Only the public half of the age key appears here.
 
 ## Editing an existing SOPS file
 
@@ -75,17 +68,14 @@ actually encrypted.
 
 ## Rotating the age key
 
-1. Generate a new key: `age-keygen -o ~/.config/sops/age/keys.txt.new`
-2. Update `.sops.yaml` in each affected repo to add the new public recipient (keep the old one until cutover).
-3. Run `sops updatekeys .sops.json` across every encrypted file.
-4. Remove the old recipient from `.sops.yaml`; run `sops updatekeys` again.
-5. Escrow the new key in Bitwarden; revoke the old.
+1. Update `.sops.yaml` in each affected repo to add the new public recipient (keep the old one until cutover).
+2. Run `sops updatekeys .sops.json` across every encrypted file.
+3. Remove the old recipient from `.sops.yaml`; run `sops updatekeys` again.
 
 The cycle is documented in [`agentsmd/rules/config-secrets.md`](https://github.com/JacobPEvans/ai-assistant-instructions). Keep it in muscle memory for the team.
 
 ## Best practices
 
-- Escrow the age private key in Bitwarden the moment it is generated. The local file is convenience; the escrow is canonical.
 - Use one age key per "trust domain": homelab gets one key, AWS infra gets another. Compromise of one does not leak the other.
 - Pre-commit hook in every repo that uses SOPS to verify staged `.sops.json` files have non-plaintext values. This is the cheapest control.
 - Never store the same value in two tiers. If it rotates, it belongs in the runtime manager (T2). If it never rotates and matters to one repo only, SOPS.

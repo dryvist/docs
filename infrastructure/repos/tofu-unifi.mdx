@@ -1,6 +1,6 @@
 ---
 title: "UniFi networking"
-description: "OpenTofu management of the UniFi controller through Terrakube, with native OpenBao credentials."
+description: "OpenTofu management of the UniFi controller through Terrakube."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -27,7 +27,7 @@ One generic module per resource type covers the controller's data plane:
   stateful-return rule) are written but deferred. See [provider
   notes](#provider-notes-unifi-network-9)
 - WAN uplinks (primary, secondary, LTE failover), the WireGuard VPN server, RADIUS, and the controller's dynamic-DNS record
-- Subnet values are non-secret desired state shared by both repos. Passphrases, VPN keys, and shared secrets come ephemerally from native OpenBao paths.
+- Subnet values are non-secret desired state shared by both repos.
 
 ## How it fits
 
@@ -97,7 +97,7 @@ defer what you can't, and document it. Don't fight the provider.
 
 ## Authentication
 
-UniFi services use API-key authentication. Credential management details are documented in internal documentation.
+UniFi services use API-key authentication.
 
 ## Network topology
 

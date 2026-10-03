@@ -13,7 +13,7 @@ Every repo across the org has exactly one canonical transport. The visibility of
 | Repo visibility | Transport | Remote URL shape | Authenticates via |
 | --- | --- | --- | --- |
 | Public | SSH | `git@github.com:<owner>/<repo>.git` | Unlocked SSH key |
-| Private | HTTPS | `https://github.com/<owner>/<repo>.git` | A GitHub token, resolved per request by a credential helper |
+| Private | HTTPS | `<remote-url>` | A GitHub token |
 
 The owner (personal account, org, fork) does not matter. A public dryvist repo gets SSH; a private personal repo gets HTTPS. The transport is a property of the repo, not the account.
 
@@ -38,16 +38,7 @@ A private repo's write path is *only* gated by client-side credentials. If a pri
 - An unlocked SSH key is always on. It would auto-authenticate to every private repo the user can reach, with no per-repo scope and no record of which tool initiated the push.
 - Any process with read access to `~/.ssh/id_*` could push, because SSH is binary "key works" or "key doesn't." There is no fine-grained scope on the SSH side.
 
-Routing private pushes through HTTPS forces the git client to look up a credential on every `git
-push`. A credential helper answers that lookup with a token scoped to the
-repository being pushed, not a standing credential for everything the user can
-reach. So each push is authorized on its own, one repository at a time, and
-the least-privilege gate stays meaningful for writes.
-
-Without an appropriately scoped credential, a private push fails at the lookup. That is the point.
-It makes the user (or AI agent) escalate explicitly, and visibly, for that one repository, before
-any write reaches the remote. See [GitHub access](/autonomous-agents/github-access) for
-what the helper mints and how the tiers are gated.
+Private pushes require a credential scoped to the target repository.
 
 ## Setting the right remote URL
 

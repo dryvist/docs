@@ -72,9 +72,6 @@ The runner and webhook paths keep working.
 <Step title="Clone and let direnv activate the dev shell">
 `git clone https://github.com/dryvist/tofu-runs-on.git && cd tofu-runs-on && direnv allow`
 </Step>
-<Step title="Confirm the Terrakube workspace">
-The workspace receives short-lived AWS credentials from OpenBao's native dynamic credentials path. The RunsOn license is read ephemerally from its OpenBao path.
-</Step>
 <Step title="Plan and apply">
 Run `tofu plan`, review the remote plan, then `tofu apply`. Terrakube owns state and locking.
 </Step>

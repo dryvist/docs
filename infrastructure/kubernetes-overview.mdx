@@ -91,13 +91,11 @@ shortcut it.
 
 The same invariant holds on the homelab side: the production Cribl Edge tier sends to Cribl Stream; Stream is the only component with Splunk egress. Different platform, same shape.
 
-## Secrets, overlays, and deploy
+## Overlays and deploy
 
-Secrets are pre-injected into the Claude Code session via Nix + direnv (SOPS-decrypted env vars).
-`secrets.enc.yaml` is the source of truth. Base manifests in `k8s/monitoring/` use the literal
+Base manifests in `k8s/monitoring/` use the literal
 `PLACEHOLDER_HOME_DIR` for hostPath volumes; it is never replaced in the base. The generated
-`k8s/overlays/local/` is gitignored and produced at deploy time. `make deploy-doppler` does the
-whole dance; CI enforces the same chain on a self-hosted ARM64 runner.
+`k8s/overlays/local/` is gitignored and produced at deploy time.
 
 ## When to add a new workload
 

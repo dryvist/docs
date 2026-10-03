@@ -14,6 +14,8 @@ side which version did better.
 
 ## Set up once
 
+The evaluator reads `OPENROUTER_API_KEY`.
+
 You need [Nix](https://nixos.org/download) (with flakes) and
 [direnv](https://direnv.net). Those are the only two things you install by hand;
 the eval runner and everything else come from the dev shell. There is no `npm`.
@@ -23,7 +25,6 @@ git clone git@github.com:dryvist/llm-prompt-evals.git
 cd llm-prompt-evals
 direnv allow                   # loads the dev shell: promptfoo, python, node
 git submodule update --init    # fetch the prompt catalog
-cp .env.example .env           # paste your OPENROUTER_API_KEY into .env
 ```
 
 ## Evaluate a prompt

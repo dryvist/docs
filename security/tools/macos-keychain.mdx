@@ -1,26 +1,10 @@
 ---
 title: "macOS Keychain"
-description: "The keychain is human-only. The automation tier is retired, every automated read moved to the runtime manager, and no AI-readable database remains."
+description: "Human-only keychain access, locking, and entry management."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
 > One job left: human break-glass. There is no AI-readable keychain tier.
-
-<Note>
-**The automation keychain tier is retired.** Every automated read moved to
-[OpenBao](/security/tools/openbao) (T2), where an agent authenticates via
-AppRole with zero interactive prompts. The AppRole secret-zero that bootstraps
-that path is not kept in a keychain. The run-wrapper publishes it into the
-agent's environment. What remains on the keychain is human-only break-glass
-material behind a locked database. It also holds ordinary login convenience
-that no automated flow depends on. See the [four-tier model](/security/comparison).
-</Note>
-
-<Warning>
-**No GitHub token lives here.** Every GitHub token is an ephemeral GitHub App
-installation token minted on demand and never written to disk. See
-[GitHub access](/autonomous-agents/github-access) for the model.
-</Warning>
 
 ## One database that matters
 
@@ -34,34 +18,6 @@ credential is placed there for an agent to find.
 | --- | --- | --- | --- |
 | Human-only tier | Locked, GUI unlock prompt | Break-glass material such as a root or administrator credential | No: the prompt blocks any non-interactive read |
 | Login tier | Unlocked at login | Personal login convenience only | Not used by any automated path |
-
-Machine secret-zero does not live on the keychain. The per-domain AppRole that
-bootstraps T2 reaches an agent through the run-wrapper's environment. The
-keychain holds no AppRole, no app secret, and no service token an agent
-consumes.
-
-## Reading a keychain entry the right way
-
-The last positional argument is the keychain path. Omit it and `security` searches the login
-keychain only. That keychain does not contain these entries. Always pass the path explicitly so the lookup
-hits the right database:
-
-```bash
-# Fetch once into a variable; never inline the read into every command.
-SOME_TOKEN=$(security find-generic-password \
-  -a <account-label> \
-  -s <service-name> \
-  -w \
-  ~/Library/Keychains/<keychain-name>.keychain-db)
-
-# Use the variable.
-SOME_TOKEN=$SOME_TOKEN <cli> auth whoami
-```
-
-Each `security find-generic-password` call against the locked human-only keychain triggers an unlock
-prompt; inlining the read on every command would prompt every time. Fetch once, inject the variable
-across the session, and unset it when done. A prompt is the expected behaviour here, not an
-obstacle to work around.
 
 ## Adding a new keychain entry
 
@@ -78,7 +34,7 @@ The `-U` flag updates if the entry already exists.
 
 ## Best practices
 
-- Do not add a credential here for an automated flow to read. If a process needs it, it belongs in the runtime manager or is minted per call.
+- Do not add a credential here for an automated flow to read.
 - Keep break-glass material in the locked database only. The unlock posture is the whole control.
 - Cap the auto-lock timeout on the human-only database (~5 minutes idle) so an abandoned session re-locks.
 - Biometric confirmation gates every privilege escalation on the interactive human account.
@@ -88,6 +44,6 @@ The `-U` flag updates if the entry already exists.
 
 ## See also
 
-- [GitHub access](/autonomous-agents/github-access): the ephemeral installation-token model that replaced GitHub tokens in the keychain.
+- [GitHub access](/autonomous-agents/github-access): access policy.
 - [Local AI isolation](/security/local-ai-isolation): the scoping that pairs with the keychain split.
 - [Harness trust tiers](/autonomous-agents/harness-trust-tiers): which identity may escalate privilege unattended.

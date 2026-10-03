@@ -83,10 +83,7 @@ Three special-purpose VLANs sit outside the tier numbering:
 | 5 | Management | Infrastructure management, including BMC / out-of-band |
 | 53 | DNS | Dedicated DNS network (named for port 53) |
 
-**CIDR pattern, not the real subnet.** Each VLAN's subnet follows the pattern
-`192.168.<vlan-tag>.0/24`. The VLAN tag drops straight into the third octet. The real subnets are
-secret and injected at runtime, never committed; the preceding pattern is a placeholder shape, not
-a live address.
+The VLAN tag occupies the third octet of the subnet placeholder.
 
 [UniFi zones](/infrastructure/repos/tofu-unifi) group one or more VLANs by trust posture rather
 than mapping one zone per VLAN. The current zones are **Management**, **Default**, and

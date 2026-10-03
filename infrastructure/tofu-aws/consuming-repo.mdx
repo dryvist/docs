@@ -1,30 +1,29 @@
 ---
 title: "Consuming AWS workspace setup"
-description: "Connect an AWS OpenTofu repo to Terrakube and obtain short-lived AWS credentials through OpenBao."
+description: "Connect an AWS OpenTofu repo to Terrakube for remote execution and state."
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
-> The repo declares resources. Terrakube owns execution and state. OpenBao mints the AWS session.
+> The repo declares resources. Terrakube owns execution and state.
 
 
-{/*Shape: linear credential chain. 4 nodes. Aspect ~3:1 LR.*/}
+{/*Shape: linear execution chain.*/}
 
 ```mermaid
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   Repo([Repo<br/>cloud block])
-  Terrakube([Terrakube<br/>OpenBao identity])
-  Bao[(OpenBao<br/>ephemeral STS role)]
-  AWS([AWS provider<br/>scoped session])
+  Terrakube([Terrakube<br/>execution + state])
+  AWS([AWS provider])
 
-  Repo --> Terrakube --> Bao --> AWS
+  Repo --> Terrakube --> AWS
 
   classDef edge fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef sec  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
 
   class Repo,Terrakube edge
-  class Bao,AWS sec
+  class AWS sec
 
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
@@ -53,39 +52,9 @@ terraform {
     aws = {
       source = "hashicorp/aws"
     }
-    vault = {
-      source = "hashicorp/vault"
-    }
   }
 }
 ```
-
-## Credentials
-
-Terrakube gives the run a short-lived OpenBao identity. The Vault provider uses
-that native identity, and an ephemeral AWS credentials resource mints a scoped
-STS session for the AWS provider. No long-lived AWS key, aws-vault profile,
-Doppler value, or Terrakube secret variable is in the path.
-
-```hcl
-provider "vault" {}
-
-ephemeral "vault_aws_access_credentials" "workspace" {
-  mount = var.openbao_aws_mount
-  role  = var.openbao_aws_role
-  type  = "sts"
-}
-
-provider "aws" {
-  region     = var.aws_region
-  access_key = ephemeral.vault_aws_access_credentials.workspace.access_key
-  secret_key = ephemeral.vault_aws_access_credentials.workspace.secret_key
-  token      = ephemeral.vault_aws_access_credentials.workspace.security_token
-}
-```
-
-The OpenBao role, policy, and AWS trust relationship are platform-owned. A
-workspace can mint only the role assigned to it.
 
 ## Validate and run
 
@@ -112,4 +81,3 @@ Provider and module packages resolve through the homelab mirror.
 
 - [OpenTofu on AWS overview](/infrastructure/tofu-aws/overview)
 - [IaC tooling](/infrastructure/iac-tooling)
-- [OpenBao](/security/tools/openbao)

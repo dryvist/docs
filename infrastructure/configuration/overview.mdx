@@ -68,10 +68,10 @@ OpenTofu outputs an inventory. Each Ansible role consumes it independently. Ink 
 </Card>
 </CardGroup>
 
-## Secrets
+## Environment
 
 <Note>
-Doppler is the secrets backend for the Ansible inventories. `DOPPLER_TOKEN` resolves project-specific secrets at run time. Nothing sensitive lands in git.
+The playbooks read `DOPPLER_TOKEN`.
 </Note>
 
 ## Where to go next

@@ -6,9 +6,6 @@ on:
   pull_request:
     types: [opened, ready_for_review]
 
-# The router authenticates via an app installation token minted inside the
-# called workflow (the org private key is forwarded explicitly below), so
-# the GITHUB_TOKEN needs nothing beyond contents: read.
 permissions:
   contents: read
 

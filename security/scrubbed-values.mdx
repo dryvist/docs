@@ -1,15 +1,15 @@
 ---
 title: "Scrubbed values"
-description: "The canonical placeholders for IPs, domains, usernames, and tokens in every committed file. Variable indirection, portable paths, keychain reuse."
+description: "The canonical placeholders for IPs, domains, usernames, and tokens in every committed file. Variable indirection and portable paths."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Every committed value must work for any person who clones the repo right now. Real values come from runtime injection, never the filesystem.
+> Every committed example uses placeholders.
 
 [Golden law
 1](/security/golden-laws#1-no-secret-at-rest-in-plaintext-outside-an-authorized-store) forbids
 real secrets in repo content. The table below is the canonical set of shape stand-ins to use
-*instead*, plus the injection paths that supply the real values at runtime.
+*instead*.
 
 ## Scrubbed values
 
@@ -34,9 +34,7 @@ The public `docs` repo runs a fail-closed [gitleaks](https://github.com/gitleaks
 [`gitleaks-action`](https://github.com/gitleaks/gitleaks-action). A finding fails the job, so a
 sensitive value cannot merge.
 
-So the *list of what counts as sensitive stays private*, the rule set is **never committed**. It
-lives only as the `dryvist` org Actions secret `GITLEAKS_PRIVATE_CONFIG`, injected into CI at run
-time. The scan runs with `--redact`, and the public-output features (PR comments, SARIF artifact,
+The scan reads `GITLEAKS_PRIVATE_CONFIG` and runs with `--redact`. Public-output features (PR comments, SARIF artifact,
 job summary) are turned off. Neither the patterns nor any match ever surface publicly. `useDefault`
 covers generic credentials; org-specific rules cover the values that must never appear here.
 
@@ -71,38 +69,6 @@ provider "proxmox" {
   pm_api_token_id = "terraform@pam!abc123xyz="
 }
 ```
-
-## Runtime secret injection
-
-Real values come from one of these stores, never the repo:
-
-- **macOS Keychain** (the human-only database): for break-glass material a human reads at a keyboard, never in files or env vars
-- **Doppler**: `doppler run --name-transformer tf-var` for infrastructure
-- **SOPS + age**: encrypted secrets at rest in git
-- **Environment variables**: CI/CD secrets or local `.env` files (never committed)
-- **AWS Secrets Manager / Parameter Store**: for AWS deployments
-- **SSH agent**: agent forwarding only; never commit keys
-
-Tool deep-dives for each store live under [Secrets tools](/security/overview#which-tool-for-which-secret).
-
-## macOS Keychain reuse
-
-**Every keychain read triggers a password approval prompt.** Fetch the secret once into a shell
-variable, then inject the variable into every command that needs it. Never inline `$(security
-find-generic-password ...)` in each command.
-
-```bash
-# WRONG — prompts on every command
-TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain") tofu plan
-TF_VAR_anthropic_key=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain") tofu apply
-
-# CORRECT — one prompt, then inject the variable
-ANTHROPIC_API_KEY=$(security find-generic-password -s ANTHROPIC_API_KEY -w "${HOME}/Library/Keychains/ai-secrets.keychain")
-TF_VAR_anthropic_key=$ANTHROPIC_API_KEY tofu plan
-TF_VAR_anthropic_key=$ANTHROPIC_API_KEY tofu apply
-```
-
-The same pattern applies to any keychain-backed secret and any `security find-*-password` invocation.
 
 ## What this connects to
 

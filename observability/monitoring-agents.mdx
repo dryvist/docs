@@ -78,10 +78,8 @@ tier), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
 Two as-built details of that egress:
 
 - **Edge → Stream rides Cribl S2S** as tcpjson on the dedicated `cribl_s2s` service port (a pipeline constant from the infrastructure repo, never hardcoded).
-- **Stream → Splunk is one HEC output per index**, each with its own token. Tokens are *derived*,
-  not distributed: UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl and Splunk
-  compute the same value independently. The namespace UUID is the only secret, and a leaked token
-  scopes to one index. See the [full family/port/index
+- **Stream → Splunk is one HEC output per index**, each with its own token
+  scoped to one index. See the [full family/port/index
   map](/observability/overview#syslog-ingest-families).
 
 ## Per-tool Cribl Edge packs

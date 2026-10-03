@@ -12,8 +12,7 @@ Bitwarden is **T4**, the **never-AI human tier** of the [four-tier secrets
 model](/security/comparison): break-glass and crown jewels. It is the one tier with *no*
 programmatic bridge by design. It has no command-line-tool integration, no MCP server, no agent path. Everything here is
 reached by a human at a keyboard with a second factor. It holds the material that can rebuild the
-other tiers if they are lost. That includes the [OpenBao](/security/tools/openbao) recovery shares
-that are the last-resort unseal path when both T2 and the T3 secret-zero are gone.
+other tiers if they are lost.
 
 ## What goes in the Bitwarden vault
 
@@ -27,7 +26,7 @@ that are the last-resort unseal path when both T2 and the T3 secret-zero are gon
 
 ## What does not go here
 
-- Anything that flows into a workflow programmatically. CI cannot read Bitwarden; Bitwarden is not for CI. Use Doppler or `secrets-sync` instead.
+- Credentials for automated workflows.
 - Programmatic AI tokens. Use [BWS](/security/tools/bws) (a sister product, separate vault) for those.
 
 ## The "AI never touches" boundary
@@ -35,39 +34,6 @@ that are the last-resort unseal path when both T2 and the T3 secret-zero are gon
 There is no command-line-tool integration, no MCP server, no programmatic bridge in this stack that reads the
 Bitwarden vault. Reaching it always requires the master password plus a second factor at the
 keyboard. These are gates an AI subprocess cannot satisfy.
-
-| Stored in the vault | Reaches the host only via |
-| --- | --- |
-| SSH private keys | manual copy into `~/.ssh/`, then ssh-agent |
-| Age private keys | manual paste into `~/.config/sops/age/keys.txt` |
-| Recovery codes | one-shot read at the recovery prompt |
-| Account passwords | browser autofill (human interaction) |
-| TOTP seeds | per-login challenge in the Bitwarden app |
-
-## Workflow patterns
-
-### SSH key checkout
-
-1. Open Bitwarden (browser, native app, or `bw unlock`).
-2. Copy the private key to `~/.ssh/id_ed25519_<name>`.
-3. Load into the agent: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519_<name>`.
-4. The key file is sensitive but path-denied to AI tools (`~/.ssh/id_*` is on the Claude Code deny list).
-
-### Age key escrow restore
-
-1. Unlock Bitwarden.
-2. Reveal the age key secure note.
-3. Paste into `~/.config/sops/age/keys.txt`.
-4. `chmod 600 ~/.config/sops/age/keys.txt`.
-
-That is the only path to restore a SOPS-encrypted repo after a workstation wipe.
-
-### Recovery-code restore
-
-1. Unlock Bitwarden.
-2. Read the relevant service's recovery codes.
-3. Use one at the service's recovery prompt; the rest stay in the vault, one-use-per-code.
-4. Generate a fresh set after each use and replace the vault entry.
 
 ## Best practices
 
@@ -89,4 +55,4 @@ homelab move is a defense-in-depth posture change, not a "this is broken" fix.
 - [OpenBao](/security/tools/openbao): the T2 runtime manager whose recovery shares are escrowed here.
 - [BWS](/security/tools/bws): the Bitwarden product an AI bridge does interact with.
 - [SOPS](/security/tools/sops): the consumer of age-keys escrowed here.
-- [Local AI isolation](/security/local-ai-isolation): the path-deny list that blocks SSH-key file reads even after a manual export.
+- [Local AI isolation](/security/local-ai-isolation): the path-deny list.

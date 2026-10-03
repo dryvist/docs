@@ -297,9 +297,7 @@ the console claims) is version-controlled in the network IaC repo.
 ## HEC fan-in
 
 Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per
-index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-\<index\>` in a
-shared private namespace. Cribl and Splunk compute the same token independently, and the namespace
-UUID is the only secret.
+index**. Every output carries its own token.
 
 {/*Shape: hub and spokes (leaves chained with invisible links). Boundary crossings: 1 per real edge. */}
 {/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass.*/}
@@ -308,7 +306,7 @@ UUID is the only secret.
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
-  Stream([Cribl Stream<br/>uuid5 token per index])
+  Stream([Cribl Stream<br/>one output per index])
   subgraph net["Network indexes"]
   direction TB
   Iu[(unifi)]
@@ -342,7 +340,7 @@ UUID is the only secret.
   linkStyle 0,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs-and-derived-tokens). It is an alert that fires when the index goes quiet.
+Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs). It is an alert that fires when the index goes quiet.
 
 ## Source → port → index map
 
@@ -366,9 +364,8 @@ Every syslog family and every AI log port, in one table. Syslog rides the HAProx
 
 ## The network underneath
 
-The pipeline rides the trust-ordered VLAN tier model. The VLAN tag = tier × 10, and subnets follow
-the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are injected at runtime, never
-committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk. Every other
+The pipeline rides the trust-ordered VLAN tier model. The VLAN tag = tier × 10.
+The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk. Every other
 tier is a log source.
 
 {/*Shape: hub and spokes (tiers chained with invisible links). Boundary crossings: 1 per real edge. */}

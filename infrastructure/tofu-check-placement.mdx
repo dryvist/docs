@@ -50,9 +50,6 @@ flowchart LR
 - Do not use `continue-on-error` on format, validation, or tests.
 - Never upload a binary plan or `tofu show -json` artifact to public CI.
 - Never enable debug or trace logging around live credentials.
-- Terrakube obtains workspace credentials from OpenBao through native dynamic
-  credentials or ephemeral resources. Do not copy secrets into CI or workspace
-  variables.
 
 ## Why plans stay out of public CI
 

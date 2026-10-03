@@ -16,7 +16,7 @@ overlays that the rest of the Nix stack consumes.
 
 Host-specific provider wiring is intentionally outside `nix-ai`. If a tool needs
 to point at a private local LLM gateway, package the tool here. Then keep the
-endpoint and token-source module in the consuming workstation flake. That keeps
+endpoint configuration in the consuming workstation flake. That keeps
 reusable packaging public and environment topology private.
 
 ## What it does
@@ -56,34 +56,9 @@ Modules read `userConfig` via `_module.args` so nothing outside `maintainer-prof
 import it directly. A consumer overrides values either in their own `nix-darwin` config (via
 `extraSpecialArgs`) or by importing the module and setting options.
 
-### Secrets and injection
+### Environment variables
 
-Runtime secrets are never stored in Nix store paths or committed files. Four injection patterns are in use:
-
-| Pattern | Used by | Mechanism |
-| --- | --- | --- |
-| OpenBao subprocess wrapper | Splunk MCP | Reads scoped read-only vault credentials from a local credential store, obtains a short-lived token via [OpenBao](/security/tools/openbao), and injects the shared connection only into the child MCP process |
-| Doppler subprocess wrapper | Google Workspace MCP | `doppler run -p <project> -c <config> -- <binary>` |
-| macOS Keychain via shell init | Model-hub and other third-party service API keys | `security find-generic-password` exported in `~/.zshrc` |
-| Kubernetes Doppler Operator | Cribl pods | In-cluster operator syncs Doppler → K8s Secrets |
-
-**Source-control credentials use none of these.** They are short-lived tokens
-minted on demand per request. They are never written to disk: not to the Keychain, not
-to a `.env`, and not to a direnv cache. Direnv persists its environment dump
-on disk, which would turn a mint-time credential into a stored one. The Keychain row
-preceding this covers third-party service keys only. Treat any older guidance that routes
-source-control credentials through it as retired.
-
-The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,
-and the Antigravity command-line tool and IDE surfaces. Antigravity (`agy`) is the
-Gemini-family harness; it is not a second Gemini MCP identity. Hermes uses the
-same Splunk connection through its machine AppRole. Terrakube workload
-identity applies only to remote Terrakube jobs, not interactive workstation
-agents.
-
-The variable catalog (required vs optional, purpose, source) lives in `.env.example` at the repo
-root. A real `.env` is an opt-in convenience; direct injection is preferred. The local injection
-runbook is `AGENTS.local.md` (gitignored).
+The required and optional variable names are documented in `.env.example` at the repo root.
 
 ### On-demand MCP servers
 

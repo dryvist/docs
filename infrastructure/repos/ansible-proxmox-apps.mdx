@@ -65,8 +65,8 @@ Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring ag
 <Step title="Clone and enter the dev shell">
 `git clone https://github.com/JacobPEvans/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
 </Step>
-<Step title="Provide Doppler credentials">
-Cribl tokens, HAProxy stats password, and Splunk HEC tokens all come from Doppler via `DOPPLER_TOKEN`.
+<Step title="Required environment">
+The playbooks read `DOPPLER_TOKEN`.
 </Step>
 <Step title="Run the playbook">
 `ansible-playbook -i inventory site.yml`. Re-runs converge drift only. Safe to run on a schedule.

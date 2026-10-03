@@ -8,11 +8,7 @@ page_type: "decision"
 
 ## The access ladder
 
-1. **Certificate authority (the normal path).** A short-lived SSH keypair is generated on demand,
-   signed by the [runtime credential manager's](/security/tools/openbao) SSH certificate
-   authority, used once, and discarded. Nothing durable sits on disk waiting to be stolen. This is
-   [Golden law #6](/security/golden-laws#6-time-bound-every-credential) applied to host access
-   specifically.
+1. **Certificate authority (the normal path).** Short-lived certificates are the preferred access policy.
 2. **Legacy shared key.** Exists only while a fleet-wide CA rollout is unfinished, and only on hosts
    old enough to still carry it. Assume it is **absent** on anything rebuilt after the CA went live.
    A rebuilt host gets provisioned with CA trust from day one, never a legacy key.

@@ -63,12 +63,6 @@ job from the shared task queue, and one job runs as one instance of a systemd
   lives there and cannot outlive the unit.
 - `NoNewPrivileges`, `ProtectSystem`, and a narrow set of writable paths.
 
-The unit's `ExecStart` is the secrets agent in process-supervisor mode, not the
-job script. It authenticates, renders the job's credentials into the child
-environment, then execs the runner. So there is no code path where a job runs
-with credentials that were not scoped and leased for it. See
-[Secrets](/autonomous-agents/secrets).
-
 A guest is converged by one Ansible role (`agent_guest`, in the
 `ansible-proxmox-ai` repo) on a stock Debian template. Nothing about the guest is hand-built, and rebuilding one is a
 converge, not a restore.
@@ -123,7 +117,7 @@ same guest, so the swap happens after the canary, not before it.
 <Steps>
 <Step title="Claim">
 Mac: `agent run <repo> <prompt>` wraps `container run --rm` with a tmpfs
-workspace and injected env. Pool: the poller claims a queue job and starts
+workspace. Pool: the poller claims a queue job and starts
 `agent-task@<job-id>`.
 </Step>
 <Step title="Clone">
@@ -152,19 +146,14 @@ agent run [--tool claude|codex|gemini] [--profile <name>] \
 Two flags carry two **independent** credential axes. Read-secret scope and
 repository-write scope are orthogonal, and a run gets only the axes it names:
 
-| Flag | Grants | How it is minted |
-| --- | --- | --- |
-| `--profile <name>` | Read access to one task profile's secret group | The profile is baked into the image; its OpenBao KV group is fetched by an AppRole login: ambient read-tier material by default, or a human-minted single-use wrapped secret ID for apply tier profiles. Read-only. |
-| `--repo <owner/name>` | Write to exactly one repository, this run only | The launcher mints a per-run, single-repo-scoped GitHub App token via the write identity. See [GitHub access](/autonomous-agents/github-access). |
+| Flag | Grants |
+| --- | --- |
+| `--profile <name>` | Read access to one task profile's secret group |
+| `--repo <owner/name>` | Write to exactly one repository, this run only |
 
 The split is the point. A `--profile` run with no `--repo` can read its secrets
 but can never push. A `--repo` run's write reach is exactly one repository,
-never an account. **The token is minted launcher-side; the container can never
-mint a write token itself.** A caller-supplied token already in the environment
-always wins over the mint.
-
-A pool job names the same two axes in its queue entry instead of on a command
-line. The mint path is identical.
+never an account.
 
 Host targets, egress network names, and the apply tier grant procedure are
 operational detail. That detail lives in the internal ops runbooks, not in
@@ -232,7 +221,7 @@ because there the missing route is the control.
   title="Secrets"
   icon="key"
   href="/autonomous-agents/secrets">
-  How credentials get into a job without living on the guest.
+  Credential scope for a job.
 </Card>
 <Card
   title="LXC vs Docker"

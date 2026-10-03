@@ -49,10 +49,8 @@ policy](/infrastructure/cicd/policy) for that layer.
 <Step title="Clone and enter the dev shell">
 `git clone git@github.com:dryvist/tofu-github.git && cd tofu-github && direnv allow`
 </Step>
-<Step title="Log in to the Terrakube workspace">
-`tofu login "$TF_CLOUD_HOSTNAME"` requires membership in the org's `terrakube-admins` team. It
-needs no AWS account and no local `GITHUB_TOKEN`. Terrakube injects the org-admin GitHub
-credential at run time.
+<Step title="Required environment">
+The workspace configuration reads `TF_CLOUD_HOSTNAME`. The provider reads `GITHUB_TOKEN`.
 </Step>
 <Step title="Plan and apply">
 `tofu init && tofu plan && tofu apply` runs plan and apply remotely in Terrakube. Output streams back to the local shell.

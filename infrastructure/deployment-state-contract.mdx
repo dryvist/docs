@@ -14,7 +14,7 @@ authoritative; local files are temporary.
 
 | Store | Holds | Owner |
 | --- | --- | --- |
-| Homelab object storage | Versioned `deployment.json` input and published Ansible inventory | OpenTofu graph, with OpenBao-scoped credentials |
+| Homelab object storage | Versioned `deployment.json` input and published Ansible inventory | OpenTofu graph |
 | Terrakube workspace | OpenTofu state versions, run queue, and lock | Terrakube |
 
 ```mermaid
@@ -63,8 +63,6 @@ authoritative; local files are temporary.
   match the desired-state key.
 - Never use a targeted apply. It can publish inventory that describes only a
   subset of the estate.
-- Provider and object-store credentials come from OpenBao through native,
-  short-lived Terrakube paths. They are not workspace secret variables.
 
 Independent Terrakube workspaces have independent locks. Cross-workspace
 production changes use an explicit reviewed sequence, not a universal mutex.
