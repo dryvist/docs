@@ -61,9 +61,9 @@ Every Edge feeds a Stream; only Stream reaches Splunk; the AWS tier is one routi
 | --- | --- | --- | --- |
 | `cribl-edge` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
 | `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, volume reduction, routing | Splunk HEC ([`ansible-splunk`](/observability/repos/ansible-splunk)) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no Cloud fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI command-line tools / LLM stack / OpenBao audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI command-line tools / LLM stack / audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
 | `cribl-edge-standalone` (OrbStack) | StatefulSet in [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) `monitoring` namespace | AI tool telemetry: Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
-| `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl Cloud | Cribl Cloud |
+| `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl's hosted service | Cribl's hosted service |
 | `cribl-stream-standalone` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
 | `otel-collector` (OrbStack) | StatefulSet in `orbstack-kubernetes` | OTLP from Claude Code SDK, any in-cluster OTLP source | `cribl-stream-standalone` (OrbStack) |
 
@@ -78,11 +78,9 @@ tier), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
 Two as-built details of that egress:
 
 - **Edge → Stream rides Cribl S2S** as tcpjson on the dedicated `cribl_s2s` service port (a pipeline constant from the infrastructure repo, never hardcoded).
-- **Stream → Splunk is one HEC output per index**, each with its own token. Tokens are *derived*,
-  not distributed: UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl and Splunk
-  compute the same value independently. The namespace UUID is the only secret, and a leaked token
-  scopes to one index. See the [full family/port/index
-  map](/observability/overview#syslog-ingest-families).
+- **Stream → Splunk is one HEC output per index**, each with its own token
+  scoped to one index. See the [full family/port/index
+  map](/observability/overview#syslog-intake-families).
 
 ## Per-tool Cribl Edge packs
 

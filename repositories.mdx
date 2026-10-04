@@ -24,9 +24,9 @@ OpenTofu / Terraform / Ansible that builds and configures the homelab.
 | `tofu-unifi` (private) | UniFi network-as-code: VLANs, firewall, WLANs, VPN | [hub](/infrastructure/repos/tofu-unifi) |
 | [orbstack-kubernetes](https://github.com/dryvist/orbstack-kubernetes) | Local K8s monitoring stack (OTEL, Cribl) | [hub](/infrastructure/repos/orbstack-kubernetes) |
 | [tofu-runs-on](https://github.com/dryvist/tofu-runs-on) | Self-hosted GitHub Actions runners on AWS spot | [hub](/infrastructure/cicd/tofu-runs-on) |
-| [tofu-aws-templates](https://github.com/dryvist/tofu-aws-templates) | Per-project AWS state-backend bootstrap template | [OpenTofu on AWS](/infrastructure/tofu-aws/overview) |
+| [tofu-aws-templates](https://github.com/dryvist/tofu-aws-templates) | Per-project AWS state-backend bootstrap template | |
 | [tofu-github](https://github.com/dryvist/tofu-github) | Declarative GitHub org governance: rulesets, settings | [hub](/infrastructure/repos/tofu-github) |
-| [iac-platform](https://github.com/dryvist/iac-platform) | Self-hosted Terrakube + Semaphore UI: remote OpenTofu/Ansible execution | [remote plan/apply](/infrastructure/iac-tooling) |
+| [iac-platform](https://github.com/dryvist/iac-platform) | Self-hosted Terrakube + Semaphore UI: remote OpenTofu/Ansible execution | |
 | [nix-pxe-bootstrap](https://github.com/dryvist/nix-pxe-bootstrap) | NixOS-on-Pi netboot + Proxmox auto-installer | — |
 
 ## Observability
@@ -41,7 +41,7 @@ The telemetry spine: capture, route, index, visualize.
 | [cc-edge-claude-code-io](https://github.com/dryvist/cc-edge-claude-code-io) | Claude Code telemetry via Cribl Edge → Stream | — |
 | [cc-edge-copilot-otel](https://github.com/JacobPEvans/cc-edge-copilot-otel) | GitHub Copilot Chat OTel receiver | — |
 | [cc-edge-vscode-io](https://github.com/JacobPEvans/cc-edge-vscode-io) | VS Code + Copilot extension logs | — |
-| [cc-edge-gemini-antigravity-io](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini CLI + Antigravity log collector | — |
+| [cc-edge-gemini-antigravity-io](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini command-line tool + Antigravity log collector | — |
 | [cc-stream-github-copilot-rest-io](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics via REST | — |
 | [cc-edge-pack-template](https://github.com/dryvist/cc-edge-pack-template) | Scaffold for new Cribl Edge packs | — |
 | [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans/VisiCore_App_for_AI_Observability) | Splunk dashboards for AI-tool observability | — |
@@ -88,7 +88,7 @@ Templates and standalone tools.
 | --- | --- | --- |
 | [docs](https://github.com/JacobPEvans/docs) | This site: the public architecture map | — |
 | [.github](https://github.com/dryvist/.github) | Org community-health files + the README template | — |
-| [secrets-sync](https://github.com/JacobPEvans/secrets-sync) | Distributes Doppler-held secrets and variables to GitHub Actions | [hub](/security/secrets-sync) |
+| [secrets-sync](https://github.com/JacobPEvans/secrets-sync) | Distributes secrets and variables to GitHub Actions | |
 
 <Note>
   Private repos (the live homelab, real network config, schemas) are catalogued on the gated [dryvist site](https://docs.dryvist.com), not here.

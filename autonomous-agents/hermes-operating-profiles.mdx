@@ -51,9 +51,7 @@ write-bearing GitHub work.
 | `github-maint` | Read-only repo review + proposals | Docs MCP, a GitHub-issues skill, a **read-only** token | GitHub writes: no issues opened, no PRs filed, no comments posted |
 
 `github-maint` is the one profile whose headline constraint is enforced by a
-credential rather than by tool availability. It renders a read-only token
-under the same key its skill authenticates with. The skill works unchanged,
-but every write call fails at the API. Its output leaves through Slack and a
+credential rather than by tool availability. Every write call fails at the API. Its output leaves through Slack and a
 Kanban card, never a direct repository write.
 
 Adding a new profile means scoping it by what it must **not** reach, not by
@@ -68,11 +66,5 @@ a widened existing one.
   icon="robot"
   href="/autonomous-agents/hermes-agent">
   The container, brain, and multi-agent picture this page sits underneath.
-</Card>
-<Card
-  title="GitHub access"
-  icon="github"
-  href="/autonomous-agents/github-access">
-  The separate OpenBao GitHub App engine workstation sessions and runners use — a different credential path than a Hermes profile's own token.
 </Card>
 </CardGroup>

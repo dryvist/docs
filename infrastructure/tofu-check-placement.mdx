@@ -43,16 +43,14 @@ flowchart LR
 
 ## Rules
 
-- Hooks and CI validation must work without OpenBao, AWS, Proxmox, UniFi, or a
-  keychain.
+- Hooks and CI validation must work without live credentials or access to AWS,
+  Proxmox, or UniFi.
 - Use `tofu init -backend=false` for validation.
 - Do not hide required static checks behind a manual stage.
 - Do not use `continue-on-error` on format, validation, or tests.
 - Never upload a binary plan or `tofu show -json` artifact to public CI.
 - Never enable debug or trace logging around live credentials.
-- Terrakube obtains workspace credentials from OpenBao through native dynamic
-  credentials or ephemeral resources. Do not copy secrets into CI or workspace
-  variables.
+- Do not copy secrets into CI or workspace variables.
 
 ## Why plans stay out of public CI
 
@@ -82,6 +80,4 @@ proves live impact.
 
 ## Related pages
 
-- [IaC tooling](/infrastructure/iac-tooling)
 - [CI/CD](/infrastructure/cicd/overview)
-- [Golden laws](/security/golden-laws)

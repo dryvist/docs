@@ -6,9 +6,9 @@ page_type: "overview"
 {/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **partly live.** The profiles, the Mac container path, and the GitHub
-secrets engine are in use. The Proxmox agent pool and its egress proxy are
+token path are in use. The Proxmox agent pool and its egress proxy are
 declared in infrastructure code with the converge role written, pending a first
-canary run. The [roadmap](/autonomous-agents/roadmap) tracks each workstream.
+canary run.
 </Note>
 
 > Stop asking the agent for permission. Put it somewhere it can't hurt anything,
@@ -17,7 +17,7 @@ canary run. The [roadmap](/autonomous-agents/roadmap) tracks each workstream.
 Today's safety model is fine-grained permission lists. There are roughly 640
 allow/ask/deny entries rendered into Claude Code, the Codex command-line tool,
 and the Antigravity (`agy`) command-line tool. It runs on a trusted Mac with the user's
-full credentials a keychain prompt away. That model assumes a
+full credentials one prompt away. That model assumes a
 human is watching. Autonomous agents invert it: **safety becomes the container
 boundary**, and tool permissions inside it become maximally lenient. The agent gets
 `--dangerously-skip-permissions` precisely because there is nothing dangerous left
@@ -60,7 +60,7 @@ egress, and git.
 
 | Vendor | Bypass mechanism | Isolation guidance |
 | --- | --- | --- |
-| **Anthropic** | `--dangerously-skip-permissions` | Only inside a [devcontainer](https://code.claude.com/docs/en/devcontainer) or [sandbox](https://code.claude.com/docs/en/sandbox-environments); hard-rejected when running as root. Agent SDK secure deployment: never mount host secrets, inject credentials from outside, credential-injecting proxy as the end-state. |
+| **Anthropic** | `--dangerously-skip-permissions` | Only inside a [devcontainer](https://code.claude.com/docs/en/devcontainer) or [sandbox](https://code.claude.com/docs/en/sandbox-environments); hard-rejected when running as root. Agent SDK secure deployment: never mount host secrets. |
 | **OpenAI Codex** | `approval_policy` + `sandbox_mode` axes | [`--yolo`](https://developers.openai.com/codex/) (`danger-full-access` + `never`) only inside a container; network is off by default even in `workspace-write`. |
 | **Antigravity (`agy`)** | `--dangerously-skip-permissions` | Its own sandbox is turned off and the posture is not coupled to it: the weakest pairing of the three, and the only tool that cannot carry the posture as a settings key at all, so the coupling is enforced by the launcher and the sandbox around it. |
 
@@ -69,7 +69,7 @@ The convergent model:
 - The container is the boundary.
 - Bypass flags work only inside it.
 - Default-deny egress.
-- Short-lived, scoped credentials injected from outside.
+- Short-lived, scoped credentials.
 - Git is the safety net.
 
 ## Three profiles
@@ -97,7 +97,6 @@ roughly ten entries (`gh repo delete`, `gh secret`, force-push, registry publish
 as a tripwire, not a wall. In `autonomous`, the real protection is:
 
 - **Credential scoping**: the agent holds only short-lived, narrowly scoped tokens.
-  See [Secrets](/autonomous-agents/secrets).
 - **Network boundary**: an allowlisting egress proxy is the only way out.
   See [Runtime](/autonomous-agents/runtime).
 
@@ -134,23 +133,5 @@ may see.
   icon="box"
   href="/autonomous-agents/runtime">
   The Mac container path, the static LXC pool, the egress proxy, and the run lifecycle.
-</Card>
-<Card
-  title="Secrets"
-  icon="key"
-  href="/autonomous-agents/secrets">
-  OpenBao as the single machine-secrets backbone (headless reads, short-TTL credentials) and the four-tier model behind it.
-</Card>
-<Card
-  title="GitHub access"
-  icon="github"
-  href="/autonomous-agents/github-access">
-  A separate OpenBao service engine issues short-lived GitHub App installation tokens.
-</Card>
-<Card
-  title="Roadmap"
-  icon="map"
-  href="/autonomous-agents/roadmap">
-  Phases 1–7 and the repo ownership map.
 </Card>
 </CardGroup>

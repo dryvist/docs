@@ -9,7 +9,7 @@ page_type: "explanation"
 Several AI coding harnesses run against this estate. They are not equally
 constrained, and the difference is not a matter of trust in a vendor. It is a
 matter of which credentials and which operating-system identity each class is
-given. A harness that cannot mint a token cannot push a commit, whatever its
+given. A harness without write access cannot push a commit, whatever its
 instructions say.
 
 ## The two classes
@@ -18,8 +18,8 @@ instructions say.
 | --- | --- | --- |
 | Operating-system identity | A dedicated automation account, separate from the human operator | The operator's own interactive account |
 | Unattended privilege escalation | Permitted, scoped to one exact command | None |
-| Central secret store | Read through its own bounded role; write only through a human-gated, single-use grant | Read-only, and only the leaf paths a task needs |
-| Forge (code hosting) writes | Yes, through short-lived tokens minted per call | No, read access only |
+| Secrets | Read through its own bounded role; write only through a human-gated, single-use grant | Read-only, and only the leaf paths a task needs |
+| Forge (code hosting) writes | Yes, narrowly scoped | No, read access only |
 | Infrastructure convergence | Yes, under a maintenance window | No |
 
 Trusted today are Claude Code and Codex. Untrusted today are Cursor, OpenCode,
@@ -51,34 +51,10 @@ through a pull request opened by an identity that is allowed to open one.
 Promotion is a change to capability grants, not to a document. A harness joins
 the trusted class only when three things are true. It has its own
 operating-system account. It has its own bounded role in the central store.
-And it has a minted-per-call path to forge writes. Until all three exist, it
+And it has scoped forge write access. Until all three exist, it
 is untrusted regardless of how it is described.
 
 ## See also
 
 <CardGroup cols={2}>
-<Card
-  title="Agent secrets"
-  icon="key"
-  href="/autonomous-agents/secrets">
-  The headless credential path both classes read through, and the identity rule.
-</Card>
-<Card
-  title="GitHub access"
-  icon="github"
-  href="/autonomous-agents/github-access">
-  Minted-per-call forge tokens — the capability that separates the classes.
-</Card>
-<Card
-  title="Local AI isolation"
-  icon="shield-halved"
-  href="/security/local-ai-isolation">
-  The scoping that keeps a harness from reading what it was not granted.
-</Card>
-<Card
-  title="Tools comparison"
-  icon="table-cells"
-  href="/security/comparison">
-  The four-tier secrets model each class reads against.
-</Card>
 </CardGroup>

@@ -94,14 +94,12 @@ the first place, this costs zero real detection. Two things this fix deliberatel
 
 ## Codification gap
 
-This exception is currently console-only. The
-[`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest)
-Terraform/OpenTofu provider (the same provider [`tofu-unifi`](/infrastructure/repos/tofu-unifi)
-uses for every other network resource) has no IPS / threat-management / suppression resource yet.
-So this rule can't be expressed as code alongside the rest of the network config. It joins the
-provider's other known gaps (see [Provider
-notes](/infrastructure/repos/tofu-unifi#provider-notes-unifi-network-9)). It stays a
-live-console setting to re-apply if the controller is ever rebuilt from scratch.
+IPS suppression is codified: `tofu-unifi` `deployment/ips.json` owns every alert
+suppression and whitelist entry, keyed by reservation rather than a literal IP. As of
+2026-10-02 the controller held only a per-signature suppression (sid 2034805) for the
+download VPN, not the source-direction whitelist this page describes, and `ips.json`
+records that live state. Adding the whitelist entry there is the fix this page calls for. See
+UniFi provider quirks.
 
 ## Related
 
