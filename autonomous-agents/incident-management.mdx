@@ -35,6 +35,6 @@ The agent runs the contract under the same discipline as every other write path.
 It uses a **dry-run** mode that prints what it would do instead of doing it. It
 also applies a **rate limit** of one write per finding per cycle, plus bounded
 reads that never pull full ticket histories into context. Credentials come from the
-[secrets path for agents](/autonomous-agents/secrets) and are never printed
+agent's environment and are never printed
 into a ticket. See the [Hermes agent](/autonomous-agents/hermes-agent) for the
 runtime that drives it.

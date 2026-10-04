@@ -96,6 +96,12 @@ because Phoenix reads the emitted GenAI attributes as they are. Both
 pipelines loop over the same lists in the Cribl role, so there is one place
 to add a span name or a redaction pattern.
 
+The Phoenix output retries timed-out requests and HTTP 429, 502, 503, and 504
+responses. The backoff is exponential: 1 second to start, doubling, 60 seconds
+at most. It honors `Retry-After`. While Phoenix is unreachable, the output
+queues to disk, capped at 1 GB, and drops data when the queue is full. The
+Splunk output differs. It blocks on backpressure instead of dropping.
+
 ## Reaching it
 
 Phoenix follows the [two rules](/observability/llm-observability#reaching-the-pipeline-subdomains-tls-and-who-gets-gated)
@@ -104,13 +110,11 @@ every service in this stack follows.
 - **Humans** open `https://phoenix.<subdomain>/` and sign in through Authelia.
   Phoenix auto-creates a user on first SSO login, because Authelia already
   decides who may reach the app.
-- **Cribl** POSTs to `/v1/traces` on the same host with a bearer API key minted
-  in Phoenix. That path sits outside the Authelia gate, so an unauthenticated
+- **Cribl** POSTs to `/v1/traces` on the same host with a bearer API key.
+  That path sits outside the Authelia gate, so an unauthenticated
   call gets Phoenix's own `401`, never a login redirect.
 
-That API key is the one manual step. Phoenix mints it after first boot, and it
-goes into OpenBao where the Cribl role reads it. Until it is seeded, the Cribl
-converge fails loudly rather than rendering an empty credential.
+The Cribl converge fails if the API key is missing.
 
 ## Where to go next
 

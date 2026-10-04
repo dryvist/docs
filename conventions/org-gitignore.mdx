@@ -16,7 +16,6 @@ The baseline targets two categories of files that must never reach git history:
 
 ### Secrets and credentials
 
-- `.env`, `.env.*` (except `.env.example`): never commit real env files
 - `*.pem`, `*.key`, `*.p12`, `*.pfx`: private keys
 - `terraform.tfvars` (unencrypted), `credentials.json`, `secrets.yaml` (unencrypted)
 
@@ -30,8 +29,7 @@ The baseline targets two categories of files that must never reach git history:
 
 | Path | Why it's committed |
 | --- | --- |
-| `.envrc` | `use flake` directive; the `SOPS_AGE_KEY_FILE` path is not a secret |
-| `*.sops.yaml` / `*.sops.yml` | SOPS-encrypted ciphertext, safe to commit |
+| `.envrc` | `use flake` directive |
 | `.terraform.lock.hcl` | Provider lock file, committed by convention |
 | `.claude/settings.json` | Project AI config, committed on purpose |
 | `.claude/rules/`, committed skills/agents | Project Claude Code config |
@@ -55,4 +53,3 @@ coverage.
 ## Future work
 
 - Automate adoption in the repo scaffold / copier template so new repos inherit the baseline at creation time rather than manually.
-- Add a pre-commit hook that checks for `.env` files without the example suffix before every commit.

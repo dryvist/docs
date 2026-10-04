@@ -66,6 +66,46 @@ Autonomous mode (`--codex-autonomous`) is deliberately not used. nix-ai pins
 The next rebuild would revert the installer's danger-full-access keys into
 a mixed posture.
 
+## Codex approval defaults
+
+<Note>
+**Source configuration**
+
+
+The Nix modules provide these defaults. A host receives them through its
+input update and normal rebuild. A session's permission selection is separate
+from the generated file.
+
+</Note>
+
+The default selects **Approve for me** through Codex's native
+`approval_policy = "on-request"` and `approvals_reviewer = "auto_review"`.
+The sandbox stays `workspace-write`. Operators can override either value
+through `programs.codex.approvalPolicy` and
+`programs.codex.approvalsReviewer`.
+
+The option schema lives in
+[nix-codex's approval module](https://github.com/dryvist/nix-codex/blob/main/modules/approvals.nix).
+The consumer defaults and TOML renderer live in
+[nix-ai](https://github.com/dryvist/nix-ai/blob/main/docs/architecture/config-lifecycle.md).
+Nix uses defaults that yield to explicit operator settings.
+
+```mermaid
+flowchart LR
+  Schema[nix-codex option schema] --> Defaults[nix-ai defaults]
+  Operator[Explicit operator options] --> Render[Generated Codex TOML]
+  Defaults --> Render
+  Render --> Merge[Home Manager activation merge]
+  Merge --> Config[Codex configuration]
+```
+
+Local checks verify default and overridden TOML and repeated module imports.
+The upstream Nix CI workflow calls the shared validator on Linux and macOS,
+with each platform building its own checks before a release promotion.
+The upstream export and consumer defaults are published on `main`.
+The existing bot workflow owns dependency updates. A host uses the defaults
+after its input update and normal rebuild.
+
 ## Verification
 
 ```bash

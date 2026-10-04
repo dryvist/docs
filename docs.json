@@ -5,16 +5,8 @@
   "description": "Splunk and Cribl architect by day. Building the AI dev pipeline by night. Reef tank in the living room, homelab in the basement, both fully monitored.",
   "redirects": [
     {
-      "source": "/infrastructure/terraform/overview",
-      "destination": "/infrastructure/tofu-aws/overview"
-    },
-    {
       "source": "/infrastructure/terraform/aws-bootstrap",
       "destination": "/infrastructure/tofu-aws/aws-bootstrap"
-    },
-    {
-      "source": "/infrastructure/terraform/consuming-repo",
-      "destination": "/infrastructure/tofu-aws/consuming-repo"
     },
     {
       "source": "/infrastructure/repos/terraform-proxmox",
@@ -39,10 +31,6 @@
     {
       "source": "/infrastructure/hermes-agent",
       "destination": "/autonomous-agents/hermes-agent"
-    },
-    {
-      "source": "/infrastructure/secrets-sops",
-      "destination": "/security/sops-for-iac"
     },
     {
       "source": "/configuration/overview",
@@ -78,7 +66,111 @@
     },
     {
       "source": "/firewall",
-      "destination": "/security/overview"
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/autonomous-agents/secrets",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/comparison",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/env-files",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/golden-laws",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/how-it-fits-together",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/local-ai-isolation",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/overview",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/scrubbed-values",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/secrets-sync",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/sops-for-iac",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/ssh-access",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/tools/aws-vault",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/tools/bitwarden",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/tools/bws",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/tools/macos-keychain",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/security/tools/sops",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/infrastructure/secrets-sops",
+      "destination": "/architecture/overview"
+    },
+    {
+      "source": "/autonomous-agents/github-access",
+      "destination": "/autonomous-agents/overview"
+    },
+    {
+      "source": "/autonomous-agents/roadmap",
+      "destination": "/autonomous-agents/overview"
+    },
+    {
+      "source": "/explainers/secrets-that-expire",
+      "destination": "/explainers/overview"
+    },
+    {
+      "source": "/infrastructure/iac-tooling",
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/infrastructure/applying-via-terrakube",
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/infrastructure/tofu-aws/overview",
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/infrastructure/tofu-aws/consuming-repo",
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/infrastructure/terraform/overview",
+      "destination": "/infrastructure/overview"
+    },
+    {
+      "source": "/infrastructure/terraform/consuming-repo",
+      "destination": "/infrastructure/overview"
     }
   ],
   "colors": {
@@ -145,8 +237,7 @@
               "explainers/what-is-a-hypervisor",
               "explainers/clusters-and-quorum",
               "explainers/staying-up-when-a-machine-dies",
-              "explainers/one-login-for-everything",
-              "explainers/secrets-that-expire"
+              "explainers/one-login-for-everything"
             ]
           },
           {
@@ -175,8 +266,6 @@
             "group": "Infrastructure",
             "pages": [
               "infrastructure/overview",
-              "infrastructure/iac-tooling",
-              "infrastructure/applying-via-terrakube",
               "infrastructure/deployment-state-contract",
               "infrastructure/configuration/overview",
               {
@@ -227,9 +316,7 @@
               {
                 "group": "OpenTofu on AWS",
                 "pages": [
-                  "infrastructure/tofu-aws/overview",
-                  "infrastructure/tofu-aws/aws-bootstrap",
-                  "infrastructure/tofu-aws/consuming-repo"
+                  "infrastructure/tofu-aws/aws-bootstrap"
                 ]
               }
             ]
@@ -346,12 +433,10 @@
               "autonomous-agents/overview",
               "autonomous-agents/runtime",
               "autonomous-agents/herdr",
-              "autonomous-agents/github-access",
               "autonomous-agents/harness-trust-tiers",
               "autonomous-agents/task-management",
               "autonomous-agents/incident-management",
-              "autonomous-agents/network-source-of-truth",
-              "autonomous-agents/roadmap"
+              "autonomous-agents/network-source-of-truth"
             ]
           },
           {
@@ -379,45 +464,6 @@
               "local-llm/verifying-the-instrument",
               "local-llm/distributed",
               "local-llm/homelab-gpu"
-            ]
-          }
-        ]
-      },
-      {
-        "dropdown": "Security and secrets",
-        "icon": "shield-halved",
-        "groups": [
-          {
-            "group": "Security",
-            "pages": [
-              "security/overview",
-              "security/comparison",
-              "security/golden-laws",
-              "security/ssh-access",
-              "security/how-it-fits-together",
-              "security/local-ai-isolation",
-              "security/scrubbed-values"
-            ]
-          },
-          {
-            "group": "Secrets management",
-            "pages": [
-              "security/env-files",
-              "security/secrets-sync",
-              "security/sops-for-iac",
-              "autonomous-agents/secrets",
-              {
-                "group": "Tools",
-                "pages": [
-                  "security/tools/doppler",
-                  "security/tools/macos-keychain",
-                  "security/tools/aws-vault",
-                  "security/tools/sops",
-                  "security/tools/bitwarden",
-                  "security/tools/bws",
-                  "security/tools/openbao"
-                ]
-              }
             ]
           }
         ]

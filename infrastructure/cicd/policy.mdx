@@ -87,7 +87,7 @@ configured to allow it for `dryvist/*` action sources:
   scanning UI.
 - **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
 
-Third-party actions, trusted or untrusted, are unaffected and stay SHA-pinned, each with its
+Trusted and untrusted third-party actions are unaffected and stay SHA-pinned, each with its
 released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github`
 → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
 
@@ -142,12 +142,10 @@ live in
 On-prem self-hosted runners are a single point of failure when the job has E2E coverage and the runner is broken or stale. Every on-prem runner must:
 
 1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`), never a personal access token.
-   App installation tokens auto-refresh. PATs silently expire and break the runner with no upstream
-   visibility.
 2. **Pin the runner image (or VM template) by digest**, with Renovate tracking the digest. No floating tags.
 3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
 4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
-5. **Pre-flight check the secret-injection step** so it fails loud when required secrets are missing.
+5. **Check required environment variables** so the workflow fails when any are missing.
 6. **Build the runner image off-node.** Build it on a dedicated build host and `docker load` it
    onto the runner host. Never build it in-place on a hypervisor node. A heavy image build can
    overload the node that also runs production guests.
@@ -173,7 +171,7 @@ Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that
   title="OpenTofu check placement"
   icon="list-check"
   href="/infrastructure/tofu-check-placement">
-  Static checks in pre-commit, credentialed operations in CI via OIDC.
+  Static checks in pre-commit and CI; remote plans and applies.
 </Card>
 <Card
   title="CI/CD overview"

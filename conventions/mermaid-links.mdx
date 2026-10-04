@@ -7,7 +7,7 @@ page_type: "reference"
 How to make diagram nodes clickable. For the diagram style and layout rules, see
 [`conventions/mermaid-style`](/conventions/mermaid-style).
 
-## Mermaid — drill-down links
+## Mermaid drill-down links
 
 Make diagram nodes navigable. Mintlify honors Mermaid's `click`
 directive: each node gets a pointer cursor, a hover tooltip, and
@@ -26,7 +26,7 @@ Skip clicks in two cases. First, nodes that don't map to a real
 destination (a transient process, an abstract concept like "Code" or
 "Ship"). Second, destinations that are still TODO and would 404.
 
-### Canonical syntax — INTERNAL links only
+### Canonical syntax for INTERNAL links only
 
 Use only this form. One `click` per line. Always include a tooltip;
 for hover-only users it's the only signal of where the click goes.
@@ -38,7 +38,7 @@ click NodeId "/path/to/internal/page" "Short hover tooltip"
 Place the `click` block AFTER all `classDef` definitions and `class`
 assignments, and BEFORE any `linkStyle` lines.
 
-### External URLs — do NOT click them from the diagram
+### External URLs: do NOT click them from the diagram
 
 Mermaid has open bugs
 ([#3077](https://github.com/mermaid-js/mermaid/issues/3077),
@@ -80,7 +80,7 @@ Append these to the existing self-check before emitting any context,
 overview, or hub diagram:
 
 - [ ] Every node whose label names a topic with a detail page has a `click` line
-- [ ] All `click` URLs are site-relative paths (`/security/overview`), never external `https://...`
+- [ ] All `click` URLs are site-relative paths (`/infrastructure/overview`), never external `https://...`
 - [ ] External repo URLs live in a table or CardGroup beside the diagram, NOT in `click` directives
 - [ ] Tooltips are ≤40 chars and describe the destination (not the node)
 - [ ] No `click` points at a page that doesn't exist yet (would 404)

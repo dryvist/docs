@@ -29,7 +29,7 @@ each take the OTLP traces.
   Hosts([fa:fa-server Linux · Windows · Mac])
   CLIs([fa:fa-robot AI CLIs])
   LLM([fa:fa-microchip LLM stacks])
-  Bao([fa:fa-vault OpenBao audit])
+  Audit([fa:fa-file-lines Audit log])
 
   HAP([HAProxy TCP LB])
   NGX([nginx UDP LB])
@@ -46,7 +46,7 @@ each take the OTLP traces.
   NGX --> Edge
   CLIs --> Edge
   LLM --> Edge
-  Bao --> Edge
+  Audit --> Edge
   Edge --> Stream
   Stream --> SP
   Stream --> LF
@@ -57,7 +57,7 @@ each take the OTLP traces.
   classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
-  class Gear,Hosts,Bao src
+  class Gear,Hosts,Audit src
   class CLIs,LLM ai
   class HAP,NGX,Edge,Stream hop
   class SP,LF,PX sink
@@ -119,7 +119,7 @@ from the pipeline constants in the infrastructure repo; the pipeline never hardc
 ```
 
 The full family → port → index → sourcetype table lives on the [observability
-overview](/observability/overview#syslog-ingest-families).
+overview](/observability/overview#syslog-intake-families).
 
 Hypervisor firewall drops ride the `linux` family. The node firewall logs to
 a file rather than the journal. So each node's rsyslog tails it with
@@ -133,7 +133,7 @@ Cribl Edge tails them with file inputs and ships them as tcpjson (one port per c
 Cribl Stream then lands them in per-index HEC outputs.
 
 The same Edge also ships the **Mac firewall unified-log**. A launch daemon tails the firewall
-subsystems (application firewall, network extension, packet filter) as ndjson into a rotated file.
+subsystems (app firewall, network extension, packet filter) as ndjson into a rotated file.
 A file input then forwards it over the shared S2S port with `index=firewall` stamped at the source.
 The pipeline replaced the retired BSD-syslogd remote forward, which could never be skew-safe. RFC3164
 carries no year and no timezone, and workstations deliberately keep local time.
@@ -222,7 +222,7 @@ host's Cribl Edge on tcpjson ports 10321–10323.
 ## OTLP fan-out
 
 Orchestration apps emit OpenTelemetry to Cribl Edge's OTLP HTTP source. They never emit it to a
-backend directly. Edge fans traces out to Langfuse and [Phoenix](/observability/phoenix) — never
+backend directly. Edge fans traces out to Langfuse and [Phoenix](/observability/phoenix), never
 Splunk, which does not fit the trace format. See [Data pipelines](/architecture/data-pipelines#fan-out-every-source-to-every-destination)
 for the fan-out default this follows.
 
@@ -297,9 +297,7 @@ the console claims) is version-controlled in the network IaC repo.
 ## HEC fan-in
 
 Cribl Stream is the only component with Splunk egress, and it fans out into **one HEC output per
-index**. Every output carries its own token, derived as a UUIDv5 of `splunk-hec-\<index\>` in a
-shared private namespace. Cribl and Splunk compute the same token independently, and the namespace
-UUID is the only secret.
+index**. Every output carries its own token.
 
 {/*Shape: hub and spokes (leaves chained with invisible links). Boundary crossings: 1 per real edge. */}
 {/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass.*/}
@@ -308,7 +306,7 @@ UUID is the only secret.
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
-  Stream([Cribl Stream<br/>uuid5 token per index])
+  Stream([Cribl Stream<br/>one output per index])
   subgraph net["Network indexes"]
   direction TB
   Iu[(unifi)]
@@ -342,7 +340,7 @@ UUID is the only secret.
   linkStyle 0,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs-and-derived-tokens). It is an alert that fires when the index goes quiet.
+Every index also carries a [silence detector](/observability/overview#per-index-hec-outputs). It is an alert that fires when the index goes quiet.
 
 ## Source → port → index map
 
@@ -362,12 +360,12 @@ Every syslog family and every AI log port, in one table. Syslog rides the HAProx
 | Forward proxy | `proxy` | 523 | `proxy` |
 | AI command-line tools (one port per tool) | `ai_log` | 10311–10315 | AI command-line tool log indexes |
 | LLM stack (gate · router · workers) | `ai_log` | 10321–10323 | LLM stack log indexes |
-| OpenBao | `ai_log` | 10331 | OpenBao audit index |
+| Audit log | `ai_log` | 10331 | Audit index |
 
 ## The network underneath
 
 The pipeline rides the trust-ordered VLAN tier model. The VLAN tag = tier × 10, and subnets follow
-the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are injected at runtime, never
+the `192.168.\<vlan-tag\>.0/24` placeholder pattern (real subnets are never
 committed). The observability tier (VLAN 40) hosts the ingress LBs, Cribl, and Splunk. Every other
 tier is a log source.
 

@@ -139,7 +139,7 @@ Each concern maps to one well-worn open source tool. None of it is bespoke.
 | Snapshot scheduling & retention | **sanoid** | Takes time-based snapshots and prunes them on an hourly / daily / monthly ladder |
 | Incremental replication | **syncoid** | Wraps `zfs send \| zfs receive` to ship only changed blocks between nodes |
 | App-consistent backup | **Logical dumps** | Per-app dump jobs (for example `pg_dump`) for data that must be consistent mid-write, written to a replicated dataset |
-| Capacity alerting | **ntfy** | Pushes a notification when a pool crosses 50% / 75% / 90% |
+| Capacity alerting | **Deadman monitor** | Trips an off-host deadman when a pool, or a dataset with a quota, crosses a usage band |
 
 Snapshots and replication protect the filesystem; logical dumps protect the *apps* (a
 database mid-transaction needs an app-consistent backup, not just a block snapshot). The two

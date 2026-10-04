@@ -9,24 +9,6 @@ This file follows the [llms.txt](https://llmstxt.org/) convention. The content o
 - [Introduction](https://docs.jacobpevans.com/introduction): the six surfaces — Infrastructure, Nix, AI, Observability, Security, Dev Tools.
 - [How it fits together](https://docs.jacobpevans.com/how-it-fits-together): cross-repo dependency diagram and narrative.
 
-## Security (most useful for AI tools deciding what they can and cannot do)
-
-- [Security overview](https://docs.jacobpevans.com/security/overview): which tool for which secret.
-- [Golden laws](https://docs.jacobpevans.com/security/golden-laws): the 15 non-negotiable security rules.
-- [How it fits together (security)](https://docs.jacobpevans.com/security/how-it-fits-together): cross-tool flow diagrams.
-- [Local AI isolation](https://docs.jacobpevans.com/security/local-ai-isolation): why AI tools structurally cannot view protected secret values.
-- [secrets-sync architecture](https://docs.jacobpevans.com/security/secrets-sync): Tier 1 GitHub Actions secret distribution.
-
-## Secrets tools
-
-- [Doppler](https://docs.jacobpevans.com/security/tools/doppler)
-- [macOS Keychain](https://docs.jacobpevans.com/security/tools/macos-keychain)
-- [AWS Vault](https://docs.jacobpevans.com/security/tools/aws-vault)
-- [Mozilla SOPS](https://docs.jacobpevans.com/security/tools/sops)
-- [Bitwarden vault](https://docs.jacobpevans.com/security/tools/bitwarden)
-- [Bitwarden Secrets Manager](https://docs.jacobpevans.com/security/tools/bws)
-- [OpenBao (planned)](https://docs.jacobpevans.com/security/tools/openbao)
-
 ## Other surfaces
 
 - [Infrastructure](https://docs.jacobpevans.com/infrastructure/overview): Terraform, Ansible, Proxmox.
