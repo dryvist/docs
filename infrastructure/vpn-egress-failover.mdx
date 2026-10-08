@@ -92,16 +92,11 @@ the first place, this costs zero real detection. Two things this fix deliberatel
   that recurs against *other* signatures over time. Source-based suppression is the fix that doesn't
   need to be repeated every time a new signature happens to collide.
 
-## Codification gap
+## Configuration
 
-This exception is currently console-only. The
-[`ubiquiti-community/unifi`](https://registry.terraform.io/providers/ubiquiti-community/unifi/latest)
-Terraform/OpenTofu provider (the same provider [`tofu-unifi`](/infrastructure/repos/tofu-unifi)
-uses for every other network resource) has no IPS / threat-management / suppression resource yet.
-So this rule can't be expressed as code alongside the rest of the network config. It joins the
-provider's other known gaps (see [Provider
-notes](/infrastructure/repos/tofu-unifi#provider-notes-unifi-network-9)). It stays a
-live-console setting to re-apply if the controller is ever rebuilt from scratch.
+Keep IDS/IPS exceptions in version-controlled network policy. Scope each
+exception to the traffic it must cover, and review it with the related policy
+change.
 
 ## Related
 

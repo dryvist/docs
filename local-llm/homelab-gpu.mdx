@@ -9,7 +9,7 @@ The homelab runs its own ChatGPT, and every other model size below it, behind
 and no prompt ever leaves the network. No consumer ever needs to know which
 machine actually served the request.
 
-The name resolves to a load-balanced pool of three stateless
+The name resolves to a load-balanced pool of stateless
 [LiteLLM](https://docs.litellm.ai/) routers. The routers hold the model table
 and fan requests out by tier:
 
@@ -17,8 +17,9 @@ and fan requests out by tier:
   authenticated TLS gate; the router holds the bearer token, consumers never
   see it. Which models are actually resident changes as the roster is
   re-evaluated. See [What is actually loaded](/local-llm/mac-studio#what-is-actually-loaded)
-  for the current, dated roster rather than a name hard-coded here. This is
-  the primary tier: the router prefers it whenever it's up.
+  for the dated roster; this docs pass did not verify live weights. Its role is
+  memory capacity for serial service of models that only fit in 128 GB, not a
+  claim that it is the fastest backend.
 - **Fast tier**: small, quick models (`qwen3-4b` and the
   `embeddings` model) on a Radeon RX 6800 in a privileged LXC, served by
   [llama-swap](https://github.com/mostlygeek/llama-swap) fronting llama.cpp's
@@ -39,12 +40,17 @@ and fan requests out by tier:
   implicit fallback. See
   [Delegation: the cheapest capable tier](/ai-development/model-routing#delegation-the-cheapest-capable-tier).
 
-The router chooses among the tiers it's allowed to reach for a given request.
-It uses a learned quality-vs-cost tradeoff rather than a fixed order. See
-[Cost as data](/ai-development/model-routing#cost-as-data-not-a-hardcoded-order).
-Each tier still registers an honest cost. In practice the order preceding is
-what falls out: local primary, then local GPU, then the free hosted tier,
-then paid providers.
+The router can choose among eligible tiers using a learned quality-vs-cost
+tradeoff rather than a fixed order. See [Cost as data](/ai-development/model-routing#cost-as-data-not-a-hardcoded-order).
+Each tier registers a cost. This role overview does not establish current
+router priority; check live configuration before relying on a preferred tier.
+
+In one-user testing, the discrete GPU ran the same 27 B parameter model about
+2.3 times faster than the Mac Studio. The tests used different backends and
+quantizations.
+The Mac Studio remains useful for serial service of large models that only fit
+in its 128 GB memory. This comparison describes measured configurations and does not
+establish a router priority or current live route.
 
 ## How you reach it
 
@@ -57,8 +63,8 @@ then paid providers.
   Mac([Your Mac])
   Chat([Open WebUI<br/>chat.·])
   Edge([Technitium DNS<br/>Traefik · wildcard TLS])
-  Pool([LiteLLM router pool<br/>llm.· /v1 — ×3])
-  Large([Local primary<br/>Apple Silicon · TLS gate])
+  Pool([LiteLLM router pool<br/>llm.· /v1])
+  Large([Large-memory capacity<br/>Apple Silicon · TLS gate])
   Fast([Local GPU fallback<br/>RX 6800 · fail-fast])
   Free([Free hosted tier<br/>stable handle])
   Paid([Paid providers<br/>explicit id only])
@@ -87,15 +93,16 @@ then paid providers.
 Teal is a client, ink is the DNS and reverse-proxy edge, and coral is the
 local serving fabric. Dashed teal is a hosted tier reached only as fallback
 or by explicit request. Traefik health-checks the router pool
-(`/health/liveliness`) and drops a dead router without the endpoint changing.
-Stopping one router live is a non-event. Every name resolves through
+(`/health/liveliness`) and drops an unhealthy member without changing the
+endpoint. This describes the intended redundancy; check current monitoring
+before relying on pool health. Every name resolves through
 Technitium and carries the wildcard certificate, so it is HTTPS end to end.
 
 ## What's in the stack
 
 | Piece | Does | Reached at |
 | --- | --- | --- |
-| `llm-router-1/2/3` | Stateless LiteLLM proxies, one per cluster node; the model table, tier fallbacks, and the heavy-backend bearer live here | `https://llm.<domain>/v1` (pooled) |
+| LiteLLM router pool | Stateless proxies hold the model table, tier fallbacks, and the heavy-backend bearer | `https://llm.<domain>/v1` (pooled) |
 | `llm-fast` | llama-swap + llama.cpp (ROCm) on the **RX 6800**; fast tier + `embeddings`, and a fail-fast fallback leg for the large tier | via the router |
 | `llm-light` | Same lineup, CPU-only, on the sleeps-by-default node | via the router (fallback) |
 | free hosted tier | Reached through a stable handle; the model behind it lives in the provider's own configuration, not here | via the router (fallback, behind both local tiers) |

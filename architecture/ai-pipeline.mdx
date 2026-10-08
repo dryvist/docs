@@ -128,6 +128,7 @@ the actual triggers, callers, and skill mechanics that drive this pipeline end-t
 
 ## Observability layer
 
-Every interaction in this pipeline emits OpenTelemetry. The data flows through Cribl Edge, Cribl
-Stream, and Splunk; [purpose-built Splunk apps](/observability/overview) visualize it. If an AI
-agent touched code, there's a trace.
+Every interaction in this pipeline emits OpenTelemetry. Cribl Edge and Stream route logs and
+supported metrics to Splunk. Cribl routes traces to Langfuse and [Phoenix](/observability/phoenix)
+(merged in git, not yet deployed); Splunk receives no traces. [Purpose-built Splunk apps](/observability/overview) visualize the
+logs and metrics. If an AI agent touched code, there's a trace.

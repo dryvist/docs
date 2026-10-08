@@ -9,7 +9,7 @@ page_type: "explanation"
 > the worker. This page follows that path from top to bottom.
 
 Two Apple Silicon Macs run the local models. Neither is an agent. Each is just a
-model plus a serving stack: `vllm-mlx` workers behind a `llama-swap` proxy,
+model plus a serving stack: `mlx-lm` workers behind a `llama-swap` proxy and a loopback queue front,
 answering an OpenAI-shaped API on loopback. The agent layer calls in over HTTP.
 See [Local LLM](/local-llm/overview) for the strategy; this page is the
 mechanism.
@@ -19,17 +19,17 @@ mechanism.
 The split is by job, not by hardware. One host is headless; the other runs an
 interactive desktop.
 
-- **The headless host** is the always-on serving host for the whole LAN. It has
-  no desktop working set to protect, so it reclaims that memory and holds two
-  models warm at once, with more available on demand.
+- **The headless host** provides large-memory capacity for serial service of
+  models that only fit in 128 GB. The measured comparison used one request at a
+  time; it does not establish live resident weights or multi-request saturation.
 - **The interactive laptop** self-serves: localhost clients only, so serving
   never competes with the network host. It keeps one model resident, sized to
   coexist with an interactive desktop and the user's own work.
 
-**The rule: heavy serving belongs on the headless host.** Anything large or
-structured is delegated to it over the LAN, off the laptop's battery and memory.
-The full model roster, verdicts, and performance numbers live in
-[Mac Studio serving](/local-llm/mac-studio); the per-host memory numbers live in
+**The role: use the headless host for models that need its larger memory.** It
+provides serial capacity without the laptop's battery and memory constraints.
+The dated model roster, verdicts, and performance numbers live in
+[Mac Studio serving](/local-llm/mac-studio); per-host memory numbers live in
 the gated operational reference.
 
 ### Ports
@@ -59,9 +59,9 @@ picks values; the modules turn them into a running process.
   Host([Host file<br/>lib/hosts/*.nix<br/>picks models + numbers])
   Darwin([nix-darwin<br/>wired ceiling + sysctls])
   Catalog([nix-ai catalog<br/>per-model serve facts])
-  Cmd([vllm-cmd.nix<br/>flags → serve command])
+  Cmd([serve command<br/>flags → mlx-lm command])
   Swap([llama-swap<br/>proxy + swap policy])
-  Worker([vllm-mlx worker<br/>one model, Metal])
+  Worker([mlx-lm worker<br/>one model, Metal])
 
   Host --> Darwin
   Host --> Catalog --> Cmd --> Swap --> Worker
@@ -87,9 +87,10 @@ rebuild, so the mode's memory envelope moves without one. Each host declares two
 budgets against its job. The headless host carries higher ones because it
 reclaims the desktop working set the laptop must leave free. The values are not
 typed by hand; each is derived from a memory budget, `wiredLimitMb =
-maxLocalLlmGb × 1024`. See
-[the runtime-dynamic derivation](/local-llm/memory-ceilings) for the whole
-scheme; the per-host budgets live in the gated operational reference.
+maxLocalLlmGb × 1024`. The
+[historical memory-ceilings guide](/local-llm/memory-ceilings) covers retired
+`vllm-mlx` controls; the current `mlx-lm` wrapper appears below.
+The per-host budgets live in the gated operational reference.
 
 The module also handles power posture: Low Power Mode off, Power Nap off, and
 App Nap off for the inference daemon. It also sets a Metal debug-env guard.
@@ -115,19 +116,17 @@ None of that picks a model; it shapes the box the model runs in.
     `options-runtime.nix` holds idle-unload, the swap proxy, and the preload
     list. Every knob carries the rationale for its default in-line.
   </Card>
-  <Card title="vllm-cmd.nix: the command" icon="terminal">
-    Turns the merged option values into the actual `vllm-mlx serve …` command
-    string. It reads a fixed list of `overridableFlags`. A per-model override
-    that names a flag outside that list fails the build instead of being
-    silently dropped. A load-time admission wrapper extends it, computing
-    `--max-cache-blocks` from the live wired ceiling and rejecting a model that
-    does not fit.
+  <Card title="The serve command" icon="terminal">
+    Turns the merged option values into the actual `mlx-lm` server command
+    string. A per-model override that names a flag outside the fixed list of
+    overridable flags fails the build instead of being silently dropped. A
+    launch wrapper sets MLX's in-process memory and cache limits before the
+    server starts.
   </Card>
   <Card title="lib/checks/mlx-catalog.nix: the guards" icon="shield-check">
     Build-time regression asserts three things: a host's catalog picks compile
     to the expected resident/swap profiles, host overrides beat catalog
-    defaults, and known-bad combinations (for example a hybrid-attention model
-    on the wrong paged-cache block size) never ship.
+    defaults, and known-bad combinations never ship.
   </Card>
 </CardGroup>
 
@@ -137,7 +136,7 @@ None of that picks a model; it shapes the box the model runs in.
    posture: the preload list, the swap policy, the concurrency limit.
 2. `catalog-data.nix` supplies each chosen model's family args and its
    class profile; the host's knob values merge on top.
-3. `vllm-cmd.nix` renders one `vllm-mlx serve` command per resident model,
+3. The serve-command renderer builds one `mlx-lm` server command per resident model,
    folding in the merged flags.
 4. `llama-swap` sits on the API port and manages the workers as children. The
    headless host keeps several resident at once (`groupSwap = false`); the
@@ -214,28 +213,106 @@ Nix's build-time job is narrow:
 - **the sysctl mechanism and the mode-switch watcher**: the launchd daemon that
   applies `iogpu.wired_limit_mb`, and the link watcher that flips it to the
   current mode's budget on plug or unplug.
-- **the admission-control wrapper and the model arch data**: the wrapper that
-  computes the per-model caps, and the catalog fields it reads.
+- **the launch wrapper and the model data**: the wrapper that sets MLX's
+  in-process memory and cache limits, and the catalog fields it reads.
 
 Runtime does the rest, with no rebuild:
 
 - **the link watcher** raises or lowers the wired ceiling to the mode's budget
   when the cluster cable changes.
-- **the admission wrapper** computes `--max-cache-blocks` and derived
-  `--gpu-memory-utilization` at each model load from the live sysctl, the
-  model's architecture, and the requested concurrency and context, and it
-  **rejects or clamps** a load that does not fit. Swapping a model needs no nix
-  change.
+- **the launch wrapper** sets the MLX memory and cache limits from the live
+  ceiling at each worker start. Swapping a model needs no nix change.
 
 A build-time assert remains, demoted to a policy check. It verifies the declared
 budgets are internally consistent and each leaves an OS floor, not that any one
-model fits. The per-model guarantee is the runtime admission.
+model fits.
 
-The full derivation and the two-behaviour mechanism behind it live in
-[Memory ceilings on Apple Silicon](/local-llm/memory-ceilings). So does why
-`--max-cache-blocks` (not `--cache-memory-mb`) is the real footprint cap, and
-the seven invariants that make overload virtually impossible. This page links
-to that mechanism rather than restating it.
+## The loopback queue front
+
+An HAProxy front sits between callers and `llama-swap`. It has one backend per
+model, with `maxconn` equal to that model's concurrency from the role map. It
+buffers each request body, reads the JSON `model` field, and picks the backend
+by role name or physical id. A POST that names no known model goes to the
+default role's backend, so nothing bypasses a queue. All listeners bind to
+loopback only.
+
+| Port | Class | Behavior when the model is busy |
+| --- | --- | --- |
+| 11433 | Wait | FIFO per backend, `maxconn 8`, `timeout queue 90s`, then a 503 |
+| 11432 | Direct | Immediate 429 (or 503 when the backend is unavailable), so the router falls through to its next rung |
+| 11431 | Metrics | Prometheus exporter at `/metrics`: queue depth, max queue, and 4xx/5xx counters |
+| 11430 | Power agent | Answers `up ready` on AC power and `maint` on battery |
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+flowchart LR
+Guard([gh-guard judge after activation]):::gate --> Swap([llama-swap direct<br/>11434]):::sink
+Recorder([recorder]):::src --> Wait[11433 wait]:::hop
+Router([router local rungs<br/>and the LAN gate]):::src --> Direct[11432 direct]:::hop
+Wait --> Back[per-model backend<br/>maxconn = concurrency]:::hop
+Direct --> Back
+Back --> Swap
+Power([11430 power agent]):::host -.up ready or maint.-> Back
+classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
+classDef host     fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+```
+
+- **Battery gating.** Each backend server runs an HAProxy `agent-check` against
+  the power agent. On battery every server goes to maintenance, and both
+  classes answer 503 at once. Back on AC the agent's `up ready` reply returns
+  every server to service: `up` sets the state and `ready` lifts maintenance.
+  The agent is a launchd socket agent that runs a one-line `pmset` check. On the
+  always-on host the check always reports AC, so it has no effect.
+- **Timeouts.** Client and server timeouts are 300 s. A request frozen across a
+  sleep ends instead of finishing hours later.
+- **Drift guard.** A build-time assertion requires llama-swap's concurrency for
+  each kept model to equal the role map's value. The rendered `maxconn` and the
+  proxy admission limit cannot disagree.
+- **Checks.** One check proves every rendered `maxconn` matches the map, with a
+  negative case. A second runs `haproxy -c` with warnings fatal on each host
+  class, with a negative case for an unknown keyword. A third runs HAProxy
+  against the shipped power-agent command through an AC, battery, AC cycle and
+  requires every server to end in service, with a negative case for an agent
+  that replies only `ready`.
+- **Callers.** After Home Manager activation, `gh-guard` sends judge requests
+  straight to llama-swap on `11434`, bypassing the queue and its battery gate.
+  The recorder uses the `11433` wait port. The router's local rungs and the LAN
+  gate use the `11432` direct port.
+- **Metrics scrape.** Cribl Edge scrapes the metrics port with an
+  `edge_prometheus` source; see
+  [Mac pack](/observability/repos/cc-edge-the-mac-pack).
+
+## The role map and host derivation
+
+`model-roles.json` in `homelab-contracts` maps each role to a model, an egress
+class, and a host class. Hosts and the router both read it; see
+Fast-subagent tier for the roles and chains.
+The shared [`model-catalog.json`](https://github.com/dryvist/homelab-contracts/blob/main/ansible/roles/llm_model_catalog/files/model-catalog.json)
+owns per-model limits and backend profiles. A model's router limits can differ
+from its MLX serving profile while remaining in the same catalog entry.
+[`nix-ai` reads the locked catalog](https://github.com/dryvist/nix-ai/blob/main/modules/mlx/model-catalog.nix)
+for MLX values; the router and serving roles project root or backend-profile
+values from the same source. Their checks fail if rendered limits disagree.
+The Nix hosts derive their serving from these shared inputs:
+
+- the catalog is the `27B` dense model, `MiMo-9B`, and an OCR swap model on the
+  server class;
+- the preload list, resident-worker count, and role-to-id registry come from
+  the map, not from per-host blocks; per-model concurrency comes from the
+  shared catalog rather than a duplicate role-map number;
+- the per-worker memory limit derives to 48 GiB on both Macs;
+- `vllm-mlx` is removed, and its options now fail with a removal message.
+
+<Warning>
+**Deploy state, 2026-10-03**
+
+Merged, but not yet deployed on the Macs. The queue front, the derived hosts,
+and the metrics scrape take effect at the next host rebuild. The router has not
+been converged to the new role map.
+</Warning>
 
 ## Related
 
@@ -247,16 +324,16 @@ to that mechanism rather than restating it.
   The serving host in full: model verdicts, evaluation battery, and headline performance numbers.
 </Card>
 <Card
-  title="Memory ceilings"
+  title="Historical vllm-mlx memory ceilings"
   icon="microchip"
   href="/local-llm/memory-ceilings">
-  Why one flag drives two memory behaviours, and the single-input derivation that keeps a model from paging the host.
+  Retired vllm-mlx controls; see this page for current mlx-lm guidance.
 </Card>
 <Card
   title="Apple Silicon stack"
   icon="sliders"
   href="/local-llm/apple-silicon">
-  Every non-secret tuning knob on the `vllm-mlx` + `llama-swap` stack, and why each is set the way it is.
+  Every non-secret tuning knob on the `mlx-lm` + `llama-swap` stack, and why each is set the way it is.
 </Card>
 <Card
   title="AI tooling (nix-ai)"

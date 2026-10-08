@@ -1,6 +1,6 @@
 ---
 title: "Apps on Proxmox"
-description: "Ansible roles that deploy the application stack on top of configured Proxmox hosts: HAProxy, Cribl Edge, Cribl Stream."
+description: "Ansible roles that deploy the app stack on top of configured Proxmox hosts: HAProxy, Cribl Edge, Cribl Stream."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -10,7 +10,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox-apps" />
 
-`ansible-proxmox-apps` deploys the application stack onto VMs and LXC containers that `tofu-proxmox`
+`ansible-proxmox-apps` deploys the app stack onto VMs and LXC containers that `tofu-proxmox`
 provisioned and `ansible-proxmox` configured. This is where the data-plane services that move
 traffic between sources and Splunk actually appear on disk.
 
@@ -42,7 +42,7 @@ flowchart LR
 
 - Deploys **HAProxy** as the front door for syslog and NetFlow traffic
 - Deploys **Cribl Edge** for collection and edge-side reshaping
-- Deploys **Cribl Stream** for routing, transformation, and ingest reduction
+- Deploys **Cribl Stream** for routing, transformation, and volume reduction at intake
 - Pulls Cribl pack configuration from the [`cc-edge-*`](https://github.com/JacobPEvans?tab=repositories&q=cc-edge) repos at deploy time
 - Wires every service so traffic flows from gear → HAProxy → Cribl Edge → Cribl Stream → Splunk
 
@@ -65,8 +65,8 @@ Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring ag
 <Step title="Clone and enter the dev shell">
 `git clone https://github.com/JacobPEvans/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
 </Step>
-<Step title="Provide Doppler credentials">
-Cribl tokens, HAProxy stats password, and Splunk HEC tokens all come from Doppler via `DOPPLER_TOKEN`.
+<Step title="Required environment">
+The playbooks read the Cribl tokens, HAProxy stats password, and Splunk HEC tokens as environment variables.
 </Step>
 <Step title="Run the playbook">
 `ansible-playbook -i inventory site.yml`. Re-runs converge drift only. Safe to run on a schedule.

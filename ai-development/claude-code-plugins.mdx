@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Drop-in plugins for Claude Code. The pieces that make a generic agent useful for a specific stack.
 
-<RepoMeta language="Python" status="active" lastActive="today" repoUrl="https://github.com/JacobPEvans/claude-code-plugins" />
+<RepoMeta language="Python" status="active" lastActive="today" repoUrl="https://github.com/dryvist/claude-code-plugins" />
 
 `claude-code-plugins` packages the extension points Claude Code supports (commands, skills, agents,
 hooks) into reusable plugins. Each plugin lives in its own directory and is installable via the
@@ -17,6 +17,7 @@ Claude Code plugin API.
 ## What it does
 
 - Ships plugins for git and GitHub workflows (`ship`, `finalize-pr`, `sync-main`), retrospectives, CodeQL resolution, and more
+- Includes the `monitoring-first` procedure in `homelab-ops`, referenced by the shared rules layer
 - Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
 - Houses **skills** that progressively load only when their triggers fire, keeping token cost minimal when idle
 - Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
@@ -38,6 +39,9 @@ Reads rules from [Assistant rules](/ai-development/ai-assistant-instructions); i
 <RepoFit>
 Workflow logic. Anything that's "how Claude Code should approach a task" lives here. Anything that's "what the rules are" lives in `ai-assistant-instructions`.
 </RepoFit>
+
+**MERGED in git; NOT DEPLOYED:** [PR #559](https://github.com/JacobPEvans/claude-code-plugins/pull/559)
+centralizes the definition of when `human:review` applies.
 
 ## Getting started
 
@@ -89,7 +93,7 @@ From any Claude Code session, type the slash command (for example, `/ship`) to u
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/claude-code-plugins">
+  href="https://github.com/dryvist/claude-code-plugins">
   Plugins, hooks, full README.
 </Card>
 </CardGroup>

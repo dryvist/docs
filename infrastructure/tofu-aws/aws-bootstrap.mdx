@@ -6,7 +6,7 @@ page_type: "how-to"
 {/* projected from the authoring site; do not edit here */}
 {/*TIER-GUARD: reference page — prerequisites, the bootstrap module, the migrate-state flow, and verify all belong together.*/}
 
-> Run this once per new project, with admin AWS credentials. Output is everything a new repo's `backend.tf` needs.
+> Run this once per new project, with administrator AWS credentials. Output is everything a new repo's `backend.tf` needs.
 
 The bootstrap is plain Terraform. The first `apply` runs with local state. Once the bucket exists,
 uncomment the `backend "s3"` block at the top of the file. Then `terraform init -migrate-state`
@@ -16,7 +16,7 @@ own bootstrap state (`_bootstrap/terraform.tfstate`) and the consuming repo's st
 
 ## Prerequisites
 
-- Admin AWS credentials in the shell — `aws sts get-caller-identity` returns an admin ARN.
+- Administrator AWS credentials in the shell. `aws sts get-caller-identity` returns an administrator ARN.
 - Terraform ≥ 1.10 or OpenTofu ≥ 1.10 on PATH.
 - The new GitHub repo (`<github-org>/<github-repo>`) already exists.
 - The GitHub Actions OIDC provider exists in the AWS account. Check with:
@@ -42,7 +42,7 @@ own bootstrap state (`_bootstrap/terraform.tfstate`) and the consuming repo's st
 
 ## Where this lives
 
-The recommended layout is one directory per project inside a single admin-owned repo (suggested name: `terraform-aws-foundation`):
+The recommended layout is one directory per project inside a single administrator-owned repo (suggested name: `terraform-aws-foundation`):
 
 ```text
 terraform-aws-foundation/
@@ -183,7 +183,7 @@ aws iam get-role --role-name tf-<project>
 terraform output -json
 ```
 
-If all three succeed, the consuming repo can immediately set up its [backend.tf](/infrastructure/tofu-aws/consuming-repo) and run its first `terraform plan`.
+If all three succeed, the consuming repo can immediately set up its `backend.tf` and run its first `terraform plan`.
 
 {/*Shape: linear chain. 5 nodes. Boundary crossings: 0. Aspect: ~5:1 LR. Pass.*/}
 
@@ -214,27 +214,9 @@ If all three succeed, the consuming repo can immediately set up its [backend.tf]
 
 <CardGroup cols={2}>
 <Card
-  title="OpenTofu on AWS overview"
-  icon="diagram-project"
-  href="/infrastructure/tofu-aws/overview">
-  The isolation model and naming conventions this bootstrap implements.
-</Card>
-<Card
-  title="Set up the consuming repo"
-  icon="folder-tree"
-  href="/infrastructure/tofu-aws/consuming-repo">
-  What the new repo drops in next to use the outputs above.
-</Card>
-<Card
   title="OpenTofu check placement"
   icon="list-check"
   href="/infrastructure/tofu-check-placement">
   Where every Terraform / OpenTofu command runs — pre-commit vs CI.
-</Card>
-<Card
-  title="aws-vault (legacy) and the OpenBao broker"
-  icon="key"
-  href="/security/tools/aws-vault">
-  How operators and agents now reach the role this bootstrap created.
 </Card>
 </CardGroup>

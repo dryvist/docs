@@ -23,14 +23,10 @@ install onto hosts that `tofu-splunk-aws` provisioned (or onto homelab hardware 
 - Wires in conf bundles from the AI-observability Splunk apps and TAs
 - Runs idempotently: safe to re-run as a drift-correction tool
 
-## HEC tokens are derived, not distributed
+## HEC inputs
 
-Each index's HEC token is a **UUIDv5 of `splunk-hec-<index>` in a shared private namespace**. Cribl
-Stream (the only Splunk egress) and this repo's HEC input config derive the same token
-independently from that formula. No token list ever needs syncing between repos. The namespace
-UUID is the only secret. Doppler injects it at run time, it is never committed, and a leaked
-token scopes to a single index. The family → port → index map lives on the [observability
-overview](/observability/overview#syslog-ingest-families).
+Each HEC token scopes to a single index. The family → port → index map lives on the [observability
+overview](/observability/overview#syslog-intake-families).
 
 ## How it fits
 
@@ -51,8 +47,8 @@ Run `tofu-splunk-aws` (cloud) or `ansible-proxmox` (homelab) first. Hosts need O
 <Step title="Clone and enter the dev shell">
 `git clone https://github.com/dryvist/ansible-splunk && cd ansible-splunk && nix develop`
 </Step>
-<Step title="Provide Splunk license and HEC tokens via Doppler">
-`DOPPLER_TOKEN` resolves the Splunk license file and any pre-shared HEC tokens at run time. No secrets in git.
+<Step title="Required environment">
+The playbook reads the Splunk license file and any pre-shared HEC tokens as environment variables.
 </Step>
 <Step title="Run the playbook">
 `ansible-playbook -i inventory site.yml`. The first run installs Splunk; subsequent runs converge config drift.

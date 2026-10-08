@@ -7,9 +7,17 @@ page_type: "explanation"
 > Same spans, second viewer. Langfuse shows what a call cost; Phoenix lets you score it, replay it, and run experiments against it.
 
 [LLM observability](/observability/llm-observability) sends every LLM trace through
-Cribl Stream, which fans it out to Langfuse and Splunk. Phoenix is a third leg on
-that same input. Nothing upstream changed: the apps still emit to the collector,
-and the collector still decides where spans go.
+Cribl Stream, which routes traces to Langfuse and Phoenix. The direct OTLP
+source has no Splunk trace leg. The S2S source drops marked spans on its HEC
+branch before forwarding other events. Its filter matches
+`sourcetype=otel:span` or `__otlp.type=traces`; confirm pack routes preserve
+those markers. Pack-internal `default` routes can bypass the shared Edge
+route, so verify the installed destination before treating that path as live.
+Logs and supported metrics use separate routes.
+
+The [Stream input](https://github.com/dryvist/ansible-proxmox-apps/blob/develop/roles/cribl_stream/templates/inputs.yml.j2)
+defines both trace paths. The [HEC filter](https://github.com/dryvist/ansible-proxmox-apps/blob/develop/roles/cribl_stream/templates/pipelines/force_splunk_meta/conf.yml.j2)
+drops marked spans before metadata enrichment.
 
 ## Why a second trace viewer
 
@@ -58,35 +66,38 @@ after July 2025 and was relicensed to GPL-3 that November (checked September
 
 ## Where it sits
 
-{/*Shape: fan-out. Cribl Stream -> three sinks. Total nodes: 5.*/}
+{/*Shape: two Stream inputs fan out to two trace sinks. Total nodes: 6.*/}
 
 ```mermaid
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
   Apps([Orchestration stack<br/>+ router tier])
-  Stream([Cribl Stream<br/>in_otel])
+  Edge([Edge OTLP packs])
+  OTel([Cribl Stream<br/>in_otel])
+  S2S([Cribl Stream<br/>in_cribl_s2s])
   LF([Langfuse<br/>trace · cost])
   PX([Phoenix<br/>evals · experiments])
-  SP[(Splunk<br/>archival · SIEM)]
 
-  Apps -->|OTLP| Stream
-  Stream -->|otel_traces| LF
-  Stream -->|otel_traces_phoenix| PX
-  Stream -->|all signals| SP
+  Apps -->|OTLP| OTel
+  Edge -.->|default route; verify destination| S2S
+  OTel -->|otel_traces| LF
+  OTel -->|otel_traces_phoenix| PX
+  S2S -->|otel_traces| LF
+  S2S -->|otel_traces_phoenix| PX
 
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
-  class Apps ai
-  class Stream hop
-  class LF,PX,SP sink
+  class Apps,Edge ai
+  class OTel,S2S hop
+  class LF,PX sink
 
   click LF "/observability/llm-observability" "Langfuse and the OTLP path"
 
-  linkStyle 0 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 1,2,3 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 0,1 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 2,3,4,5 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 The Phoenix leg runs its own Cribl pipeline. It keeps the same guards as the
@@ -95,6 +106,12 @@ redact credentials. It skips the Langfuse-specific attribute rewrites,
 because Phoenix reads the emitted GenAI attributes as they are. Both
 pipelines loop over the same lists in the Cribl role, so there is one place
 to add a span name or a redaction pattern.
+
+The Phoenix output retries timed-out requests and HTTP 429, 502, 503, and 504
+responses. The backoff is exponential: 1 second to start, doubling, 60 seconds
+at most. It honors `Retry-After`. While Phoenix is unreachable, the output
+queues to disk, capped at 1 GB, and drops data when the queue is full. The
+Splunk output differs. It blocks on backpressure instead of dropping.
 
 ## Reaching it
 
@@ -108,7 +125,7 @@ every service in this stack follows.
   in Phoenix. That path sits outside the Authelia gate, so an unauthenticated
   call gets Phoenix's own `401`, never a login redirect.
 
-That API key is the one manual step. Phoenix mints it after first boot, and it
+The API key is the one manual step. Phoenix mints it after first boot, and it
 goes into OpenBao where the Cribl role reads it. Until it is seeded, the Cribl
 converge fails loudly rather than rendering an empty credential.
 

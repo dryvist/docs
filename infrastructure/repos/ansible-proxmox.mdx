@@ -34,7 +34,7 @@ flowchart LR
 ```
 
 `ansible-proxmox` is the middle tier of the Proxmox stack. It owns everything that needs to be true
-about a Proxmox host *before* any workload runs on it. That includes ZFS, networking, swap and CPU
+about a Proxmox host *before* any workload runs on it. That includes ZFS, networking, swap, and CPU
 tuning, users, hardening, and monitoring agents.
 
 ## What it does
@@ -65,8 +65,8 @@ Run once per host after OpenTofu finishes. Re-running is safe. Every role is ide
 <Step title="Point at the OpenTofu inventory">
 Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
 </Step>
-<Step title="Resolve secrets via Doppler">
-`DOPPLER_TOKEN` lets the playbook fetch host passwords, SSH keys, and monitoring tokens at run time. No secrets in git.
+<Step title="Required environment">
+The playbooks read host passwords, SSH keys, and monitoring tokens as environment variables.
 </Step>
 <Step title="Run the playbook">
 `ansible-playbook -i inventory site.yml`. The first run is the slow one; subsequent runs only converge what's drifted.

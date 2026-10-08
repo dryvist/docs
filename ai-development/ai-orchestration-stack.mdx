@@ -9,27 +9,28 @@ page_type: "explanation"
 > deployed and never used.
 
 The homelab runs a self-hosted layer for building LLM workflows and agents on top
-of its [private model serving](/local-llm/overview). Three pieces carry
-production work today:
+of its [private model serving](/local-llm/overview). Repository events and
+external agent intake carry production work today. The stateful graph service
+needs a host-level status check before a flow depends on it:
 
 - **Scheduled event automation** for repository events: a pull request opened or
   updated, a review comment, a merge, or a timed sweep.
 - **An agent intake service** for scheduled and agentic work: signed webhooks and
   a job API queue the work, and a self-hosted agent runs it. See
   [the self-hosted agent](/autonomous-agents/hermes-agent).
-- **A self-hosted LangGraph server** for a stateful, multi-step agent that needs
-  to carry state between steps, behind a self-hosted chat UI. No cloud tracing
-  account is required.
+- **A declared LangGraph server** for a stateful, multi-step agent that needs to
+  carry state between steps, behind a self-hosted chat UI. Its host-layout page
+  still marks it as a seed, so check its live state before using it.
 
 <Note>
 **What else is deployed but not load-bearing**
 
 Two visual workflow builders are running as platforms, for prototyping only: no
 authored production workflow is committed to either. A general workflow
-automation tool is declared in infrastructure but has no deployment role
-configured, so nothing runs on it. A separate execution host still runs a small
-multi-agent Python framework as a seed script; it is not the primary agent
-runtime. None of the four carry production traffic today.
+automation role exists in Ansible, but its live deployment and event flows were
+not verified. GitHub Actions remains the selected repository-event path. A
+separate execution host still runs a small multi-agent Python framework as a
+seed script; it is not the primary agent runtime.
 </Note>
 
 ## How they fit together
@@ -43,13 +44,17 @@ runtime. None of the four carry production traffic today.
   subgraph buildtime [Build-time: declared and provisioned]
   IAC([Infra-as-code<br/>guests · firewall · ACME])
   end
-  subgraph runtime [Run-time: actually carries traffic]
+  subgraph runtime [Run-time: current event paths]
   EVT([Scheduled event automation<br/>repo events + sweeps])
   INTAKE([Agent intake<br/>signed webhooks + job API])
   AGENT([Self-hosted agent])
-  LG([LangGraph server<br/>+ chat UI])
   MODELS([Model providers<br/>fabric router · external APIs])
   OBS([Observability<br/>OTEL traces])
+  end
+
+  subgraph declared [Declared: runtime status needs readback]
+  LG([LangGraph server<br/>stateful flow candidate])
+  N8N([n8n role<br/>optional workflow tool])
   end
 
   IAC -.provisions.-> LG
@@ -57,8 +62,8 @@ runtime. None of the four carry production traffic today.
   EVT --> AGENT
   INTAKE --> AGENT
   AGENT --> MODELS
-  LG --> MODELS
   AGENT -.-> OBS
+  LG -.-> MODELS
   LG -.-> OBS
 
   classDef svc fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
@@ -66,7 +71,7 @@ runtime. None of the four carry production traffic today.
   classDef obs fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
   classDef build fill:#0B1D2A,stroke:#4FB3A9,stroke-width:1.5px,color:#F4EFE6,stroke-dasharray: 4 3;
 
-  class EVT,INTAKE,AGENT,LG svc
+  class EVT,INTAKE,AGENT,LG,N8N svc
   class MODELS core
   class OBS obs
   class IAC build
@@ -74,11 +79,10 @@ runtime. None of the four carry production traffic today.
   linkStyle 5,6 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
-Build-time is infrastructure-as-code declaring and provisioning the guest, its
-firewall rules, and its ACME certificate. Run-time is the actual request path:
-an event or a signed webhook lands, the agent runs, and its model calls and
-traces flow to the shared fabric and the observability pipeline the same way
-every other tool's do.
+Build-time infrastructure-as-code declares and provisions the guest, firewall
+rules, and ACME certificate. Run-time is the request path. An event or signed
+webhook arrives, the agent runs, and its model calls and traces flow through the
+shared fabric and observability pipeline.
 
 Every piece is configured to its **own** model provider per its standard
 install: the local OpenAI-compatible endpoint, an external API, or both. It is
@@ -86,15 +90,15 @@ never forced onto a shared backend that belongs to another stack. Each call is
 instrumented, and traces fan out to the
 [LLM observability](/observability/llm-observability) pipeline.
 
-## Picking one — the blunt version
+## Choosing an orchestration path
 
 - Repository events (a PR opened, a review comment, a merge) → scheduled event
   automation. That is what it exists for.
 - Scheduled or externally triggered agent work → the agent intake service. Send
   it a signed webhook or a job, and the self-hosted agent runs it.
 - A durable, stateful, multi-step agent that needs to carry state between
-  steps, behind a UI, with no cloud tracing account → the self-hosted LangGraph
-  server.
+  steps, behind a UI, with no cloud tracing account → LangGraph after its
+  current host state is verified.
 - A visual workflow builder for prototyping only → either of the two deployed
   platforms. Neither carries a committed production workflow today, so treat
   time spent there as throwaway.

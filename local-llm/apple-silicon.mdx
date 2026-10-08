@@ -1,15 +1,25 @@
 ---
 title: "Apple Silicon stack"
-description: "The M4 Max vllm-mlx and llama-swap stack, and the tuning knobs that let a 128 GB laptop serve a large model without melting the desktop."
+description: "Historical M4 Max llama-swap and vllm-mlx stack (vllm-mlx retired 2026-10-02), and the tuning knobs that let a 128 GB laptop serve a large model without melting the desktop."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 > One resident model, behind a swapping proxy, tuned so the GPU serves tokens
 > without starving the machine you're actually using.
 
+<Warning>
+**Historical vllm-mlx guidance**
+
+The tuning below was written for the `vllm-mlx` worker. That backend was removed
+from [`nix-ai`](/nix/nix-ai) on 2026-10-02, and the active worker is `mlx-lm`.
+Read this page for the design reasoning. For current controls, see
+[How the Nix stack serves a model](/local-llm/nix-serving-stack).
+</Warning>
+
 The workstation serves its local model through two processes: `llama-swap`, a
-thin model-multiplexing proxy on `localhost:11434`, and one `vllm-mlx` worker
-that does the MLX inference. Every caller speaks the OpenAI API; the proxy
+thin model-multiplexing proxy on `localhost:11434`, and one MLX worker
+that does the inference. The worker was `vllm-mlx` when this page's tuning was written.
+That backend was removed on 2026-10-02, and the active worker is `mlx-lm`. Every caller speaks the OpenAI API; the proxy
 routes to the resident worker and manages its lifecycle.
 
 The hard part on a laptop isn't raw speed. It's **coexistence**. A large model
@@ -27,7 +37,7 @@ exists to keep inference from quietly pushing the whole machine into swap.
   flowchart LR
   Caller([OpenAI client<br/>:11434/v1])
   Swap([llama-swap<br/>proxy])
-  Worker([vllm-mlx<br/>worker])
+  Worker(["vllm-mlx (retired)<br/>worker"])
   Weights[(model weights<br/>external volume)]
 
   Caller --> Swap --> Worker --> Weights
@@ -189,7 +199,7 @@ fix when a worker has been evicted under pressure.
   title="Backends & tool calling"
   icon="server"
   href="/local-llm/backends">
-  Why `vllm-mlx`, and the tool-calling reliability problem.
+  Why the stack chose `vllm-mlx` (retired 2026-10-02), and the tool-calling reliability problem.
 </Card>
 <Card
   title="nix-ai"

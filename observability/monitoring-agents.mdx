@@ -11,7 +11,7 @@ The monitoring stack runs across four hosts. These are the homelab Proxmox clust
 AWS-side Splunk install. Each tier picks the lowest-overhead path the host OS supports natively.
 This page maps every collector to a host and a destination.
 
-{/*Shape: parallel convergence. Two host subgraphs; both Stream tiers land on Splunk; AWS is the failover. 7 nodes, ≤1 boundary per edge.*/}
+{/*Shape: parallel convergence. Two host subgraphs; homelab trace routes split to Langfuse and Phoenix; Splunk is the failover source. 9 nodes, ≤1 boundary per edge.*/}
 
 ```mermaid
 %%{init:
@@ -28,12 +28,16 @@ This page maps every collector to a host and a destination.
   oStream(["OrbStack Cribl Stream"])
   end
   awsdr[("Splunk DR · AWS")]
+  langfuse([Langfuse<br/>traces])
+  phoenix([Phoenix<br/>traces])
 
   hEdge --> hStream
   mEdge --> hStream
   oEdge --> oStream
-  hStream --> splunk
+  hStream -->|supported logs + metrics| splunk
   oStream --> splunk
+  hStream -->|traces| langfuse
+  hStream -->|traces| phoenix
   splunk -.failover.-> awsdr
 
   classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
@@ -43,46 +47,51 @@ This page maps every collector to a host and a destination.
 
   class hEdge,mEdge,oEdge src
   class hStream,oStream hop
-  class splunk sink
+  class splunk,langfuse,phoenix sink
   class awsdr external
 
   click splunk "/observability/repos/ansible-splunk" "The homelab Splunk install"
   click awsdr "/observability/repos/tofu-splunk-aws" "The AWS DR footprint"
 
   linkStyle 0,1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 5 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+  linkStyle 5,6 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 7 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-Every Edge feeds a Stream; only Stream reaches Splunk; the AWS tier is one routing-rule flip away. Detail per collector below.
+Every Edge feeds a Stream; only Stream reaches Splunk. In the homelab AI path,
+supported logs and metrics go to Splunk while traces are routed to Langfuse and Phoenix.
+The trace routes are **merged in git; NOT DEPLOYED** yet, so see [LLM observability](/observability/llm-observability) for status.
+The AWS tier is one routing-rule flip away. Detail per collector below.
 
 ## The collectors
 
 | Collector | Where it runs | What it collects | Forwards to |
 | --- | --- | --- | --- |
 | `cribl-edge` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
-| `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, volume reduction, routing | Splunk HEC ([`ansible-splunk`](/observability/repos/ansible-splunk)) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no Cloud fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI command-line tools / LLM stack / OpenBao audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
+| `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, volume reduction, routing | Supported logs and metrics to Splunk; AI traces to Langfuse and Phoenix (merged, not yet deployed) |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI command-line tools / LLM stack / audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
 | `cribl-edge-standalone` (OrbStack) | StatefulSet in [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) `monitoring` namespace | AI tool telemetry: Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
-| `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl Cloud | Cribl Cloud |
+| `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl's hosted service | Cribl's hosted service |
 | `cribl-stream-standalone` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
 | `otel-collector` (OrbStack) | StatefulSet in `orbstack-kubernetes` | OTLP from Claude Code SDK, any in-cluster OTLP source | `cribl-stream-standalone` (OrbStack) |
 
-## The Edge → Stream → Splunk invariant
+## The Splunk egress invariant
 
-Across every tier, the architectural rule is the same. Edge collects, Stream routes, and Splunk indexes.
-Edge does not talk directly to Splunk anywhere on this stack. Stream is the only component with
-Splunk egress. On the OrbStack cluster this is enforced by network policies that lock Edge egress to
-Stream on HEC port 8088 only. On the homelab Proxmox side the rule is operational (single Stream
-tier), reinforced by firewall rules in `tofu-proxmox/modules/firewall/`.
+For signals routed to Splunk, Edge collects, Stream routes, and Splunk indexes.
+Edge does not talk directly to Splunk anywhere on this stack. Stream is the
+only component with Splunk egress. Homelab AI traces take separate Cribl routes
+to Langfuse and Phoenix (merged, not yet deployed); Splunk receives no traces. On the OrbStack cluster the
+Splunk egress rule is enforced by network policies that lock Edge egress to
+Stream on HEC port 8088 only. On the homelab Proxmox side the rule is
+operational (single Stream tier), reinforced by firewall rules in
+`tofu-proxmox/modules/firewall/`.
 
 Two as-built details of that egress:
 
 - **Edge → Stream rides Cribl S2S** as tcpjson on the dedicated `cribl_s2s` service port (a pipeline constant from the infrastructure repo, never hardcoded).
-- **Stream → Splunk is one HEC output per index**, each with its own token. Tokens are *derived*,
-  not distributed: UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl and Splunk
-  compute the same value independently. The namespace UUID is the only secret, and a leaked token
-  scopes to one index. See the [full family/port/index
-  map](/observability/overview#syslog-ingest-families).
+- **Stream → Splunk is one HEC output per index**, each with its own token
+  scoped to one index. See the [full family/port/index
+  map](/observability/overview#syslog-intake-families).
 
 ## Per-tool Cribl Edge packs
 
@@ -153,7 +162,7 @@ Splunk tier is live.
   title="Observability overview"
   icon="chart-line"
   href="/observability/overview">
-  The OTEL → Cribl → Splunk pipeline, end to end.
+  Cribl routes supported logs and metrics to Splunk. Trace routes to Langfuse and Phoenix are merged, not yet deployed.
 </Card>
 <Card
   title="orbstack-kubernetes"

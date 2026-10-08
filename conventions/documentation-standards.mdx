@@ -8,14 +8,20 @@ page_type: "reference"
 > rule and a page disagree, fix the page.
 
 This page is the canonical standard for `docs.jacobpevans.com`. It exists so new
-pages land consistently no matter who, human or model, writes them.
+pages land consistently, whether a human or a model writes them.
 
 ## Information architecture
 
 The site is organized by **domain**, not by document type. The left sidebar has a
-small set of top-level dropdowns (Overview, Homelab infrastructure, Platform and
-tooling, AI and agents, Security and secrets, Reference). A reader picks a domain
-first, then narrows.
+small set of top-level dropdowns:
+
+- Overview
+- Homelab infrastructure
+- Platform and tooling
+- AI and agents
+- Reference
+
+A reader picks a domain first, then narrows.
 
 Document type (the [Diátaxis](https://diataxis.fr/) idea of tutorial, how-to,
 reference, explanation) is captured as page metadata, the `page_type` field below,
@@ -36,10 +42,9 @@ Preserve these tokens exactly, wherever they appear in a title:
 
 `AI · API · AWS · BMC · CI/CD · DNS · GPU · HEC · IAM · IaC · IDS · IPS · K8s ·
 LLM · LXC · macOS · MCP · MFA · MLX · MoE · Nix · OIDC · OTEL · OTLP · PR ·
-README · SIEM · SOPS · TTL · UniFi · VLAN · VMID · VPN · YAML · ZFS` — plus proper
-nouns kept in their own casing: `Apple · Bifrost · Bitwarden · ChatGPT · Cribl ·
-Docker · Doppler · GitHub · Keychain · Kubernetes · Mac · OpenBao · OpenTofu ·
-OrbStack · Proxmox · Splunk`
+README · SIEM · SOPS · TTL · UniFi · VLAN · VMID · VPN · YAML · ZFS`, plus proper
+nouns kept in their own casing: `Apple · Bifrost · ChatGPT · Cribl · Docker ·
+GitHub · Kubernetes · Mac · OpenTofu · OrbStack · Proxmox · Splunk`
 
 Renaming a file changes its slug. When you rename or move a page, add a
 `redirects` entry in `docs.json` (old → new) **and** update every inbound link so
@@ -90,8 +95,8 @@ These standards derive from established documentation practice:
 | Source | What it informs |
 | --- | --- |
 | [Diátaxis](https://diataxis.fr/) | The four document types, captured here as `page_type`. |
-| [Divio — The documentation system](https://docs.divio.com/documentation-system/) | The same four-type model, applied to structure. |
+| [Divio: the documentation system](https://docs.divio.com/documentation-system/) | The same four-type model, applied to structure. |
 | [Google developer documentation style guide](https://developers.google.com/style) | Sentence case, active voice, plain language. |
-| [Write the Docs — Documentation Guide](https://www.writethedocs.org/guide/) | General authoring and maintenance practice. |
-| [Nielsen Norman Group — menu configurations](https://www.nngroup.com/articles/menu-configurations/) | Navigation density and scannability. |
+| [Write the Docs: documentation guide](https://www.writethedocs.org/guide/) | General authoring and maintenance practice. |
+| [Nielsen Norman Group: menu configurations](https://www.nngroup.com/articles/menu-configurations/) | Navigation density and scannability. |
 | [Mintlify navigation](https://mintlify.com/docs/organize/navigation) | Dropdowns, groups, and how this site's sidebar renders. |

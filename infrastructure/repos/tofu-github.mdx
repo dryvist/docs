@@ -20,16 +20,24 @@ Team plan) let dryvist define this once and apply it to every repo automatically
 
 - **Push protection.** A hard ceiling on file size and a banned-extension list, enforced at the git layer (no workflow run) on every repo and ref.
 - **Branch protection.** Required commit signatures, a branch-name pattern, a strict Conventional
-  Commits regex, and PR thread resolution on every default branch, with no bypass for anyone,
+  Commits regular expression, and PR thread resolution on every default branch, with no bypass for anyone,
   including org admins.
 - **Upstream forks.** A fork of a third-party project sets `upstream_fork: true` in
   `config/repos.yml`. Upstream history can't meet the signature and commit-format rules, so the
   fork is exempt from them. Its default branch still requires a PR, allows merge commits only, and
   blocks deletion and force-push.
 - **Review gate.** One approving review plus a CODEOWNER review on every default branch, with an
-  admin-only bypass so admins can merge their own PRs while bots and other contributors still need
+  administrator-only bypass so administrators can merge their own PRs while bots and other contributors still need
   the review.
 - **Markdown lint.** Requires the markdownlint workflow (defined once in the org's `.github` repo) to pass on every ref of every repo, with new repos exempted until their default branch exists.
+- **Labels.** [`labels.yml`](https://github.com/dryvist/tofu-github/blob/main/labels.yml) is the one
+  label definition, and OpenTofu applies it to every unarchived repo, forks included. A `moved`
+  block moved the label state from its first resource address to the org-wide one. A data-driven
+  import block adopts labels that already exist on a repo, matched case-insensitively by name, and
+  creates the rest. The org's `.github` repo no longer has a label-sync workflow.
+- **Repo settings.** Every unarchived repo is governed by default: auto-merge on, delete-branch-on-merge
+  on, and vulnerability alerts on. The apply completed on 2026-10-03 (the final plan reported no
+  changes), and all 76 unarchived repos carry these settings.
 
 ## How it fits
 
@@ -38,8 +46,8 @@ Team plan) let dryvist define this once and apply it to every repo automatically
 | Explicitly approved `tofu apply` in Terrakube | Every repo in the `dryvist` org, at the ruleset layer |
 
 <RepoFit>
-Org-wide GitHub governance only: rulesets, required workflows, and (over time) org/repo settings.
-It doesn't touch what any individual repo's CI pipeline does. See [CI/CD
+Org-wide GitHub governance only: rulesets, required workflows, labels, and repo settings.
+It doesn't change what any individual repo's CI pipeline does. See [CI/CD
 policy](/infrastructure/cicd/policy) for that layer.
 </RepoFit>
 
@@ -49,10 +57,8 @@ policy](/infrastructure/cicd/policy) for that layer.
 <Step title="Clone and enter the dev shell">
 `git clone git@github.com:dryvist/tofu-github.git && cd tofu-github && direnv allow`
 </Step>
-<Step title="Log in to the Terrakube workspace">
-`tofu login "$TF_CLOUD_HOSTNAME"` requires membership in the org's `terrakube-admins` team. It
-needs no AWS account and no local `GITHUB_TOKEN`. Terrakube injects the org-admin GitHub
-credential at run time.
+<Step title="Required environment">
+The workspace configuration reads `TF_CLOUD_HOSTNAME`. The provider reads `GITHUB_TOKEN`.
 </Step>
 <Step title="Plan and apply">
 `tofu init && tofu plan && tofu apply` runs plan and apply remotely in Terrakube. Output streams back to the local shell.

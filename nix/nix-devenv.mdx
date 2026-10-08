@@ -14,9 +14,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 ## What it does
 
-- Exports `devShells.<stack>` for `terraform`, `ansible`, `kubernetes`, `python`, `ml`, and more
+- Exports per-system `devShells`; the OpenTofu shell is `tofu` in [`flake.nix`](https://github.com/JacobPEvans/nix-devenv/blob/develop/flake.nix)
 - Provides a `mkshell` template: `nix flake init -t github:JacobPEvans/nix-devenv#mkshell`
-- Pins toolchain versions so every project on the same shell gets the same `terraform` / `kubectl` / `ansible`
+- Pins toolchain versions so every project on the same shell gets the same `tofu` / `terraform` / `kubectl` / `ansible`
 - Activated per-project via direnv (`.envrc` is committed; `.direnv/` is gitignored)
 
 ## How it fits

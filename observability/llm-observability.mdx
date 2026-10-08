@@ -15,6 +15,19 @@ tags and fans out, and the spans land in Langfuse and [Arize Phoenix](/observabi
 There are zero direct-to-backend paths. Splunk gets the same estate's other telemetry, but never
 traces — traces don't fit its event model; see the [fan-out default](/architecture/data-pipelines#fan-out-every-source-to-every-destination).
 
+These Cribl routing changes are **MERGED in git; NOT DEPLOYED**. Alert delivery
+through Stream is in
+[ansible-proxmox-apps PR #2417](https://github.com/dryvist/ansible-proxmox-apps/pull/2417)
+and [nix-darwin PR #2740](https://github.com/dryvist/nix-darwin/pull/2740). The
+catalog is in [ansible-proxmox-ai PR #1077](https://github.com/dryvist/ansible-proxmox-ai/pull/1077)
+and [nix-darwin PR #2737](https://github.com/dryvist/nix-darwin/pull/2737). Stream
+S2S span fan-out is in
+[ansible-proxmox-apps PR #2426](https://github.com/dryvist/ansible-proxmox-apps/pull/2426)
+(commit `728dc754`). The S2S pack sends spans to Langfuse and Phoenix. It drops
+marked spans before the Splunk leg. Acceptance is pending the Stream converge.
+Observe 15 minutes with zero new span events in Splunk and a known trace in the
+trace backend.
+
 ## Emitting traces: OpenLLMetry and OTEL GenAI
 
 Apps are instrumented with [OpenLLMetry](https://github.com/traceloop/openllmetry)
@@ -43,26 +56,28 @@ with its producer and forks it in parallel:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
   Apps([Orchestration stack<br/>+ proxy tier])
-  Cribl([Cribl<br/>Edge collects · Stream routes])
+  Cribl([Cribl Edge])
+  Stream([Cribl Stream<br/>S2S routes])
   LF([Langfuse<br/>trace · cost])
   PX([Phoenix<br/>evals · experiments])
 
   Apps -->|OTLP per type| Cribl
-  Cribl -->|traces| LF
-  Cribl -->|traces| PX
+  Cribl -->|S2S| Stream
+  Stream -->|traces| LF
+  Stream -->|traces| PX
 
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Apps ai
-  class Cribl hop
+  class Cribl,Stream hop
   class LF,PX sink
 
   click PX "/observability/phoenix" "Arize Phoenix: evals and experiments"
 
   linkStyle 0 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
-  linkStyle 1,2 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 1,2,3 stroke:#4FB3A9,stroke-width:2px;
 ```
 
 - **Langfuse** gets the traces. It is the LLM-native view: trace waterfalls per
@@ -71,9 +86,9 @@ with its producer and forks it in parallel:
 - **Phoenix** gets the same traces on its own pipeline leg. It is where a trace
   becomes a test case: datasets, experiments, LLM-as-judge evals, and a
   playground that replays a captured call. See [Arize Phoenix](/observability/phoenix).
-- **Splunk never gets traces.** The fan-out default routes every format to every
-  destination it fits, and a trace does not fit Splunk's event model. Splunk
-  still gets this estate's other telemetry (metrics, logs) over its own legs.
+- **Marked spans are dropped before the Splunk leg.** The Stream S2S pack
+  filters them before forwarding. Splunk still gets this estate's other
+  telemetry (metrics, logs) over its own legs.
 
 Apps never talk to a trace store directly, and they never reach across into the
 monitoring tier. They emit to the collector, and the collector decides where it

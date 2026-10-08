@@ -7,7 +7,7 @@ page_type: "overview"
 > Provision once with OpenTofu, configure with Ansible, run forever.
 
 The infrastructure layer is OpenTofu-managed; the `terraform-*` repo names are legacy, and the
-engine inside is `tofu` (see [IaC tooling](/infrastructure/iac-tooling)). Every module is
+engine inside is `tofu`. Every module is
 opinionated about deployment shape. It uses LXC for production homelab workloads, Docker on a
 dedicated VM only when vendor-locked, and AWS for disaster recovery and managed services.
 
@@ -38,10 +38,10 @@ flowchart LR
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-Every guest follows the same three-stage pipeline: OpenTofu provisions it, Ansible configures it,
-then the app stack deploys on top. CI/CD gates every change before it reaches provisioning, and the
-AWS module map exists mainly as a failover target and for managed services the homelab doesn't run
-itself.
+Every guest follows the same three-stage pipeline. OpenTofu provisions it, Ansible configures it,
+and then the app stack deploys on top. CI/CD gates every change before it reaches provisioning.
+The AWS module map exists mainly as a failover target and for managed services the homelab doesn't
+run itself.
 
 ## The Proxmox stack
 
@@ -130,12 +130,6 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
 
 <CardGroup cols={2}>
 <Card
-  title="OpenTofu on AWS"
-  icon="diagram-project"
-  href="/infrastructure/tofu-aws/overview">
-  Per-project IAM role, GitHub OIDC, S3 native locking, SSE-S3 — the standard for any new AWS-backed Terraform repo.
-</Card>
-<Card
   title="Kubernetes overview"
   icon="cube"
   href="/infrastructure/kubernetes-overview">
@@ -146,12 +140,6 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
   icon="boxes-stacked"
   href="/infrastructure/lxc-vs-docker">
   The four-question decision tree for every new workload.
-</Card>
-<Card
-  title="SOPS for IaC"
-  icon="key"
-  href="/security/sops-for-iac">
-  Encrypted-at-rest secrets across OpenTofu and Ansible repos.
 </Card>
 <Card
   title="Self-hosted Netflix"

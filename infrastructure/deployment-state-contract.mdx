@@ -12,9 +12,15 @@ authoritative; local files are temporary.
 
 ## Stores and ownership
 
+The published inventory carries shared proxy URL lists under
+`cache_proxy_urls`. The [inventory assembly](
+https://github.com/dryvist/tofu-proxmox/blob/develop/modules/proxmox-stack/inventory_assembly.tf)
+derives them from capability-tagged guest FQDNs, so consumers use one
+published endpoint list.
+
 | Store | Holds | Owner |
 | --- | --- | --- |
-| Homelab object storage | Versioned `deployment.json` input and published Ansible inventory | OpenTofu graph, with OpenBao-scoped credentials |
+| Homelab object storage | Versioned `deployment.json` input and published Ansible inventory | OpenTofu graph |
 | Terrakube workspace | OpenTofu state versions, run queue, and lock | Terrakube |
 
 ```mermaid
@@ -63,8 +69,7 @@ authoritative; local files are temporary.
   match the desired-state key.
 - Never use a targeted apply. It can publish inventory that describes only a
   subset of the estate.
-- Provider and object-store credentials come from OpenBao through native,
-  short-lived Terrakube paths. They are not workspace secret variables.
+- Provider and object-store credentials are not workspace secret variables.
 
 Independent Terrakube workspaces have independent locks. Cross-workspace
 production changes use an explicit reviewed sequence, not a universal mutex.

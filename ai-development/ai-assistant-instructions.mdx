@@ -26,6 +26,7 @@ repo so Claude Code, the Antigravity (`agy`) command-line tool, GitHub Copilot, 
   the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and
   [PR conventions](/conventions/pr-conventions)
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, LiteLLM-routing details
+- Provides the canonical rule source that generated command-line contexts and agent prompt bundles reuse
 - Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs:
   [`agentsmd/rules/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/subagent-resilience.md)
   (probe before fan-out, bounded concurrency, mandatory solo fallback),
@@ -69,7 +70,7 @@ default for routine tasks.
 
 That's the entire file. Two lines of content (plus a heading). All actual project guidance lives in
 `AGENTS.md`. Claude Code resolves `@AGENTS.md` as an inline file import ([official
-docs](https://code.claude.com/docs/en/memory)) — the contents are loaded into context exactly as if
+docs](https://code.claude.com/docs/en/memory)); the contents are loaded into context exactly as if
 they had been written into `CLAUDE.md` directly.
 
 ### Why
@@ -104,7 +105,7 @@ likewise come from the global `~/.claude/rules` wiring rather than a per-repo
 3. If `AGENTS.md` ends up > 12 KB, either trim further (link out to `docs/`) or add a `.file-size.yml` extension:
 
    ```yaml
-   # .file-size.yml — extends the shared default for AGENTS.md only
+   # .file-size.yml (extends the shared default for AGENTS.md only)
    extended:
      limit: 32768
      files:

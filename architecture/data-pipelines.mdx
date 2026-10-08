@@ -37,7 +37,7 @@ low-volume data — a source never gets its own one-off destination:
 | --- | --- |
 | Metrics | the metrics store **and** the Splunk metrics index |
 | Events / logs | Splunk, plus any other event store that applies |
-| Traces | Langfuse and [Phoenix](/observability/phoenix) — never Splunk; a trace does not fit Splunk's event model |
+| Traces | Langfuse and [Phoenix](/observability/phoenix) (merged, not yet deployed) — Cribl excludes traces from its Splunk route |
 
 A route to a single destination needs a stated reason in its pull request. Data is duplicated
 across these systems on purpose, so the same signal can be compared between them. A feed is never

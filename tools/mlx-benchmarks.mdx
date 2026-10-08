@@ -1,6 +1,6 @@
 ---
 title: "Local LLM benchmarking"
-description: "Reproducible benchmark harness for MLX-quantized LLMs on Apple Silicon. One envelope schema, one HuggingFace dataset, one viewer."
+description: "Reproducible publisher for local-model benchmark results. One envelope schema, one Hugging Face dataset, one viewer."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -10,10 +10,16 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 <RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/mlx-benchmarks" />
 
-`mlx-benchmarks` is the result-envelope contract and publisher for benchmarking MLX-quantized and
-locally hosted LLMs on Apple Silicon. It is the thin glue between upstream evaluation tools
+`mlx-benchmarks` is the result-envelope contract and publisher for benchmarking locally hosted
+LLMs across MLX and other serving backends. It is the thin glue between upstream evaluation tools
 (`lm-eval`, `vllm benchmark_serving`, agent-framework harnesses) and a single public HuggingFace
 dataset, with a Gradio viewer on top.
+
+The public dataset carries measured results and run-defining variables only.
+Record `power_limit_w` with each applicable result. Keep operational telemetry,
+such as power draw, temperature, utilization, clocks, and fan speed, internal.
+Give intelligence and speed equal weight in comparisons; prefer suites with
+headroom and repeat short suites.
 
 ## What it does
 
@@ -22,8 +28,15 @@ dataset, with a Gradio viewer on top.
   and uploads to the [HF dataset](https://huggingface.co/datasets/JacobPEvans/mlx-benchmarks) with
   content-addressed filenames (`data/run-<timestamp>-<git_sha>-<suite>-<model_slug>.parquet`).
 - Owns converters for `lm-eval`, `vllm benchmark_serving`, and framework-eval (OpenAI / Qwen-Agent / smolagents / ADK).
+  `mlx-bench-publish --campaign-dimensions PATH` copies the `campaign_dimensions` and `dimension_null_reasons` objects from a JSON file onto the envelope for every `--kind`.
+- Serves the dataset through two configs. `default` reads one rolling file, `data/recent/latest.parquet`: the canonical shards within 30 days of the newest one, newest run first.
+  `history` reads every canonical shard. The `deploy-space` workflow rebuilds the rolling file on pushes and daily.
+- Declares campaign recipes under `configs/`, including `lm-eval/gpqa-diamond` (a gated dataset; the target needs its own Hugging Face read credential)
+  and `evalscope/livecodebench` (needs `evalscope[sandbox]` and Docker on the target; no converter, so raw reports stay in the target results directory).
+  `configs/LAYOUT.md` lists every recipe.
 - Auto-detects runtime metadata (OS, chip, memory, Python, MLX, lm-eval versions) via `detect_system()` so envelopes are fully reproducible without hand-curation.
-- Deploys a [Gradio viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) to HF Spaces on every `main` push touching `space/`.
+- Deploys a [Gradio viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) to HF Spaces on a `main` push that touches `space/`,
+  the dataset card, the run index or the dataset code, and daily at 05:43 UTC.
 
 ## How it fits
 
@@ -190,14 +203,14 @@ warmed median.
 
 | Model | Actual prompt | Warm cumulative tok/s | Warm prefill tok/s | Warm decode tok/s | Status |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Qwen3.5 9B, 4-bit | 32,000 | 749.87 | 765.47 | 65.69 | success, 4/4, no swap |
-| Qwen3.6 35B-A3B, 4-bit | 32,000 | 1,157.12 | 1,187.01 | 55.22 | success, 4/4, no swap |
-| Qwen3.6 35B-A3B, 4-bit | 63,998 | 732.51 | 740.45 | 30.75 | success, 4/4, no swap |
-| Qwen3.8 27B, 4-bit | 31,998 | 177.25 | 180.45 | 17.63 | success, 4/4, no swap |
-| Qwen3.8 27B, 4-bit | 64,002 | 141.15 | 143.89 | 6.93 | success, 4/4, no swap |
-| Qwen3.8 27B, 4-bit | 128,000 target | — | — | — | capacity-gated: first nonzero swap and interrupted request; not scored |
-| Qwen3.8 27B MTP, 4-bit | 32,000 | 232.22 | 233.18 | 19.55 | success, 4/4, isolated native-MTP c1 profile; 9.20 GiB post-run swap observed |
-| Qwen3.8 27B MTP, 4-bit | 63,998 | 206.38 | 207.30 | 21.19 | success, 4/4, isolated native-MTP c1 profile; 9.20 GiB post-run swap observed |
+| `Qwen3.5 9B`, 4-bit | 32,000 | 749.87 | 765.47 | 65.69 | success, 4/4, no swap |
+| `Qwen3.6 35B-A3B`, 4-bit | 32,000 | 1,157.12 | 1,187.01 | 55.22 | success, 4/4, no swap |
+| `Qwen3.6 35B-A3B`, 4-bit | 63,998 | 732.51 | 740.45 | 30.75 | success, 4/4, no swap |
+| `Qwen3.8 27B`, 4-bit | 31,998 | 177.25 | 180.45 | 17.63 | success, 4/4, no swap |
+| `Qwen3.8 27B`, 4-bit | 64,002 | 141.15 | 143.89 | 6.93 | success, 4/4, no swap |
+| `Qwen3.8 27B`, 4-bit | 128,000 target | — | — | — | capacity-gated: first nonzero swap and interrupted request; not scored |
+| `Qwen3.8 27B MTP`, 4-bit | 32,000 | 232.22 | 233.18 | 19.55 | success, 4/4, isolated native-MTP c1 profile; 9.20 GiB post-run swap observed |
+| `Qwen3.8 27B MTP`, 4-bit | 63,998 | 206.38 | 207.30 | 21.19 | success, 4/4, isolated native-MTP c1 profile; 9.20 GiB post-run swap observed |
 
 ### Clean-reset 2026-08-30 128k matrix
 
@@ -210,10 +223,10 @@ the warm medians.
 
 | Model and profile | Actual prompt | Warm cumulative tok/s | Warm prefill tok/s | Warm decode tok/s | Status |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Qwen3.8 27B, 4-bit, base c1 | 128,000 | 166.86 | 167.00 | 17.73 | success, 4/4, clean reset, no swap |
-| Qwen3.8 27B MTP, 4-bit, c1 | 128,000 | 166.77 | 167.04 | 12.45 | success, 4/4, clean reset, no swap |
-| Qwen3.8 27B MTP, 4-bit, c2 | 128,000 | 166.84 | 167.04 | 12.31 | success, four sequential resident samples; one two-request probe completed 2/2 at 166.81 aggregate cumulative tok/s, no swap |
-| Qwen3.8 27B MTP, 4-bit, c4 | 128,000 | — | — | — | unscored concurrent attempt: 1/4 streams completed before the harness 1,800-second stream timeout; no swap |
+| `Qwen3.8 27B`, 4-bit, base c1 | 128,000 | 166.86 | 167.00 | 17.73 | success, 4/4, clean reset, no swap |
+| `Qwen3.8 27B MTP`, 4-bit, c1 | 128,000 | 166.77 | 167.04 | 12.45 | success, 4/4, clean reset, no swap |
+| `Qwen3.8 27B MTP`, 4-bit, c2 | 128,000 | 166.84 | 167.04 | 12.31 | success, four sequential resident samples; one two-request probe completed 2/2 at 166.81 aggregate cumulative tok/s, no swap |
+| `Qwen3.8 27B MTP`, 4-bit, c4 | 128,000 | — | — | — | unscored concurrent attempt: 1/4 streams completed before the harness 1,800-second stream timeout; no swap |
 
 The clean-reset base and MTP c1 rows show comparable 128k prompt throughput.
 The c2 result admitted two requests without swap, but its aggregate rate stayed
@@ -250,9 +263,9 @@ median of three runs, with the observed range in brackets.
 
 | Model class | Cumulative (median, range) | Decode | Prefill | TTFT | Tool calls |
 | --- | --- | --- | --- | --- | --- |
-| 30B sparse MoE, coder-tuned (incumbent) | **163.4** (156.8–164.5) | 110.9 | 475–774 | 0.238–0.387 s | PASS |
-| 35B sparse MoE | 140.9 (140.7–141.7) | 102.0 | 355–360 | 0.53 s | PASS |
-| 80B sparse MoE, instruct | 112.1 (112.0–113.0) | 83.0 | 262 | 0.70 s | PASS |
+| 30-billion sparse MoE, coder-tuned (incumbent) | **163.4** (156.8–164.5) | 110.9 | 475–774 | 0.238–0.387 s | PASS |
+| 35-billion sparse MoE | 140.9 (140.7–141.7) | 102.0 | 355–360 | 0.53 s | PASS |
+| 80-billion sparse MoE, instruct | 112.1 (112.0–113.0) | 83.0 | 262 | 0.70 s | PASS |
 | Reasoning-first flash model | 111.6 (111.2–111.9) | 79.2 | 399 | 0.43 s | PASS, unusable as default |
 
 All four returned a genuine `tool_calls` **array** with
@@ -281,7 +294,7 @@ From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .
 serve` directly if you're not on the Nix stack.
 </Step>
 <Step title="Install and authenticate">
-`git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. Then `export HF_TOKEN=...` with write scope on the dataset namespace.
+`git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. The benchmarks read `HF_TOKEN`, which needs write scope on the dataset namespace.
 </Step>
 <Step title="Run a smoke benchmark">
 Point `lm-eval` at the local endpoint:
@@ -300,7 +313,8 @@ reasoning --dry-run` validates the envelope locally against `schema.json`. Drop 
 push to the HF dataset.
 </Step>
 <Step title="View results">
-Open the [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer). It auto-loads every published shard. Or `cd space && python app.py` for a local copy.
+Open the [HF Space viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer). It auto-loads every published shard.
+In the dataset viewer, the `default` config shows the recent window and `history` shows every shard. Or `cd space && python app.py` for a local copy.
 </Step>
 </Steps>
 

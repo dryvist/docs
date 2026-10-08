@@ -17,11 +17,11 @@ Antigravity, the routines) lives above them and calls in over HTTP.
   laptop-class M4 Max, one resident model, tuned to coexist with a working
   desktop. This is a laptop's own private model for delegated edits, drafts, and
   "don't burn cloud tokens on this" tasks.
-- **The always-on large tier**: a desktop-class Apple Silicon host, always on
-  and reachable across the LAN, holds the big resident model the laptops call as
-  clients. One place serves the large tier; everything else is a client of it.
-  This supersedes the earlier dedicated-GPU approach. See
-  [Homelab GPU](/local-llm/homelab-gpu) for the path it replaces.
+- **The large-memory tier**: a desktop-class Apple Silicon host provides serial
+  capacity for models that only fit in its 128 GB of unified memory. A separate
+  GPU tier provided higher throughput in the tested one-user comparison. Each
+  tier serves a different memory and concurrency envelope; neither replaces
+  the other.
 
 The cloud frontier models still win on the hardest reasoning. The point of local
 isn't to beat them. It's to own the routine, private, and high-volume work
@@ -29,15 +29,13 @@ without metering, and to keep a credible offline fallback.
 
 ## One gateway, one endpoint
 
-A single self-hosted, OpenAI-compatible LLM gateway unifies both stacks (the
-local models and the always-on workstation-hosted models) behind one endpoint.
-Every client speaks the same OpenAI API to one URL and one key; the gateway
-routes to whichever model answers. Model serving spans the always-on
-workstation-class host for larger models and a separate GPU host for a
-smaller, faster tier. The gateway selects between them automatically, so no
-client needs to know which one served the request. This GPU host is
-distinct from the older dedicated-GPU approach for large models noted earlier,
-which the second workstation superseded.
+The design uses one self-hosted, OpenAI-compatible LLM gateway for the local
+models. Clients use one API, URL, and key. The gateway routes requests to
+registered deployments. The Mac Studio provides serial capacity for large
+models that only fit in its 128 GB memory. The separate GPU tier has higher
+throughput in the measured one-user comparison. That comparison used the same
+27 B parameter model with different backends and quantizations. It does not
+establish live router priority.
 
 The homelab's self-hosted autonomous agents run continuously and connect to
 that same endpoint as their model backend.
@@ -56,7 +54,7 @@ for the general policy this follows.
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
   Laptop([Laptop<br/>1× M4 Max · one resident model])
-  Large([Large tier · live<br/>always-on host · 2 models concurrent])
+  Large([Large-memory role<br/>Mac Studio · serial capacity])
   Shard([Gated<br/>shard one model across both])
 
   Laptop --> Large --> Shard
@@ -67,18 +65,20 @@ for the general policy this follows.
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-The always-on large-tier host (Mac Studio) is live, tuned, and benchmarked,
-serving two models resident concurrently (see [Homelab GPU](/local-llm/homelab-gpu)).
-It is the intelligence tier: it optimises for answer quality, not throughput.
+The Mac Studio is the capacity tier for serial service of large models that
+only fit in its 128 GB memory. This page does not assert a current resident
+model roster or multi-request saturation. The separate GPU tier had higher
+throughput in the tested one-user comparison. The same 27 B parameter model
+was measured with different backends and quantizations. That result does not
+establish live router priority.
 A boot warmup LaunchAgent (`mlx-warmup`) faults model weights into memory at
 boot so the first request does not pay the cold-start cost.
 
-For what that host actually loads right now, read
+For the recorded model roster, read
 [What is actually loaded](/local-llm/mac-studio#what-is-actually-loaded), a
-dated, live-read roster. No throughput figures are quoted here on purpose:
-every earlier number was decode-only and carried no prompt regime, which makes
-it uncitable. The re-measured, regime-stated figures live in
-[Re-measured in isolation](/local-llm/mac-studio#re-measured-in-isolation).
+dated record. The re-measured, regime-stated figures live in
+[Re-measured in isolation](/local-llm/mac-studio#re-measured-in-isolation)
+and [the 2026-10-07 single-request comparison](/local-llm/mac-studio#2026-10-07-single-request-measurements).
 The historical tuning report is in `nix-darwin`
 [MACOS-LLM-PERFORMANCE-TUNING-REPORT.md](https://github.com/dryvist/nix-darwin/blob/main/docs/MACOS-LLM-PERFORMANCE-TUNING-REPORT.md).
 
@@ -162,7 +162,7 @@ and it remains measurement-gated. See
   title="Backends & tool calling"
   icon="server"
   href="/local-llm/backends">
-  Why `vllm-mlx`, how it compares to Ollama / llama.cpp / mlx-lm / Rapid-MLX, and the tool-calling reliability problem.
+  Why the stack chose `vllm-mlx` (retired 2026-10-02), how it compares to Ollama / llama.cpp / mlx-lm / Rapid-MLX, and the tool-calling reliability problem.
 </Card>
 <Card
   title="Distributed & multi-Mac"
@@ -204,12 +204,6 @@ and it remains measurement-gated. See
   icon="diagram-project"
   href="/architecture/ai-pipeline">
   Where local models sit in the bigger picture: routed alongside Claude, Antigravity, and Copilot by task class.
-</Card>
-<Card
-  title="Local AI isolation"
-  icon="shield-halved"
-  href="/security/local-ai-isolation">
-  Why a local model and the agents calling it still can't read protected secrets.
 </Card>
 <Card
   title="Operational reference (private)"

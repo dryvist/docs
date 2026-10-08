@@ -1,6 +1,6 @@
 ---
 title: "Observability"
-description: "OTEL telemetry from every AI coding tool, routed through Cribl, stored in Splunk, visualized by purpose-built dashboards."
+description: "Cribl routes supported logs and metrics to Splunk. Trace routes to Langfuse and Phoenix are merged, not yet deployed."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -64,7 +64,7 @@ Coral dashed edges are telemetry; solid green are the routing hops. Per-tool pac
 Diagram walkthroughs for every intake path live on [Pipeline flows](/observability/pipeline-flows). That
 covers syslog families, AI command-line tool shipping, the LLM stack, OTLP fan-out, NetFlow, and HEC fan-in.
 
-## Syslog ingest families
+## Syslog intake families
 
 Syslog intake is **one port per source family**, fronted by the ingress load balancers (HAProxy for
 TCP, nginx for UDP). Each family routes to its own Splunk index with a family sourcetype. A
@@ -116,22 +116,19 @@ AI-side logs skip syslog entirely. Cribl Edge tails the local log files and ship
 | 10300 | Shared S2S, sources that stamp their index locally (Mac firewall unified-log, host metrics) |
 | 10311–10315 | AI command-line tool logs (one port per command-line tool: Claude Code and friends) |
 | 10321–10323 | Local LLM stack logs (gate, router, workers) |
-| 10331 | OpenBao audit log |
+| 10331 | Audit log |
 
-The Mac firewall leg tails the unified log (application firewall, network
+The Mac firewall leg tails the unified log (app firewall, network
 extension, packet filter subsystems) as ndjson via a launch daemon. The
 local Edge ships it with `index=firewall` stamped at the source. Unified-log
 timestamps carry a UTC offset, so a local-time workstation stays skew-safe.
 
 Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cribl_s2s` service port from the same pipeline constants.
 
-## Per-index HEC outputs and derived tokens
+## Per-index HEC outputs
 
 Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per
-index**, each with its own token. Tokens are never distributed. Both sides derive the same value as
-a UUIDv5 of `splunk-hec-<index>` in a shared private namespace, so Cribl outputs and Splunk HEC
-inputs agree by construction. The namespace UUID is the only secret; a leaked token scopes to a
-single index.
+index**, each with its own token scoped to a single index.
 
 Each index also has a **silence detector**, a per-index alert that fires when the index stops
 receiving events within its expected cadence. A broken port, token, or sender surfaces as "index

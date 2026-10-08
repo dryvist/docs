@@ -1,9 +1,19 @@
 ---
-title: "Memory ceilings on Apple Silicon"
-description: "Why GPU memory utilization is a cap, not a reservation, and how runtime admission control stops a local model from paging the host."
+title: "Historical vllm-mlx memory ceilings"
+description: "Historical memory controls for the retired vllm-mlx backend; see the serving stack for current mlx-lm controls."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
+<Warning>
+**Historical vllm-mlx guidance**
+
+
+This page covers memory controls for the retired `vllm-mlx` backend. See the
+[Nix serving stack](/local-llm/nix-serving-stack) for current `mlx-lm`
+memory and cache controls.
+
+</Warning>
+
 > Two memory behaviours ride on one flag, over a wired ceiling that moves with
 > the serving mode. The stack tunes them at runtime. A model or mode swap needs
 > no rebuild. But the GPU cap alone is necessary, not sufficient.
