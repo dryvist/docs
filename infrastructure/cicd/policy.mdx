@@ -143,8 +143,10 @@ Every Ansible repository calls `dryvist/.github` for lint, change detection, and
 Pull requests into `develop` and `main` run lint, syntax, and repository contract checks, plus Molecule
 scenarios mapped to changed paths. Non-main branch pushes use the same focused selection. Declared
 full-matrix paths defer Molecule to the post-merge push to `main`; only that push runs the full matrix
-and configured integration checks. Other unmapped changes fail selection instead of widening to all
-scenarios. Each caller's single `Merge Gate` requires Molecule and every repository-specific check.
+and configured integration checks. Unmapped changes under `.github/` select no scenario; a caller runs
+the full set for one by mapping it into every scenario filter. Other unmapped changes fail selection
+instead of widening to all scenarios. Each caller's single `Merge Gate` requires Molecule and every
+repository-specific check.
 Public repositories and fork pull requests use GitHub-hosted runners. Eligible private repositories
 may pass an approved self-hosted or RunsOn runner label. A role without a Molecule scenario may use
 `molecule_contract_filters` only when its contract test runs inside that same `Merge Gate`.
