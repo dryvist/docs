@@ -31,8 +31,6 @@ flowchart LR
 
 The CI/CD surface spans four runner tiers, with workflows picking a tier by the work they need to do. Credentialed OpenTofu runs are a separate control-plane concern owned by Terrakube.
 
-For how secrets reach a workflow regardless of tier, read [Security](/security/overview). This page does not duplicate that material.
-
 ## Runner tiers
 
 Pick by what the workload actually needs:
@@ -40,7 +38,7 @@ Pick by what the workload actually needs:
 | Tier | Where | When to use |
 | --- | --- | --- |
 | **GitHub-hosted** | GitHub Actions cloud (free for public repos) | Public repos. No AWS work, no internal-host access, nothing that needs a private runner. Cheapest path. Includes `macos-latest` for real Darwin (`xcrun`, codesign). |
-| **RunsOn AWS spot** | EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes; same OIDC trust into AWS. Default for IaC apply jobs that authenticate to AWS. |
+| **RunsOn AWS spot** | EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on) | Private repos. Much cheaper than GitHub-hosted private-repo minutes. |
 | **On-prem Mac Studio (mac-fleet)** | Always-on Mac Studio in the homelab. GitHub still names the runner group `llm-runners`. | Linux ARM64 inside an Apple container (labels include `apple-container` and `mlx`). Jobs that need that host or the LAN around it. **Not** a Darwin runner. It cannot run `xcrun` or codesign. **Not** the laptop. |
 | **On-prem Proxmox (proxmox-fleet)** | Dedicated Linux x64 runner host in the homelab | Docker-capable Linux x64, Proxmox LAN, jobs that must not leave the homelab boundary. Separate from the Studio. |
 
@@ -54,11 +52,11 @@ GitHub-hosted. A Linux x64 job that must stay on-prem picks proxmox-fleet. The c
 | Stage | Trigger | Where it runs | What it does |
 | --- | --- | --- | --- |
 | Static validation | `pull_request` | The repo's CI tier | `tofu fmt -check`, `tofu init -backend=false`, `tofu validate`, and tests without live credentials |
-| Remote plan | VCS or operator trigger | Homelab Terrakube executor | Plans with short-lived provider credentials from OpenBao; keeps resolved values in the workspace log |
+| Remote plan | VCS or operator trigger | Homelab Terrakube executor | Keeps resolved values in the workspace log |
 | Review | Terrakube approval step or explicit saved-plan gate | Terrakube UI / operator command-line tool | Reviews the complete plan and blocks unexpected destroy or replacement |
 | Apply | Approved Terrakube run | Same workspace executor | Applies under the workspace's native queue and state lock |
 
-Public PRs never receive raw resolved plans. Terrakube keeps the full plan in the homelab workspace and obtains provider credentials through native OpenBao paths.
+Public PRs never receive raw resolved plans. Terrakube keeps the full plan in the homelab workspace.
 
 ## Branch protection and merge rules
 
@@ -113,12 +111,6 @@ under `dryvist` set the count in their own rulesets.
   icon="list-check"
   href="/infrastructure/tofu-check-placement">
   Static checks in pre-commit and CI; credentialed operations in Terrakube.
-</Card>
-<Card
-  title="Security overview"
-  icon="lock"
-  href="/security/overview">
-  How secrets reach a workflow, across all four runner tiers.
 </Card>
 <Card
   title="Infrastructure overview"

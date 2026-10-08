@@ -33,10 +33,10 @@ flowchart LR
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-`tofu-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS: API Gateway,
+`tofu-runs-on` provisions a [RunsOn](https://runs-on.com) v3 control plane on AWS using API Gateway,
 Lambda, and ECS/Fargate. It also provisions the IAM and networking needed to spin up EC2 spot
 runners on demand. Workflows opt in with a `runs-on:` label. Runners launch in seconds, run the
-job, and end. Cribl.Cloud Free collects OTLP telemetry for runner performance tracking.
+job, and end. Cribl's free hosted tier collects OTLP telemetry for runner performance tracking.
 
 ## What it does
 
@@ -46,7 +46,7 @@ job, and end. Cribl.Cloud Free collects OTLP telemetry for runner performance tr
 - Tags every runner with workflow/job/repo for AWS cost allocation
 - Optional managed WAF (`enable_waf = true`, on by default) protects the public ingress
 - Optional Bedrock IAM grant (`enable_bedrock = true`) lets CI invoke Bedrock models directly
-- Forwards OTLP runner telemetry to Cribl.Cloud Free (zero-cost observability tier)
+- Forwards OTLP runner telemetry to Cribl's free hosted tier (zero-cost observability tier)
 
 Cost guardrails (Budgets thresholds, alarm targets, expected spend envelope) live in the repo's own README. They are tuned per-deployment and do not belong in cross-repo docs.
 
@@ -71,9 +71,6 @@ The runner and webhook paths keep working.
 <Steps>
 <Step title="Clone and let direnv activate the dev shell">
 `git clone https://github.com/dryvist/tofu-runs-on.git && cd tofu-runs-on && direnv allow`
-</Step>
-<Step title="Confirm the Terrakube workspace">
-The workspace receives short-lived AWS credentials from OpenBao's native dynamic credentials path. The RunsOn license is read ephemerally from its OpenBao path.
 </Step>
 <Step title="Plan and apply">
 Run `tofu plan`, review the remote plan, then `tofu apply`. Terrakube owns state and locking.

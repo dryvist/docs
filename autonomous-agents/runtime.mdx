@@ -1,6 +1,6 @@
 ---
 title: "Runtime"
-description: "An agent runs in a Nix-built OCI image on the Mac, or in a static Proxmox LXC pool behind an allowlisting egress proxy."
+description: "A Nix-built agent image supports local and remote jobs; a static LXC pool remains a separately declared path."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -8,24 +8,24 @@ page_type: "explanation"
 Status: **partly live.** The Mac path (`agent-image`, `agent-cli`) is in use.
 The pool's firewall profile and its egress proxy guest are declared in
 infrastructure code. The Ansible role that converges a pool guest is
-written. The first end-to-end canary run has not happened yet. See the
-[roadmap](/autonomous-agents/roadmap).
+written. The first end-to-end canary run has not happened yet.
 </Note>
 
 > Build the sandbox once, with Nix. Declare the pool once, in infrastructure
 > code. Then stop provisioning anything per task.
 
-An agent runs in one of two places:
+This repo provides a local entry path and a remote job dispatcher:
 
 | Where | Boundary | What it is for |
 | --- | --- | --- |
 | **Mac** | Apple `container`, one container per run | Local, interactive-adjacent runs the operator starts by hand |
-| **Proxmox** | A static pool of LXC guests, one systemd unit per job | Unattended and scheduled work |
+| **Remote dispatch** | `agent-dispatch`, one Docker container per run | Unattended repository work |
+| **Proxmox pool** | A static pool of LXC guests, one systemd unit per job | The separately declared pool runtime |
 
-Both run the same agent CLIs under the same `autonomous` profile. They differ in
-how the sandbox is created and how strong the network boundary is.
+The local and remote paths use the same image and agent command-line tools.
+They differ in how a job starts and how its workspace persists.
 
-## The Mac path: one image, one container per run
+## The local image path: one container per run
 
 The `nix-agent-sandbox` repo owns this surface:
 
@@ -36,9 +36,14 @@ The `nix-agent-sandbox` repo owns this surface:
 
 Image contents:
 
-- The agent CLIs, `git`, `gh`, `nix`, `cacert`, `jq`, `ripgrep`.
-- The baked `autonomous` profile configs rendered by
-  [nix-ai](/nix/nix-ai)'s formatter layer, the only place these configs exist.
+- ZCode, OpenCode, and Cursor Agent, plus `git`, `gh`, `nix`, `cacert`, `jq`,
+  and `ripgrep`. OpenCode comes from Nixpkgs; Cursor Agent comes from the
+  pinned `llm-agents.nix` input. The image's [package list](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-image.nix)
+  and [`flake.lock`](https://github.com/dryvist/nix-agent-sandbox/blob/main/flake.lock)
+  own the selected packages and their versions.
+- The `autonomous` profile configs rendered by [nix-ai](/nix/nix-ai). The
+  image excludes the generated OpenCode provider config; routed access comes
+  from its task profile.
 - A non-root `agent` user (uid 1000), no sudo.
 - An entrypoint that refuses uid 0 or a missing `AGENT_SANDBOX=1`, then runs the
   lifecycle: clone → `nix develop -c <agent>` → push branch → `gh pr create` → exit.
@@ -46,6 +51,49 @@ Image contents:
 Per-repo toolchains are **not** baked in. Each target repo's own flake devShell
 provides its compilers, linters, and tools via `nix develop`. The image stays
 generic, and the repo stays the source of truth for its own environment.
+
+## The remote dispatcher path: one container per run
+
+The repo also packages [`agent-dispatch`](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-dispatch.nix)
+and its forced-command adapter. The dispatcher validates a request before
+creating a disposable container and a named workspace volume. A continuation
+starts a fresh container on that job's workspace.
+
+Each job uses one host-side service token. The waiter keeps it in memory while
+the job runs and remains available for continuations. It reuses the token for
+result notifications and continuation runs. When the token lease expires or
+the job is pruned, the manager exits and revokes the token. The token is never
+written to disk or sent to a container. A refused login aborts before container
+creation. A configured alert endpoint receives the role and refusal reason.
+
+The container receives a scoped repository token, selected task-profile
+values, and optional router settings in a mode-0600 `.agent-env` file. Routed
+CLIs use their matching task profile and receive `AGENT_ROUTER_BASE_URL` and
+`AGENT_ROUTER_KEY`, not provider-specific API keys. The prompt is copied
+separately in `.agent-prompt`. The entrypoint imports only approved names and
+removes `.agent-env` before running the agent command-line tool. Optional
+router keys are named by the profile's
+[`routerKeyField`](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/task-profiles.nix).
+
+{/*Shape: linear chain. Nodes: 6. Aspect: ~2:1 LR. Pass.*/}
+
+```mermaid
+%%{init:
+  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+  flowchart LR
+  Request([Request]) --> Validate([Validate])
+  Validate --> Create([Create container])
+  Create --> Run([Run job])
+  Run --> Notify([Notify result])
+  Notify --> Continue{Continuation?}
+  Continue -- Yes --> Create
+  Continue -- No --> Wait([Wait for lease expiry or job pruning])
+  Wait --> Exit([Job manager exits])
+  Exit --> Revoke([Revoke service token])
+
+  classDef n fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class Request,Validate,Create,Run,Notify,Continue,Wait,Exit,Revoke n
+```
 
 ## The Proxmox path: a static pool, pull dispatch
 
@@ -62,12 +110,6 @@ job from the shared task queue, and one job runs as one instance of a systemd
 - `PrivateTmp`: the unit gets its own memory-backed `/tmp`. The job's checkout
   lives there and cannot outlive the unit.
 - `NoNewPrivileges`, `ProtectSystem`, and a narrow set of writable paths.
-
-The unit's `ExecStart` is the secrets agent in process-supervisor mode, not the
-job script. It authenticates, renders the job's credentials into the child
-environment, then execs the runner. So there is no code path where a job runs
-with credentials that were not scoped and leased for it. See
-[Secrets](/autonomous-agents/secrets).
 
 A guest is converged by one Ansible role (`agent_guest`, in the
 `ansible-proxmox-ai` repo) on a stock Debian template. Nothing about the guest is hand-built, and rebuilding one is a
@@ -123,12 +165,12 @@ same guest, so the swap happens after the canary, not before it.
 <Steps>
 <Step title="Claim">
 Mac: `agent run <repo> <prompt>` wraps `container run --rm` with a tmpfs
-workspace and injected env. Pool: the poller claims a queue job and starts
+workspace. Pool: the poller claims a queue job and starts
 `agent-task@<job-id>`.
 </Step>
 <Step title="Clone">
 The job clones the target repo into its private tmpfs using a short-lived
-scoped token (see [GitHub access](/autonomous-agents/github-access)).
+scoped token.
 </Step>
 <Step title="Work">
 `nix develop -c <agent>` enters the repo's own devShell and runs the agent
@@ -152,19 +194,17 @@ agent run [--tool claude|codex|gemini] [--profile <name>] \
 Two flags carry two **independent** credential axes. Read-secret scope and
 repository-write scope are orthogonal, and a run gets only the axes it names:
 
-| Flag | Grants | How it is minted |
-| --- | --- | --- |
-| `--profile <name>` | Read access to one task profile's secret group | The profile is baked into the image; its OpenBao KV group is fetched by an AppRole login: ambient read-tier material by default, or a human-minted single-use wrapped secret ID for apply tier profiles. Read-only. |
-| `--repo <owner/name>` | Write to exactly one repository, this run only | The launcher mints a per-run, single-repo-scoped GitHub App token via the write identity. See [GitHub access](/autonomous-agents/github-access). |
+| Flag | Grants |
+| --- | --- |
+| `--profile <name>` | Read access to one task profile's secret group |
+| `--repo <owner/name>` | Write to exactly one repository, this run only |
 
 The split is the point. A `--profile` run with no `--repo` can read its secrets
 but can never push. A `--repo` run's write reach is exactly one repository,
-never an account. **The token is minted launcher-side; the container can never
-mint a write token itself.** A caller-supplied token already in the environment
-always wins over the mint.
+never an account.
 
-A pool job names the same two axes in its queue entry instead of on a command
-line. The mint path is identical.
+Remote jobs enter through `dispatch-ssh`, which accepts the dispatcher's
+validated `start`, `continue`, `status`, `cancel`, and `refresh` commands.
 
 Host targets, egress network names, and the apply tier grant procedure are
 operational detail. That detail lives in the internal ops runbooks, not in
@@ -229,21 +269,9 @@ because there the missing route is the control.
   Why the boundary inverted and what the profiles are.
 </Card>
 <Card
-  title="Secrets"
-  icon="key"
-  href="/autonomous-agents/secrets">
-  How credentials get into a job without living on the guest.
-</Card>
-<Card
   title="LXC vs Docker"
   icon="boxes-stacked"
   href="/infrastructure/lxc-vs-docker">
   The decision tree this runtime slots into.
-</Card>
-<Card
-  title="Roadmap"
-  icon="map"
-  href="/autonomous-agents/roadmap">
-  What is shipped, and what the canary still gates.
 </Card>
 </CardGroup>

@@ -87,7 +87,7 @@ configured to allow it for `dryvist/*` action sources:
   scanning UI.
 - **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning, so `@main` is never flagged.
 
-Third-party actions, trusted or untrusted, are unaffected and stay SHA-pinned, each with its
+Trusted and untrusted third-party actions are unaffected and stay SHA-pinned, each with its
 released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github`
 → SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
 
@@ -137,17 +137,30 @@ Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and
 live in
 [`tofu-runs-on/docs/migration-guide.md`](https://github.com/dryvist/tofu-runs-on/blob/main/docs/migration-guide.md).
 
+### Ansible checks
+
+Every Ansible repository calls `dryvist/.github` for lint, change detection, and Molecule selection.
+Pull requests into `develop` and `main` run lint, syntax, and repository contract checks, plus Molecule
+scenarios mapped to changed paths. Non-main branch pushes use the same focused selection. Declared
+full-matrix paths defer Molecule to the post-merge push to `main`; only that push runs the full matrix
+and configured integration checks. Other unmapped changes fail selection instead of widening to all
+scenarios. Each caller's single `Merge Gate` requires Molecule and every repository-specific check.
+Public repositories and fork pull requests use GitHub-hosted runners. Eligible private repositories
+may pass an approved self-hosted or RunsOn runner label. A role without a Molecule scenario may use
+`molecule_contract_filters` only when its contract test runs inside that same `Merge Gate`.
+
+Set job concurrency from measured runner capacity. Reassess the limit after
+measuring peak CPU and memory use.
+
 ### On-prem runner requirements
 
 On-prem self-hosted runners are a single point of failure when the job has E2E coverage and the runner is broken or stale. Every on-prem runner must:
 
 1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`), never a personal access token.
-   App installation tokens auto-refresh. PATs silently expire and break the runner with no upstream
-   visibility.
 2. **Pin the runner image (or VM template) by digest**, with Renovate tracking the digest. No floating tags.
 3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
 4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
-5. **Pre-flight check the secret-injection step** so it fails loud when required secrets are missing.
+5. **Check required environment variables** so the workflow fails when any are missing.
 6. **Build the runner image off-node.** Build it on a dedicated build host and `docker load` it
    onto the runner host. Never build it in-place on a hypervisor node. A heavy image build can
    overload the node that also runs production guests.
@@ -173,7 +186,7 @@ Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that
   title="OpenTofu check placement"
   icon="list-check"
   href="/infrastructure/tofu-check-placement">
-  Static checks in pre-commit, credentialed operations in CI via OIDC.
+  Static checks in pre-commit and CI; remote plans and applies.
 </Card>
 <Card
   title="CI/CD overview"

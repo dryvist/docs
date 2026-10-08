@@ -10,13 +10,22 @@ page_type: "explanation"
 Any OpenAI-compatible server can answer a chat request. The ones that matter for
 agentic work hold up under sustained, structured, multi-turn pressure. That
 means continuous batching, a paged KV cache, and a tool-call parser that
-doesn't drift. That's why this stack runs `vllm-mlx`.
+doesn't drift. That was the reasoning for running `vllm-mlx`.
+
+<Warning>
+**Historical: vllm-mlx is retired**
+
+`vllm-mlx` was removed from [`nix-ai`](/nix/nix-ai) on 2026-10-02. The active
+backend is `mlx_lm.server`. The comparison below records why `vllm-mlx` was
+chosen and is kept as history. For current serving, see
+[How the Nix stack serves a model](/local-llm/nix-serving-stack).
+</Warning>
 
 ## The landscape
 
 | Backend | What it's for | Notes for this stack |
 | --- | --- | --- |
-| **vllm-mlx** *(chosen)* | Production-shaped serving on Apple Silicon | Continuous batching, paged + prefix KV cache, OpenAI tool calling. The most server-shaped MLX runtime: what [`nix-ai`](/nix/nix-ai) packages and runs. |
+| **vllm-mlx** *(retired 2026-10-02; was chosen)* | Production-shaped serving on Apple Silicon | Continuous batching, paged + prefix KV cache, OpenAI tool calling. The most server-shaped MLX runtime: what [`nix-ai`](/nix/nix-ai) packaged and ran until its removal. |
 | **mlx-lm server** | The reference implementation | The baseline everyone benchmarks against; single-stream, explicitly not meant for production serving. |
 | **Ollama (MLX backend)** | Easiest setup | Mature tool calling; convenient, but a thinner serving layer than vllm-mlx for batched agentic load. |
 | **LM Studio** | GUI-first local serving | Great for interactive use; less suited to headless, automated serving. |

@@ -1,6 +1,6 @@
 ---
 title: "Proxmox provisioning"
-description: "OpenTofu provisioning for Proxmox VMs and LXC containers through Terrakube and OpenBao."
+description: "OpenTofu provisioning for Proxmox VMs and LXC containers through Terrakube."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -32,7 +32,7 @@ flowchart LR
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-`tofu-proxmox` defines every VM and LXC in the homelab as OpenTofu resources. Terrakube runs it remotely and OpenBao supplies short-lived provider credentials.
+`tofu-proxmox` defines every VM and LXC in the homelab as OpenTofu resources. Terrakube runs it remotely.
 
 ## What it does
 
@@ -67,9 +67,6 @@ data volume via `sanoid`/`syncoid`.
 <Steps>
 <Step title="Clone and enter the dev shell">
 `git clone https://github.com/dryvist/tofu-proxmox && cd tofu-proxmox && nix develop`
-</Step>
-<Step title="Authenticate to Terrakube">
-Run `tofu login` for the repo's Terrakube host. The workspace obtains Proxmox credentials from OpenBao.
 </Step>
 <Step title="Apply">
 Run `tofu plan`, review the remote plan, then `tofu apply`.

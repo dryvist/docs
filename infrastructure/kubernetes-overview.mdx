@@ -27,10 +27,10 @@ Five StatefulSets in a single `monitoring` namespace:
 | StatefulSet | Role |
 | --- | --- |
 | `otel-collector` | OTLP receiver: forwards to local Cribl Stream |
-| `cribl-edge-managed` | Cloud-managed Cribl Edge: forwards to Cribl Cloud |
+| `cribl-edge-managed` | Cribl Edge managed from Cribl's hosted service, which it forwards to |
 | `cribl-edge-standalone` | Local Cribl Edge with three packs (`cc-edge-claude-code-otel`, `cc-edge-gemini-antigravity-io`, `cc-edge-vscode-io`); forwards to local Stream |
 | `cribl-stream-standalone` | Local Cribl Stream leader, runs the `cc-stream-github-copilot-rest-io` pack, outputs to Splunk HEC |
-| `cribl-mcp-server` | Cribl Cloud MCP API surface for Claude Code |
+| `cribl-mcp-server` | MCP API surface of Cribl's hosted service for Claude Code |
 
 Four healthchecks.io CronJobs ping every five minutes as dead-man switches: `pipeline-heartbeat`, `heartbeat-splunk`, `heartbeat-edge`, `heartbeat-otel`.
 
@@ -71,7 +71,7 @@ Four healthchecks.io CronJobs ping every five minutes as dead-man switches: `pip
   linkStyle 3 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
 
-`cribl-mcp-server` (Cribl Cloud's MCP API surface) sits alongside but carries no pipeline traffic, so it's off the preceding flow.
+`cribl-mcp-server` (the MCP API surface of Cribl's hosted service) sits alongside but carries no pipeline traffic, so it's off the preceding flow.
 
 ## What does not run on the OrbStack cluster
 
@@ -91,13 +91,11 @@ shortcut it.
 
 The same invariant holds on the homelab side: the production Cribl Edge tier sends to Cribl Stream; Stream is the only component with Splunk egress. Different platform, same shape.
 
-## Secrets, overlays, and deploy
+## Overlays and deploy
 
-Secrets are pre-injected into the Claude Code session via Nix + direnv (SOPS-decrypted env vars).
-`secrets.enc.yaml` is the source of truth. Base manifests in `k8s/monitoring/` use the literal
+Base manifests in `k8s/monitoring/` use the literal
 `PLACEHOLDER_HOME_DIR` for hostPath volumes; it is never replaced in the base. The generated
-`k8s/overlays/local/` is gitignored and produced at deploy time. `make deploy-doppler` does the
-whole dance; CI enforces the same chain on a self-hosted ARM64 runner.
+`k8s/overlays/local/` is gitignored and produced at deploy time.
 
 ## When to add a new workload
 

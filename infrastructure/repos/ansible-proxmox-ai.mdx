@@ -81,6 +81,19 @@ Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring ag
 This repository currently ships **roles only**. It has no site playbook or dynamic tofu-inventory loader yet. Deploy orchestration is a tracked follow-up.
 </Note>
 
+## Release process
+
+**MERGED in git; NOT DEPLOYED:** [PR #1097](https://github.com/dryvist/ansible-proxmox-ai/pull/1097)
+(commit `b9848b29`) changed releases to draft-first. Tags are created
+immediately. Both release assets attach to the draft, then the release is
+published. This avoids HTTP 422 when uploading assets after publication.
+[PR #1090](https://github.com/dryvist/ansible-proxmox-ai/pull/1090) and
+[PR #1094](https://github.com/dryvist/ansible-proxmox-ai/pull/1094) are
+**MERGED in git; NOT DEPLOYED**. They promoted `main` at `fd14dad0` as `0.65.0`
+and `0f7ac72c` as `0.66.0`. The back-merge in
+[PR #1096](https://github.com/dryvist/ansible-proxmox-ai/pull/1096) is also
+**MERGED in git; NOT DEPLOYED**.
+
 ## Related repos
 
 <CardGroup cols={2}>

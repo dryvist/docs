@@ -20,8 +20,8 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 
 - **Brain:** an always-on local GPU model (OpenAI-compatible), so the agent never
   depends on an external API or a sleeping laptop. The brain is a **single
-  resident model** served behind the router and selected at runtime from an
-  OpenBao value, so re-pointing it needs no rebuild and no agent restart. It
+  resident model** served behind the router and selected at runtime, so
+  re-pointing it needs no rebuild and no agent restart. It
   runs with **thinking ON** and carries sampling guardrails for quantized brains.
 - **Memory:** the built-in `MEMORY.md` / `USER.md`, stored under `$HERMES_HOME`
   on a dedicated volume that is snapshotted and replicated off-node, plus the
@@ -36,7 +36,7 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 ## More than one agent
 
 The homelab runs more than one independent Hermes agent identity side by side.
-Each has its own container, Slack app, OpenBao credential domain, and memory
+Each has its own container, Slack app, credentials, and memory
 bank, so one agent's state never leaks into another's. The primary identity is
 `hermes`; a second, purpose-built identity (`donna`) runs the same way. New
 identities are declared, not layered on top of an existing one. See
@@ -74,13 +74,13 @@ it through its gateway. You can also talk to it in **Slack**, the wired-in
 messaging gateway (Socket Mode) and the sole chat platform in front of it today.
 
 The optional Web Dashboard runs as a separate service. It is published only through
-the homelab's TLS reverse proxy and uses the same single sign-on provider as the
+the homelab's TLS reverse proxy and uses the same identity provider as the
 other browser UIs. Keep webhook and API paths separate from the interactive route:
 those machine clients use their own signed or bearer credentials.
 
 ## Configuring it
 
-Everything is in `$HERMES_HOME/config.yaml` (secrets in `.env`), set non-interactively
+Everything is in `$HERMES_HOME/config.yaml`, set non-interactively
 with `hermes config set <key> <value>`:
 
 ```yaml
@@ -207,21 +207,15 @@ The Hermes agent fan-out connects its LLM routing brain to multiple internal and
 - **Splunk MCP**: The `mcp_servers.splunk` entry connects to the Splunk MCP Server app (Splunkbase
   7931) at `${SPLUNK_MCP_URL}` (which MUST be the management base plus the `/services/mcp` path)
   using `Authorization: Bearer ${SPLUNK_MCP_TOKEN}`. Tokens are not generic Splunk JWTs; the app
-  strictly accepts tokens minted by its own `GET
-  /services/mcp_token?username=<user>&expires_on=+90d` endpoint. These minted tokens have an `mcp`
+  strictly accepts tokens with an `mcp`
   audience, are RSA-encrypted, and enforce encryption by default (`require_encrypted_token`).
-  OpenBao is the sole machine-secret source for this shared connection. Hermes and Nix-managed
+  Hermes and Nix-managed
   workstation harnesses use the same Splunk service identity.
 - **Context7 MCP**: A hosted MCP connection at `https://mcp.context7.com/mcp` for up-to-date
-  library/framework documentation. An API key (raising rate limits) is now supplied from the shared
-  secrets engine on the generic AI credential path, so every harness that reads that path gets the
-  same keyed access; the auth header is only rendered when a key is present.
+  library/framework documentation. An API key raises rate limits; the auth header is only rendered when a key is present.
 - **GitHub issues/projects**: The agent interacts with GitHub via a custom skill (REST for issues,
   GraphQL for Projects v2, with guardrails). This is powered by a scoped, short-lived GitHub App
   installation token for issues and Projects v2. No personal access token remains anywhere in this
-  system; the token is minted from the shared [OpenBao GitHub service
-  engine](/autonomous-agents/github-access).
+  system.
 - **Codex escalation**: For tasks beyond the local brain's reach, the agent can escalate to an
-  external frontier coding model (Codex). Its credential is bootstrapped once from the shared
-  secrets engine into the agent home on first converge (create-only: an existing session is never
-  overwritten), so the capability materializes without hand-placing secrets on the host.
+  external frontier coding model (Codex).

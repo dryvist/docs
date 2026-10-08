@@ -33,7 +33,7 @@ Three sections, in this order:
    `pnpm test`, `tofu fmt -check`), and what a reviewer still has to verify by hand (browser smoke
    test, reviewed Terrakube plan, anything CI cannot see). Tick the boxes as work completes.
 3. **Optional: `## Security notes`**: when the change touches credentials, IAM scopes, network
-   exposure, secret-store layout, or anything else where the security review is non-obvious from the
+   exposure, or anything else where the security review is non-obvious from the
    diff. Empty section = "I considered it and there is nothing to flag" (different from "I did not
    think about security").
 
@@ -63,7 +63,7 @@ Lead with the *why*. The diff already shows the *what*. PR descriptions that jus
 
 ## Review
 
-- CI must be green before merge. CodeQL alerts must be resolved, not dismissed. See [Golden laws](/security/golden-laws).
+- CI must be green before merge. CodeQL alerts must be resolved, not dismissed.
 - A reviewer's `request changes` blocks merge until the author addresses every comment, either with a fix or with a written reply explaining why no fix is needed. Silent dismissal is not acceptable.
 - The author drives the conversation. If a reviewer goes quiet for more than 24 h on an open PR, the author pings them in the PR thread or on Slack. The PR stops waiting silently.
 

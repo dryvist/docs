@@ -8,7 +8,7 @@ page_type: "explanation"
 
 [`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`). The workflow
 orchestration, provider routing, and rate guards live there. Prompt text comes from the pinned
-[`dryvist/ai-llm-prompts`](/automation/repos/ai-llm-prompts) catalog. Consumers declare triggers, permissions, and secret forwarding.
+[Prompt catalog](/automation/repos/ai-llm-prompts). Consumers declare triggers and permissions.
 
 ## Event-triggered workflows
 
@@ -25,6 +25,11 @@ These run on GitHub events. Wire one caller per workflow you want.
 | `issue-linker.yml` | `pull_request: [opened, closed]` | Links open issues to PRs on open; closes resolved issues on merge |
 | `notify-ai-pr.yml` | `pull_request: [opened]` from a bot | Slack notification when an AI-authored PR opens |
 
+**MERGED in git; NOT DEPLOYED:** [PR #465](https://github.com/dryvist/ai-workflows/pull/465)
+(commit `95448fa`) gives the post-merge docs review a shared reusable-workflow
+alias. [PR #463](https://github.com/dryvist/ai-workflows/pull/463) fixes the
+scheduler actor.
+
 ## Scheduled workflows
 
 These run on cron, typically called with `schedule:` and a manual `workflow_dispatch:`.
@@ -36,7 +41,6 @@ These run on cron, typically called with `schedule:` and a manual `workflow_disp
 | `next-steps.yml` | Daily 05:00 UTC | Analyzes merge momentum, suggests next logical action |
 | `issue-sweeper.yml` | Weekly Mon 06:00 UTC | Scans open issues, comments on progress, closes resolved |
 | `issue-hygiene.yml` | Weekly Mon 07:00 UTC | Detects duplicates, links merged PRs, flags stale issues |
-| `label-sync.yml` | Weekly Sun 05:00 UTC | Syncs canonical labels from the `.github` repo to consumers |
 | `repo-orchestrator.yml` | `workflow_dispatch` | Multi-repo hub-and-spoke dispatcher for ad-hoc operations |
 
 ## How a reusable caller looks
@@ -86,9 +90,6 @@ Reusable `.yml` workflows select the AI agent through one organization variable:
 callers keep their current behavior. Set it to `codex` once at the organization,
 repository, or environment level to switch every inherited workflow.
 
-Each agent keeps its own credential. Pre-provision both secrets so switching the
-selector does not require caller edits.
-
 | Name | Kind | Purpose |
 | --- | --- | --- |
 | `GH_ACTION_AI_AGENT` | Variable | `claude` or `codex`. Defaults to `claude`. |
@@ -104,23 +105,6 @@ selector does not require caller edits.
 | `GH_ACTION_AI_CODEX_EFFORT` | Variable | Optional Codex reasoning-effort override. |
 | `GH_ACTION_AI_CODEX_VERSION` | Variable | Optional Codex command-line tool version override. |
 
-Set them at org level with the GitHub command-line tool:
-
-```bash
-gh secret set GH_ACTION_AI_API_KEY --org <your-org>
-gh secret set OPENAI_API_KEY --org <your-org>
-gh variable set GH_ACTION_AI_AGENT --org <your-org> --body claude
-```
-
-Callers inside the same organization can use `secrets: inherit`. If a caller
-maps secrets explicitly, forward both credentials:
-
-```yaml
-secrets:
-  GH_ACTION_AI_API_KEY: ${{ secrets.GH_ACTION_AI_API_KEY }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-```
-
 > **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token
 > (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms
 > of Service](https://www.anthropic.com/legal/terms) and risks an account ban. The subscription is
@@ -134,16 +118,12 @@ Provider details and model configuration live in [AUTHENTICATION.md](https://git
 
 The model job does not receive a privileged GitHub App token. It checks out
 code without persisted credentials and returns structured output or a workspace
-change. A separate publisher job validates that handoff, mints the short-lived
-App token, and performs the requested GitHub write.
+change. A separate publisher job validates that handoff and performs the requested GitHub write.
 
 This boundary keeps repository comments, labels, branches, commits, and pull
 requests deterministic. It also applies to both agents, so changing
 `GH_ACTION_AI_AGENT` does not change the workflow's GitHub permissions.
-Existing GitHub App secret names remain supported for inherited callers.
-The `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_ID` secrets are
-distributed through the `_github_app_repos` anchor, not `_claude_bot_repos`, so
-reusable workflows can mint App tokens from consumer repositories.
+The workflows also read `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_ID`.
 
 ## Where to go next
 
@@ -183,11 +163,5 @@ reusable workflows can mint App tokens from consumer repositories.
   icon="route"
   href="/automation/issue-to-pr-pipeline">
   Exactly which six callers are wired on `JacobPEvans/docs` and why.
-</Card>
-<Card
-  title="Secret distribution"
-  icon="lock"
-  href="/security/secrets-sync">
-  How `GH_ACTION_AI_API_KEY` and the App credentials land on each consumer repo.
 </Card>
 </CardGroup>

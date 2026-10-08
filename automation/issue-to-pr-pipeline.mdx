@@ -84,20 +84,13 @@ Two patterns are slightly larger:
 
 ## Secrets the pipeline needs
 
-Distributed automatically by [`secrets-sync`](/security/secrets-sync) when a repo is added to the `_github_app_repos` and `_all_repos` anchors in `secrets-config.yml`:
-
-| Secret / variable | Source | Purpose |
-| --- | --- | --- |
-| `AI_TOKEN` (secret) | `_all_repos` | Provider credential for `claude-code-action`; defaults to Claude OAuth when `AI_PROVIDER` is unset |
-| `AI_PROVIDER` (variable) | `_all_repos` | Optional provider route; set `openrouter` or `anthropic_api` to switch without code changes |
-| `AI_BASE_URL` (variable or secret) | `_all_repos` | Optional Anthropic-compatible router URL |
-| `GH_APP_CLAUDE_BOT_PRIVATE_KEY` (secret) | `_github_app_repos` | Mints App tokens for signed commits attributed to `JacobPEvans-claude[bot]` |
-| `GH_APP_CLAUDE_BOT_ID` (variable) | `_github_app_repos` | App identifier |
-
-Per [Git signing](/infrastructure/cicd/git-signing), every AI workflow mints a
-`JacobPEvans-claude` installation token immediately before calling `claude-code-action@v1`, then
-hands it in as `github_token` with `use_commit_signing: true`. Commits land web-flow-signed and
-attributed to the bot.
+| Secret / variable | Purpose |
+| --- | --- |
+| `AI_TOKEN` | Provider credential |
+| `AI_PROVIDER` | Optional provider route |
+| `AI_BASE_URL` | Optional API endpoint |
+| `GH_APP_CLAUDE_BOT_PRIVATE_KEY` | App private key |
+| `GH_APP_CLAUDE_BOT_ID` | App identifier |
 
 ## Rate and safety guards
 

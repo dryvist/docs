@@ -36,7 +36,7 @@ flowchart LR
 ```
 
 `required_signatures` is enforced org-wide by Repository Rulesets on every protected branch. A
-commit without a valid web-flow or GPG signature is rejected at the API. The five rows below are the
+commit without a valid web-flow or GPG signature is rejected at the API. The rows below are the
 only ways to land a commit that satisfies the ruleset.
 
 ## Identity per context
@@ -45,8 +45,7 @@ only ways to land a commit that satisfies the ruleset.
 | --- | --- | --- | --- |
 | Local Mac | `JacobPEvans` | local user | GPG (key `31652F22BF6AC286`); nix-home reads identity from a gitignored local file |
 | GitHub Actions: deterministic (snake, `3d-contrib`, `peter-evans/create-pull-request`, release-please) | `JacobPEvans-github-actions[bot]` | default `GITHUB_TOKEN` | web-flow via the action's Contents API call |
-| GitHub Actions: AI workflows | `JacobPEvans-claude[bot]` | `JacobPEvans-claude` App installation token (`actions/create-github-app-token@v2`) | web-flow via `anthropics/claude-code-action@v1` with `use_commit_signing: true` and `github_token` set to the App token |
-| Native cloud-routine workflows (`claude-code-routines`) | `JacobPEvans-claude[bot]` | same App installation token | same Contents API path; routine bodies run inside a regular GHA workflow (not the Anthropic cloud routines sandbox, which cannot mint App-class tokens) |
+| AI workflows and native cloud routines | App identity | `github_token` | Contents API with `use_commit_signing: true` |
 | GitHub bots (Renovate, release-please releases, dependabot) | the bot's GitHub identity | managed by GitHub | web-flow |
 
 Verification for any commit:
@@ -60,31 +59,11 @@ Expect `verified: true`, `reason: "valid"`, and the `login` from the preceding t
 
 ## AI workflow App-token pattern
 
-Every reusable AI workflow in `JacobPEvans/ai-workflows` mints a `JacobPEvans-claude` installation
-token immediately before calling `anthropics/claude-code-action@v1`, then hands the token in as
-`github_token`. The action's `use_commit_signing: true` sends edits through the Contents API, which
+The action's `use_commit_signing: true` sends edits through the Contents API, which
 web-flow-signs every commit and attributes it to whichever bot owns the token.
 
-```yaml
-- name: Run Claude Code with bot attribution
-  uses: dryvist/ai-workflows/.github/actions/run-claude-code@main
-  with:
-    ai_provider: ${{ vars.AI_PROVIDER || 'claude_oauth' }}
-    ai_token: ${{ secrets.AI_TOKEN }}
-    ai_base_url: ${{ vars.AI_BASE_URL || secrets.AI_BASE_URL || '' }}
-    allowed_bots: "github-actions"
-    use_commit_signing: "true"
-    prompt: ${{ steps.prompt.outputs.content }}
-    allowed_tools: "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git diff:*)"
-    model: ${{ vars.AI_MODEL_CODE || vars.AI_MODEL || 'sonnet' }}
-    app_id: ${{ vars.GH_APP_CLAUDE_BOT_ID }}
-    app_private_key: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
-```
-
-Consumers do not import the App credentials themselves. [`secrets-sync`](/security/secrets-sync)
-distributes `vars.GH_APP_CLAUDE_BOT_ID` and `secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY` to every repo in
-the `*github_app_repos` set. To add a new consumer repo: append it to that anchor in
-`JacobPEvans/secrets-sync/secrets-config.yml` and re-run the distribution workflow.
+The workflow reads `AI_PROVIDER`, `AI_TOKEN`, `AI_BASE_URL`, `AI_MODEL_CODE`,
+`AI_MODEL`, `GH_APP_CLAUDE_BOT_ID`, and `GH_APP_CLAUDE_BOT_PRIVATE_KEY`.
 
 The AI never constructs Contents API payloads itself. It edits files locally inside the workflow.
 `claude-code-action@v1` translates those edits into Contents API calls on commit. AI workflows enjoy
@@ -108,7 +87,7 @@ Never build a custom Contents-API or Git-Data-API helper for content the runner 
 
 Pick a real identity, never an anonymous one: a GitHub App, a user, or a bot. Then pick the auth method:
 
-- **App installation token** (`actions/create-github-app-token@v2`) when commits must be attributed to `JacobPEvans-claude[bot]`.
+- **App installation token** when commits must be attributed to an App identity.
 - **Default `GITHUB_TOKEN`** when commits should be attributed to `JacobPEvans-github-actions[bot]`.
 - **GPG / SSH on the runner** only when a workflow truly needs `git commit` on the runner (rebase, cherry-pick, generated patches that do not fit the Contents API). Document the exception inline.
 
@@ -127,9 +106,6 @@ Single source of truth. Link from other repos rather than duplicating prose.
   final-pr-review)
 - Native cloud-routine pattern:
   [`JacobPEvans/claude-code-routines/.github/workflows/issue-solver.yml`](https://github.com/JacobPEvans/claude-code-routines/blob/main/.github/workflows/issue-solver.yml)
-- App credential distribution: the `secrets:` block in
-  [`JacobPEvans/secrets-sync/secrets-config.yml`](https://github.com/JacobPEvans/secrets-sync/blob/main/secrets-config.yml)
-  (`GH_APP_CLAUDE_BOT_PRIVATE_KEY`, `GH_APP_CLAUDE_BOT_ID`)
 
 ## Where to go next
 
@@ -139,17 +115,5 @@ Single source of truth. Link from other repos rather than duplicating prose.
   icon="scale-balanced"
   href="/infrastructure/cicd/policy">
   Marketplace actions, release-please, version pinning, runner choice.
-</Card>
-<Card
-  title="secrets-sync"
-  icon="rotate"
-  href="/security/secrets-sync">
-  How the GitHub App credentials reach every consumer repo.
-</Card>
-<Card
-  title="Golden laws"
-  icon="shield-halved"
-  href="/security/golden-laws">
-  Why every commit is signed, audit-trail rules, MFA on elevated sessions.
 </Card>
 </CardGroup>
