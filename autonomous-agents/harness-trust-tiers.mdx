@@ -22,9 +22,54 @@ instructions say.
 | Forge (code hosting) writes | Yes, narrowly scoped | No, read access only |
 | Infrastructure convergence | Yes, under a maintenance window | No |
 
-Trusted today are Claude Code and Codex. Untrusted today are Cursor, OpenCode,
-and Gemini/Antigravity. These are public products; naming them is what makes
-the tier assignment auditable.
+Trusted today are Claude Code, Codex, and Antigravity (`agy`). Untrusted today
+are OpenCode, Gemini, and Cursor Agent. These are public products; naming them is
+what makes the tier assignment auditable.
+
+Cursor Agent has no local install. The local Cursor command-line tool was removed in
+[nix-ai#2483](https://github.com/dryvist/nix-ai/pull/2483), and `cursor-agent`
+runs only in a sandbox container, through the dispatch path.
+
+OpenCode is the untrusted local tier. It runs under a deny-default macOS Seatbelt
+profile, on by default on macOS, through the `programs.opencode.sandbox.enable`
+option in nix-ai. The profile denies the keychain, `~/.doppler`, `~/.ssh`, the
+ssh-agent socket, loopback except the model proxy, `open`, `osascript`,
+`launchctl`, and `sudo`. It also denies:
+
+- creating, removing, and renaming `.git` entries;
+- hooks and config under any gitdir name;
+- hard links;
+- writes to `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, and `.cursor`.
+
+OpenCode's `.git` hardening and FSEvents `mach-lookup` allowance are in
+[nix-ai#2484](https://github.com/dryvist/nix-ai/pull/2484). File watching still
+works while the profile denies git metadata changes and git hooks/config access.
+OpenCode works only in standalone clones under `~/opencode-work`. The profile
+limits what OpenCode can reach. It does not separate an identity, because
+OpenCode runs as the operator's account.
+
+<Note>
+**Trusted git in an OpenCode work root**
+
+
+Do not run trusted `git` in the OpenCode work root with the clone's own config.
+Run it with hooks and fsmonitor turned off:
+
+```bash
+git -c core.fsmonitor=false -c core.hooksPath=/dev/null <command>
+```
+
+Or fetch into a separate trusted repository, outside the work root.
+</Note>
+
+<Warning>
+**Sandbox merged, not yet on every host**
+
+
+The OpenCode sandbox is merged in nix-ai. A host runs it once its flake lock pins
+that revision. Until then the host runs OpenCode without the profile.
+
+</Warning>
 
 ## Why the identity is the boundary
 

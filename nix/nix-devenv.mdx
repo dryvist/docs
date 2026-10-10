@@ -15,7 +15,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 ## What it does
 
 - Exports per-system `devShells`; the OpenTofu shell is `tofu` in [`flake.nix`](https://github.com/JacobPEvans/nix-devenv/blob/develop/flake.nix)
-- Provides a `mkshell` template: `nix flake init -t github:JacobPEvans/nix-devenv#mkshell`
+- Provides a `mkshell` template: `nix flake init -t "github:dryvist/nix-devenv?ref=vN#mkshell"`, where `vN` is the current major tag
 - Pins toolchain versions so every project on the same shell gets the same `tofu` / `terraform` / `kubectl` / `ansible`
 - Activated per-project via direnv (`.envrc` is committed; `.direnv/` is gitignored)
 
@@ -33,13 +33,13 @@ Anything project-scoped belongs here. Anything machine-scoped belongs in [nix-da
 
 <Steps>
 <Step title="Scaffold a flake in your project">
-`cd my-project && nix flake init -t github:JacobPEvans/nix-devenv#mkshell`. Edit `flake.nix` to pick the shell you need.
+`cd my-project && nix flake init -t "github:dryvist/nix-devenv?ref=vN#mkshell"`. Edit `flake.nix` to pick the shell you need.
 </Step>
 <Step title="Commit .envrc">
 Add `use flake` to `.envrc`. Commit it; direnv activates the shell whenever you `cd` in.
 </Step>
 <Step title="Pull a pre-built shell">
-Skip the local flake and `nix develop github:JacobPEvans/nix-devenv?dir=shells/<lang>` for one-off work.
+Skip the local flake and `nix develop "github:dryvist/nix-devenv?dir=shells/<lang>&ref=vN"` for one-off work.
 </Step>
 </Steps>
 

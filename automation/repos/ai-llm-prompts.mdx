@@ -9,7 +9,7 @@ page_type: "reference"
 [`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. Its first release is
 [`v0.1.0`](https://github.com/dryvist/ai-llm-prompts/releases/tag/v0.1.0), resolved to commit
 [`0431be6994d51169b9f705ddeba958eb8a4d0fc4`](https://github.com/dryvist/ai-llm-prompts/commit/0431be6994d51169b9f705ddeba958eb8a4d0fc4).
-Consumers pin that full commit instead of a mutable branch.
+Consumers reference the floating major tag (`?ref=vN`); their flake lock holds the exact revision. Nothing tracks a branch.
 
 ## Catalog layout
 
@@ -20,6 +20,10 @@ Consumers pin that full commit instead of a mutable branch.
 | `applications/` | Application-facing system and user prompts |
 | `developer-tools/` | Model-visible hook, guard, and development-workflow prompts |
 
+The `auto-ai-agent/claude-code/` subtree holds the Claude Code subagent roster (`agents/haiku-xhigh.md`, `agents/opus-medium.md`) and the
+always-loaded `rules/brief-delegates.md` rule. The `nix-ai` flake module delivers both into Claude Code's home directory. Agents name a
+model family alias (`haiku`, `opus`), never a version.
+
 Every prompt uses Open Knowledge Format 0.1 Markdown. YAML frontmatter carries its stable `prompt://dryvist/...` resource ID, rendering policy,
 variables, consumer list, status, and source history. Consumers follow the declared render contract and strip frontmatter when the prompt says
 `frontmatter: strip`.
@@ -27,15 +31,15 @@ variables, consumer list, status, and source history. Consumers follow the decla
 ## Consumption contract
 
 The repository exposes one Nix package per catalog directory plus a combined default package. A consumer selects only the package it needs and
-pins the release commit in its flake input:
+takes the floating major tag in its flake input. `vN` below stands for the current major tag of `dryvist/ai-llm-prompts`:
 
 ```nix
-inputs.ai-llm-prompts.url =
-  "github:dryvist/ai-llm-prompts/0431be6994d51169b9f705ddeba958eb8a4d0fc4";
+inputs.ai-llm-prompts.url = "github:dryvist/ai-llm-prompts?ref=vN";
 ```
 
-Release tags are immutable. Renovate proposes compatible prompt updates through normal pull requests. AI agents may prepare compatible patch or
-minor changes, but major and breaking releases remain human-only decisions.
+The flake lock records the exact release commit. Release tags are immutable. A bot opens one pull request per consumer when a release lands: a patch
+bump auto-merges once the Merge Gate is green, and minor and major bumps wait for a person. AI agents may prepare compatible patch or minor changes,
+but major and breaking releases remain human-only decisions.
 
 ## GitHub Agentic Workflows status
 

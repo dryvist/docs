@@ -21,6 +21,10 @@ Claude Code plugin API.
 - Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
 - Houses **skills** that progressively load only when their triggers fire, keeping token cost minimal when idle
 - Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
+- Includes the **ai-delegation** hooks module, which routes generic subagent spawns to the cheapest tier that fits
+  (Luna on Codex when `codex-quota` allows, otherwise Haiku, both at `xhigh` by default; Sonnet for planning and
+  Opus for architecture or security, never Codex; Codex is Luna only, at `high`, `xhigh` or `max`)
+  and answers the `bash -c` removal prompt with a judge model; any failure leaves the permission dialog
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
 - Houses **hooks** that enforce conventions automatically (style, permissions, no-skip patterns)
 - Composes with [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) for the rules layer
@@ -40,8 +44,12 @@ Reads rules from [Assistant rules](/ai-development/ai-assistant-instructions); i
 Workflow logic. Anything that's "how Claude Code should approach a task" lives here. Anything that's "what the rules are" lives in `ai-assistant-instructions`.
 </RepoFit>
 
-**MERGED in git; NOT DEPLOYED:** [PR #559](https://github.com/JacobPEvans/claude-code-plugins/pull/559)
-centralizes the definition of when `human:review` applies.
+**MERGED in git; NOT DEPLOYED:** [PR #559](https://github.com/dryvist/claude-code-plugins/pull/559)
+centralizes the definition of when `human:review` applies. The definition requires all of these: the
+PR targets `main`, it is risky, and a second-agent review cannot settle it. Risky means at least 400
+lines, at least 15 files, or a cross-repository change. The `ship`, `finalize-pr` and `resolve-pr-threads`
+skills report a held or escalated PR by status word only and apply no label
+([PR #584](https://github.com/dryvist/claude-code-plugins/pull/584)).
 
 ## Getting started
 
