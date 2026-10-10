@@ -5,7 +5,8 @@ description: Keep the Mintlify docs site in sync with the JacobPEvans (and dryvi
 
 # mintlify-docs-update
 
-Discover public repos under `JacobPEvans` and `dryvist`, diff against pages on this site, and scaffold the missing pages. Never overwrite existing pages; never touch private, archived, or forked repos by default.
+Discover public repos under `JacobPEvans` and `dryvist`, diff against pages on this site, and scaffold the
+missing pages. Never overwrite existing pages; never touch private, archived, or forked repos by default.
 
 ## When to use
 
@@ -106,14 +107,15 @@ Every token in `template-repo-page.mdx` must be replaced. The table below lists 
 | `STEP_1_BODY` … `STEP_3_BODY` | step bodies — short commands, instructions, or pointers to the repo README. |
 | `RELATED_TITLE_1` … `_3` | Card title for each related repo (3 max in addition to the always-present "Source on GitHub" Card). |
 | `RELATED_ICON_1` … `_3` | Lucide icon name (e.g., `screwdriver-wrench`, `aws`, `snowflake`, `bot`, `chart-line`). |
-| `RELATED_HREF_1` … `_3` | path to in-site docs page (preferred — e.g., `/infrastructure/ansible-proxmox`) or external GitHub URL when no docs page exists yet. |
+| `RELATED_HREF_1` … `_3` | in-site docs path (preferred, e.g. `/infrastructure/ansible-proxmox`), or the GitHub URL when no page exists yet. |
 | `RELATED_DESC_1` … `_3` | one-line description for the Card body — what the related repo does in this context. |
 
 Replacements happen via `Edit` tool with `replace_all: true`. Never use `sed` — this is exact-string replacement.
 
 ### Step 6 — Update `docs.json`
 
-For each new page, insert its path into the appropriate sidebar group's `pages` array, preserving alphabetical order. Use `Edit` on `docs.json`; never regenerate the file.
+For each new page, insert its path into the appropriate sidebar group's `pages` array, preserving alphabetical
+order. Use `Edit` on `docs.json`; never regenerate the file.
 
 ### Step 7 — Validate
 

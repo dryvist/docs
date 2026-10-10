@@ -40,7 +40,7 @@ No global install. No package to publish. The skill is the directory.
 
 From a Claude Code session in this repo:
 
-```
+```text
 /mintlify-docs-update
 ```
 
@@ -72,7 +72,8 @@ The skill activates on those triggers. You'll be asked to confirm before pages a
 
 - The skill doesn't read repo READMEs — placeholders need to be filled by hand.
 - Categorization is name-based; if a repo's name doesn't match any pattern, the skill asks.
-- The dryvist org currently has zero public repos. The skill still queries it on every run; this is intentional so new dryvist repos are picked up automatically.
+- The skill queries the dryvist org on every run, so new public dryvist repos are picked up
+  automatically.
 
 ## Roadmap
 
