@@ -8,19 +8,19 @@ page_type: "explanation"
 
 The pipeline on this repo, [`JacobPEvans/docs`](https://github.com/JacobPEvans/docs), uses six thin
 caller files in `.github/workflows/` that delegate to reusable workflows in
-[`JacobPEvans/ai-workflows`](https://github.com/JacobPEvans/ai-workflows). Each caller is 10–30
+[`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows). Each caller is 10–30
 lines; the AI work all lives in the upstream reusable workflow.
 
 ## What runs, in order
 
 | Step | Trigger | Caller file | Reusable workflow | What it does |
 | --- | --- | --- | --- | --- |
-| 1 | `issues: [opened]` | `issue-triage.yml` | `ai-workflows/.github/workflows/issue-triage.yml@main` | Categorizes, deduplicates, labels |
-| 2 | `issues: [opened]` | `issue-resolver.yml` | `ai-workflows/.github/workflows/issue-resolver.yml@main` | Creates a **draft PR** if the issue is well-scoped and not on the excluded-labels list |
+| 1 | `issues: [opened]` | `issue-triage.yml` | `dryvist/ai-workflows/.github/workflows/issue-triage.yml` | Categorizes, deduplicates, labels |
+| 2 | `issues: [opened]` | `issue-resolver.yml` | `dryvist/ai-workflows/.github/workflows/issue-resolver.yml` | Creates a **draft PR** if the issue is well-scoped and not on the excluded-labels list |
 | 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller: handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
-| 4 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | `ai-workflows/.github/workflows/ci-fix.yml@main` | Reads the failed CI log, pushes a fix commit (up to 2 attempts per PR, 5 per day) |
-| 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `ai-workflows/.github/workflows/project-router.yml@main` | Routes the item to the right GitHub Project with smart field assignment |
-| 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `ai-workflows/.github/workflows/post-merge-docs-review.yml@main` | After merge, audits docs touched by the commit and creates fix PRs if needed |
+| 4 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | `dryvist/ai-workflows/.github/workflows/ci-fix.yml` | Reads the failed CI log, pushes a fix commit (up to 2 attempts per PR, 5 per day) |
+| 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `dryvist/ai-workflows/.github/workflows/project-router.yml` | Routes the item to the right GitHub Project with smart field assignment |
+| 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `dryvist/ai-workflows/.github/workflows/post-merge-docs-review.yml` | After merge, audits docs touched by the commit and creates fix PRs if needed |
 | 7 | Human clicks **Merge** | n/a | n/a | The only manual step |
 
 ## How the six callers connect
@@ -70,7 +70,7 @@ permissions:
   issues: write
 jobs:
   run:
-    uses: JacobPEvans/ai-workflows/.github/workflows/issue-triage.yml@main
+    uses: dryvist/ai-workflows/.github/workflows/issue-triage.yml@<40-hex-sha> # vX.Y.Z
     secrets: inherit
 ```
 
@@ -78,7 +78,7 @@ Two patterns are slightly larger:
 
 - **`ci-fix.yml`** passes a `repo_context` and `ci_structure` describing what the repo is and what CI runs, so the AI knows what to fix.
 - **`post-merge-docs-review.yml`** uses the [Post-Merge Dispatch
-  Pattern](https://github.com/JacobPEvans/ai-workflows/blob/main/docs/PATTERNS.md#post-merge-dispatch-pattern).
+  Pattern](https://github.com/dryvist/ai-workflows/blob/main/docs/PATTERNS.md#post-merge-dispatch-pattern).
   It is a two-job file because `push` events aren't supported by `claude-code-action@v1`, so the caller
   re-dispatches as `workflow_dispatch`.
 
@@ -129,13 +129,13 @@ For the local iteration loop on a PR you're editing yourself, see [`/ship` and `
 <Card
   title="ai-workflows getting started"
   icon="book"
-  href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md">
   Caller templates and the live workflow catalog.
 </Card>
 <Card
   title="Authentication"
   icon="key"
-  href="https://github.com/JacobPEvans/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+  href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
   `AI_TOKEN`, provider routing, and model variables.
 </Card>
 </CardGroup>

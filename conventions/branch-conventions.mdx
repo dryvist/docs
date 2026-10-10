@@ -60,8 +60,8 @@ The `git flow` command-line tool is installed and configured globally (nix-manag
 | `hotfix/<slug>` | Urgent production fix | Branched from `main`; PR to `main`, merge commit; back-merged to `develop`. |
 
 Every merge into `main` produces a release: release-please watches `main`, opens the release PR
-against it, and tags on merge. The release PR merge-commits like any other `main` PR. It is not a
-squash exception. See [PR conventions](/conventions/pr-conventions) for the full merge-strategy
+against it, and tags on merge. A person merges that release PR; release-please never auto-merges it.
+The release PR merge-commits like any other `main` PR. It is not a squash exception. See [PR conventions](/conventions/pr-conventions) for the full merge-strategy
 breakdown.
 
 ### Promotion is a step you take, not an event that happens
