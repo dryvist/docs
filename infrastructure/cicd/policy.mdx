@@ -78,7 +78,9 @@ release tag as a trailing comment. Nix, Ansible, and Tofu sources use a floating
 and the lock file holds the exact revision. The org scanners enforce that shape:
 
 - **Renovate.** Moves each `dryvist/*` action SHA and its version comment together.
-- **zizmor.** Treats `dryvist/*` as `hash-pin`.
+- **zizmor.** Treats `dryvist/*`, `JacobPEvans/*` and `JacobPEvans-personal/*` as `hash-pin`.
+- **Merge Gate.** Fails a first-party `uses:` ref that isn't a 40-character commit SHA. The full rule is
+  [dependency automation, rule 8](/infrastructure/cicd/dependency-automation).
 - **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
   avoid the paid Code Security charge), managed as IaC in
   [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).

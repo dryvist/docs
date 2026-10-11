@@ -530,7 +530,9 @@
               "github/apps/jacobpevans-claude",
               "github/apps/jacobs-agent-smith",
               "github/apps/openbao-service-broker",
-              "github/apps/jacobs-hermes-agent"
+              "github/apps/jacobs-hermes-agent",
+              "github/apps/jacobpevans-github-actions",
+              "github/apps/jacobpevans-autonomous-agents"
             ]
           }
         ]

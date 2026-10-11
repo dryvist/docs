@@ -25,6 +25,10 @@ These run on GitHub events. Wire one caller per workflow you want.
 | `issue-linker.yml` | `pull_request: [opened, closed]` | Links open issues to PRs on open; closes resolved issues on merge |
 | `notify-ai-pr.yml` | `pull_request: [opened]` from a bot | Slack notification when an AI-authored PR opens |
 
+Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
+path until cutover; ci-resolver replaces them,
+and those workflows retire after cutover.
+
 **MERGED in git; NOT DEPLOYED:** [PR #465](https://github.com/dryvist/ai-workflows/pull/465)
 (commit `95448fa`) gives the post-merge docs review a shared reusable-workflow
 alias. [PR #463](https://github.com/dryvist/ai-workflows/pull/463) fixes the
