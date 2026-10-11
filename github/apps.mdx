@@ -55,12 +55,11 @@ The table follows the order of GitHub's "Create GitHub App" form.
 | Permissions | None by default. Each App sets its own least-privilege list. |
 | Subscribe to events | None |
 | Where can this GitHub App be installed | Only on this account, meaning the organizations of the Enterprise |
-| Installation | Every organization, all repositories |
+| Installation | Every organization, selected repositories, managed by [JacobPEvans-claude-admin](/github/apps/jacobpevans-claude-admin) |
 | Private key | One active key. To rotate, add the new key, switch consumers, then delete the old one. |
 
-Installing on all repositories is safe. Breadth is not the security boundary.
-Each minted token is short-lived and scoped to one repository. The App's permission list
-caps what a token can do. Branch protection still applies.
+Each installation lists its repositories explicitly. The Enterprise API lets claude-admin add a new repository, so
+nobody toggles access in the UI. Minted tokens stay short-lived and scoped to one repository.
 
 ## Installing in each organization
 
@@ -69,6 +68,9 @@ Each organization still needs its own installation.
 
 - An Enterprise-owned App installs on the Enterprise or on organizations inside it. It
   cannot install on a personal account.
+- Only an App installed on the Enterprise itself can edit an installation's repositories, through the
+  [Enterprise organization-installations API](https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/organization-installations).
+  That is why claude-admin is installed there.
 - A permission change made by an Enterprise owner is accepted automatically in every
   organization. A change made by an App manager waits for an organization owner.
 - An App manager can edit settings and keys but cannot install the App.

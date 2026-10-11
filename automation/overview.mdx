@@ -51,6 +51,10 @@ A human files the issue and clicks merge. Everything in between runs without sup
 | [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
 | [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch: finalize a PR you're iterating on |
 
+Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
+path until cutover; ci-resolver replaces them,
+and those workflows retire after cutover.
+
 ## Where to go next
 
 <CardGroup cols={2}>
