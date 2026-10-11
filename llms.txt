@@ -25,5 +25,5 @@ This file follows the [llms.txt](https://llmstxt.org/) convention. The content o
 
 ## Source
 
-The source for this site is at [github.com/JacobPEvans/docs](https://github.com/JacobPEvans/docs).
+The source for this site is at [github.com/dryvist/docs](https://github.com/dryvist/docs).
 The per-repo READMEs are the operational runbooks; this site is the architecture map.
