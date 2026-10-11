@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The Mac control plane for the local AI stack: OTEL, two Cribl Edges, and a Cribl Stream, all in one OrbStack cluster.
 
-<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/orbstack-kubernetes" />
+<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/orbstack-kubernetes" />
 
 `orbstack-kubernetes` is the Kustomize-based manifest set for a local Kubernetes cluster on
 [OrbStack](https://orbstack.dev/). It runs the AI-development monitoring stack in a single
@@ -60,8 +60,8 @@ shortcut it.
 | --- | --- | --- |
 | `otel-collector` | OTLP receiver, forwards to local Cribl Stream | — |
 | `cribl-edge-managed` | Edge managed from Cribl's hosted service, which it forwards to | — |
-| `cribl-edge-standalone` | Local Edge with three packs ([claude-code-otel](https://github.com/JacobPEvans/cc-edge-claude-code-otel), [gemini-antigravity-io](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io), [vscode-io](https://github.com/JacobPEvans/cc-edge-vscode-io)), forwards to local Stream | :30910 |
-| `cribl-stream-standalone` | Local Stream leader, [Copilot REST collector](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) pack, outputs to Splunk HEC | :30900 |
+| `cribl-edge-standalone` | Local Edge with three packs ([claude-code-otel](https://github.com/JacobPEvans-personal/cc-edge-claude-code-otel), [gemini-antigravity-io](https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io), [vscode-io](https://github.com/JacobPEvans-personal/cc-edge-vscode-io)), forwards to local Stream | :30910 |
+| `cribl-stream-standalone` | Local Stream leader, [Copilot REST collector](https://github.com/JacobPEvans-personal/cc-stream-github-copilot-rest-io) pack, outputs to Splunk HEC | :30900 |
 | `cribl-mcp-server` | MCP API surface of Cribl's hosted service for Claude Code | :30030 |
 
 Four `healthchecks.io` CronJobs ping every 5 minutes as dead-man switches: `pipeline-heartbeat`, `heartbeat-splunk`, `heartbeat-edge`, `heartbeat-otel`.
@@ -135,7 +135,7 @@ See [CI/CD overview](/infrastructure/cicd/overview).
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/orbstack-kubernetes">
+  href="https://github.com/dryvist/orbstack-kubernetes">
   Full manifest set, Makefile, deployment scripts.
 </Card>
 </CardGroup>

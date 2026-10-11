@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The macOS system layer. Everything below it is just `inputs`.
 
-<RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/nix-darwin" />
+<RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/nix-darwin" />
 
 `nix-darwin` is the top-level entry point for the Mac. One `darwin-rebuild switch` updates packages, fonts, app preferences, shell, and dock: anything that has a system-level reflection.
 
@@ -37,7 +37,7 @@ The orchestrator. If a tool needs to be on every shell session by default, it be
 Use the Determinate Nix installer for flakes-enabled macOS. The README links the exact command.
 </Step>
 <Step title="Clone and run the bootstrap">
-`git clone https://github.com/JacobPEvans/nix-darwin && cd nix-darwin && darwin-rebuild switch --flake .#$(hostname -s)`
+`git clone https://github.com/dryvist/nix-darwin && cd nix-darwin && darwin-rebuild switch --flake .#$(hostname -s)`
 </Step>
 <Step title="Iterate">
 Edit `flake.nix` or any module under `modules/`. Re-run `darwin-rebuild switch --flake .`; only what changed gets rebuilt.
@@ -62,7 +62,7 @@ Edit `flake.nix` or any module under `modules/`. Re-run `darwin-rebuild switch -
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/nix-darwin">
+  href="https://github.com/dryvist/nix-darwin">
   Modules, host configs, full README.
 </Card>
 </CardGroup>

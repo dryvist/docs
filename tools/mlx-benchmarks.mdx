@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > One envelope schema, every upstream eval tool, one public HF dataset.
 
-<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/mlx-benchmarks" />
+<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/mlx-benchmarks" />
 
 `mlx-benchmarks` is the result-envelope contract and publisher for benchmarking locally hosted
 LLMs across MLX and other serving backends. It is the thin glue between upstream evaluation tools
@@ -294,7 +294,7 @@ From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .
 serve` directly if you're not on the Nix stack.
 </Step>
 <Step title="Install and authenticate">
-`git clone https://github.com/JacobPEvans/mlx-benchmarks && cd mlx-benchmarks && uv sync`. The benchmarks read `HF_TOKEN`, which needs write scope on the dataset namespace.
+`git clone https://github.com/dryvist/mlx-benchmarks && cd mlx-benchmarks && uv sync`. The benchmarks read `HF_TOKEN`, which needs write scope on the dataset namespace.
 </Step>
 <Step title="Run a smoke benchmark">
 Point `lm-eval` at the local endpoint:
@@ -348,7 +348,7 @@ In the dataset viewer, the `default` config shows the recent window and `history
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/mlx-benchmarks">
+  href="https://github.com/dryvist/mlx-benchmarks">
   Schema, publisher, converters, full README, `docs/architecture.md`.
 </Card>
 </CardGroup>
