@@ -8,13 +8,13 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > Don't put project deps in your system PATH. Don't put system deps in your project flake.
 
-<RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/nix-devenv" />
+<RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/nix-devenv" />
 
 `nix-devenv` is a library of dev shells. Every project repo in the portfolio pulls its `flake.nix` from here. One source of truth for what "the OpenTofu dev shell" or "the ML dev shell" contains.
 
 ## What it does
 
-- Exports per-system `devShells`; the OpenTofu shell is `tofu` in [`flake.nix`](https://github.com/JacobPEvans/nix-devenv/blob/develop/flake.nix)
+- Exports per-system `devShells`; the OpenTofu shell is `tofu` in [`flake.nix`](https://github.com/dryvist/nix-devenv/blob/develop/flake.nix)
 - Provides a `mkshell` template: `nix flake init -t "github:dryvist/nix-devenv?ref=vN#mkshell"`, where `vN` is the current major tag
 - Pins toolchain versions so every project on the same shell gets the same `tofu` / `terraform` / `kubectl` / `ansible`
 - Activated per-project via direnv (`.envrc` is committed; `.direnv/` is gitignored)
@@ -67,7 +67,7 @@ Skip the local flake and `nix develop "github:dryvist/nix-devenv?dir=shells/<lan
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/nix-devenv">
+  href="https://github.com/dryvist/nix-devenv">
   Templates, shells, full README.
 </Card>
 </CardGroup>

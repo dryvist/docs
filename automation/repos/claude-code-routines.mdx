@@ -6,7 +6,7 @@ page_type: "explanation"
 {/* projected from the authoring site; do not edit here */}
 > Cron, not events. Org-wide, not per-repo. One configuration, scans everything.
 
-[`JacobPEvans/claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines) ships
+[`JacobPEvans/claude-code-routines`](https://github.com/dryvist/claude-code-routines) ships
 seven prompt files that run on schedule inside Anthropic's cloud-hosted Claude Code sandbox. They
 discover repos under `$GH_OWNER` via `gh search`, do their work by calling the `gh` command-line tool, and report
 results to Slack via the official Slack MCP connector. There is no per-repo wiring. Drop a repo
@@ -66,7 +66,7 @@ these environment variables:
 
 Slack output goes through the official Slack MCP connector. The full operator-setup walkthrough
 lives in
-[`docs/CLOUD_ROUTINES_AUTH.md`](https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md)
+[`docs/CLOUD_ROUTINES_AUTH.md`](https://github.com/dryvist/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md)
 in the source repo.
 
 The local Claude Code that develops and deploys these routines is configured declaratively via
@@ -114,13 +114,13 @@ The two systems are complementary. ai-workflows handles the per-event reaction, 
 <Card
   title="Source repo"
   icon="github"
-  href="https://github.com/JacobPEvans/claude-code-routines">
+  href="https://github.com/dryvist/claude-code-routines">
   The six prompt files, schedule manifest, deploy notes.
 </Card>
 <Card
   title="Cloud routine auth"
   icon="key"
-  href="https://github.com/JacobPEvans/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md">
+  href="https://github.com/dryvist/claude-code-routines/blob/main/docs/CLOUD_ROUTINES_AUTH.md">
   Operator setup: env vars, Slack MCP, token strategy.
 </Card>
 <Card

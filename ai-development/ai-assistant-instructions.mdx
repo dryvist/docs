@@ -22,23 +22,23 @@ repo so Claude Code, the Antigravity (`agy`) command-line tool, GitHub Copilot, 
 - Owns the **model-routing policy**: when to reach for Claude vs Gemini vs Copilot vs local MLX
 - Owns the **tool-use rules**: Read over `cat`, Edit over `sed`, Bash for shell-only
 - Owns the git-flow branching/merge model and `git-flow-next` tool usage:
-  [`agentsmd/rules/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/git-flow.md);
+  [`agentsmd/rules/on-demand/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/git-flow.md);
   the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and
   [PR conventions](/conventions/pr-conventions)
 - Owns AI-runtime concerns: skill execution semantics, subagent typing, LiteLLM-routing details
 - Provides the canonical rule source that generated command-line contexts and agent prompt bundles reuse
 - Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs:
-  [`agentsmd/rules/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/subagent-resilience.md)
+  [`agentsmd/rules/on-demand/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/subagent-resilience.md)
   (probe before fan-out, bounded concurrency, mandatory solo fallback),
-  [`agentsmd/rules/loop-cadence.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/loop-cadence.md)
+  [`agentsmd/rules/on-demand/loop-cadence.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/loop-cadence.md)
   (every recurring loop gates itself on a durable min-interval marker), and
-  [`agentsmd/rules/delegation-trust.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/delegation-trust.md)
+  [`agentsmd/rules/on-demand/delegation-trust.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/delegation-trust.md)
   (a denial binds to the action, not the requester; no permission laundering across agent hops)
 - Owns the **shared behavioral base (soul)** for every agent surface:
   [`agentsmd/rules/soul.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/soul.md)
-  (ground truth before claims, verify before done, reversibility gates autonomy) and its
-  copy-paste rendering for non-Claude agents,
-  [`agentsmd/prompts/autonomous-base.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/prompts/autonomous-base.md)
+  (ground truth before claims, verify before done, reversibility gates autonomy). Its
+  copy-paste rendering for non-Claude agents lives in `ai-llm-prompts`:
+  [`auto-ai-agent/autonomous-base.md`](https://github.com/dryvist/ai-llm-prompts/blob/main/auto-ai-agent/autonomous-base.md)
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
 
 Cross-repo writing standards that humans also need to read live on this docs site. They
@@ -79,7 +79,7 @@ they had been written into `CLAUDE.md` directly.
 | --- | --- |
 | **Vendor lock-in.** Claude reads `CLAUDE.md`, Codex / GitHub Copilot / Cursor / OpenAI agents read `AGENTS.md`, Gemini reads `GEMINI.md`. Duplicating content across them rots fast. | One canonical file (`AGENTS.md`), every other tool's config file imports it. |
 | **Context bloat.** A 12 KB `CLAUDE.md` burns tokens on every session. | `CLAUDE.md` becomes ~40 bytes; `AGENTS.md` carries the load and can still be split further via nested `@path` imports. |
-| **Size budgets.** The shared [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml) workflow defaults to `warn=6 KB`, `error=12 KB`. A fat `CLAUDE.md` trips that gate. | A 40-byte `CLAUDE.md` never trips it; `AGENTS.md` can opt into an `extended:` limit per repo via `.file-size.yml` when actually needed. |
+| **Size budgets.** The shared [`_file-size`](https://github.com/dryvist/.github/blob/main/.github/workflows/_file-size.yml) workflow defaults to `warn=6 KB`, `error=12 KB`. A fat `CLAUDE.md` trips that gate. | A 40-byte `CLAUDE.md` never trips it; `AGENTS.md` can opt into an `extended:` limit per repo via `.file-size.yml` when actually needed. |
 | **Single source of truth.** Moving project rules between files in different vendors' formats is an unforced error. | All edits land in one file. |
 
 ### Where it applies
@@ -114,7 +114,7 @@ likewise come from the global `~/.claude/rules` wiring rather than a per-repo
 
 4. Mirror the same change in any other agent file (for example, `GEMINI.md` → `@AGENTS.md`).
 5. Update CI: most repos already inherit the
-   [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml)
+   [`_file-size`](https://github.com/dryvist/.github/blob/main/.github/workflows/_file-size.yml)
    check from `JacobPEvans/.github`. No per-repo workflow edit needed.
 
 ## How it fits
@@ -139,7 +139,7 @@ points to.
 Profiles cover personal, work, and learning contexts. The README enumerates which rules each one activates.
 </Step>
 <Step title="Update from upstream regularly">
-The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](https://github.com/JacobPEvans/claude-code-routines).
+The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](https://github.com/dryvist/claude-code-routines).
 </Step>
 </Steps>
 

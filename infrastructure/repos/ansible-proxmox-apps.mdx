@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > The third tier. By the time this runs, the host is ready and the apps just need to land on it.
 
-<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox-apps" />
+<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ansible-proxmox-apps" />
 
 `ansible-proxmox-apps` deploys the app stack onto VMs and LXC containers that `tofu-proxmox`
 provisioned and `ansible-proxmox` configured. This is where the data-plane services that move
@@ -64,7 +64,7 @@ This is the deploy tier. Anything that's stateful and long-running on a homelab 
 Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring agents in place before apps land on them.
 </Step>
 <Step title="Clone and enter the dev shell">
-`git clone https://github.com/JacobPEvans/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
+`git clone https://github.com/dryvist/ansible-proxmox-apps && cd ansible-proxmox-apps && nix develop`
 </Step>
 <Step title="Required environment">
 The playbooks read the Cribl tokens, HAProxy stats password, and Splunk HEC tokens as environment variables.
@@ -98,7 +98,7 @@ The playbooks read the Cribl tokens, HAProxy stats password, and Splunk HEC toke
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/ansible-proxmox-apps">
+  href="https://github.com/dryvist/ansible-proxmox-apps">
   Roles, packs, full README.
 </Card>
 </CardGroup>

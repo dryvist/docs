@@ -99,10 +99,10 @@ The AI-coding-tool packs sit on top of the OrbStack cluster's `cribl-edge-standa
 
 | Pack | Collects from |
 | --- | --- |
-| [`cc-edge-claude-code-otel`](https://github.com/JacobPEvans/cc-edge-claude-code-otel) | Claude Code (OTEL hooks) |
-| [`cc-edge-copilot-otel`](https://github.com/JacobPEvans/cc-edge-copilot-otel) | GitHub Copilot Chat (OTLP gRPC) |
-| [`cc-edge-vscode-io`](https://github.com/JacobPEvans/cc-edge-vscode-io) | VS Code (logs + telemetry) |
-| [`cc-edge-gemini-antigravity-io`](https://github.com/JacobPEvans/cc-edge-gemini-antigravity-io) | Gemini Antigravity |
+| [`cc-edge-claude-code-otel`](https://github.com/JacobPEvans-personal/cc-edge-claude-code-otel) | Claude Code (OTEL hooks) |
+| [`cc-edge-copilot-otel`](https://github.com/JacobPEvans-personal/cc-edge-copilot-otel) | GitHub Copilot Chat (OTLP gRPC) |
+| [`cc-edge-vscode-io`](https://github.com/JacobPEvans-personal/cc-edge-vscode-io) | VS Code (logs + telemetry) |
+| [`cc-edge-gemini-antigravity-io`](https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io) | Gemini Antigravity |
 
 The macOS host telemetry pack [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack)
 was renamed from `cc-edge-macos-system`. It targets the **native macOS** Cribl Edge install, not the
@@ -113,7 +113,7 @@ container.
 
 | Pack | Polls | Hosted on |
 | --- | --- | --- |
-| [`cc-stream-github-copilot-rest-io`](https://github.com/JacobPEvans/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics REST API (per-org, per-seat) | `cribl-stream-standalone` (OrbStack) |
+| [`cc-stream-github-copilot-rest-io`](https://github.com/JacobPEvans-personal/cc-stream-github-copilot-rest-io) | GitHub Copilot usage metrics REST API (per-org, per-seat) | `cribl-stream-standalone` (OrbStack) |
 
 REST collectors run on Stream rather than Edge because they're pull-based jobs against authenticated
 APIs. That is closer to the routing layer's responsibility than the host-side capture layer.

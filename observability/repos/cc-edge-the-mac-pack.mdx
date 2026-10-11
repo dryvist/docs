@@ -10,14 +10,14 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 > populates. Pack internals, including Sources, predicates, override patterns, and version-to-version changelogs,
 > live in the repo's own README.
 
-<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io" />
+<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/cc-edge-the-mac-pack-io" />
 
 This page is the homelab-integration view of
-[`cc-edge-the-mac-pack-io`](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io). It covers where
+[`cc-edge-the-mac-pack-io`](https://github.com/dryvist/cc-edge-the-mac-pack-io). It covers where
 the pack runs, what it sends, and how it slots into the wider observability stack. For the full
 Cribl-side reference, including every Source, every input, anomaly detection rules, override patterns,
 and release notes, read [the repo's
-README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#readme).
+README](https://github.com/dryvist/cc-edge-the-mac-pack-io#readme).
 
 ## Where it runs
 
@@ -64,7 +64,7 @@ A new Mac joins the telemetry fleet by:
 Upgrades are GitOps: bump the pinned pack version in the nix-darwin config, rebuild, done. For
 one-off testing outside the Nix-managed path, the pack ships a `.crbl` artifact installable via
 Cribl's REST API. See the [repo
-README](https://github.com/JacobPEvans/cc-edge-the-mac-pack-io#install) for that path.
+README](https://github.com/dryvist/cc-edge-the-mac-pack-io#install) for that path.
 
 <RepoFit>
 This page documents how the Mac Pack is deployed in this homelab. The pack itself, including Sources, predicates, anomaly detection rules, and override patterns, is documented in its own repo.
@@ -88,7 +88,7 @@ This page documents how the Mac Pack is deployed in this homelab. The pack itsel
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/cc-edge-the-mac-pack-io">
+  href="https://github.com/dryvist/cc-edge-the-mac-pack-io">
   The pack itself: every Source, every input, anomaly-detection rules, override patterns, release notes.
 </Card>
 </CardGroup>

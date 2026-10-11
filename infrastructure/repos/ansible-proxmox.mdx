@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 > OpenTofu made the box. This makes it Proxmox.
 
-<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/JacobPEvans/ansible-proxmox" />
+<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ansible-proxmox" />
 
 
 {/*Shape: linear chain, this repo's position. 3 nodes. Aspect ~3:1 LR.*/}
@@ -60,7 +60,7 @@ Run once per host after OpenTofu finishes. Re-running is safe. Every role is ide
 
 <Steps>
 <Step title="Clone and enter the dev shell">
-`git clone https://github.com/JacobPEvans/ansible-proxmox && cd ansible-proxmox && nix develop`
+`git clone https://github.com/dryvist/ansible-proxmox && cd ansible-proxmox && nix develop`
 </Step>
 <Step title="Point at the OpenTofu inventory">
 Ansible reads the host list that `tofu-proxmox` wrote out. The README covers the exact path and var precedence.
@@ -97,7 +97,7 @@ The playbooks read host passwords, SSH keys, and monitoring tokens as environmen
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/JacobPEvans/ansible-proxmox">
+  href="https://github.com/dryvist/ansible-proxmox">
   Roles, inventory examples, full README.
 </Card>
 </CardGroup>
