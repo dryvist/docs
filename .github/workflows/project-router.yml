@@ -21,6 +21,6 @@ concurrency:
 
 jobs:
   route:
-    uses: dryvist/.github/.github/workflows/_project-router.yml@0aab1ddaecacea5dc9752b075e2ac10491af33bf # v1.11.3
+    uses: dryvist/.github/.github/workflows/_project-router.yml@f9e8814ad8f82e4bc8cdaac73ee49b1ffa6d4cf2 # v1.12.1
     secrets:
       GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
