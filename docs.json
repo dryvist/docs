@@ -524,7 +524,13 @@
           {
             "group": "GitHub",
             "pages": [
-              "github/apps"
+              "github/apps",
+              "github/apps/jacobpevans-claude-admin",
+              "github/apps/jacobpevans-release-please",
+              "github/apps/jacobpevans-claude",
+              "github/apps/jacobs-agent-smith",
+              "github/apps/openbao-service-broker",
+              "github/apps/jacobs-hermes-agent"
             ]
           }
         ]

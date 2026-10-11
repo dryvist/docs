@@ -94,7 +94,7 @@ provider "aws" {
 }
 
 module "state_backend" {
-  source = "git::https://github.com/dryvist/tofu-aws-templates.git?ref=v0.1.0"
+  source = "git::https://github.com/dryvist/tofu-aws-templates.git?ref=<release tag>"
 
   project        = "proxmox"
   github_org     = "<github-org>"
