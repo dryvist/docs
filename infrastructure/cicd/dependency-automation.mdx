@@ -195,9 +195,14 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
    minor, or major) from the release tags. Scheduled whole-lock relocks skip dryvist inputs.
 7. **Deploys build from a pinned lock.** Host builds use the wrapper repo's `flake.lock`, whose dryvist
    inputs use `?ref=vN`. Nothing deploys from `main`.
-8. **Enforcement.** zizmor treats `dryvist/*` as `hash-pin`. `scripts/ci-gate-uses-resolve.sh`
-   (`PIN_POLICY_MODE`) and `scripts/flake-lock-fresh.sh` (`FLAKE_REF_POLICY`) report refs that break rules 1
-   and 2. They warn first and fail once enforcement is on.
+8. **Enforcement.** zizmor treats `dryvist/*`, `JacobPEvans/*` and `JacobPEvans-personal/*` as `hash-pin`.
+   `scripts/ci-gate-uses-resolve.sh` (`PIN_POLICY_MODE`) and `scripts/flake-lock-fresh.sh` (`FLAKE_REF_POLICY`)
+   fail by default on refs that break rules 1 and 2; `warn` is still accepted. A flake ref may name a floating
+   major tag (`vN`) or an exact release tag (`vX.Y.Z`). The `uses:` scan covers alias, flow-style and quoted-key
+   entries in workflows and in every `action.yml`. A first-party `uses:` ref that isn't a 40-character commit SHA
+   fails `gate / Merge Gate`. Two exceptions sit outside the checks: the `.github` canary raw fetch at `main`, and
+   checkouts of repos a workflow writes to, such as docs repos and the model registry. Source:
+   [dryvist/.github#372](https://github.com/dryvist/.github/pull/372).
 9. **Third-party dependencies are unchanged** by this policy.
 
 ## Where to go next
