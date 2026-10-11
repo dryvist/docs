@@ -1,15 +1,14 @@
 ---
 title: "GitHub Apps"
-description: "The shared settings every GitHub App inherits, and the few fields each App overrides. This page is every App's Homepage URL."
+description: "The shared settings every GitHub App inherits. Each App's own page, its Homepage URL, lists only what that App changes."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
-This page is the **Homepage URL** of every GitHub App in the estate:
-`https://docs.jacobpevans.com/github/apps`.
-
-Every App inherits the [shared settings](#shared-settings). The [Apps table](#apps)
-lists only what an App changes. Any other page that needs an App setting links to this
-page. It never copies a value.
+Every GitHub App in the estate inherits the [shared settings](#shared-settings) on this
+page. Each App also has its own page, listed under [Apps](#apps). That page is the App's
+**Homepage URL**, `https://docs.jacobpevans.com/github/apps/<app-slug>`. It holds the App's
+IDs and only the settings it overrides. Any other page that needs an App setting links to
+these pages. It never copies a value.
 
 ```mermaid
 %%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
@@ -17,7 +16,7 @@ page. It never copies a value.
 %% Aspect: ~3:1 (LR). Pass.
 flowchart LR
   shared(["Shared settings<br/>one table"])
-  row[["Per-App row<br/>overrides only"]]
+  row[["Per-App page<br/>IDs and overrides only"]]
   form(["GitHub App form"])
   other(("Any other page<br/>links, never copies"))
 
@@ -46,7 +45,7 @@ The table follows the order of GitHub's "Create GitHub App" form.
 | Owner | The GitHub Enterprise account |
 | GitHub App name | `<owner>-<role>`, for example `JacobPEvans-claude-admin` |
 | Description | One sentence naming what the App is for |
-| Homepage URL | `https://docs.jacobpevans.com/github/apps` |
+| Homepage URL | `https://docs.jacobpevans.com/github/apps/<app-slug>`, the App's own page |
 | Callback URL (redirect URI) | None; wildcard matching off |
 | Expire user authorization tokens | On |
 | Request user authorization (OAuth) during installation | Off |
@@ -79,26 +78,23 @@ GitHub documents the rules in
 
 ## Apps
 
-Each row lists only overrides of the shared settings. **Permissions** is always an
-override: read the live list at `https://api.github.com/apps/<slug>` instead of a copy
-here. GitHub owns that fact.
+Each App's page holds its App ID, client ID, and overrides. **Permissions** is always an
+override: each App sets its own least-privilege list, and GitHub's App settings page holds
+the live list.
 
-| App | App ID | Client ID | Purpose | Overrides |
-| --- | --- | --- | --- | --- |
-| [`jacobpevans-claude`](https://github.com/apps/jacobpevans-claude) | 2956476 | `Iv23liKbCfnxYNZdsWJp` | Trusted command-line agents: read and write tokens, plus read-only administration | Permissions |
-| [`openbao-service-broker`](https://github.com/apps/openbao-service-broker) | 4282473 | `Iv23liwO52z1YnS5IcXj` | Administrator gates, runners, and the docs publisher | Permissions |
-| [`jacobpevans-release-please`](https://github.com/apps/jacobpevans-release-please) | 3923580 | `Iv23limEq07ik6HNq9NJ` | Release automation | Permissions |
-| `jacobs-agent-smith` | None yet | None yet | Untrusted job execution in a sandbox | Permissions |
-| `jacobs-hermes-agent` | None yet | None yet | The Hermes review agent | Permissions |
-| `JacobPEvans-claude-admin` | None yet | None yet | Enterprise and organization administration | Permissions |
-
-An App without an ID is not yet published on GitHub. Its row gains the IDs when GitHub
-publishes the App. Read any published App live at `https://api.github.com/apps/<slug>`.
+| App | Purpose |
+| --- | --- |
+| [`jacobpevans-claude`](/github/apps/jacobpevans-claude) | Trusted command-line agents |
+| [`openbao-service-broker`](/github/apps/openbao-service-broker) | Administrator gates, runners, and the docs publisher |
+| [`jacobpevans-release-please`](/github/apps/jacobpevans-release-please) | Release automation |
+| [`jacobs-agent-smith`](/github/apps/jacobs-agent-smith) | Untrusted job execution in a sandbox |
+| [`jacobs-hermes-agent`](/github/apps/jacobs-hermes-agent) | The Hermes review agent |
+| [`JacobPEvans-claude-admin`](/github/apps/jacobpevans-claude-admin) | Enterprise and organization administration |
 
 <Note>
 **Identifiers are public**
 
-An App ID and client ID are public: the GitHub API returns them for any public App. The
-private key, client secret, and webhook secret are never written in these docs.
+An App ID and client ID are identifiers, not secrets. The private key, client secret, and
+webhook secret are never written in these docs.
 </Note>
 
