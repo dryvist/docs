@@ -56,12 +56,12 @@ The four-repo Nix split each owns a slice of the install:
 
 <Steps>
 <Step title="Add the flake input">
-Add `nix-claude-code.url = "github:dryvist/nix-claude-code"` to your flake `inputs`. Set
+Add `nix-claude-code.url = "github:dryvist/nix-claude-code?ref=vN"` to your flake `inputs`, where `vN` is the current major tag. The flake lock holds the exact revision. Set
 `nix-claude-code.inputs.nixpkgs.follows = "nixpkgs"` and the same for `home-manager` so versions
 stay aligned.
 </Step>
 <Step title="Scaffold from a template">
-`nix flake init -t github:dryvist/nix-claude-code#minimal` (or `#flake-parts` if you already use flake-parts). The minimal template is the fastest way to see the wiring.
+`nix flake init -t "github:dryvist/nix-claude-code?ref=vN#minimal"` (or `#flake-parts` if you already use flake-parts). The minimal template is the fastest way to see the wiring.
 </Step>
 <Step title="Declare the install">
 Set `programs.claude.enabledPlugins`, `programs.claude.mcpServers`, and `programs.claude.permissions` in your home-manager config. Run `home-manager switch` or `darwin-rebuild switch`.

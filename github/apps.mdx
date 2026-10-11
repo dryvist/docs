@@ -1,0 +1,104 @@
+---
+title: "GitHub Apps"
+description: "The shared settings every GitHub App inherits, and the few fields each App overrides. This page is every App's Homepage URL."
+page_type: "reference"
+---
+{/* projected from the authoring site; do not edit here */}
+This page is the **Homepage URL** of every GitHub App in the estate:
+`https://docs.jacobpevans.com/github/apps`.
+
+Every App inherits the [shared settings](#shared-settings). The [Apps table](#apps)
+lists only what an App changes. Any other page that needs an App setting links to this
+page. It never copies a value.
+
+```mermaid
+%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+%% Shape: linear chain with a side reference. Boundary crossings: 0 (no subgraphs). Ranks: 3x1 plus one leaf.
+%% Aspect: ~3:1 (LR). Pass.
+flowchart LR
+  shared(["Shared settings<br/>one table"])
+  row[["Per-App row<br/>overrides only"]]
+  form(["GitHub App form"])
+  other(("Any other page<br/>links, never copies"))
+
+  shared --> row --> form
+  other -.-> shared
+
+  classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
+  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
+  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
+  class shared src
+  class row hop
+  class form sink
+  class other external
+
+  linkStyle 0,1 stroke:#4FB3A9,stroke-width:2px;
+  linkStyle 2 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
+```
+
+## Shared settings
+
+The table follows the order of GitHub's "Create GitHub App" form.
+
+| Field | Shared value |
+| --- | --- |
+| Owner | The GitHub Enterprise account |
+| GitHub App name | `<owner>-<role>`, for example `JacobPEvans-claude-admin` |
+| Description | One sentence naming what the App is for |
+| Homepage URL | `https://docs.jacobpevans.com/github/apps` |
+| Callback URL (redirect URI) | None; wildcard matching off |
+| Expire user authorization tokens | On |
+| Request user authorization (OAuth) during installation | Off |
+| Enable Device Flow | Off |
+| Setup URL, Redirect on update | None, off |
+| Webhook: Active | Off. An App only mints installation tokens; it receives no events. |
+| Permissions | None by default. Each App sets its own least-privilege list. |
+| Subscribe to events | None |
+| Where can this GitHub App be installed | Only on this account, meaning the organizations of the Enterprise |
+| Installation | Every organization, all repositories |
+| Private key | One active key. To rotate, add the new key, switch consumers, then delete the old one. |
+
+Installing on all repositories is safe. Breadth is not the security boundary.
+Each minted token is short-lived and scoped to one repository. The App's permission list
+caps what a token can do. Branch protection still applies.
+
+## Installing in each organization
+
+The Enterprise owns the App definition, so one edit changes it for every organization.
+Each organization still needs its own installation.
+
+- An Enterprise-owned App installs on the Enterprise or on organizations inside it. It
+  cannot install on a personal account.
+- A permission change made by an Enterprise owner is accepted automatically in every
+  organization. A change made by an App manager waits for an organization owner.
+- An App manager can edit settings and keys but cannot install the App.
+
+GitHub documents the rules in
+[Creating GitHub Apps for your enterprise](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-github-apps-for-your-enterprise/creating-github-apps-for-your-enterprise).
+
+## Apps
+
+Each row lists only overrides of the shared settings. **Permissions** is always an
+override: read the live list at `https://api.github.com/apps/<slug>` instead of a copy
+here. GitHub owns that fact.
+
+| App | App ID | Client ID | Purpose | Overrides |
+| --- | --- | --- | --- | --- |
+| [`jacobpevans-claude`](https://github.com/apps/jacobpevans-claude) | 2956476 | `Iv23liKbCfnxYNZdsWJp` | Trusted command-line agents: read and write tokens, plus read-only administration | Permissions |
+| [`openbao-service-broker`](https://github.com/apps/openbao-service-broker) | 4282473 | `Iv23liwO52z1YnS5IcXj` | Administrator gates, runners, and the docs publisher | Permissions |
+| [`jacobpevans-release-please`](https://github.com/apps/jacobpevans-release-please) | 3923580 | `Iv23limEq07ik6HNq9NJ` | Release automation | Permissions |
+| `jacobs-agent-smith` | None yet | None yet | Untrusted job execution in a sandbox | Permissions |
+| `jacobs-hermes-agent` | None yet | None yet | The Hermes review agent | Permissions |
+| `JacobPEvans-claude-admin` | None yet | None yet | Enterprise and organization administration | Permissions |
+
+An App without an ID is not yet published on GitHub. Its row gains the IDs when GitHub
+publishes the App. Read any published App live at `https://api.github.com/apps/<slug>`.
+
+<Note>
+**Identifiers are public**
+
+An App ID and client ID are public: the GitHub API returns them for any public App. The
+private key, client secret, and webhook secret are never written in these docs.
+</Note>
+

@@ -37,7 +37,7 @@ If a config lives in `~/.config/` or `~/.<tool>rc`, it belongs here. System-wide
 Already wired into [`nix-darwin`](/nix/nix-darwin). `darwin-rebuild switch` picks up both.
 </Step>
 <Step title="Standalone home-manager (Linux)">
-`nix run home-manager/master -- switch --flake github:JacobPEvans/nix-home`.
+`nix run home-manager/master -- switch --flake "github:dryvist/nix-home?ref=vN"`, where `vN` is the current major tag.
 </Step>
 <Step title="Iterate">
 Edit modules, re-run the rebuild. Generations let you roll back if something breaks.

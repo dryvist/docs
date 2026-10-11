@@ -53,12 +53,13 @@ from whichever series happen to come back from a query. A missing series shows a
 its age, then "no data since …" — it never silently disappears from the view. An entity is removed
 from a dashboard only by removing it from config, never by a query that stops returning it.
 
-## Versions: Renovate only
+## Versions: bot pull requests only
 
-Every dependency and pipeline-component version bump comes from Renovate; see
+Every dependency and pipeline-component version bump comes from a bot pull request: Renovate, or the
+relock workflow for `flake.lock` inputs. See
 Dependency automation coverage for the manager-by-pin-shape
 table, the annotation contract, and the gate a version needs when a hash rides beside it. No
-hand-written bump, no hand-pinned hash, and no hand `nix flake update` of a Renovate-managed input in
+hand-written bump, no hand-pinned hash, and no hand `nix flake update` of a bot-managed input in
 this pipeline's repos.
 
 ## Log pipeline
