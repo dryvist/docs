@@ -93,11 +93,14 @@ CVE is more dangerous than an unvetted release.
 Inside the org, release-please opens a release pull request in the *source* repo. A person merges
 it, and release-please never auto-merges a release. On git-flow repos, whose default branch is
 `develop`, a release happens only when `develop` is promoted to `main`. After a release is published,
-the reusable `promote-major-tag` workflow moves the floating `vN` tag. Consumers pick up a change only
-through a pull request that changes their ref or lock. A releasing repo may send a
+the reusable `promote-major-tag` workflow moves the floating `vN` tag. The tag may carry SemVer build
+metadata (`vX.Y.Z+rev.1`); the workflow moves the floating tag for it too. Consumers pick up a change
+only through a pull request that changes their ref or lock. A releasing repo may send a
 `repository_dispatch` event carrying its name and tag. The consumer then relocks only the named input
-and classifies the bump as patch, minor, or major from the release tags. Producer releases never push
-a bump into a consumer.
+and classifies the bump as patch, minor, or major from the release tags. The releasing repo's
+`DISPATCH_CONSUMERS` repository variable lists the consumer repos that receive the event. Without a
+dispatch, a lock revision that is still inside the floating tag's history counts as fresh, so no
+scheduled run moves it. Producer releases never push a bump into a consumer.
 
 ## AI review is advisory, not the merge gate
 
@@ -189,7 +192,10 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
    to `main`.
 5. **Floating major tags.** Every dryvist repo that other repos consume publishes a floating `vN` tag at
    its current major. The reusable `promote-major-tag` workflow moves it after a release is published. A
-   major version bump (`feat!` or `BREAKING CHANGE`) needs explicit human intent.
+   major version bump (`feat!` or `BREAKING CHANGE`) needs explicit human intent. A repo whose releases
+   follow an upstream version can cut a packaging-only release for a change to its own code: nix-screenpipe
+   tags `v{desktop version}+rev.{N}` from a manual run of its Auto Tag workflow on `main`. The tag push
+   moves the floating tag and starts the consumer dispatch without waiting for the draft release.
 6. **Producer releases do not push bumps.** A releasing repo may send a `repository_dispatch` event
    carrying its name and tag. The consumer relocks only the named input and classifies the bump (patch,
    minor, or major) from the release tags. Scheduled whole-lock relocks skip dryvist inputs.
