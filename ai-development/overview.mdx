@@ -17,8 +17,8 @@ reads the same rules.
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9'}}}%%
   flowchart TB
   CFG([Universal config<br/>CLAUDE.md · AGENTS.md])
-  TOOLS([Cloud models + local inference<br/>Claude Code · Antigravity · Copilot · MLX])
-  ROUTE([Model routing<br/>one endpoint, cheapest capable tier])
+  TOOLS([Hosted models + local inference<br/>Claude Code · Antigravity · Copilot · MLX])
+  ROUTE([Model routing<br/>one endpoint, policy-selected capable tier])
   CFG --> TOOLS --> ROUTE
 ```
 
@@ -27,16 +27,16 @@ reads the same rules.
 | Layer | Repo / tool | What it owns |
 | --- | --- | --- |
 | **Universal config** | [Assistant rules](/ai-development/ai-assistant-instructions) | `CLAUDE.md`, `AGENTS.md`, rules, permissions, workflows: read by every AI tool |
-| **Cloud models** | Claude Code, Antigravity (`agy`), GitHub Copilot | The IDEs and CLIs that do the work |
+| **Hosted models** | Claude Code, Antigravity (`agy`), GitHub Copilot | The IDEs and CLIs that do the work |
 | **Local inference** | MLX | Apple Silicon-native model inference for typo fixes, quick edits, no cloud tokens |
 | **Extensions** | [Claude Code plugins](/ai-development/claude-code-plugins), `claude-code-routines`, `ai-workflows`, `raycast-smart-issue` | Commands, scheduled agents, Copilot workflows, Raycast UI on top of MLX |
 
 ## Model routing
 
-Each model has a sweet spot, and work is routed to the cheapest one that can
-actually do it. Deep reasoning and multi-file refactors go to the strongest
-model. Line-level completions go to the cheap high-volume one, and anything
-trivial goes to local inference rather than burning cloud tokens.
+Each model has a sweet spot, and work is routed to a tier with the needed
+capability. Deep reasoning and multi-file refactors go to a strong model.
+Line-level completions go to a fast model, and trivial work can use local
+inference to limit cloud calls.
 
 [Model routing](/ai-development/model-routing) covers how that choice is
 made and governed. One endpoint sits in front of every backend, and callers ask

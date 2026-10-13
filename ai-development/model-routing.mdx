@@ -1,10 +1,10 @@
 ---
 title: "Model routing"
-description: "Why every model call routes through one endpoint, how work delegates to the cheapest capable tier, and what makes a cost control enforced."
+description: "Why model calls share one governed endpoint, how agents delegate across capable tiers, and which controls enforce policy."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> The cheapest capable model that can do the job, chosen per task, and one place where that choice can actually be governed.
+> One endpoint for every model call, with routing policy, observability, and enforcement in one place.
 
 {/*Shape: fan-in then decision. One endpoint, ordered tiers below it.*/}
 
@@ -70,52 +70,37 @@ single machine-readable registry that the routing config is generated from.
 Docs should point at it, or at the endpoint's own live model listing, instead of
 restating it. That is why this page names no models.
 
-## Delegation: the cheapest capable tier
+## Delegation across capable tiers
 
 Once every agent can reach a shared endpoint, an agent no longer has to do all
-its own thinking on its own subscription. It can hand a bounded subtask to
-whichever tier can do it most cheaply, in roughly this order:
+its own thinking on its own subscription. It can hand a bounded subtask to a
+tier that has the needed capability and fits the task's data boundary:
 
-1. **A local tier.** No marginal cost, no data leaving the network, no
-   credential. This covers most bounded subtasks and should be the default.
+1. **A local tier.** Use it when its capability fits and local processing suits
+   the task's data boundary.
 2. **An external provider**, when a local tier genuinely cannot do the job: a
    context window it cannot hold, or a capability it does not have.
 3. **The agent's own model.** The fallback, not the default. An agent that
    delegates and ends up here has saved nothing.
 
-External access should always be **opt-in by explicit model identifier**, so
-nothing routes to a paid provider implicitly.
+External access needs a clear routing policy. A caller can name a provider
+model directly, or an approved fallback chain can include external tiers.
 
 Whether an external tier may also sit *inside* a fallback chain, rather than
 being reached only by explicit request, is a separate question. It depends on
 whether its cost and failure modes are bounded. An external tier can safely
-occupy a fallback leg when two things hold. It must be priced honestly, so the
-router's cost-vs-quality tradeoff sees its real price, not zero. And it must
-behave fail-fast: it rejects immediately when unavailable, never retrying or
-backing off in place. A chain built from several such legs, each individually
-rate-capped, degrades gracefully rather than emptying because one provider is
-flaky. The case the old, blanket "always exclude" advice actually guards
-against is the *unbounded* one. A provider with no rate ceiling of its own, or
-one that retries and backs off internally, is dangerous here. It can turn a
-fallback chain into an unbounded wait or an unbounded bill. Keep that kind out
-entirely.
+occupy a fallback leg when its failure behavior and billing exposure are
+bounded. It must fail fast when unavailable, without hidden retries or
+backoff. A provider with no rate ceiling, or one that waits and retries
+internally, can turn a fallback chain into an unbounded wait or bill. Keep
+that kind out of automatic fallback.
 
-### Cost as data, not a hardcoded order
+### Keep route order separate from cost reporting
 
-A hand-ordered fallback chain ("try local, then this provider, then that
-one") freezes today's guess about what's cheap and good into code. It stops
-being true the moment a model's price or quality changes, and nobody notices
-until the ordering is visibly wrong.
-
-The alternative is a router that classifies each request and keeps a running
-quality estimate per model. It weighs that estimate against each model's
-*registered* cost through a single tunable weight. It never consults a fixed
-list. "Prefer local" then isn't a rule anyone wrote; it falls out of local
-tiers carrying an honestly low registered cost. Raise a hosted tier's
-registered price and the router prefers it less, automatically, with no
-reordering. The lesson generalizes past this one router. Whenever "prefer
-cheap/local" is encoded as an explicit if-first-then-else chain, consider an
-alternative. Ask whether it could instead be a cost value the decision reads.
+A per-token rate change does not automatically change which model the router
+tries next. Cost data supports accounting; route selection follows its own
+policy. Check the [router registry](https://github.com/dryvist/ansible-proxmox-ai/tree/main/llm-models.d)
+before assuming a price change reorders a route.
 
 ### The stable-handle pattern, for a tier you don't control
 

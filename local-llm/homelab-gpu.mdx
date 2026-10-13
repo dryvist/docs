@@ -36,14 +36,15 @@ and fan requests out by tier:
   [the stable-handle pattern](/ai-development/model-routing#the-stable-handle-pattern-for-a-tier-you-dont-control).
   It sits behind every local tier in the fallback order: local capacity is
   always tried first.
-- **Paid providers**, reached only by explicit model identifier, never as an
-  implicit fallback. See
-  [Delegation: the cheapest capable tier](/ai-development/model-routing#delegation-the-cheapest-capable-tier).
+- **Paid providers**, reached through the configured fallback policy or by an
+  explicit model identifier. The wildcard passthrough still requires an
+  explicit id. See
+  [delegation across capable tiers](/ai-development/model-routing#delegation-across-capable-tiers).
 
-The router can choose among eligible tiers using a learned quality-vs-cost
-tradeoff rather than a fixed order. See [Cost as data](/ai-development/model-routing#cost-as-data-not-a-hardcoded-order).
-Each tier registers a cost. This role overview does not establish current
-router priority; check live configuration before relying on a preferred tier.
+The router follows configured route order. A per-token rate change does not
+reorder eligible tiers. See [Model routing](/ai-development/model-routing)
+for the policy and LiteLLM price map for rate
+resolution.
 
 In one-user testing, the discrete GPU ran the same 27 B parameter model about
 2.3 times faster than the Mac Studio. The tests used different backends and
@@ -75,7 +76,8 @@ establish a router priority or current live route.
   Pool --> Large
   Pool --> Fast
   Pool -.fallback.-> Free
-  Pool -.explicit only.-> Paid
+  Pool -.configured alias fallback.-> Paid
+  Pool -.explicit id.-> Paid
 
   classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef edge fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
