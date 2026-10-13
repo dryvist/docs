@@ -25,6 +25,7 @@ Claude Code plugin API.
   (Luna on Codex when `codex-quota` allows, otherwise Haiku, both at `xhigh` by default; Sonnet for planning and
   Opus for architecture or security, never Codex; Codex is Luna only, at `high`, `xhigh` or `max`)
   and answers the `bash -c` removal prompt with a judge model; any failure leaves the permission dialog
+- The [`fast-subagent` skill](https://github.com/dryvist/claude-code-plugins/blob/main/ai-delegation/skills/fast-subagent/SKILL.md) documents the local Codex and OpenCode routes
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
 - Houses **hooks** that enforce conventions automatically (style, permissions, no-skip patterns)
 - Composes with [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) for the rules layer
@@ -34,7 +35,7 @@ Claude Code plugin API.
 | Component | Examples |
 | --- | --- |
 | **Commands** | `/ship`, `/finalize-pr`, `/sync-main`, `/retrospecting` |
-| **Skills** | `premium-agent-orchestration`, `delegate-to-ai`, `goal`, `handoff` |
+| **Skills** | `premium-agent-orchestration`, `delegate-to-ai`, `fast-subagent`, `goal`, `handoff` |
 | **Agents** | Explore, Plan, code-reviewer |
 | **Hooks** | Style guards, permission gates |
 
