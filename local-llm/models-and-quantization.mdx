@@ -24,12 +24,14 @@ constraint is memory pressure over time, and the lever is sparsity. The rule is
 that nothing changes on a claimed score, only on a
 [measured](/tools/mlx-benchmarks) one.
 
-## One resident model, many roles
+## One resident model, many local aliases
 
-The workstation keeps a **single** physical model loaded. It exposes that model
-under capability-role aliases: `default`, `coding`, `quickest`, `tool-calling`,
-`large-context`, `most-capable`, `oss`. Today they all resolve to the same
-resident model. The aliases are a stable contract for callers; the resident id
+The workstation keeps a **single** physical model loaded. Its local llama-swap
+service exposes that model under aliases: `default`, `coding`, `quickest`,
+`tool-calling`, `large-context`, `most-capable`, `oss`. Today they all resolve
+to the same resident model. These are local service names. Callers of the shared router use
+the five capabilities on [Model routing](/ai-development/model-routing).
+The aliases are a stable contract for local callers; the resident id
 behind them is a value in the AI-stack registry
 (`~/.config/ai-stack/registry.json`, written by [`nix-ai`](/nix/nix-ai) at
 activation), so changing the model is a one-line registry edit, never a code

@@ -54,21 +54,23 @@ The `git flow` command-line tool is installed and configured globally (nix-manag
 | Branch | Role | Gets changes by |
 | --- | --- | --- |
 | `main` | Production. Protected; no direct pushes. | **Merge commits only**: squash and rebase into `main` are banned, no exceptions. |
-| `develop` | Default integration branch. Protected but direct pushes allowed. | Squash-merged feature PRs (the default); merge commits for back-merges and stacked work. |
+| `develop` | Default integration branch. Protected but direct pushes allowed. | Squash-merged feature PRs (the default); merge commits for stacked work. |
 | `feature/<issue>-<slug>` | One change's work | Branched from fresh `develop`. |
-| `release/<version>` | Optional final stabilization | Branched from `develop`; merge-committed to `main`; back-merged to `develop`. |
-| `hotfix/<slug>` | Urgent production fix | Branched from `main`; PR to `main`, merge commit; back-merged to `develop`. |
+| `release-please--branches--develop` | The release PR | Opened and kept current by release-please against `develop`; auto-merges (squash) once checks pass. |
+| `hotfix/<slug>` | Urgent production fix | Branched from `main`; PR to `main`, merge commit; a second PR from the hotfix branch carries the fix to `develop`. |
 
-Every merge into `main` produces a release: release-please watches `main`, opens the release PR
-against it, and tags on merge. A person merges that release PR; release-please never auto-merges it.
-The release PR merge-commits like any other `main` PR. It is not a squash exception. See [PR conventions](/conventions/pr-conventions) for the full merge-strategy
-breakdown.
+Releases are cut on `develop`, so `main` is never merged back. release-please keeps one release PR
+open against `develop` with the version bump, CHANGELOG and release notes. That PR auto-merges
+(squash) once its checks pass, so the release commit is the last release-related commit on `develop`.
+Commits that land after it ship in the same promotion and take the next version. The tag and GitHub
+Release are created when `main` receives the promotion, never earlier. See [PR conventions](/conventions/pr-conventions)
+for the full merge-strategy breakdown.
 
 ### Promotion is a step you take, not an event that happens
 
 Feature PRs squash into `develop`, then stop there. Nothing on `develop` reaches production until
 someone opens a `develop` → `main` promotion PR and lands it with a **merge commit** (never squash,
-never rebase). Each promotion merge is a release.
+never rebase). Each promotion merge publishes the release already prepared on `develop`.
 
 This is the step that gets skipped. Features pile up on `develop`, and everything looks "done" in the
 PR list. Meanwhile `main`, the branch releases are cut from, quietly falls weeks behind. Treat
@@ -91,15 +93,15 @@ promotion as part of finishing work, not a separate ceremony:
    a closing keyword (`fixes #123`) when the change closes it.
 4. Open the PR against `develop`. Squash-merge ordinary feature PRs. Use a merge commit into
    `develop` only where preserving multiple atomic commits matters: stacked work, coordinated
-   multi-commit changes, and release or hotfix back-merges.
+   multi-commit changes.
 5. `hotfix/*` is the one exception to PR targeting: it branches from `main`, its PR targets `main`
-   directly with a merge commit (never squash), and `main` is immediately back-merged into `develop`
-   afterward.
+   directly with a merge commit (never squash), and a second PR from the hotfix branch (not from
+   `main`) carries the fix into `develop`.
 6. Small direct pushes to `develop` are fine; open a PR for anything reviewable.
 
 ### git-flow-next usage
 
-- `git flow feature start <name>` / `git flow release start <version>` / `git flow hotfix start <name>` create correctly based branches.
+- `git flow feature start <name>` / `git flow hotfix start <name>` create correctly based branches. Releases are not started by hand: release-please opens the release PR on `develop`.
 - `git flow finish` detects the branch type from any topic branch. Prefer finishing through the PR
   flow in the preceding steps; use `finish` directly only where a PR is overkill (for example,
   local-only cleanup) and the branch target allows direct pushes.
