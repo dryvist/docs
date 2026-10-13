@@ -19,16 +19,17 @@ Cribl-side reference, including every Source, every input, anomaly detection rul
 and release notes, read [the repo's
 README](https://github.com/dryvist/cc-edge-the-mac-pack-io#readme).
 
+
 ## Where it runs
 
 The pack targets a **native macOS Cribl Edge install**, managed declaratively by nix-darwin. Three install constraints from this homelab's posture:
 
 - The Edge install must be native to the Mac. Exec inputs in the pack invoke macOS-only binaries (`pmset`, `ioreg`, `powermetrics`) and do not work from a Linux container.
 - The Mac runs Cribl Edge directly, not through OrbStack. The K8s cluster runs unrelated Cribl Edge instances for different workloads, and this pack does not target them.
-- Each Mac's Edge runs **standalone**. No Cribl Leader manages it, and enrolling Macs into a
-  Cloud-managed fleet is **explicitly forbidden** in this posture. Configuration is GitOps: the pack
-  version is pinned in the nix-darwin host config, and updates land by bumping the pin and
-  rebuilding. It is never done by a Leader or Cloud push.
+- Each Mac's Edge runs **standalone**. No Cribl Leader manages it, and enrolling Macs in a
+  hosted-service fleet is **explicitly forbidden**. Configuration uses GitOps. The nix-darwin host
+  config pins the pack version. Updating it means bumping the pin and rebuilding. A Leader or hosted
+  service does not push configuration.
 
 ## What it sends
 
@@ -39,11 +40,10 @@ Data lands in two Splunk indexes:
 | `os` | macOS unified logs (every Apple subsystem) and host-event signals | General OS troubleshooting, security event search |
 | `mac_perf` | Host CPU/memory/disk/network/process metrics and per-process energy | Performance dashboards, capacity planning |
 
-Separately from the pack, the host config adds an `edge_prometheus` source named
-`in_queue_metrics`. It scrapes the local LLM queue front's `/metrics` endpoint
-(queue depth, max queue, and 4xx/5xx counters) from a static loopback target, split
-from the same endpoint definition the queue module uses. The `llm_metrics` pipeline sends the
-events to Stream on the interim event path (`index=llm`). Metric-format
+Separately from the pack, host config adds an `edge_prometheus` source named
+`in_queue_metrics`. It scrapes `/metrics` from the local LLM queue front. The
+static loopback target uses the queue module's endpoint definition. The
+`llm_metrics` pipeline sends events to Stream on the interim event path (`index=llm`). Metric-format
 delivery needs a Stream-side route that is not applied yet. Edge begins
 scraping after the next host rebuild and Edge restart; the exporter itself is
 [described here](/local-llm/nix-serving-stack#the-loopback-queue-front).

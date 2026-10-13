@@ -6,9 +6,8 @@ page_type: "reference"
 {/* projected from the authoring site; do not edit here */}
 > One public catalog owns Dryvist-authored prompt text. Runtime repositories own schedules, credentials, deployment IDs, and app logic.
 
-[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. Its first release is
-[`v0.1.0`](https://github.com/dryvist/ai-llm-prompts/releases/tag/v0.1.0), resolved to commit
-[`0431be6994d51169b9f705ddeba958eb8a4d0fc4`](https://github.com/dryvist/ai-llm-prompts/commit/0431be6994d51169b9f705ddeba958eb8a4d0fc4).
+[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. Its current release is
+[`v1.14.1`](https://github.com/dryvist/ai-llm-prompts/releases/tag/v1.14.1).
 Consumers reference the floating major tag (`?ref=vN`); their flake lock holds the exact revision. Nothing tracks a branch.
 
 ## Catalog layout
@@ -24,6 +23,14 @@ The `auto-ai-agent/claude-code/` subtree holds the Claude Code subagent roster (
 always-loaded `rules/brief-delegates.md` rule. The `nix-ai` flake module delivers both into Claude Code's home directory. Agents name a
 model family alias (`haiku`, `opus`), never a version.
 
+## Autonomous-agent prompt limits
+
+Release `v1.14.1` measures the shared autonomous base at 669 Qwen tokens and
+the Hermes persona at 774. The repository's `.token-limits.yaml` gates both
+files, and CI runs the `token_limits` check ([PR #106](https://github.com/dryvist/ai-llm-prompts/pull/106)).
+OpenRouter budget details live in the `dryvist/openrouter-models` skill.
+
+
 Every prompt uses Open Knowledge Format 0.1 Markdown. YAML frontmatter carries its stable `prompt://dryvist/...` resource ID, rendering policy,
 variables, consumer list, status, and source history. Consumers follow the declared render contract and strip frontmatter when the prompt says
 `frontmatter: strip`.
@@ -37,9 +44,11 @@ takes the floating major tag in its flake input. `vN` below stands for the curre
 inputs.ai-llm-prompts.url = "github:dryvist/ai-llm-prompts?ref=vN";
 ```
 
-The flake lock records the exact release commit. Release tags are immutable. A bot opens one pull request per consumer when a release lands: a patch
-bump auto-merges once the Merge Gate is green, and minor and major bumps wait for a person. AI agents may prepare compatible patch or minor changes,
-but major and breaking releases remain human-only decisions.
+The flake lock records the exact release commit. Release tags are immutable.
+A bot opens one pull request per consumer when a release lands. Patch bumps
+auto-merge after the Merge Gate passes. Minor and major bumps wait for a person.
+AI agents may prepare compatible patch or minor changes. Major and breaking
+releases remain human-only decisions.
 
 ## GitHub Agentic Workflows status
 
@@ -54,8 +63,8 @@ outside `.github/workflows` to document the historical format. It is not a produ
 <Card
   title="Browse the catalog"
   icon="book"
-  href="https://github.com/dryvist/ai-llm-prompts/blob/v0.1.0/index.md">
-  Directory indexes for all prompt assets in `v0.1.0`.
+  href="https://github.com/dryvist/ai-llm-prompts/blob/v1.14.1/index.md">
+  Directory indexes for all prompt assets in `v1.14.1`.
 </Card>
 <Card
   title="AI workflows"

@@ -109,6 +109,13 @@ was renamed from `cc-edge-macos-system`. It targets the **native macOS** Cribl E
 OrbStack-deployed one. Its exec inputs call macOS-only binaries that need host access, not a Linux
 container.
 
+## Configuration ownership
+
+Reusable content follows the [observability ownership rule](/observability/overview#reusable-observability-content).
+Ansible repositories carry environment wiring for the collectors and services
+on this map.
+
+
 ## REST collectors
 
 | Pack | Polls | Hosted on |
@@ -145,6 +152,7 @@ Heartbeats prove the pipeline is up; **per-index silence detectors** prove the d
 Every Splunk index carries an alert that fires when the index receives no events within its expected
 cadence. A dead sender, port, or token then surfaces as "index went quiet" rather than a gap
 discovered at search time.
+
 
 ## Forwarding to AWS DR
 

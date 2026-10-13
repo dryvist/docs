@@ -55,10 +55,10 @@ The table follows the order of GitHub's "Create GitHub App" form.
 | Permissions | None by default. Each App sets its own least-privilege list. |
 | Subscribe to events | None |
 | Where can this GitHub App be installed | Only on this account, meaning the organizations of the Enterprise |
-| Installation | Every organization that holds a repository the App serves; selected repositories, managed by [JacobPEvans-claude-admin](/github/apps/jacobpevans-claude-admin), which is itself installed on every organization |
+| Installation | Every organization that holds a repository the App serves; selected repositories, managed by the [Enterprise installation manager](/github/apps/jacobpevans-claude-admin), which is itself installed on every organization |
 | Private key | One active key. To rotate, add the new key, switch consumers, then delete the old one. |
 
-Each installation lists its repositories explicitly. The Enterprise API lets claude-admin add a new repository, so
+Each installation lists its repositories explicitly. The Enterprise API lets the installation manager add a repository, so
 nobody toggles access in the UI. Minted tokens stay short-lived and scoped to one repository.
 
 ## Installing in each organization
@@ -70,17 +70,16 @@ Each organization still needs its own installation.
   cannot install on a personal account.
 - Only an App installed on the Enterprise itself can edit an installation's repositories, through the
   [Enterprise organization-installations API](https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/organization-installations).
-  That is why claude-admin is installed there.
+  That is why the Enterprise installation manager is installed there.
 - A permission change made by an Enterprise owner is accepted automatically in every
   organization. A change made by an App manager waits for an organization owner.
 - The App's installation on the Enterprise itself still waits for an owner to accept a new
   Enterprise permission. Until then, its tokens keep the old permission.
-- claude-admin installs an App on a new organization through the same API. GitHub refuses an
+- The installation manager installs an App on a new organization through the same API. GitHub refuses an
   installation with no repositories, so an empty organization starts with all repositories.
 - An App manager can edit settings and keys but cannot install the App.
 
-GitHub documents the rules in
-[Creating GitHub Apps for your enterprise](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-github-apps-for-your-enterprise/creating-github-apps-for-your-enterprise).
+GitHub documents these enterprise installation rules.
 
 ## Apps
 

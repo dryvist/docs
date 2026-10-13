@@ -1,6 +1,6 @@
 ---
 title: "Data pipelines"
-description: "Cribl is the ingest hub for every signal; the fan-out default sends each format to every destination it fits, and consumers read their entity set from config, never from what happened to arrive."
+description: "Cribl sends each signal to every compatible destination; consumers read their entity sets from config."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -8,59 +8,54 @@ Two pipelines move data from the homelab edge to Splunk. The architecture is int
 load-balances toward Cribl Edge, which routes, transforms, and reduces volume before forwarding to
 Splunk over HEC.
 
-The goal: 30–50% ingest reduction without losing security signal.
+The goal is a 30–50% volume reduction without losing security signal.
 
 ## Cribl is the hub, native first
 
-Every new data need is met from what already flows into Cribl Stream or Edge first: a native
-transform (Aggregations, Publish Metrics, Lookup, Eval), then a route. A data need never gets its
-own exporter, poller, proxy, or credential; a native flag on an agent that already runs is the
-preferred fix (for example a `node_exporter` collector flag, or loading a kernel module).
+Meet each new data need from signals already flowing into Cribl Stream or Edge.
+Start with a native transform (Aggregations, Publish Metrics, Lookup, or Eval), then add a route.
+Do not add an exporter, poller, proxy, or credential for data that already flows there.
+Prefer a native flag on an existing agent, such as a `node_exporter` collector flag, or load a kernel module.
 
-When the data genuinely is not in Cribl yet, it's added by the path with the least new software, in
-order:
+When Cribl does not have the data, add it with the least new software:
 
-1. A native Cribl source — REST Collector (e.g. Redfish), SNMP, NetFlow/IPFIX, or a Prometheus scrape.
+1. A native Cribl source, such as a Redfish REST Collector, SNMP, NetFlow/IPFIX, or a Prometheus scrape.
 2. Cribl Edge system metrics.
-3. A single tool Cribl scrapes, only when the vendor offers no stream of its own. [unpoller](/observability/monitoring-agents)
-   is the approved case, because UniFi controller stats are API-only.
+3. A single tool Cribl scrapes, only when the vendor offers no stream. [unpoller](/observability/monitoring-agents)
+   is the approved case because UniFi controller stats are API-only.
 
-Producers emit once, to Cribl. A producer wired straight to a single sink is the pattern this
-architecture exists to replace.
+Producers emit once to Cribl. A producer wired straight to one sink is the pattern this architecture replaces.
 
 ## Fan-out: every source to every destination
 
-The default is that every source goes to every destination whose format fits, especially for
-low-volume data — a source never gets its own one-off destination:
+By default, each source goes to every compatible destination. This rule matters most for low-volume data.
+No source gets its own one-off destination:
 
 | Signal | Destinations |
 | --- | --- |
 | Metrics | the metrics store **and** the Splunk metrics index |
 | Events / logs | Splunk, plus any other event store that applies |
-| Traces | Langfuse and [Phoenix](/observability/phoenix) (merged, not yet deployed) — Cribl excludes traces from its Splunk route |
+| Traces | Langfuse and [Phoenix](/observability/phoenix) (merged, not yet deployed); Cribl excludes traces from its Splunk route |
 
-A route to a single destination needs a stated reason in its pull request. Data is duplicated
-across these systems on purpose, so the same signal can be compared between them. A feed is never
-removed because another sink already carries the same data — a failing feed gets fixed, not
-dropped. See [LLM observability](/observability/llm-observability) and
+Each single-destination route needs a reason in its pull request. Data duplication lets teams compare
+the same signal across systems. Do not remove a feed because another sink carries the same data.
+Fix a failing feed instead. See [LLM observability](/observability/llm-observability) and
 [Pipeline flows](/observability/pipeline-flows) for the live OTLP fan-out and its current
 Langfuse/Phoenix legs.
 
 ## Consumers read their entity set from config
 
-A dashboard or other consumer draws its entity set (nodes, VLANs, apps) from configuration, never
+A dashboard or other consumer draws its entity set (nodes, VLANs, apps) from configuration, not
 from whichever series happen to come back from a query. A missing series shows as stale data with
-its age, then "no data since …" — it never silently disappears from the view. An entity is removed
-from a dashboard only by removing it from config, never by a query that stops returning it.
+its age, then as `no data since …`. It never silently disappears from the view. Remove an entity
+from a dashboard by removing it from config, not by relying on a query that stops returning it.
 
 ## Versions: bot pull requests only
 
-Every dependency and pipeline-component version bump comes from a bot pull request: Renovate, or the
-relock workflow for `flake.lock` inputs. See
-Dependency automation coverage for the manager-by-pin-shape
-table, the annotation contract, and the gate a version needs when a hash rides beside it. No
-hand-written bump, no hand-pinned hash, and no hand `nix flake update` of a bot-managed input in
-this pipeline's repos.
+Renovate or the `flake.lock` relock workflow supplies every dependency and pipeline-component version
+bump. See Dependency automation coverage for the
+manager-by-pin-shape table, annotation contract, and hash gates. Do not hand-write bumps, pin hashes,
+or run `nix flake update` on bot-managed inputs in these repositories.
 
 ## Log pipeline
 
@@ -141,13 +136,13 @@ Cribl pipelines de-duplicate, parse flow records, and aggregate by tuple before 
 | HAProxy | (Ansible role) | [ansible-proxmox-apps](https://github.com/dryvist/ansible-proxmox-apps) | apps repo |
 | Cribl Edge | (Ansible role) | [ansible-proxmox-apps](https://github.com/dryvist/ansible-proxmox-apps) | apps repo |
 | Splunk Enterprise | (manual / Ansible) | [ansible-splunk](https://github.com/dryvist/ansible-splunk) | splunk repo |
-| Cribl pipelines | (manual / Cribl pack) | [cc-edge-* packs](https://github.com/JacobPEvans?tab=repositories&q=cc-edge) | pack repos |
-| Splunk knowledge objects | n/a | Splunk TA (AI observability) | TA repo |
+| Cribl pipelines and routes | Cribl packs | Function-specific pack repos | [Observability overview](/observability/overview#reusable-observability-content) |
+| Splunk apps and knowledge objects | Splunk app packages | Function-specific app repos | [Observability overview](/observability/overview#reusable-observability-content) |
 
 ## DR posture
 
-`tf-splunk-aws` provisions an on-demand Splunk and/or Cribl environment on AWS with plain OpenTofu,
-started or stopped on demand, that accepts the same HEC traffic if the home cluster is offline.
+`tf-splunk-aws` provisions an on-demand Splunk or Cribl environment on AWS with plain OpenTofu.
+Start or stop it as needed. It accepts the same HEC traffic if the home cluster is offline.
 Cribl Stream's output can be flipped from the homelab HEC to the AWS HEC by a routing-rule change.
 See Observability stack for the
 current toggle and schedule.

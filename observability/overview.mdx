@@ -29,9 +29,9 @@ Purpose-built Splunk apps make it readable.
   CAG([cc-edge-gemini-antigravity-io])
   CCV([cc-edge-vscode-io])
 
-  Stream([Cribl Stream])
-  SP[(Splunk indexer)]
-  App([Splunk apps])
+  Stream([Stream])
+  SP[(Splunk)]
+  App([Apps])
 
   Claude --> CCO --> Stream
   Copilot --> CCP --> Stream
@@ -48,12 +48,8 @@ Purpose-built Splunk apps make it readable.
   class Stream,SP,App route
 
   click SP "/observability/repos/ansible-splunk" "Splunk install + indexes"
-  %% Cribl Edge pack repos (CCO/CCP/CAG/CCV) intentionally NOT clickable —
-  %% Mermaid drops the _blank target attribute on flowchart clicks
-  %% ([https://github.com/mermaid-js/mermaid/issues/3077](https://github.com/mermaid-js/mermaid/issues/3077),
-  %% [https://github.com/mermaid-js/mermaid/issues/5550](https://github.com/mermaid-js/mermaid/issues/5550)). The pack repo links
-  %% are listed in the table below this diagram, where Mintlify
-  %% auto-applies target="_blank" to external markdown links.
+  %% Pack nodes stay unlinked because Mermaid omits target=_blank on flowchart clicks.
+  %% The table below links each pack repo. See Mermaid issues #3077 and #5550.
 
   linkStyle 0,1,2,3,4,5,6,7 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
   linkStyle 8,9 stroke:#4FB3A9,stroke-width:2px;
@@ -127,8 +123,8 @@ Edge-to-Stream relay traffic itself rides Cribl S2S tcpjson on the dedicated `cr
 
 ## Per-index HEC outputs
 
-Cribl Stream is the only component that talks to Splunk, and it does so through **one HEC output per
-index**, each with its own token scoped to a single index.
+Only Cribl Stream talks to Splunk. It uses **one HEC output per index**. Each
+output has a token scoped to one index.
 
 Each index also has a **silence detector**, a per-index alert that fires when the index stops
 receiving events within its expected cadence. A broken port, token, or sender surfaces as "index
@@ -154,7 +150,13 @@ repositories. Two pieces matter on this site:
 - **Owner doc**: [ansible-splunk](/observability/repos/ansible-splunk) for
   the indexes and HEC tokens these dashboards read.
 
-## Cribl Edge packs (collectors)
+## Reusable observability content
+
+Cribl pipeline and route logic lives in function-specific Cribl packs. Splunk
+apps and knowledge objects live in function-specific app repositories.
+Ansible carries environment wiring such as outputs, hosts, ports, and
+credential references, plus pack or app pins. Each Cribl pack lives in one
+function-specific repository.
 
 | Repo | Collects from |
 | --- | --- |

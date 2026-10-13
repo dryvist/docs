@@ -39,7 +39,12 @@ repo so Claude Code, the Antigravity (`agy`) command-line tool, GitHub Copilot, 
   (ground truth before claims, verify before done, reversibility gates autonomy). Its
   copy-paste rendering for non-Claude agents lives in `ai-llm-prompts`:
   [`auto-ai-agent/autonomous-base.md`](https://github.com/dryvist/ai-llm-prompts/blob/main/auto-ai-agent/autonomous-base.md)
+- Defines autonomous-agent context budgets in
+  [`cost-aware-authoring.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/cost-aware-authoring.md):
+  use the serving tokenizer, consider every context lever, and never raise a
+  budget to fit the prompt
 - Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
+
 
 Cross-repo writing standards that humans also need to read live on this docs site. They
 cover commit conventions, no-scripts, diagramming, CI/CD policy, OpenTofu check placement,

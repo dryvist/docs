@@ -43,7 +43,7 @@ flowchart LR
 - Deploys **HAProxy** as the front door for syslog and NetFlow traffic
 - Deploys **Cribl Edge** for collection and edge-side reshaping
 - Deploys **Cribl Stream** for routing, transformation, and volume reduction at intake
-- Pulls Cribl pack configuration from the [`cc-edge-*`](https://github.com/JacobPEvans?tab=repositories&q=cc-edge) repos at deploy time
+- Applies pinned Cribl packs to the environment; see [observability content ownership](/observability/overview#reusable-observability-content)
 - Wires every service so traffic flows from gear → HAProxy → Cribl Edge → Cribl Stream → Splunk
 
 ## How it fits
