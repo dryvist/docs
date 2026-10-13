@@ -30,8 +30,9 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 - **Containment:** the LXC is the blast-radius boundary, with deliberately narrow
   egress. Within one agent, named *profiles* scope which tools and credentials a
   job gets. It is a tool/credential boundary, not an OS sandbox: every profile runs as
-  the same user in the same container, and all profiles of one agent share the
-  same memory. See [Operating profiles](/autonomous-agents/hermes-operating-profiles).
+  the same user in the same container, and the profiles of one agent share the
+  same memory, except a profile that names its own bank (the Splunk profile
+  does). See [Operating profiles](/autonomous-agents/hermes-operating-profiles).
 
 ## More than one agent
 

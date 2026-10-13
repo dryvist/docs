@@ -1,6 +1,6 @@
 ---
 title: "Hermes operating profiles"
-description: "How a Hermes agent scopes tools and credentials per job with named profiles, the current roster, and when to use each one."
+description: "How a Hermes agent scopes tools and credentials per job with worker profiles and a card-filing orchestrator."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -22,16 +22,19 @@ A named profile that omits something the default profile has simply does not
 get it. There is no fallback to the shared value. A job needing a tool must
 have that tool named on its assignee's profile, or the worker runs without it.
 
-**The isolation boundary is tools and credentials, not memory.** Every
-profile of one agent reads and writes the same memory bank. This is
-deliberate: it is what lets a `default`-profile job recall a card's findings
-after its assignee moves. But it also means a narrowly scoped profile can
-still recall anything any other profile of that agent ever wrote. Profile
-scoping is not a data boundary.
+**The isolation boundary is tools and credentials, not memory.** Profiles of
+one agent read and write the same memory bank. This is deliberate: it is what
+lets a `default`-profile job recall a card's findings after its assignee
+moves. But it also means a narrowly scoped profile can still recall anything
+any other profile of that bank ever wrote. Profile scoping is not a data
+boundary.
 
 The shared bank is the agent's bank in the network memory provider, not the
 per-directory files. It is keyed by the agent's id, not sub-keyed by profile.
-So every profile of one agent resolves to the same bank.
+So a profile resolves to its agent's bank unless its entry sets
+`memory_bank_id`. The `splunk-admin` profile sets it, so every Splunk job
+shares one Splunk bank. On the agent that owns the Splunk system, that bank is
+the agent's own bank.
 The built-in `MEMORY.md` / `USER.md` files described in
 [Self-hosted AI agent](/autonomous-agents/hermes-agent) live in each profile's
 own `HERMES_HOME` and are not the shared surface. Separate agents derive
@@ -44,8 +47,8 @@ Every Kanban worker run ends with exactly one terminal call: use
 continue. If required access is missing or denied, block with
 `kind=needs_input` and request that prerequisite. Keep the assigned profile and
 identity; do not switch credentials. `[SILENT]` applies to cron delivery and
-never replaces the terminal call. The role composes this rule into each profile
-from [`soul-kanban-lifecycle.md.j2`](https://github.com/dryvist/ansible-proxmox-ai/blob/main/roles/hermes_agent/templates/soul-kanban-lifecycle.md.j2).
+never replaces the terminal call. The `kanban-lifecycle` addendum ships under
+`soul/profiles/` in the [`nix-hermes` bundle](https://github.com/dryvist/nix-hermes/pull/195).
 
 ## Current roster
 
@@ -55,10 +58,11 @@ write-bearing GitHub work.
 
 | Profile | Mission | Has | Must not have |
 | --- | --- | --- | --- |
-| `default` | Cross-domain, board-meta, write-bearing GitHub | Everything | — |
+| `default` | Cross-domain, board-meta, write-bearing GitHub | Configured default tools | — |
 | `splunk-admin` | Read-only SIEM: search, alert, report | Splunk + docs MCP, a Splunk-monitoring skill | GitHub, incident-ticketing, other tools |
 | `homelab-admin` | Incidents + fabric health | Docs MCP, an incident-ticketing skill | Splunk, GitHub, other tools |
 | `github-maint` | Read-only repo review + proposals | Docs MCP, a GitHub-issues skill, a **read-only** token | GitHub writes: no issues opened, no PRs filed, no comments posted |
+
 
 `github-maint` is the one profile whose headline constraint is enforced by a
 credential rather than by tool availability. Every write call fails at the API. Its output leaves through Slack and a
