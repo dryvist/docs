@@ -52,13 +52,13 @@ Lead with the *why*. The diff already shows the *what*. PR descriptions that jus
 
 ### git-flow repos (has `develop`)
 
-- **PRs target `develop` by default.** Squash-merge is the default there too: one PR, one commit on `develop`. Use a merge commit into `develop` only for stacked work or a release/hotfix back-merge.
+- **PRs target `develop` by default.** Squash-merge is the default there too: one PR, one commit on `develop`. Use a merge commit into `develop` only for stacked work.
 - **`develop` → `main` promotion is merge-commit only.** Squash and rebase into `main` are banned,
-  no exceptions. That includes the `release-please` release PR, which merge-commits like every
-  other `main` PR.
+  no exceptions. The `release-please` release PR is not a `main` PR: it targets `develop`, squash-merges there,
+  and the promotion carries it to `main`.
 - **`hotfix/*` is the one exception to PR targeting.** It branches from `main`, its PR targets
-  `main` directly with a merge commit (never squash), and `main` is immediately back-merged into
-  `develop` afterward.
+  `main` directly with a merge commit (never squash), and a second PR from the hotfix branch (not from
+  `main`) carries the fix into `develop`.
 - **No force-push to `main` or `develop`.** Force-push to your own feature branch is fine while the PR is open.
 
 ## Review

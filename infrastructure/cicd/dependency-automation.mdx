@@ -90,9 +90,9 @@ CVE is more dangerous than an unvetted release.
 
 ## First-party changes arrive by pull request
 
-Inside the org, release-please opens a release pull request in the *source* repo. A person merges
-it, and release-please never auto-merges a release. On git-flow repos, whose default branch is
-`develop`, a release happens only when `develop` is promoted to `main`. After a release is published,
+Inside the org, release-please opens a release pull request in the *source* repo and enables auto-merge
+on it. On git-flow repos, whose default branch is `develop`, the release PR targets `develop` and the
+release is tagged only when `develop` is promoted to `main`. After a release is published,
 the reusable `promote-major-tag` workflow moves the floating `vN` tag. The tag may carry SemVer build
 metadata (`vX.Y.Z+rev.1`); the workflow moves the floating tag for it too. Consumers pick up a change
 only through a pull request that changes their ref or lock. A releasing repo may send a
@@ -187,9 +187,10 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
    auto-merge. Nothing tracks `main`, `develop`, or "latest" of a dryvist repo. First-party digest and pin
    PRs carry no human-gate label: Renovate leaves them to the bot-PR auto-merge sweep, which merges each
    once its head commit has soaked and checks are green. `needs-human` is not a label in the organization.
-4. **Release PRs (release-please) are never auto-merged.** A person merges the release PR when the batch
-   of changes is ready. git-flow repos (default branch `develop`) release only when `develop` is promoted
-   to `main`.
+4. **Release PRs (release-please) auto-merge** once their checks pass, in every repo the organization
+   releases. git-flow repos (default branch `develop`) cut the release PR against `develop` and tag only when
+   `develop` is promoted to `main`; nothing is merged back into `develop`. A repo behind the manual-review
+   ruleset keeps the release PR open until the release App is a bypass actor on that ruleset.
 5. **Floating major tags.** Every dryvist repo that other repos consume publishes a floating `vN` tag at
    its current major. The reusable `promote-major-tag` workflow moves it after a release is published. A
    major version bump (`feat!` or `BREAKING CHANGE`) needs explicit human intent. A repo whose releases

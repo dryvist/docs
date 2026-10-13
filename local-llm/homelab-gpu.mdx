@@ -20,14 +20,8 @@ and fan requests out by tier:
   for the dated roster; this docs pass did not verify live weights. Its role is
   memory capacity for serial service of models that only fit in 128 GB, not a
   claim that it is the fastest backend.
-- **Fast tier**: small, quick models (`qwen3-4b` and the
-  `embeddings` model) on a Radeon RX 6800 in a privileged LXC, served by
-  [llama-swap](https://github.com/mostlygeek/llama-swap) fronting llama.cpp's
-  `llama-server` (ROCm build, models co-resident). It now also backs up the
-  large tier as a fallback leg. It's **fail-fast, not retrying**: it accepts a
-  request immediately if it has capacity or rejects immediately if it
-  doesn't, so a busy fast tier can never stall a caller waiting on a retry or
-  backoff.
+- **Fast tier**: `llm-fast` remains the public router alias for GPU serving.
+  The private guest identities and roles appear below.
 - **CPU standby**: the same llama.cpp lineup, CPU-only, on a node that sleeps
   most of the day; cold capacity if both GPU tiers are out.
 - **A free hosted tier**, reached through a stable handle whose underlying
@@ -66,7 +60,7 @@ establish a router priority or current live route.
   Edge([Technitium DNS<br/>Traefik · wildcard TLS])
   Pool([LiteLLM router pool<br/>llm.· /v1])
   Large([Large-memory capacity<br/>Apple Silicon · TLS gate])
-  Fast([Local GPU fallback<br/>RX 6800 · fail-fast])
+  Fast(["GPU serving alias<br/>llm-fast"])
   Free([Free hosted tier<br/>stable handle])
   Paid([Paid providers<br/>explicit id only])
 
@@ -105,7 +99,7 @@ Technitium and carries the wildcard certificate, so it is HTTPS end to end.
 | Piece | Does | Reached at |
 | --- | --- | --- |
 | LiteLLM router pool | Stateless proxies hold the model table, tier fallbacks, and the heavy-backend bearer | `https://llm.<domain>/v1` (pooled) |
-| `llm-fast` | llama-swap + llama.cpp (ROCm) on the **RX 6800**; fast tier + `embeddings`, and a fail-fast fallback leg for the large tier | via the router |
+| `llm-fast` | Public router alias for GPU serving | via the router |
 | `llm-light` | Same lineup, CPU-only, on the sleeps-by-default node | via the router (fallback) |
 | free hosted tier | Reached through a stable handle; the model behind it lives in the provider's own configuration, not here | via the router (fallback, behind both local tiers) |
 | paid providers | Reached only by explicit model identifier; never an implicit fallback | via the router (opt-in) |
@@ -113,13 +107,6 @@ Technitium and carries the wildcard certificate, so it is HTTPS end to end.
 | `qdrant` | Vector store for retrieval | `https://qdrant.<domain>` |
 | `llamaindex` | RAG engine; takes `embeddings` **from the router**, stores in Qdrant | internal (RAG) |
 
-All guests are DHCP-first LXCs on the `ai` VLAN with deterministic MAC
-reservations, so every address is a DNS name. `llm-fast` is a privileged LXC
-with the GPU passed through (`/dev/kfd` + `/dev/dri`); models live on a 120 GB
-fast-pool volume. The LXCs, firewall groups, and the Traefik pool entries are
-provisioned by [tofu-proxmox](/infrastructure/repos/tofu-proxmox).
-[ansible-proxmox-ai](/infrastructure/repos/ansible-proxmox-ai) configures
-llama.cpp, llama-swap, the routers, and Open WebUI.
 
 <Note>
   **This is not the same "local AI" as the

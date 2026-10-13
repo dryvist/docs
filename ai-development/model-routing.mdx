@@ -15,8 +15,8 @@ page_type: "explanation"
   A1([Agent A]) --> EP([Shared endpoint<br/>stateless · config-as-code])
   A2([Agent B]) --> EP
   A3([Agent C]) --> EP
-  EP --> L([Local tier<br/>default: no cost, no data leaves])
-  EP -.explicit only.-> X([External provider<br/>opt-in by model id])
+  EP --> L([Homelab capability<br/>registry order])
+  EP -.key grant.-> X([Cloud group<br/>explicit key grant])
   EP -.fallback.-> S([Agent's own model<br/>last resort])
 ```
 
@@ -53,11 +53,13 @@ revocable per-consumer keys, need somewhere to store that state. Statelessness
 and per-caller accounting pull in opposite directions, and that trade should be
 made deliberately rather than discovered later.
 
-## Ask for a role, not a model
+## Ask for a capability, not a model
 
-Consumers should request a **stable alias** that names a job: the default
-reasoning model, the judge, the tool-calling tier. That beats requesting a
-specific model identifier.
+Consumers request one of five capabilities: `small`, `medium`, `large`, `embed`,
+or `ocr`. `medium` is the default. The router selects an eligible serving
+deployment in registry order. Callers do not name a host, rung, or backend model.
+The [model registry](https://github.com/dryvist/ansible-proxmox-ai/tree/main/llm-models.d)
+owns deployment membership and order.
 
 The reason is drift. Model identifiers change constantly: a new quantization, a
 better checkpoint, a swap for something cheaper. Every place that hardcoded the
@@ -83,8 +85,11 @@ tier that has the needed capability and fits the task's data boundary:
 3. **The agent's own model.** The fallback, not the default. An agent that
    delegates and ends up here has saved nothing.
 
-External access needs a clear routing policy. A caller can name a provider
-model directly, or an approved fallback chain can include external tiers.
+External access needs a clear routing policy. A caller requests the applicable
+capability, and an approved fallback chain can include external tiers. Any
+path to a cloud model requires an explicit grant on the consumer key. A
+capability name does not grant cloud access. Without that grant, `medium` stays
+on homelab deployments and returns an error if none serves.
 
 Whether an external tier may also sit *inside* a fallback chain, rather than
 being reached only by explicit request, is a separate question. It depends on
@@ -93,21 +98,32 @@ occupy a fallback leg when its failure behavior and billing exposure are
 bounded. It must fail fast when unavailable, without hidden retries or
 backoff. A provider with no rate ceiling, or one that waits and retries
 internally, can turn a fallback chain into an unbounded wait or bill. Keep
-that kind out of automatic fallback.
+that kind out of automatic fallback. An explicitly granted key can carry a
+cloud fallback tail as part of its policy; callers still request the same
+capability. Capability members follow registry order, and a key without a cloud
+grant cannot reach a cloud deployment.
 
 ### Keep route order separate from cost reporting
 
-A per-token rate change does not automatically change which model the router
-tries next. Cost data supports accounting; route selection follows its own
-policy. Check the [router registry](https://github.com/dryvist/ansible-proxmox-ai/tree/main/llm-models.d)
+A per-token rate change does not automatically change which deployment the
+router tries next. Cost data supports accounting; route selection follows its
+own policy. The homelab router uses registry order to select deployments
+within a capability; see the capability routing decision.
+Check the [router registry](https://github.com/dryvist/ansible-proxmox-ai/tree/main/llm-models.d)
 before assuming a price change reorders a route.
+
+Some routers use cost as data instead of a fixed fallback order. In a cost-
+based design, the router can classify each request and keep a running quality
+estimate per model. It weighs that estimate against each model's registered
+cost through a tunable weight. This is an alternative pattern, not the homelab
+router's deployment-selection rule.
 
 ### The stable-handle pattern, for a tier you don't control
 
 A hosted free tier is often a moving target. The provider lets you point a name
 at whichever underlying model you want, and changes it on their side without
 warning. Model routing already has the answer for that, from
-[Ask for a role, not a model](#ask-for-a-role-not-a-model). Give it a **stable
+[Ask for a capability, not a model](#ask-for-a-capability-not-a-model). Give it a **stable
 handle** and never route on the identifier behind it. Here the indirection is
 provider-side rather than in your own registry. You edit the provider's
 dashboard, not your config. But the property that matters is identical. The
