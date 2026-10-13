@@ -11,7 +11,7 @@ page_type: "overview"
 "Local LLM" here means two distinct stacks that answer to the same OpenAI-shaped
 API, plus the strategy that decides which one runs what. Neither is an agent.
 Both are *just the model plus a serving stack*. The agent layer (Claude Code,
-Antigravity, the routines) lives above them and calls in over HTTP.
+Antigravity, the routines) runs outside them and calls in over HTTP.
 
 - **The client laptops**: `mlx-lm` workers behind `llama-swap` on a
   laptop-class M4 Max, one resident model, tuned to coexist with a working
@@ -42,7 +42,7 @@ that same endpoint as their model backend.
 
 A free hosted tier sits behind both local tiers in the fallback order. It is
 reached only when local capacity is unavailable, never in front of it. See
-[Model routing](/ai-development/model-routing#delegation-the-cheapest-capable-tier)
+[Model routing](/ai-development/model-routing#delegation-across-capable-tiers)
 for the general policy this follows.
 
 ## Current shape, and what's still gated
@@ -83,23 +83,20 @@ The historical tuning report is in `nix-darwin`
 [MACOS-LLM-PERFORMANCE-TUNING-REPORT.md](https://github.com/dryvist/nix-darwin/blob/main/docs/MACOS-LLM-PERFORMANCE-TUNING-REPORT.md).
 
 <Warning>
-  **Why those figures were pulled, and why you should distrust any number that
-  lacks its provenance**. The swapping proxy once served the resident model's
-  weights under every other model's label. Single-model collapse grafted each
-  inactive model's *physical identifier* onto the surviving entry as an alias,
-  which inflated one measurement by 7x. That defect is fixed: an inactive
-  model's physical id no longer gets aliased, and now returns HTTP 404. But
-  figures measured while it was live remain provisional regardless. The
-  concurrency aggregate is not a general
-  result either. On a large MoE model, four streams measured *worse* than one
-  (verified 2026-07-26/27). Read
-  [Verifying the instrument](/local-llm/verifying-the-instrument) before citing
-  any number on this site.
+  **Use figures only when they include their source and test conditions.** The
+  swapping proxy once served resident weights under inactive model IDs. It
+  mapped each inactive ID to the active entry. That error inflated one
+  measurement by 7×. The proxy no longer aliases inactive IDs; they return HTTP
+  404. Treat earlier measurements as provisional.
 
-  They were also quoted on the wrong metric, and without a regime. The headline
-  figure is **cumulative** tokens/second: prompt plus completion over total
-  wall-clock, because decode-only rates hide real prefill gains. But cumulative
-  is meaningless without its prompt size, so both must be published together.
+  The concurrency aggregate also does not generalize. Four streams ran slower
+  than one on a large MoE model. Testing in July 2026 confirmed this result. Read
+  [Verifying the instrument](/local-llm/verifying-the-instrument) before you
+  cite a number.
+
+  Earlier reports used the wrong metric and omitted test conditions. Report
+  **cumulative** tokens per second: prompt plus completion over total wall-clock
+  time. Always include the prompt size.
   See [the metric definition](/tools/mlx-benchmarks#the-headline-metric-is-cumulative-not-decode-only),
   [why the regime matters](/tools/mlx-benchmarks#cumulative-is-meaningless-without-its-regime),
   and the [re-measured figures](/local-llm/mac-studio#re-measured-in-isolation).
