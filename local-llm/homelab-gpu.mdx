@@ -5,8 +5,8 @@ page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 The homelab runs its own ChatGPT, and every other model size below it, behind
-**one endpoint**: `https://llm.<domain>/v1`. No tokens are metered by a vendor
-and no prompt ever leaves the network. No consumer ever needs to know which
+**one endpoint**: `https://llm.<domain>/v1`. Cloud providers are reachable only
+through keys that explicitly grant access. No consumer needs to know which
 machine actually served the request.
 
 The name resolves to a load-balanced pool of stateless
@@ -20,19 +20,19 @@ and fan requests out by tier:
   for the dated roster; this docs pass did not verify live weights. Its role is
   memory capacity for serial service of models that only fit in 128 GB, not a
   claim that it is the fastest backend.
-- **Fast tier**: `llm-fast` remains the public router alias for GPU serving.
-  The private guest identities and roles appear below.
-- **CPU standby**: the same llama.cpp lineup, CPU-only, on a node that sleeps
-  most of the day; cold capacity if both GPU tiers are out.
-- **A free hosted tier**, reached through a stable handle whose underlying
-  model lives in the provider's own configuration rather than in anything
-  committed here. See
+- **Router capabilities**: `small`, `medium`, `large`, `embed`, and `ocr`.
+  Within each capability, the router selects eligible deployments in registry
+  order.
+- **CPU candidate**: `qwen3.5-9b` belongs to `small` at order 3. The router
+  omits it while its CPU backend group is absent.
+- **A free hosted tier**, reachable through a stable handle only for keys with
+  an explicit cloud grant. The underlying model lives in provider configuration
+  rather than in anything committed here. See
   [the stable-handle pattern](/ai-development/model-routing#the-stable-handle-pattern-for-a-tier-you-dont-control).
-  It sits behind every local tier in the fallback order: local capacity is
-  always tried first.
+  It is not an automatic fallback.
 - **Paid providers**, reached through the configured fallback policy or by an
-  explicit model identifier. The wildcard passthrough still requires an
-  explicit id. See
+  explicit model identifier, only for keys with an explicit cloud grant. The
+  wildcard passthrough still requires an explicit id. See
   [delegation across capable tiers](/ai-development/model-routing#delegation-across-capable-tiers).
 
 The router follows configured route order. A per-token rate change does not
@@ -59,8 +59,8 @@ establish a router priority or current live route.
   Chat([Open WebUI<br/>chat.·])
   Edge([Technitium DNS<br/>Traefik · wildcard TLS])
   Pool([LiteLLM router pool<br/>llm.· /v1])
-  Large([Large-memory capacity<br/>Apple Silicon · TLS gate])
-  Fast(["GPU serving alias<br/>llm-fast"])
+  Large([Mac MLX deployments<br/>medium · large · ocr])
+  GPU([GPU deployments<br/>eligible by registry order])
   Free([Free hosted tier<br/>stable handle])
   Paid([Paid providers<br/>explicit id only])
 
@@ -68,9 +68,9 @@ establish a router priority or current live route.
   Chat --> Edge
   Edge --> Pool
   Pool --> Large
-  Pool --> Fast
-  Pool -.fallback.-> Free
-  Pool -.configured alias fallback.-> Paid
+  Pool --> GPU
+  Pool -.explicit key grant.-> Free
+  Pool -.key-granted fallback.-> Paid
   Pool -.explicit id.-> Paid
 
   classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
@@ -80,15 +80,15 @@ establish a router priority or current live route.
 
   class Mac,Chat host
   class Edge edge
-  class Pool,Large,Fast ai
+  class Pool,Large,GPU ai
   class Free,Paid cloud
 
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
 Teal is a client, ink is the DNS and reverse-proxy edge, and coral is the
-local serving fabric. Dashed teal is a hosted tier reached only as fallback
-or by explicit request. Traefik health-checks the router pool
+local serving fabric. Dashed teal marks cloud routes, which require an explicit
+grant on the caller's key. Traefik health-checks the router pool
 (`/health/liveliness`) and drops an unhealthy member without changing the
 endpoint. This describes the intended redundancy; check current monitoring
 before relying on pool health. Every name resolves through
@@ -99,13 +99,14 @@ Technitium and carries the wildcard certificate, so it is HTTPS end to end.
 | Piece | Does | Reached at |
 | --- | --- | --- |
 | LiteLLM router pool | Stateless proxies hold the model table, tier fallbacks, and the heavy-backend bearer | `https://llm.<domain>/v1` (pooled) |
-| `llm-fast` | Public router alias for GPU serving | via the router |
-| `llm-light` | Same lineup, CPU-only, on the sleeps-by-default node | via the router (fallback) |
-| free hosted tier | Reached through a stable handle; the model behind it lives in the provider's own configuration, not here | via the router (fallback, behind both local tiers) |
-| paid providers | Reached only by explicit model identifier; never an implicit fallback | via the router (opt-in) |
-| `open-webui` | Chat front-end, default model = the large tier | `https://chat.<domain>` |
+| GPU deployments | Eligible members of the `small` and `medium` capabilities | via the router |
+| CPU 9B candidate | `qwen3.5-9b` in `small`, order 3; omitted without a backend | not routed |
+| `llm-light` | CPU deployment for the `embed` capability | via the router |
+| free hosted tier | Reached through a stable handle only for keys with an explicit cloud grant; not an automatic fallback | via the router |
+| paid providers | Reached through configured fallback or an explicit model identifier, only for keys with an explicit cloud grant | via the router |
+| `open-webui` | Chat front-end, default model = the `medium` capability | `https://chat.<domain>` |
 | `qdrant` | Vector store for retrieval | `https://qdrant.<domain>` |
-| `llamaindex` | RAG engine; takes `embeddings` **from the router**, stores in Qdrant | internal (RAG) |
+| `llamaindex` | RAG engine; uses the router's `embed` capability, stores in Qdrant | internal (RAG) |
 
 
 <Note>
@@ -136,7 +137,7 @@ Any OpenAI client works. Change the base URL and send the key:
 curl https://llm.example.net/v1/chat/completions \
   -H "Authorization: Bearer $LLM_ROUTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"qwen3-4b","messages":[{"role":"user","content":"hello"}]}'
+  -d '{"model":"small","messages":[{"role":"user","content":"hello"}]}'
 ```
 
 ```python
@@ -144,15 +145,15 @@ from openai import OpenAI
 
 client = OpenAI(base_url="https://llm.example.net/v1", api_key=llm_router_key)
 resp = client.chat.completions.create(
-    model="qwen3-4b",  # or embeddings, or a large-tier alias — see /v1/models below
+    model="small",  # use embed for vectorization; medium is the default
     messages=[{"role": "user", "content": "hello"}],
 )
 print(resp.choices[0].message.content)
 ```
 
-`GET /v1/models` lists every alias the fabric serves. Picking a model picks a
-tier, and the router handles placement, fallbacks, and the heavy backend's
-authentication for you.
+`GET /v1/models` lists the names the key can use. A capability name lets the
+router pick an eligible deployment in registry order; the router handles
+fallbacks and the heavy backend's authentication for you.
 
 ## Related
 
