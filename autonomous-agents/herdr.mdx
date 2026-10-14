@@ -16,10 +16,10 @@ through a command-line tool and a local socket API.
 The homelab runs it as a service, on the fleet, so the work does not live on a
 laptop.
 
-## Three containers, on purpose
+## Fleet guests
 
-Each part runs in its own LXC. A crash in the Slack bridge must not affect the
-runtime holding live agent panes.
+The herdr runtime and Hail bridge run in separate systemd units on the same
+guest. A crash in Hail must not affect the runtime holding live agent panes.
 
 ```mermaid
 %%{init:
@@ -27,7 +27,7 @@ runtime holding live agent panes.
   flowchart LR
   Slack[Slack] -->|Socket Mode<br>outbound| Bridge[Slack bridge]
   Browser[Browser or phone] -->|SSO gate| Dash[Web dashboard]
-  Bridge -->|forwarded socket<br>over SSH| Runtime[herdr runtime]
+  Bridge <-->|local control socket| Runtime[herdr runtime]
   Dash -->|SSH| Runtime
   Runtime --> Panes[Agent panes<br>Claude Code, Codex, agy, ...]
   Laptop[Workstation] -->|herdr --remote| Runtime
@@ -41,7 +41,7 @@ runtime holding live agent panes.
   class Runtime,Panes core;
 ```
 
-| Container | What it does | Reachable from outside? |
+| Part | What it does | Reachable from outside? |
 | --- | --- | --- |
 | Runtime | Holds the agent panes and every coding command-line tool | No: SSH only |
 | Slack bridge | Alerts when an agent blocks; sends your reply back to that pane | No: Slack Socket Mode dials out |
@@ -50,6 +50,7 @@ runtime holding live agent panes.
 Only the runtime keeps state. Agent credentials, git worktrees and session
 state live on one backed-up volume. The other two rebuild from code, so they
 need no backup and no failover.
+
 
 ## Talking to it from Slack
 
@@ -63,6 +64,7 @@ on one bot token split events between them, so each side would miss half the
 alerts.
 
 Replies run in a live terminal, so an allowlist controls who may send one.
+
 
 ## One config, two places
 
