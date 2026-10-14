@@ -68,6 +68,22 @@ uses `lib.mkDefault`, so a consumer's explicit module argument takes priority.
 
 The variable catalog (required vs optional, purpose) lives in `.env.example` at the repo root.
 
+### Model endpoints and static MLX checks
+
+Qwen Code uses the local LiteLLM URL when that proxy is enabled; otherwise it
+uses the endpoint selected by `services.aiStack`. That selector defaults to the
+on-host `mlx_local` endpoint ([Qwen endpoint](https://github.com/dryvist/nix-ai/blob/develop/modules/qwen-code/endpoint.nix),
+[endpoint selector](https://github.com/dryvist/nix-ai/blob/develop/modules/ai-stack/endpoint.nix)).
+OpenCode's router provider reads `LLM_ROUTER_URL`. Enabling local LiteLLM adds a
+separate MLX provider at `litellmLocal.baseUrl`
+([module](https://github.com/dryvist/nix-ai/blob/develop/modules/opencode/default.nix)).
+
+The static resident checks under `lib/checks/mlx-static-*.nix` verify resident
+server agents, catalog-derived limits, local routing and fallback behavior,
+and cooldown settings ([serving](https://github.com/dryvist/nix-ai/blob/develop/lib/checks/mlx-static-serving.nix),
+[routing](https://github.com/dryvist/nix-ai/blob/develop/lib/checks/mlx-static-routing.nix),
+[fallback](https://github.com/dryvist/nix-ai/blob/develop/lib/checks/mlx-static-fallback.nix)).
+
 ### Splunk MCP entry
 
 The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,
