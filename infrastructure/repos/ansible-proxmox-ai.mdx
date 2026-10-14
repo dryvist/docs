@@ -1,6 +1,6 @@
 ---
 title: "AI/LLM stack on Proxmox"
-description: "Ansible roles for the homelab's AI/LLM stack — model serving, RAG, agents, and LLM app platforms — extracted from ansible-proxmox-apps into its own repo."
+description: "Ansible roles for the homelab's AI and LLM stack: model serving, RAG, agents, and LLM app platforms."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -83,16 +83,12 @@ This repository currently ships **roles only**. It has no site playbook or dynam
 
 ## Release process
 
-**MERGED in git; NOT DEPLOYED:** [PR #1097](https://github.com/dryvist/ansible-proxmox-ai/pull/1097)
-(commit `b9848b29`) changed releases to draft-first. Tags are created
-immediately. Both release assets attach to the draft, then the release is
-published. This avoids HTTP 422 when uploading assets after publication.
-[PR #1090](https://github.com/dryvist/ansible-proxmox-ai/pull/1090) and
-[PR #1094](https://github.com/dryvist/ansible-proxmox-ai/pull/1094) are
-**MERGED in git; NOT DEPLOYED**. They promoted `main` at `fd14dad0` as `0.65.0`
-and `0f7ac72c` as `0.66.0`. The back-merge in
-[PR #1096](https://github.com/dryvist/ansible-proxmox-ai/pull/1096) is also
-**MERGED in git; NOT DEPLOYED**.
+This repo follows git-flow with release on `develop`. Release-please opens a
+`chore(develop): release` PR against `develop` with the version, changelog and
+manifest. Promotion merges `develop` into `main` with a merge commit, and the
+`main` run of release-please tags that release. Nothing merges back from
+`main` to `develop`. The full rule is in
+[branch conventions](/conventions/branch-conventions).
 
 ## Related repos
 

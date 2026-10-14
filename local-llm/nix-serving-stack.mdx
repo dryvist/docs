@@ -8,9 +8,10 @@ page_type: "explanation"
 > of serve flags, a swap policy, and a build-time safety check. It then launches
 > the worker. This page follows that path from top to bottom.
 
-Two Apple Silicon Macs run the local models. Neither is an agent. Each is just a
-model plus a serving stack: `mlx-lm` workers behind a `llama-swap` proxy and a loopback queue front,
-answering an OpenAI-shaped API on loopback. The agent layer calls in over HTTP.
+Two Apple Silicon Macs run local models. Neither is an agent. Each exposes an
+OpenAI-compatible API on loopback. The agent layer calls in over HTTP.
+
+
 See [Local LLM](/local-llm/overview) for the strategy; this page is the
 mechanism.
 
@@ -23,8 +24,9 @@ interactive desktop.
   models that only fit in 128 GB. The measured comparison used one request at a
   time; it does not establish live resident weights or multi-request saturation.
 - **The interactive laptop** self-serves: localhost clients only, so serving
-  never competes with the network host. It keeps one model resident, sized to
-  coexist with an interactive desktop and the user's own work.
+  never competes with the network host. It is sized to coexist with an
+  interactive desktop and the user's own work.
+
 
 **The role: use the headless host for models that need its larger memory.** It
 provides serial capacity without the laptop's battery and memory constraints.
@@ -34,14 +36,8 @@ the gated operational reference.
 
 ### Ports
 
-Every serving host exposes the same shape on loopback; only the headless host
-adds a LAN-facing gate.
+The headless host adds a LAN-facing gate.
 
-| Endpoint | Where | Purpose |
-| --- | --- | --- |
-| `127.0.0.1:11434` | Both hosts | `llama-swap` OpenAI-compatible API: the one URL every local client speaks. |
-| `127.0.0.1:11440` | Headless host (rank 0) | Clustered-mode `mlx-lm` endpoint, used only when the two Macs shard one model over Thunderbolt. |
-| `llm-large.<base-domain>` (TLS, LAN) | Headless host | A Caddy gate terminates TLS and enforces a bearer token, then proxies to loopback `11434`. Consumers reach the large tier by capability name, not host name. |
 
 ## How the repos compose
 
@@ -50,27 +46,8 @@ memory ceiling and power knobs. `nix-ai` owns the **serving stack**: which
 models exist, how each is served, and the command that starts it. A host file
 picks values; the modules turn them into a running process.
 
-{/*Shape: pipeline. LR, role via classDef. One direction, no branches.*/}
+{/*Shape: host serving paths. LR with host-specific proxy branches.*/}
 
-```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
-  Host([Host file<br/>lib/hosts/*.nix<br/>picks models + numbers])
-  Darwin([nix-darwin<br/>wired ceiling + sysctls])
-  Catalog([nix-ai catalog<br/>per-model serve facts])
-  Cmd([serve command<br/>flags → mlx-lm command])
-  Swap([llama-swap<br/>proxy + swap policy])
-  Worker([mlx-lm worker<br/>one model, Metal])
-
-  Host --> Darwin
-  Host --> Catalog --> Cmd --> Swap --> Worker
-  Darwin -.sets the ceiling the worker lives under.-> Worker
-
-  classDef ai fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  class Host,Darwin,Catalog,Cmd,Swap,Worker ai
-  linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
-```
 
 ### The nix-darwin side: the host ceiling
 
@@ -138,9 +115,8 @@ None of that picks a model; it shapes the box the model runs in.
    class profile; the host's knob values merge on top.
 3. The serve-command renderer builds one `mlx-lm` server command per resident model,
    folding in the merged flags.
-4. `llama-swap` sits on the API port and manages the workers as children. The
-   headless host keeps several resident at once (`groupSwap = false`); the
-   laptop keeps exactly one, evicting the previous model on any switch.
+4. Each host's proxy routes requests to the model servers selected by its host
+   configuration.
 5. A warmup agent faults the preload list into memory at boot, so the first
    request never pays a cold start.
 6. `nix-darwin` has already set the wired ceiling the worker allocates under.
@@ -227,63 +203,13 @@ A build-time assert remains, demoted to a policy check. It verifies the declared
 budgets are internally consistent and each leaves an OS floor, not that any one
 model fits.
 
-## The loopback queue front
+## Laptop local serving
 
-An HAProxy front sits between callers and `llama-swap`. It has one backend per
-model, with `maxconn` equal to that model's concurrency from the role map. It
-buffers each request body, reads the JSON `model` field, and picks the backend
-by role name or physical id. A POST that names no known model goes to the
-default role's backend, so nothing bypasses a queue. All listeners bind to
-loopback only.
 
-| Port | Class | Behavior when the model is busy |
-| --- | --- | --- |
-| 11433 | Wait | FIFO per backend, `maxconn 8`, `timeout queue 90s`, then a 503 |
-| 11432 | Direct | Immediate 429 (or 503 when the backend is unavailable), so the router falls through to its next rung |
-| 11431 | Metrics | Prometheus exporter at `/metrics`: queue depth, max queue, and 4xx/5xx counters |
-| 11430 | Power agent | Answers `up ready` on AC power and `maint` on battery |
-
-```mermaid
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-flowchart LR
-Guard([gh-guard judge after activation]):::gate --> Swap([llama-swap direct<br/>11434]):::sink
-Recorder([recorder]):::src --> Wait[11433 wait]:::hop
-Router([router local rungs<br/>and the LAN gate]):::src --> Direct[11432 direct]:::hop
-Wait --> Back[per-model backend<br/>maxconn = concurrency]:::hop
-Direct --> Back
-Back --> Swap
-Power([11430 power agent]):::host -.up ready or maint.-> Back
-classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
-classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-classDef host     fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-```
-
-- **Battery gating.** Each backend server runs an HAProxy `agent-check` against
-  the power agent. On battery every server goes to maintenance, and both
-  classes answer 503 at once. Back on AC the agent's `up ready` reply returns
-  every server to service: `up` sets the state and `ready` lifts maintenance.
-  The agent is a launchd socket agent that runs a one-line `pmset` check. On the
-  always-on host the check always reports AC, so it has no effect.
-- **Timeouts.** Client and server timeouts are 300 s. A request frozen across a
-  sleep ends instead of finishing hours later.
-- **Drift guard.** A build-time assertion requires llama-swap's concurrency for
-  each kept model to equal the role map's value. The rendered `maxconn` and the
-  proxy admission limit cannot disagree.
-- **Checks.** One check proves every rendered `maxconn` matches the map, with a
-  negative case. A second runs `haproxy -c` with warnings fatal on each host
-  class, with a negative case for an unknown keyword. A third runs HAProxy
-  against the shipped power-agent command through an AC, battery, AC cycle and
-  requires every server to end in service, with a negative case for an agent
-  that replies only `ready`.
-- **Callers.** After Home Manager activation, `gh-guard` sends judge requests
-  straight to llama-swap on `11434`, bypassing the queue and its battery gate.
-  The recorder uses the `11433` wait port. The router's local rungs and the LAN
-  gate use the `11432` direct port.
-- **Metrics scrape.** Cribl Edge scrapes the metrics port with an
-  `edge_prometheus` source; see
-  [Mac pack](/observability/repos/cc-edge-the-mac-pack).
+For the `small` and `medium` fallback order, see
+Fast-subagent tier.
+For Cribl Edge observability, see
+[Mac pack](/observability/repos/cc-edge-the-mac-pack).
 
 ## The role map and host derivation
 
@@ -301,18 +227,11 @@ The Nix hosts derive their serving from these shared inputs:
 - the catalog is the `27B` dense model, `MiMo-9B`, and an OCR swap model on the
   server class;
 - the preload list, resident-worker count, and role-to-id registry come from
-  the map, not from per-host blocks; per-model concurrency comes from the
-  shared catalog rather than a duplicate role-map number;
+  the map; per-model concurrency defaults come from the shared catalog, with
+  host-specific `modelConcurrency` overrides;
 - the per-worker memory limit derives to 48 GiB on both Macs;
 - `vllm-mlx` is removed, and its options now fail with a removal message.
 
-<Warning>
-**Deploy state, 2026-10-03**
-
-Merged, but not yet deployed on the Macs. The queue front, the derived hosts,
-and the metrics scrape take effect at the next host rebuild. The router has not
-been converged to the new role map.
-</Warning>
 
 ## Related
 
