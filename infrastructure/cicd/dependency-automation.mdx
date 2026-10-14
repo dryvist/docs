@@ -194,8 +194,8 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
 5. **Floating major tags.** Every dryvist repo that other repos consume publishes a floating `vN` tag at
    its current major. The reusable `promote-major-tag` workflow moves it after a release is published. A
    major version bump (`feat!` or `BREAKING CHANGE`) needs explicit human intent. A repo whose releases
-   follow an upstream version can cut a packaging-only release for a change to its own code: nix-screenpipe
-   tags `v{desktop version}+rev.{N}` from a manual run of its Auto Tag workflow on `main`. The tag push
+   follow an upstream version can cut a packaging-only release for a change to its own code: a Nix packaging repo
+   tags `v{upstream version}+rev.{N}` from a manual run of its Auto Tag workflow on `main`. The tag push
    moves the floating tag and starts the consumer dispatch without waiting for the draft release.
 6. **Producer releases do not push bumps.** A releasing repo may send a `repository_dispatch` event
    carrying its name and tag. The consumer relocks only the named input and classifies the bump (patch,

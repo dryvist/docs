@@ -48,7 +48,6 @@ Image contents:
 - An entrypoint that refuses uid 0 or a missing `AGENT_SANDBOX=1`, then runs the
   lifecycle: clone → `nix develop -c <agent>` → push branch → `gh pr create` → exit.
 
-
 Per-repo toolchains are **not** baked in. Each target repo's own flake devShell
 provides its compilers, linters, and tools via `nix develop`. The image stays
 generic, and the repo stays the source of truth for its own environment.

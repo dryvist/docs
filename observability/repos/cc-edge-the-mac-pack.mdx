@@ -40,15 +40,6 @@ Data lands in two Splunk indexes:
 | `os` | macOS unified logs (every Apple subsystem) and host-event signals | General OS troubleshooting, security event search |
 | `mac_perf` | Host CPU/memory/disk/network/process metrics and per-process energy | Performance dashboards, capacity planning |
 
-Separately from the pack, host config adds an `edge_prometheus` source named
-`in_queue_metrics`. It scrapes `/metrics` from the local LLM queue front. The
-static loopback target uses the queue module's endpoint definition. The
-`llm_metrics` pipeline sends events to Stream on the interim event path (`index=llm`). Metric-format
-delivery needs a Stream-side route that is not applied yet. Edge begins
-scraping after the next host rebuild and Edge restart; the exporter itself is
-[described here](/local-llm/nix-serving-stack#the-loopback-queue-front).
-A Splunk alert on queue depth is not defined.
-
 Per-use-case filtering lives in [Cribl Stream pipelines](/observability/monitoring-agents) downstream of
 this Edge install, not in the pack itself. That includes security event extraction, performance triage, and alerting rules.
 
