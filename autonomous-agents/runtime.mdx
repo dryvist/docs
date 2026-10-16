@@ -41,6 +41,10 @@ Image contents:
   pinned `llm-agents.nix` input. The image's [package list](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-image.nix)
   and [`flake.lock`](https://github.com/dryvist/nix-agent-sandbox/blob/main/flake.lock)
   own the selected packages and their versions.
+- The image packages the Zammad MCP environment and exposes `mcp-zammad`
+  through the `sandbox-zammad-mcp` wrapper ([image](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-image.nix),
+  [environment](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/zammad-mcp.nix),
+  [wrapper](https://github.com/dryvist/nix-agent-sandbox/blob/main/scripts/zammad-mcp.sh)).
 - The `autonomous` profile configs rendered by [nix-ai](/nix/nix-ai). The
   image excludes the generated OpenCode provider config; routed access comes
   from its task profile.
@@ -55,9 +59,13 @@ generic, and the repo stays the source of truth for its own environment.
 ## The remote dispatcher path: one container per run
 
 The repo also packages [`agent-dispatch`](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-dispatch.nix)
-and its forced-command adapter. The dispatcher validates a request before
-creating a disposable container and a named workspace volume. A continuation
-starts a fresh container on that job's workspace.
+and its forced-command adapter. The dispatcher validates each request before
+creating a disposable container. Repo-bound jobs use a named workspace volume.
+A repository-free `tty zcode` session mounts the read-only public-mirror
+workspace. It receives no GitHub token or OpenBao credentials. It has no
+repository volume or publish step ([dispatcher](https://github.com/dryvist/nix-agent-sandbox/blob/main/scripts/agent-dispatch.sh),
+[entrypoint](https://github.com/dryvist/nix-agent-sandbox/blob/main/scripts/entrypoint.sh)).
+A continuation starts a fresh container on that job's workspace.
 
 Each job uses one host-side service token. The waiter keeps it in memory while
 the job runs and remains available for continuations. It reuses the token for
