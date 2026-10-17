@@ -37,7 +37,8 @@ flowchart LR
 ```
 
 Every Renovate configuration extends `github>JacobPEvans/.github`; repositories with a Nix flake
-also extend `:renovate-nix`. Shared rules live in [`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json).
+also extend `:renovate-nix`. For example, [`dryvist/.github/renovate.json`](https://github.com/dryvist/.github/blob/main/renovate.json)
+extends the shared rules in [`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json).
 Renovate opens PRs on weekends only.
 [SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md) carries the same table from
 the security angle. Dependabot handles security updates per repository; Renovate vulnerability alerts
@@ -132,6 +133,7 @@ rebuilds the world on a machine configuration. A third-party release bump of any
 merges hands-off on green CI. A dryvist patch bump merges hands-off once the Merge Gate is green. A
 dryvist minor or major Nix lock bumps from release dispatch wait for a person; they are not Renovate
 update classes.
+
 
 ## Version pinning
 
