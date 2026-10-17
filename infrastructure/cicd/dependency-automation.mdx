@@ -36,9 +36,9 @@ flowchart LR
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-Every dryvist and JacobPEvans repo inherits one Renovate policy from [`JacobPEvans/.github` →
-`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json). This
-master preset extends nothing external. Renovate opens PRs on weekends only.
+Every Renovate configuration extends `github>JacobPEvans/.github`; repositories with a Nix flake
+also extend `:renovate-nix`. Shared rules live in [`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json).
+Renovate opens PRs on weekends only.
 [SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md) carries the same table from
 the security angle. Dependabot handles security updates per repository; Renovate vulnerability alerts
 are off.
@@ -62,10 +62,10 @@ hold the merge.
 **Freshness first.** The default is to move, not to freeze. Stale dependencies build their own
 risk: unpatched CVEs, drifting APIs, and harder upgrades later.
 
-**Release age is a supply-chain tripwire.** The xz backdoor was caught within about 3 days of the
-malicious release, and npm allows unpublish under 72 hours. A 7-day wait lets Renovate skip a
-poisoned release before it lands. A major from outside the trusted list waits 30 days, because a
-major is a deliberate break and a less-known publisher gets a longer window.
+**Release age is a supply chain tripwire.** The xz backdoor was caught about three days after its
+malicious release. npm allows unpublishing within 72 hours. A seven-day wait lets Renovate skip a
+poisoned release. A major from outside the trusted list waits 30 days. Major releases can break
+compatibility, and unfamiliar publishers add risk.
 
 ## First-party changes arrive by pull request
 
@@ -162,7 +162,7 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
    file (`flake.lock`, `.terraform.lock.hcl`, the resolved requirements) holds the exact revision. A bump
    is a pull request that changes the ref or relocks, so CI builds the new version.
 3. **Bumps are pull requests, never silent.** A bot opens one pull request per consumer that updates the
-   ref or SHA and the lock. Renovate updates follow the trust-tier policy above. Nix release-dispatch lock
+   ref or SHA and the lock. Renovate updates follow the trust-tier policy in the preceding section. Nix release-dispatch lock
    PRs follow the separate gate described in [Nix flake locks](#nix-flake-locks-are-outside-renovate).
    `nixpkgs*` moves never auto-merge. Nothing tracks `main`, `develop`, or "latest" of a dryvist repo.
    First-party digest and pin PRs carry no human-gate label: Renovate leaves them to the bot-PR

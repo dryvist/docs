@@ -62,7 +62,8 @@ policy](/infrastructure/cicd/policy) for that layer.
 `git clone git@github.com:dryvist/tofu-github.git && cd tofu-github && direnv allow`
 </Step>
 <Step title="Required environment">
-The workspace configuration reads `TF_CLOUD_HOSTNAME`. The provider reads `GITHUB_TOKEN`.
+- `TF_CLOUD_HOSTNAME`: workspace hostname.
+- `GITHUB_TOKEN`: provider credential.
 </Step>
 <Step title="Plan and apply">
 `tofu init && tofu plan && tofu apply` runs plan and apply remotely in Terrakube. Output streams back to the local shell.
@@ -88,7 +89,7 @@ The workspace configuration reads `TF_CLOUD_HOSTNAME`. The provider reads `GITHU
   title="CI/CD policy"
   icon="shield-halved"
   href="/infrastructure/cicd/policy">
-  The per-repo CI/CD conventions these org rulesets enforce the shape of.
+  CI/CD conventions enforced by these org rulesets.
 </Card>
 <Card
   title="Source on GitHub"

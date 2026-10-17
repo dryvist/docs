@@ -17,6 +17,7 @@ Claude Code plugin API.
 ## What it does
 
 - Ships plugins for git and GitHub workflows (`ship`, `finalize-pr`, `sync-main`), retrospectives, CodeQL resolution, and more
+- Includes the `ansible` plugin (`ansible-conventions`), `cribl` plugin (`cribl-pack-conventions`), and `splunk` plugin (`splunk-app-conventions`)
 - Includes the `monitoring-first` procedure in `homelab-ops`, referenced by the shared rules layer
 - Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
 - Houses **skills** that progressively load only when their triggers fire, keeping token cost minimal when idle
