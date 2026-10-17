@@ -84,7 +84,7 @@ they had been written into `CLAUDE.md` directly.
 | --- | --- |
 | **Vendor lock-in.** Claude reads `CLAUDE.md`, Codex / GitHub Copilot / Cursor / OpenAI agents read `AGENTS.md`, Gemini reads `GEMINI.md`. Duplicating content across them rots fast. | One canonical file (`AGENTS.md`), every other tool's config file imports it. |
 | **Context bloat.** A 12 KB `CLAUDE.md` burns tokens on every session. | `CLAUDE.md` becomes ~40 bytes; `AGENTS.md` carries the load and can still be split further via nested `@path` imports. |
-| **Size budgets.** The shared [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml) workflow defaults to `warn=6 KB`, `error=12 KB`. A fat `CLAUDE.md` trips that gate. | A 40-byte `CLAUDE.md` never trips it; `AGENTS.md` can opt into an `extended:` limit per repo via `.file-size.yml` when actually needed. |
+| **Size budgets.** The shared [`_file-size`](https://github.com/dryvist/.github/blob/main/.github/workflows/_file-size.yml) workflow defaults to `warn=6 KB`, `error=12 KB`. A fat `CLAUDE.md` trips that gate. | A 40-byte `CLAUDE.md` never trips it; `AGENTS.md` can opt into an `extended:` limit per repo via `.file-size.yml` when actually needed. |
 | **Single source of truth.** Moving project rules between files in different vendors' formats is an unforced error. | All edits land in one file. |
 
 ### Where it applies
@@ -119,8 +119,8 @@ likewise come from the global `~/.claude/rules` wiring rather than a per-repo
 
 4. Mirror the same change in any other agent file (for example, `GEMINI.md` → `@AGENTS.md`).
 5. Update CI: most repos already inherit the
-   [`_file-size`](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_file-size.yml)
-   check from `JacobPEvans/.github`. No per-repo workflow edit needed.
+   [`_file-size`](https://github.com/dryvist/.github/blob/main/.github/workflows/_file-size.yml)
+   check from `dryvist/.github`. No per-repo workflow edit needed.
 
 ## How it fits
 
