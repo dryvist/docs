@@ -30,31 +30,41 @@ instructions say.
 | Forge (code hosting) writes | Yes, narrowly scoped | No, read access only |
 | Infrastructure convergence | Yes, under a maintenance window | No |
 
-Trusted today are Claude Code, Codex, and Antigravity (`agy`). Untrusted today
-are OpenCode, Gemini, and Cursor Agent. These are public products; naming them is
-what makes the tier assignment auditable.
+Current examples include Claude Code, Codex, and Antigravity (`agy`) in the
+trusted tier, and Gemini and Cursor Agent in the untrusted tier. These are
+public products; naming them is what makes the tier assignment auditable.
 
 Cursor Agent has no local install. The local Cursor command-line tool was removed in
 [nix-ai#2483](https://github.com/dryvist/nix-ai/pull/2483), and `cursor-agent`
 runs only in a sandbox container, through the dispatch path.
 
-OpenCode is the untrusted local tier. It runs under a deny-default macOS Seatbelt
-profile, on by default on macOS, through the `programs.opencode.sandbox.enable`
-option in nix-ai. The profile denies the keychain, `~/.doppler`, `~/.ssh`, the
-ssh-agent socket, loopback except the model proxy, `open`, `osascript`,
-`launchctl`, and `sudo`. It also denies:
+OpenCode has wrappers with different trust boundaries. `opencode` is the trusted
+local launcher defined in the host configuration. `opencode-remote` starts a
+fresh sandbox session through the dispatcher.
+`opencode-wall` is the local Seatbelt-walled launcher for untrusted use
+([nix-ai](https://github.com/dryvist/nix-ai/blob/develop/modules/opencode/default.nix#L69-L77)).
+See Agent identity and access for the
+command and identity details.
+
+`opencode-wall` is the untrusted local tier. It runs under a deny-default macOS
+Seatbelt profile, enabled by default on macOS through the
+`programs.opencode.sandbox.enable` option in nix-ai. The profile denies the
+keychain, `~/.doppler`, `~/.ssh`, the ssh-agent socket, and loopback except the
+configured model proxy. It blocks app launches through `open`, AppleEvents
+through `osascript`, launchd job creation through `launchctl`, and `sudo`. It
+also denies:
 
 - creating, removing, and renaming `.git` entries;
 - hooks and config under any gitdir name;
 - hard links;
 - writes to `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, and `.cursor`.
 
-OpenCode's `.git` hardening and FSEvents `mach-lookup` allowance are in
+`opencode-wall`'s `.git` hardening and FSEvents `mach-lookup` allowance are in
 [nix-ai#2484](https://github.com/dryvist/nix-ai/pull/2484). File watching still
-works while the profile denies git metadata changes and git hooks/config access.
-OpenCode works only in standalone clones under `~/opencode-work`. The profile
-limits what OpenCode can reach. It does not separate an identity, because
-OpenCode runs as the operator's account.
+works while the profile denies git metadata changes and writes to git
+hooks/config. By default, `opencode-wall` accepts only standalone clones under
+`~/opencode-work`. The profile limits what `opencode-wall` can reach. It does
+not separate an identity because it runs as the operator's account.
 
 <Note>
 **Trusted git in an OpenCode work root**

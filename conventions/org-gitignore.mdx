@@ -1,12 +1,12 @@
 ---
 title: "Org default .gitignore"
-description: "A canonical .gitignore baseline shipped from dryvist/.github that every repo adopts. Prevents secrets, credentials, and AI-assistant local state from ever reaching git history."
+description: "A canonical .gitignore baseline shipped from JacobPEvans/.github that every repo adopts. Prevents secrets, credentials, and AI-assistant local state from ever reaching git history."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
 > One gitignore to rule them all. Never commit secrets or AI local state, not by accident, not by habit.
 
-The `dryvist/.github` repo ships a canonical `.gitignore` baseline at `configs/gitignore`. Every new
+The `JacobPEvans/.github` repo ships a canonical `.gitignore` baseline at `configs/gitignore`. Every new
 repo adopts it by appending (not overwriting) to the repo's own `.gitignore`, preserving
 repo-specific entries while inheriting the org-wide safety floor.
 
@@ -38,7 +38,7 @@ The baseline targets two categories of files that must never reach git history:
 ## Adopting in a new repo
 
 ```bash
-gh api repos/dryvist/.github/contents/configs/gitignore \
+gh api repos/JacobPEvans/.github/contents/configs/gitignore \
   -H "Accept: application/vnd.github.raw" >> .gitignore
 ```
 

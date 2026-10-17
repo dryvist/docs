@@ -155,7 +155,7 @@ knowledge once, reuse often": it provides inspectable Markdown instead of opaque
   Raw --> Curate[Curate wiki pages<br>wikilinks & tags]
   Curate --> Index[index.md & log.md]
   Index --> Lint[Lint]
-  Lint --> PR[Open signed draft PR]
+  Lint --> PR[Open signed PR]
   PR --> Review[Human review & merge]
 
   classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
@@ -174,7 +174,7 @@ knowledge once, reuse often": it provides inspectable Markdown instead of opaque
 The agent can read public repositories and open documentation pull requests on its own as a dedicated GitHub App bot identity. Key properties of this workflow include:
 
 - Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
-- PRs are opened as **drafts** and the bot has **no merge authority**. A human always reviews and merges; organization rulesets block the bot from self-merging.
+- PRs open ready with the `human:review` label, and the bot has **no merge authority**. A human always reviews and merges; auto-merge stays off.
 - **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo
   daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so
   sensitive material never lands in a public PR.

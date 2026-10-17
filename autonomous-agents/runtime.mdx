@@ -61,8 +61,9 @@ generic, and the repo stays the source of truth for its own environment.
 The repo also packages [`agent-dispatch`](https://github.com/dryvist/nix-agent-sandbox/blob/main/nix/agent-dispatch.nix)
 and its forced-command adapter. The dispatcher validates each request before
 creating a disposable container. Repo-bound jobs use a named workspace volume.
-A repository-free `tty zcode` session mounts the read-only public-mirror
-workspace. It receives no GitHub token or OpenBao credentials. It has no
+A repository-free `tty zcode` session mounts the read-only public Git mirror
+workspace. It receives
+no GitHub token or OpenBao credentials. It has no
 repository volume or publish step ([dispatcher](https://github.com/dryvist/nix-agent-sandbox/blob/main/scripts/agent-dispatch.sh),
 [entrypoint](https://github.com/dryvist/nix-agent-sandbox/blob/main/scripts/entrypoint.sh)).
 A continuation starts a fresh container on that job's workspace.

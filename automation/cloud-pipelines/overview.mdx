@@ -1,6 +1,6 @@
 ---
 title: "Cloud pipelines"
-description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become draft PRs, CI failures get fixed, merge readiness is gated."
+description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become ready PRs labeled human:review, CI failures get fixed, and merge readiness is gated."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -8,8 +8,8 @@ page_type: "overview"
 
 Cloud pipelines are the **event-driven** half of the automation surface. Something happens in GitHub:
 an issue is filed, a CI run fails, or a PR is opened. The reusable workflows in
-[`dryvist/ai-workflows`](/automation/repos/ai-workflows) react. The result lands as a
-draft PR or a commit on an existing PR, signed by
+[`JacobPEvans/.github-ai`](/automation/repos/ai-workflows) react. The result lands as a
+ready PR labeled `human:review` or a commit on an existing PR, signed by
 [`JacobPEvans-claude[bot]`](/infrastructure/cicd/git-signing) and ready for review.
 
 The cron-driven sibling (work that runs on a schedule rather than in response to an event) is documented under [Scheduled routines](/automation/scheduled-routines/overview).
@@ -20,7 +20,7 @@ The cron-driven sibling (work that runs on a schedule rather than in response to
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart TB
-  E1([issues.opened]) --> W1([issue-resolver.yml]) --> O1([Draft PR])
+  E1([issues.opened]) --> W1([issue-resolver.yml]) --> O1([Ready PR])
   E2([workflow_run failure]) --> W2([ci-fix.yml]) --> O2([Fix commit])
   E3([pull_request]) --> W3([code-simplifier.yml]) --> O3([Review comments])
 
@@ -37,7 +37,7 @@ The cron-driven sibling (work that runs on a schedule rather than in response to
 
 | Trigger | Reusable workflow | Outcome |
 | --- | --- | --- |
-| `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Draft PR implementing the issue |
+| `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Ready PR labeled `human:review` implementing the issue |
 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | Fix commit pushed back to the failing PR |
 | `pull_request` opened or `synchronize` | `code-simplifier.yml` | Review comments when ready |
 

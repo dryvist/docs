@@ -4,7 +4,7 @@ description: "How an issue becomes a merged PR with minimal human touch: ai-work
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-> File an issue. Walk away. Come back to a draft PR with green CI, AI review, and one human merge click left.
+> File an issue. Walk away. Come back to a ready PR labeled `human:review`, with green CI and AI review.
 
 This is the **issue → mergeable PR** pipeline. Three repos collaborate: `ai-workflows` runs on
 GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's cloud cron,
@@ -21,7 +21,7 @@ GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's clo
   flowchart LR
   I([Issue])
   T([AI triage])
-  D([Draft PR])
+  D([Ready PR])
   L([CI and review loop])
   G{Final gate}
   M([Merged])
@@ -41,13 +41,13 @@ GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's clo
   class M sink
 ```
 
-A human files the issue and clicks merge. Everything in between runs without supervision.
+A human files the issue, reviews the PR, and clicks merge. The `human:review` label marks the gate; auto-merge stays off.
 
 ## The three layers
 
 | Layer | Where it lives | When it runs | What it owns |
 | --- | --- | --- | --- |
-| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, draft PR creation, CI auto-fix, final review gate, project routing |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, ready PRs labeled `human:review`, CI auto-fix, final review gate, project routing |
 | [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
 | [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch: finalize a PR you're iterating on |
 
@@ -86,7 +86,7 @@ and those workflows retire after cutover.
 
 ## Source repos
 
-[`ai-workflows`](https://github.com/dryvist/ai-workflows) · [`ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) ·
+[`ai-workflows`](https://github.com/JacobPEvans/.github-ai) · [`ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) ·
 [`claude-code-routines`](https://github.com/dryvist/claude-code-routines) ·
 [`claude-code-plugins`](https://github.com/dryvist/claude-code-plugins). The 30-second pitch lives at
 [AI pipeline](/architecture/ai-pipeline); this Automation section is the mechanics.
