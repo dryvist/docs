@@ -29,11 +29,6 @@ Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
 path until cutover; ci-resolver replaces them,
 and those workflows retire after cutover.
 
-**MERGED in git; NOT DEPLOYED:** [PR #465](https://github.com/JacobPEvans/.github-ai/pull/465)
-(commit `95448fa`) gives the post-merge docs review a shared reusable-workflow
-alias. [PR #463](https://github.com/JacobPEvans/.github-ai/pull/463) fixes the
-scheduler actor.
-
 ## Scheduled workflows
 
 These run on cron, typically called with `schedule:` and a manual `workflow_dispatch:`.
@@ -84,12 +79,13 @@ callers use the floating major tag: `uses: JacobPEvans/.github-ai/.github/workfl
 a trailing version comment. Renovate keeps the ref on that major tag. See [scanner
 posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 
+
 ## Authentication
 
-Reusable `.yml` workflows select the AI agent through one organization variable:
-`GH_ACTION_AI_AGENT=claude|codex`. The default is `claude`, so existing
-callers keep their current behavior. Set it to `codex` once at the organization,
-repository, or environment level to switch every inherited workflow.
+The `GH_ACTION_AI_AGENT=claude|codex` variable selects the agent for reusable
+`.yml` workflows. Its default is `claude`, so existing callers keep that
+behavior. Set it to `codex` at the organization, repository, or environment
+level to switch every inherited workflow.
 
 | Name | Kind | Purpose |
 | --- | --- | --- |
@@ -107,24 +103,25 @@ repository, or environment level to switch every inherited workflow.
 | `GH_ACTION_AI_CODEX_VERSION` | Variable | Optional Codex command-line tool version override. |
 
 > **OAuth tokens are prohibited in unattended CI.** A Claude Code subscription token
-> (`CLAUDE_CODE_OAUTH_TOKEN`) used inside a GitHub Actions workflow violates the [Claude Code Terms
-> of Service](https://www.anthropic.com/legal/terms) and risks an account ban. The subscription is
-> intended for interactive sessions only. Use a standard API key (`GH_ACTION_AI_API_KEY`) instead;
-> it is purpose-built for programmatic access with no ToS concerns.
+> (`CLAUDE_CODE_OAUTH_TOKEN`) in GitHub Actions violates the
+> [Claude Code Terms of Service](https://www.anthropic.com/legal/terms).
+> It can lead to an account ban. Reserve subscription tokens for interactive
+> sessions. Use the standard `GH_ACTION_AI_API_KEY` for programmatic access.
 
-GitHub Agentic Workflows are retired. The catalog keeps one dormant reference template, but no active repository compiles or runs GH-AW Markdown.
+GitHub Agentic Workflows are retired. One dormant reference template remains in
+the catalog. No active repository compiles or runs GH-AW Markdown.
 Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/JacobPEvans/.github-ai/blob/main/docs/AUTHENTICATION.md).
 
 ## Security boundary
 
-The model job does not receive a privileged GitHub App token. It checks out
-code without persisted credentials and returns structured output or a workspace
-change. A separate publisher job validates that handoff and performs the requested GitHub write.
+- Model job gets no privileged GitHub App token.
+- Checkout stores no credentials.
+- It returns structured output or workspace changes.
+- Publisher validates and performs GitHub writes.
 
-This boundary keeps repository comments, labels, branches, commits, and pull
-requests deterministic. It also applies to both agents, so changing
-`GH_ACTION_AI_AGENT` does not change the workflow's GitHub permissions.
-The workflows also read `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_ID`.
+Repository comments, labels, branches, commits, and pull requests stay
+deterministic. Both agents share this boundary. Changing the selector does not
+change GitHub permissions.
 
 ## Where to go next
 
@@ -133,36 +130,36 @@ The workflows also read `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_I
   title="Getting started"
   icon="rocket"
   href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/GETTING_STARTED.md">
-  Caller templates for every workflow, with the correct permission blocks.
+  Caller examples and permissions.
 </Card>
 <Card
   title="Patterns"
   icon="puzzle-piece"
   href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/PATTERNS.md">
-  The post-merge dispatch pattern, bot guards, and other recurring shapes.
+  Dispatch flow and bot guards.
 </Card>
 <Card
   title="Authentication"
   icon="key"
   href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/AUTHENTICATION.md">
-  Full `GH_ACTION_AI_*` reference, provider routing, and model variables.
+  Provider routing and model variables.
 </Card>
 <Card
   title="Prompt catalog"
   icon="book"
   href="/automation/repos/ai-llm-prompts">
-  Versioned OKF prompt assets and the immutable consumer pin.
+  Versioned prompts and consumer pins.
 </Card>
 <Card
   title="Verification"
   icon="check-double"
   href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/VERIFICATION.md">
-  The e2e runbook for checking a freshly-wired repo end to end.
+  End-to-end workflow verification.
 </Card>
 <Card
   title="Issue → PR pipeline on this repo"
   icon="route"
   href="/automation/issue-to-pr-pipeline">
-  Exactly which six callers are wired on `dryvist/docs` and why.
+  Current issue-to-PR callers.
 </Card>
 </CardGroup>
