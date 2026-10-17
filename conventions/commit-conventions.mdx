@@ -23,6 +23,17 @@ are not stylistic; they change what ships.
   Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release
   workflow. See [CI/CD policy](/infrastructure/cicd/policy) for the release flow.
 
+## Enforcement
+
+Two gates check the subject line. The message body and trailers are free text.
+
+- **Local.** A `commit-msg` hook rejects a bad subject before the commit exists. A global hook covers git 2.54 or later.
+  Every repository dev shell also installs a pre-commit `commit-msg` hook, which works with any git version.
+- **Server.** Rulesets check every pushed commit on every branch. Default branches accept only Conventional Commit subjects.
+  Other branches also accept `Merge ...` subjects, so a branch sync or a git-flow promotion passes. A bad subject fails the
+  push with `GH013`.
+
+
 ## Tone in PR descriptions and review
 
 - **Tell hard truths directly.** Don't soften. Don't sandwich. Disagree when you disagree.

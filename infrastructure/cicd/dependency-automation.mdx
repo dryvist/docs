@@ -4,11 +4,9 @@ description: "Renovate scheduling, trust-tier automerge, and version-pinning pol
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Never ship a stale version. Never auto-merge a major release. Third-party minor and patch updates
-> auto-merge for any package, ecosystem, or publisher once they clear a 3-day stabilization window
-> and pass CI. First-party patch updates auto-merge once the Merge Gate is green. First-party minor
-> and major updates wait for a person. Trust tiers no longer gate third-party minor and patch updates.
-> They only decide how reviewers handle a major update and how often Renovate opens PRs.
+> Every Renovate update auto-merges once it clears its release age and the required checks pass.
+> Majors from outside the trusted list wait 30 days; everything else waits 7. No Renovate update
+> class waits for a person.
 
 
 {/*Shape: decision tree, update kind routes to a lane. 6 nodes. Aspect ~3:1 LR.*/}
@@ -18,75 +16,56 @@ page_type: "reference"
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
 flowchart LR
   Update{Renovate<br/>update opens}
-  MinorPatch([Third-party minor / patch<br/>any tier])
+  NonMajor([Minor, patch, digest, pin<br/>7 days])
   Major([Major])
-  Auto([Soak 0-3 days<br/>then auto-merge])
-  FirstParty([First-party patch<br/>auto-merge after Merge Gate])
-  Review([dep:review PR<br/>for a human])
+  TrustedMajor([First-party or trusted major<br/>7 days])
+  OtherMajor([Other major<br/>30 days])
+  Auto([Auto-merge<br/>required checks pass])
 
-  Update -->|third-party minor/patch| MinorPatch --> Auto
-  Update -->|first-party patch| FirstParty
-  Update -->|first-party minor| Review
+  Update -->|non-major| NonMajor --> Auto
   Update -->|major| Major
-  Major -->|first-party| Review
-  Major -->|trusted/untrusted| Review
+  Major -->|first-party or trusted| TrustedMajor --> Auto
+  Major -->|other source| OtherMajor --> Auto
 
   classDef gate fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
   classDef auto fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef human fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-
   class Update gate
-  class MinorPatch,Auto,FirstParty auto
-  class Major,Review human
+  class NonMajor,Auto,TrustedMajor,OtherMajor auto
+  class Major gate
 
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
 ```
 
-Every dryvist and JacobPEvans repo inherits one Renovate policy from [`dryvist/.github` →
-`renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json). This
-master preset extends nothing external. The model uses a single global weekly `schedule` (the
-untrusted cadence) with per-tier overrides layered on top.
-[SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md) carries the same table from
-the security angle.
+Every dryvist and JacobPEvans repo inherits one Renovate policy from [`JacobPEvans/.github` →
+`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json). This
+master preset extends nothing external. Renovate opens PRs on weekends only.
+[SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md) carries the same table from
+the security angle. Dependabot handles security updates per repository; Renovate vulnerability alerts
+are off.
 
-## Trust tiers gate majors and cadence
+## Release age by tier
 
-| Tier | Scope | PR cadence | Min age | Majors |
-| --- | --- | --- | --- | --- |
-| **First-party** | `dryvist/**`, `JacobPEvans/**`, `JacobPEvans-personal/**` | immediate (`at any time`) | 0 days | Patch auto-merges once the Merge Gate is green. Minor and major never auto-merge; a person merges them |
-| **Trusted** | curated ~50-org allowlist in `renovate-presets.json` | twice-weekly (Mon & Thu) | 3 days | opens a review PR (`dep:review`), never auto-merged |
-| **Untrusted** | everything else | weekly (Mon) | 3 days | held 30 days, then opens a review PR |
-| **Security / CVE** | any vulnerability alert | immediate (bypasses the schedule via `vulnerabilityAlerts`) | 0 days | Third-party minor/patch auto-merges fast; a security major still opens for review. First-party minor and major wait for a person |
+The preset is the source of truth for every value below.
 
-Third-party minor and patch updates auto-merge the same way in every third-party scope in the
-preceding table. Any package or ecosystem qualifies, once it clears the scope's minimum age and
-passes CI. Trust tier no longer decides whether third-party minor or patch updates auto-merge. For
-first-party repos, patch updates auto-merge once the Merge Gate is green, and minor and major updates
-wait for a person. Trust tier only decides how reviewers handle a **major** update and how often
-Renovate creates PRs.
+| Tier | Scope | Minor, patch, digest, pin | Majors |
+| --- | --- | --- | --- |
+| **First-party** | `dryvist/**`, `JacobPEvans/**`, `JacobPEvans-*/**`, `jpe-*/**` | 7 days | 7 days |
+| **Trusted** | curated allowlist in `renovate-presets.json` | 7 days | 7 days, labeled `dep:review` |
+| **Other** | everything else | 7 days | 30 days |
+
+Every update auto-merges once it clears its release age and the required checks pass. No Renovate
+update class waits for a person. The `dep:review` label runs the AI dependency review; it does not
+hold the merge.
 
 ## Why these tiers
 
 **Freshness first.** The default is to move, not to freeze. Stale dependencies build their own
-risk: unpatched CVEs, drifting APIs, and harder upgrades later. Every third-party scope auto-merges
-minor and patch updates the same way. The tier only decides how fast a PR opens and how reviewers handle a
-major update.
+risk: unpatched CVEs, drifting APIs, and harder upgrades later.
 
-**A compatible-looking version is not always a compatible API for majors.** Semver promises
-non-breaking minor and patch releases, and Renovate trusts that promise regardless of publisher. So
-third-party minor and patch updates clear a 3-day soak plus green CI. A *major* update is a
-deliberate break, regardless of who published it. First-party minor and major updates never
-auto-merge, even though dryvist controls both ends of the API. A trusted-org major still opens a
-`dep:review` PR for a human. Every other major waits 30 days before a review PR opens. Trust buys
-review speed on majors, never a pass on breaking changes.
-
-**The 3-day buffer is a supply chain tripwire.** `minimumReleaseAge: 3 days` is the
-compromise-detection window. It applies to every external minor and patch auto-merge and to the
-trusted-org major review clock alike. The xz backdoor was caught within about 3 days of the
-malicious release. npm allows unpublish under 72 hours. Waiting three days lets Renovate skip a
-poisoned release before it lands. Under twice-weekly batching, the wait costs nothing extra.
-First-party patch updates and CVE fixes skip it (0 days). First-party patch code needs no soak, and a known-exploited
-CVE is more dangerous than an unvetted release.
+**Release age is a supply-chain tripwire.** The xz backdoor was caught within about 3 days of the
+malicious release, and npm allows unpublish under 72 hours. A 7-day wait lets Renovate skip a
+poisoned release before it lands. A major from outside the trusted list waits 30 days, because a
+major is a deliberate break and a less-known publisher gets a longer window.
 
 ## First-party changes arrive by pull request
 
@@ -110,12 +89,12 @@ an AI judgment call.
 inside the **Merge Gate**, a required, non-AI check on every public repo. It fails closed on
 vulnerable or disallowed transitive dependencies before anything merges.
 
-[`dryvist/ai-workflows` → `cc-dep-review.yml`](https://github.com/dryvist/ai-workflows) runs
+[`JacobPEvans/.github-ai` → `cc-dep-review.yml`](https://github.com/JacobPEvans/.github-ai) runs
 separately, under its own **AI Merge Gate**, on every Renovate/Dependabot PR. This is the inverse
 of the usual "skip dependency bots" rule. It is advisory only:
 
 - Claude reviews the diff and changelog with an injection-resistant prompt. The review is read-only and uses no secrets. Claude applies a low, medium, or high risk label.
-- The label informs human reviewers on majors and review PRs. It does not decide whether the minor/patch lane auto-merges, and it cannot override the deterministic Merge Gate.
+- The risk label adds context for review. It does not control auto-merge or replace the deterministic Merge Gate.
 - The Merge Gate and the AI Merge Gate are always two distinct required checks on public repos. The AI signal never substitutes for the deterministic one.
 
 ## Grouping and scheduling
@@ -151,13 +130,14 @@ comparing the locked revision against the published channel revision.
 The workflow never auto-merges a pull request in which a `nixpkgs*` input moved, since a channel jump
 rebuilds the world on a machine configuration. A third-party release bump of any other input still
 merges hands-off on green CI. A dryvist patch bump merges hands-off once the Merge Gate is green. A
-dryvist minor or major bump waits for a person.
+dryvist minor or major Nix lock bumps from release dispatch wait for a person; they are not Renovate
+update classes.
 
 ## Version pinning
 
 | Source | Pin |
 | --- | --- |
-| dryvist reusable workflows (GitHub Actions `uses:`) | Full 40-character commit SHA, with the release tag as a trailing comment: `uses: dryvist/<repo>/.github/workflows/<file>@<40-hex-sha> # vX.Y.Z` |
+| Central reusable workflows (GitHub Actions `uses:`) | Floating major tag: `JacobPEvans/.github/.github/workflows/<file>@v1` or `JacobPEvans/.github-ai/.github/workflows/<file>@v1` |
 | dryvist Nix flake inputs, Ansible git sources, Tofu module sources | Floating major tag: `github:dryvist/<repo>?ref=vN` (Tofu: `?ref=vN`; Ansible: `version: vN`). The lock file holds the exact revision |
 | Third-party GitHub Actions (trusted or untrusted) | Full commit SHA, with the released version tag as a trailing comment: `uses: actions/checkout@<sha> # v4.2.2` |
 
@@ -174,19 +154,20 @@ policy → scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self
 
 These rules cover dryvist-owned dependencies. Third-party dependencies keep the trust tiers defined earlier on this page.
 
-1. **GitHub Actions refs to dryvist repos** are pinned to a full 40-character commit SHA with the
-   release tag in a trailing comment: `uses: dryvist/<repo>/.github/workflows/<file>@<40-hex-sha> # vX.Y.Z`.
-   Never `@main`, `@develop`, or a bare `@vN`. Renovate moves the SHA and the comment together.
+1. **Central reusable workflow refs** use the floating major tag: `JacobPEvans/.github/.github/workflows/<file>@v1`
+   or `JacobPEvans/.github-ai/.github/workflows/<file>@v1`, without a trailing version comment.
+   Renovate keeps these refs on the major tag. Third-party action refs remain pinned to full commit SHAs.
 2. **Nix flake inputs, Ansible git sources, and Tofu module sources** that point at a dryvist repo use the
    floating major tag: `github:dryvist/<repo>?ref=vN` (Tofu: `?ref=vN`; Ansible: `version: vN`). The lock
    file (`flake.lock`, `.terraform.lock.hcl`, the resolved requirements) holds the exact revision. A bump
    is a pull request that changes the ref or relocks, so CI builds the new version.
 3. **Bumps are pull requests, never silent.** A bot opens one pull request per consumer that updates the
-   ref or SHA and the lock. A **patch** bump, including a digest-only bump, auto-merges after the Merge
-   Gate is green. **Minor and major** bumps never auto-merge; a person merges them. `nixpkgs*` moves never
-   auto-merge. Nothing tracks `main`, `develop`, or "latest" of a dryvist repo. First-party digest and pin
-   PRs carry no human-gate label: Renovate leaves them to the bot-PR auto-merge sweep, which merges each
-   once its head commit has soaked and checks are green. `needs-human` is not a label in the organization.
+   ref or SHA and the lock. Renovate updates follow the trust-tier policy above. Nix release-dispatch lock
+   PRs follow the separate gate described in [Nix flake locks](#nix-flake-locks-are-outside-renovate).
+   `nixpkgs*` moves never auto-merge. Nothing tracks `main`, `develop`, or "latest" of a dryvist repo.
+   First-party digest and pin PRs carry no human-gate label: Renovate leaves them to the bot-PR
+   auto-merge sweep, which merges each once its head commit has soaked and checks are green.
+   `needs-human` is not a label in the organization.
 4. **Release PRs (release-please) auto-merge** once their checks pass, in every repo the organization
    releases. git-flow repos (default branch `develop`) cut the release PR against `develop` and tag only when
    `develop` is promoted to `main`; nothing is merged back into `develop`. A repo behind the manual-review
@@ -202,14 +183,14 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
    minor, or major) from the release tags. Scheduled whole-lock relocks skip dryvist inputs.
 7. **Deploys build from a pinned lock.** Host builds use the wrapper repo's `flake.lock`, whose dryvist
    inputs use `?ref=vN`. Nothing deploys from `main`.
-8. **Enforcement.** zizmor treats `dryvist/*`, `JacobPEvans/*` and `JacobPEvans-personal/*` as `hash-pin`.
-   `scripts/ci-gate-uses-resolve.sh` (`PIN_POLICY_MODE`) and `scripts/flake-lock-fresh.sh` (`FLAKE_REF_POLICY`)
-   fail by default on refs that break rules 1 and 2; `warn` is still accepted. A flake ref may name a floating
-   major tag (`vN`) or an exact release tag (`vX.Y.Z`). The `uses:` scan covers alias, flow-style and quoted-key
-   entries in workflows and in every `action.yml`. A first-party `uses:` ref that isn't a 40-character commit SHA
-   fails `gate / Merge Gate`. Two exceptions sit outside the checks: the `.github` canary raw fetch at `main`, and
+8. **Enforcement.** zizmor allows first-party shared workflows to use floating major tags; third-party actions
+   remain hash-pinned. `scripts/ci-gate-uses-resolve.sh` (`PIN_POLICY_MODE`) and `scripts/flake-lock-fresh.sh`
+   (`FLAKE_REF_POLICY`) fail by default on refs that break rules 1 and 2; `warn` is still accepted. A flake ref
+   may name a floating major tag (`vN`) or an exact release tag (`vX.Y.Z`). The `uses:` scan covers alias,
+   flow-style and quoted-key entries in workflows and in every `action.yml`; shared workflow refs use `@v1`.
+   Two exceptions sit outside the checks: the `.github` canary raw fetch at `main`, and
    checkouts of repos a workflow writes to, such as docs repos and the model registry. Source:
-   [dryvist/.github#372](https://github.com/dryvist/.github/pull/372).
+   [JacobPEvans/.github#372](https://github.com/JacobPEvans/.github/pull/372).
 9. **Third-party dependencies are unchanged** by this policy.
 
 ## Where to go next
@@ -222,7 +203,7 @@ These rules cover dryvist-owned dependencies. Third-party dependencies keep the 
   Marketplace actions, release-please conventions, the scanner posture for dryvist self-references, the runner-label catalog.
 </Card>
 <Card
-  title="ai-workflows"
+  title="AI workflows"
   icon="robot"
   href="/automation/repos/ai-workflows">
   The reusable workflows behind the AI dependency reviewer and the App-token signing they use.

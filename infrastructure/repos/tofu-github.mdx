@@ -19,10 +19,14 @@ Team plan) let dryvist define this once and apply it to every repo automatically
 ## What it manages
 
 - **Push protection.** A hard ceiling on file size and a banned-extension list, enforced at the git layer (no workflow run) on every repo and ref.
-- **Branch protection.** Required commit signatures, a branch-name pattern, a strict Conventional
-  Commits regular expression, and PR thread resolution on every default branch, with no bypass for anyone,
-  including org admins.
-- **Upstream forks.** A fork of a third-party project sets `upstream_fork: true` in
+- **Branch protection.** The org branch-protection rules keep required signatures, branch-name
+  patterns, Conventional Commits rules, and no bypass. Org branch-protection and git-flow pull-request
+  rules no longer require review
+  threads to be resolved. See the [branch rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-branch-protection.tf)
+  and [git-flow rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-gitflow.tf).
+  The separate [docs-publisher ruleset](https://github.com/dryvist/tofu-github/blob/main/docs-publisher.tf)
+  for the public docs repo keeps its human-review requirement.
+- **Upstream forks.** Their rulesets are unchanged. A fork of a third-party project sets `upstream_fork: true` in
   `config/repos.yml`. Upstream history can't meet the signature and commit-format rules, so the
   fork is exempt from them. Its default branch still requires a PR, allows merge commits only, and
   blocks deletion and force-push.

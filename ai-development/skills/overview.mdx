@@ -14,7 +14,7 @@ carries the human-readable narrative for the load-bearing ones.
 Skills are the local-execution counterpart to the [cloud
 pipelines](/automation/cloud-pipelines/overview) and [scheduled
 routines](/automation/scheduled-routines/overview). When the cloud finishes the job, you do not
-run a skill. When the cloud opens a draft PR but cannot drive it all the way, you `/ship` it from a
+run a skill. When the cloud opens a ready PR labeled `human:review` but cannot drive it all the way, you `/ship` it from a
 session. That happens when a CodeQL alert needs human triage, review threads need negotiation, or a
 CI flake needs a retry strategy.
 

@@ -20,11 +20,37 @@ Claude Code plugin API.
 - Includes the `monitoring-first` procedure in `homelab-ops`, referenced by the shared rules layer
 - Separates **session continuity** (`goal`, `handoff`, `resume`, `wrap-up`) from git: those skills read a repository when one is present but never require it
 - Houses **skills** that progressively load only when their triggers fire, keeping token cost minimal when idle
-- Includes **ai-delegation** skills that route routine work to local/free models first and keep premium models focused on judgment
-- Includes the **ai-delegation** hooks module, which routes generic subagent spawns to the cheapest tier that fits
-  (Luna on Codex when `codex-quota` allows, otherwise Haiku, both at `xhigh` by default; Sonnet for planning and
-  Opus for architecture or security, never Codex; Codex is Luna only, at `high`, `xhigh` or `max`)
-  and answers the `bash -c` removal prompt with a judge model; any failure leaves the permission dialog
+- Provides a task-specific `/delegation-ladder` skill: code review uses Codex → ZCode → OpenCode Go → Haiku high;
+  public triage uses ZCode Flash → Codex → Haiku high; private work uses Codex → OpenCode Go → Haiku high.
+  It checks `codex-quota` for Codex eligibility and limits ZCode to approved public repositories
+  ([skill](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/skills/delegation-ladder/SKILL.md),
+  [plugin README](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/README.md))
+- The [`scripts/agent-route`](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/scripts/agent-route)
+  command accepts `<kind> [--zcode available|exhausted]` and prints the first eligible executor on one
+  line; a test output is `Codex` ([route test](https://github.com/dryvist/claude-code-plugins/blob/main/tests/jpe-ai-delegation/agent-route.bats#L26-L30)).
+  It reads Codex availability from `codex-quota`'s exit status unless
+  `AGENT_ROUTE_CODEX_QUOTA` overrides the check ([script](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/scripts/agent-route#L47-L57));
+  tests use that variable to select each state ([test](https://github.com/dryvist/claude-code-plugins/blob/main/tests/jpe-ai-delegation/agent-route.bats#L9-L17)).
+  With ZCode exhausted by default, `code-review`, `triage`, and `private` print
+  `Codex` when quota is available; when exhausted, they print `OpenCode Go`,
+  `Haiku high`, and `OpenCode Go`, respectively ([ladder](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/skills/delegation-ladder/ladder.json#L3-L25),
+  [route tests](https://github.com/dryvist/claude-code-plugins/blob/main/tests/jpe-ai-delegation/agent-route.bats#L20-L30)).
+  Passing `--zcode available` makes `code-review` choose ZCode after Codex
+  exhaustion and `triage` choose ZCode Flash before Codex; private work never
+  selects ZCode, and the command reads no ZCode quota signal ([script](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/scripts/agent-route#L17-L28),
+  [ladder](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/skills/delegation-ladder/ladder.json#L3-L25)).
+  The [ladder.json](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/skills/delegation-ladder/ladder.json)
+  file stores the three ladders; the [parity test](https://github.com/dryvist/claude-code-plugins/blob/main/tests/jpe-ai-delegation/delegation-ladder.bats#L9-L22)
+  checks their rung names against the [skill table](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/skills/delegation-ladder/SKILL.md#L16-L20).
+- Includes an automatic hook for Claude Code `Agent` calls. It checks that the Codex command-line tool starts and
+  `codex-quota` succeeds, tries Codex to classify routable calls when ready, and uses Haiku when Codex is
+  unavailable or returns no label. It sends non-isolated calls with a Codex route to Codex; other routable
+  calls continue through Claude with the selected class model and effort.
+  Roster spawns get a Codex attempt only when available and non-isolated; failed attempts pass through
+  ([quota check](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/hooks/register.ts#L8-L14),
+  [routing logic](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/hooks/register.ts#L72-L95))
+- Includes the `bash -c` removal permission judge; failures leave the permission dialog
+  ([hook](https://github.com/dryvist/claude-code-plugins/blob/main/jpe-ai-delegation/hooks/register.ts#L98-L105))
 - Houses **agents** with focused tool allowlists for delegated work (Explore, Plan, code-reviewer)
 - Houses **hooks** that enforce conventions automatically (style, permissions, no-skip patterns)
 - Composes with [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) for the rules layer

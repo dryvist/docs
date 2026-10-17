@@ -19,7 +19,7 @@ into the org and the routines pick it up on the next run.
 | Morning Briefing | Daily 5:00 AM | Read-only activity summary: new PR reviews, opened issues, CI failures, anything that needs attention |
 | The Sentinel | Daily 12:33 AM | Param/secret audit; picks one PR to review; flags operator-specific patterns |
 | The Custodian | Daily 2:00 AM | Weighted-random maintenance: stale branch cleanup, missing labels, repo health audit |
-| Issue Solver | Daily 7:00 AM + 7:00 PM | Picks one open issue, takes it from triage → draft PR in six phases |
+| Issue Solver | Daily 7:00 AM + 7:00 PM | Picks one open issue, takes it from triage → ready PR labeled `human:review` in six phases |
 | Daily Polish | Daily 11:00 PM | Deep-clean one repo per day: README gaps, missing `.gitignore`, CI config, test coverage |
 | Docs Sync | Daily 3:13 AM | Reads 48 hours of estate change; opens a public `docs` PR (scrubbed) and updates internal documentation |
 | Weekly Scorecard | Mondays 5:00 AM | Portfolio health scores: repo count, open-issue median, CI pass rate, test coverage % |
@@ -49,7 +49,7 @@ every commit.
 Best-effort CI polling at 30-second intervals up to 5 minutes. Records the final `ci_status` (passed / failed / pending / none).
 </Step>
 <Step title="Submit">
-Opens a **draft PR only**: never `--ready`, never auto-merge. If the issue is too complex, it comments on the issue explaining what was tried and gives up cleanly.
+Opens a **ready PR** labeled `human:review`; never enables auto-merge. If the issue is too complex, it comments on the issue explaining what was tried and gives up cleanly.
 </Step>
 </Steps>
 
@@ -92,7 +92,7 @@ When Anthropic fixes the OAuth token to carry org UUID, the workflow can be rest
 | Won't | Why |
 | --- | --- |
 | Merge any PR | Same merge prohibition as `/finalize-pr` |
-| Open non-draft PRs | Human review is always the gate |
+| Open PRs without `human:review` | The label marks the human-review gate |
 | Cross org boundaries | Owner derived from current config only |
 | Touch archived or fork repos | `gh search` filters them out |
 | Run during incidents | No event-driven escape hatch: wait for next cron tick |
@@ -101,7 +101,7 @@ When Anthropic fixes the OAuth token to carry org UUID, the workflow can be rest
 
 | If you want… | Use… |
 | --- | --- |
-| A PR draft within minutes of opening an issue | `ai-workflows/issue-resolver.yml` event-triggered caller |
+| A ready PR within minutes of opening an issue | `ai-workflows/issue-resolver.yml` event-triggered caller |
 | A daily sweep that catches issues the event flow missed | `claude-code-routines` Issue Solver |
 | To audit health across the whole org | `claude-code-routines` Sentinel + Weekly Scorecard |
 | To fix CI failure on a PR you're iterating on right now | `/ship` from a local Claude Code session |
