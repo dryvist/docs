@@ -1,6 +1,6 @@
 ---
 title: "Pre-commit architecture"
-description: "One canonical home per artifact. Hook definitions in dryvist/nix-devenv, shared lint configs in dryvist/.github, version pinning via flake.lock."
+description: "One canonical home per artifact. Hook definitions in dryvist/nix-devenv, shared lint configs in JacobPEvans/.github, version pinning via flake.lock."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -18,10 +18,10 @@ eliminates that duplication so a single source of truth drives every consumer.
 | Artifact | Canonical home | How consumers pull it |
 | --- | --- | --- |
 | Hook definitions (Nix path) | [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) `lib/pre-commit-hooks.nix` + `flake-modules/profiles/<name>.nix` | `imports = [ inputs.nix-devenv.flakeModules.<profile> ]` in the consumer's `flake.nix` |
-| Hook definitions (non-Nix path) | [`dryvist/.github`](https://github.com/dryvist/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh |
-| `.markdownlint-cli2.yaml` | `dryvist/.github` at the root | Same root location pre-dates the precommit layer; kept for the existing markdownlint workflow's benefit |
-| `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `dryvist/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold |
-| `zizmor.yml` workflow-security policy | `dryvist/.github` at the root | Passed as `--config` by the base profile's zizmor hook |
+| Hook definitions (non-Nix path) | [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh |
+| `.markdownlint-cli2.yaml` | `JacobPEvans/.github` at the root | Same root location pre-dates the precommit layer; kept for the existing markdownlint workflow's benefit |
+| `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `JacobPEvans/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold |
+| `zizmor.yml` workflow-security policy | `JacobPEvans/.github` at the root | Passed as `--config` by the base profile's zizmor hook |
 
 ## Six profiles
 
@@ -76,19 +76,19 @@ pre-commit install
 
 ## Consumer pattern: non-Nix path
 
-`vN` below stands for the current major tag of `dryvist/.github`.
+`vN` below stands for the current major tag of `JacobPEvans/.github`.
 
 ```bash
 # Pick the matching profile template
-gh api "repos/dryvist/.github/contents/precommit/templates/terraform.yaml?ref=vN" \
+gh api "repos/JacobPEvans/.github/contents/precommit/templates/terraform.yaml?ref=vN" \
   -H "Accept: application/vnd.github.raw" > .pre-commit-config.yaml
 
 # Materialise the configs the hooks need
-gh api "repos/dryvist/.github/contents/precommit/configs/tflint.hcl?ref=vN" \
+gh api "repos/JacobPEvans/.github/contents/precommit/configs/tflint.hcl?ref=vN" \
   -H "Accept: application/vnd.github.raw" > .tflint.hcl
-gh api "repos/dryvist/.github/contents/.markdownlint-cli2.yaml?ref=vN" \
+gh api "repos/JacobPEvans/.github/contents/.markdownlint-cli2.yaml?ref=vN" \
   -H "Accept: application/vnd.github.raw" > .markdownlint-cli2.yaml
-gh api "repos/dryvist/.github/contents/zizmor.yml?ref=vN" \
+gh api "repos/JacobPEvans/.github/contents/zizmor.yml?ref=vN" \
   -H "Accept: application/vnd.github.raw" > zizmor.yml
 
 pre-commit install
@@ -119,7 +119,7 @@ The architecture explicitly does NOT centralise everything. Hooks with low cover
   then each consumer pulls it in when the next `nix-devenv` release is relocked.
 - Don't duplicate shared lint config files (`.markdownlint`, `.tflint.hcl`, `.ansible-lint`,
   `.yamllint`). Pull them via the Nix path (`fetch-shared-configs`) or copy at scaffold from
-  `dryvist/.github` (non-Nix path).
+  `JacobPEvans/.github` (non-Nix path).
 - A clean migration PR adds `flake.nix` + `flake.lock`, modifies `.envrc`, deletes `.pre-commit-config.yaml`, and deletes the duplicated lint config files that the canonical now covers.
 
 For AI agents, these decisions are recorded in the on-demand [`pre-commit-architecture`
@@ -142,7 +142,7 @@ scaffolds hooks.
 ## References
 
 - [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv): Nix-path canonical
-- [`dryvist/.github` `precommit/README.md`](https://github.com/dryvist/.github/blob/main/precommit/README.md): non-Nix-path canonical + architecture rationale
+- [`JacobPEvans/.github` `precommit/README.md`](https://github.com/JacobPEvans/.github/blob/main/precommit/README.md): non-Nix-path canonical + architecture rationale
 - [`dryvist/claude-code-plugins` `pre-commit-architecture`
   skill](https://github.com/dryvist/claude-code-plugins/blob/main/git-workflows/skills/pre-commit-architecture/SKILL.md):
   on-demand rule for AI agents

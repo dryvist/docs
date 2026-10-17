@@ -59,9 +59,10 @@ it. If a correction is needed, create a new release.
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
-- Reusable workflows are homed in [`dryvist/.github`](https://github.com/dryvist/.github) (the
-  canonical org home). See [Reusable workflow ownership](#reusable-workflow-ownership) for the few
-  still being relocated
+- Generic CI, release, lint, and Renovate presets live in
+  [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github); AI review and agent workflows
+  live in [`JacobPEvans/.github-ai`](https://github.com/JacobPEvans/.github-ai). See
+  [Reusable workflow ownership](#reusable-workflow-ownership).
 
 Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
 
@@ -73,13 +74,14 @@ sources.
 
 ### Scanner posture for self-references
 
-Dryvist references are pinned, not floating. `uses:` refs to `dryvist/*` are full commit SHAs with the
-release tag as a trailing comment. Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`),
-and the lock file holds the exact revision. The org scanners enforce that shape:
+Shared reusable workflows in `JacobPEvans/.github` and `JacobPEvans/.github-ai` use the floating
+`@v1` tag, without a trailing version comment. Nix, Ansible, and Tofu sources use a floating major tag
+(`?ref=vN`), and the lock file holds the exact revision. Third-party actions stay pinned to full commit SHAs.
+The org scanners enforce that shape:
 
-- **Renovate.** Moves each `dryvist/*` action SHA and its version comment together.
-- **zizmor.** Treats `dryvist/*`, `JacobPEvans/*` and `JacobPEvans-personal/*` as `hash-pin`.
-- **Merge Gate.** Fails a first-party `uses:` ref that isn't a 40-character commit SHA. The full rule is
+- **Renovate.** Keeps shared workflow refs on the `@v1` major tag.
+- **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
+- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable. The full rule is
   [dependency automation, rule 8](/infrastructure/cicd/dependency-automation).
 - **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
   avoid the paid Code Security charge), managed as IaC in
@@ -88,8 +90,8 @@ and the lock file holds the exact revision. The org scanners enforce that shape:
 - **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning.
 
 Trusted and untrusted third-party actions are unaffected and stay SHA-pinned, each with its
-released version tag as a trailing comment. The full per-scanner posture lives in [`dryvist/.github`
-→ SECURITY.md](https://github.com/dryvist/.github/blob/main/SECURITY.md).
+released version tag as a trailing comment. The full per-scanner posture lives in [`JacobPEvans/.github`
+→ SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md).
 
 ## Reusable workflow ownership
 
@@ -98,15 +100,15 @@ allows no variables there, and it does not follow repository move or rename redi
 references. So when a shared-CI repository changes ownership, every consumer must update its
 `uses:` reference at the same time.
 
-**dryvist is the canonical home for everything dryvist uses.** `JacobPEvans-personal/*` may depend
-on `dryvist/*`, never the reverse. Reference each workflow by its literal current owner below until
-a pending relocation lands:
+Shared workflows live in two public repositories. Generic CI, release, lint, and Renovate presets
+are in `JacobPEvans/.github`; AI review and agent workflows are in `JacobPEvans/.github-ai`.
+Callers use the literal owner and repository because GitHub does not redirect reusable workflow calls
+after a repository move or rename:
 
 | Workflow set | Current home | Status |
 | --- | --- | --- |
-| `ai-workflows` reusable workflows | `dryvist/ai-workflows` | canonical |
-| Nix + release-please reusable workflows | `dryvist/.github` | canonical |
-| Other shared `.github` workflows (`_markdown-lint`, `_ci-gate`, …) | `JacobPEvans-personal/.github` | pending relocation to `dryvist/.github` |
+| Generic CI, release, lint, and Renovate presets | `JacobPEvans/.github` | canonical |
+| AI review and agent workflows | `JacobPEvans/.github-ai` | canonical |
 
 ## Runner choice
 
@@ -139,7 +141,7 @@ live in
 
 ### Ansible checks
 
-Every Ansible repository calls `dryvist/.github` for lint, change detection, and Molecule selection.
+Every Ansible repository calls `JacobPEvans/.github` for lint, change detection, and Molecule selection.
 Pull requests into `develop` and `main` run lint, syntax, and repository contract checks, plus Molecule
 scenarios mapped to changed paths. Non-main branch pushes use the same focused selection. Declared
 full-matrix paths defer Molecule to the post-merge push to `main`; only that push runs the full matrix
@@ -156,7 +158,7 @@ measuring peak CPU and memory use.
 
 ### Shared CI gate
 
-The shared `_ci-gate.yml` workflow in `dryvist/.github` applies the rules below to every caller.
+The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules below to every caller.
 
 - **Fork pull requests.** Every caller-selected `runs-on` and `runner_label` in `_ci-gate.yml` and `_ansible-ci.yml`
   resolves to `ubuntu-24.04` when the event payload carries a pull request from another repository. That includes

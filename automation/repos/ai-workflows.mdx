@@ -6,7 +6,7 @@ page_type: "explanation"
 {/* projected from the authoring site; do not edit here */}
 > One repo of reusable workflows. Consumer repos write thin callers, choose Claude or Codex once, and receive workflow updates through reviewed pull requests.
 
-[`dryvist/ai-workflows`](https://github.com/dryvist/ai-workflows) ships reusable GitHub Actions workflows (`on: workflow_call:`). The workflow
+[`JacobPEvans/.github-ai`](https://github.com/JacobPEvans/.github-ai) ships reusable GitHub Actions workflows (`on: workflow_call:`). The workflow
 orchestration, provider routing, and rate guards live there. Prompt text comes from the pinned
 [Prompt catalog](/automation/repos/ai-llm-prompts). Consumers declare triggers and permissions.
 
@@ -29,9 +29,9 @@ Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
 path until cutover; ci-resolver replaces them,
 and those workflows retire after cutover.
 
-**MERGED in git; NOT DEPLOYED:** [PR #465](https://github.com/dryvist/ai-workflows/pull/465)
+**MERGED in git; NOT DEPLOYED:** [PR #465](https://github.com/JacobPEvans/.github-ai/pull/465)
 (commit `95448fa`) gives the post-merge docs review a shared reusable-workflow
-alias. [PR #463](https://github.com/dryvist/ai-workflows/pull/463) fixes the
+alias. [PR #463](https://github.com/JacobPEvans/.github-ai/pull/463) fixes the
 scheduler actor.
 
 ## Scheduled workflows
@@ -62,13 +62,13 @@ permissions:
   issues: write
 jobs:
   run:
-    uses: dryvist/ai-workflows/.github/workflows/issue-triage.yml@<40-hex-sha> # vX.Y.Z
+    uses: JacobPEvans/.github-ai/.github/workflows/issue-triage.yml@v1
     secrets: inherit
 ```
 
 Permission shape varies per workflow. `issue-resolver` needs `pull-requests: write`, `ci-fix` needs
 `actions: read`, and `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller
-templates](https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md) list the exact
+templates](https://github.com/JacobPEvans/.github-ai/blob/main/docs/GETTING_STARTED.md) list the exact
 permission block for each.
 
 ## How prompts are loaded
@@ -80,11 +80,8 @@ triggers, permissions, publishing, and provider configuration.
 ## Versioning
 
 Per [Dependency automation](/infrastructure/cicd/dependency-automation#version-pinning),
-callers pin `ai-workflows`, and every `dryvist/*` reusable workflow, to a full commit SHA with the
-release tag as a trailing comment: `uses: dryvist/ai-workflows/.github/workflows/<file>@<40-hex-sha> # vX.Y.Z`.
-Renovate moves the SHA and the comment together, in one pull request per consumer repo. A patch bump
-auto-merges once the Merge Gate is green. Minor and major bumps wait for a person. See [scanner
-posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
+callers use the floating major tag: `uses: JacobPEvans/.github-ai/.github/workflows/<file>@v1`, without
+a trailing version comment. Renovate keeps the ref on that major tag. See [scanner posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
 
 ## Authentication
 
@@ -115,7 +112,7 @@ repository, or environment level to switch every inherited workflow.
 > it is purpose-built for programmatic access with no ToS concerns.
 
 GitHub Agentic Workflows are retired. The catalog keeps one dormant reference template, but no active repository compiles or runs GH-AW Markdown.
-Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md).
+Provider details and model configuration live in [AUTHENTICATION.md](https://github.com/JacobPEvans/.github-ai/blob/main/docs/AUTHENTICATION.md).
 
 ## Security boundary
 
@@ -134,19 +131,19 @@ The workflows also read `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_I
 <Card
   title="Getting started"
   icon="rocket"
-  href="https://github.com/dryvist/ai-workflows/blob/main/docs/GETTING_STARTED.md">
+  href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/GETTING_STARTED.md">
   Caller templates for every workflow, with the correct permission blocks.
 </Card>
 <Card
   title="Patterns"
   icon="puzzle-piece"
-  href="https://github.com/dryvist/ai-workflows/blob/main/docs/PATTERNS.md">
+  href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/PATTERNS.md">
   The post-merge dispatch pattern, bot guards, and other recurring shapes.
 </Card>
 <Card
   title="Authentication"
   icon="key"
-  href="https://github.com/dryvist/ai-workflows/blob/main/docs/AUTHENTICATION.md">
+  href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/AUTHENTICATION.md">
   Full `GH_ACTION_AI_*` reference, provider routing, and model variables.
 </Card>
 <Card
@@ -158,7 +155,7 @@ The workflows also read `GH_APP_CLAUDE_BOT_PRIVATE_KEY` and `GH_APP_CLAUDE_BOT_I
 <Card
   title="Verification"
   icon="check-double"
-  href="https://github.com/dryvist/ai-workflows/blob/main/docs/VERIFICATION.md">
+  href="https://github.com/JacobPEvans/.github-ai/blob/main/docs/VERIFICATION.md">
   The e2e runbook for checking a freshly-wired repo end to end.
 </Card>
 <Card
