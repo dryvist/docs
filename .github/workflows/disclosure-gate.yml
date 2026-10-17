@@ -1,8 +1,8 @@
 ---
-# Disclosure Gate — thin wrapper over the dryvist org reusable workflow
+# Disclosure Gate — thin wrapper over the central reusable workflow
 #
 # Delegates the gitleaks and disclosure-denylist checks to
-# `JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@<40-hex commit SHA> # vX.Y.Z`.
+# `JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@v1`.
 
 name: Disclosure Gate
 
