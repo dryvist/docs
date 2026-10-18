@@ -1,7 +1,7 @@
 # CI Gate — thin wrapper over the central reusable workflow
 #
 # Delegates the standard checks to the central orchestrator
-# `JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1`; its `Merge Gate`
+# `JacobPEvans/.github/.github/workflows/_ci-gate.yml@b6c7d9be8f93af36e215831b2d28a60e13ab2227 # v1.23.3`; its `Merge Gate`
 # summary job always reports, making it safe to require in rulesets.
 
 name: CI Gate
@@ -30,7 +30,7 @@ jobs:
       # so `actions: write` must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@v1
+    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@b6c7d9be8f93af36e215831b2d28a60e13ab2227 # v1.23.3
     with:
       osv_scan: true
       markdown_lint: false
