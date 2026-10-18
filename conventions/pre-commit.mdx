@@ -96,10 +96,8 @@ pre-commit install
 
 ## Why one canonical home per artifact
 
-- **Single update propagates everywhere.** When `nix-devenv` releases, the relock workflow in each
-  consumer moves it as a pull request, and every hook moves with it. No per-repo `rev:` bumps.
-  (Non-Nix consumers instead get Renovate `rev:` bumps for third-party hooks, scheduled and
-  auto-merged by trust tier; see [Dependency automation](/infrastructure/cicd/dependency-automation).)
+- **Renovate manages dependency updates.** See [Dependency automation](/infrastructure/cicd/dependency-automation)
+  for the shared schedule and flake-lock policy.
 - **Drift dies.** Before consolidation the inventory found `pre-commit-terraform` pinned at six different revs across the workspace and `markdownlint-cli` at four. Canonical pinning eliminates that.
 - **New repo onboarding is one line.** `nix flake init -t "github:dryvist/nix-devenv?ref=vN#with-hooks"` plus picking a profile, no copy-paste of 30 lines of YAML.
 
@@ -115,8 +113,7 @@ The architecture explicitly does NOT centralise everything. Hooks with low cover
 ## Rules
 
 - Don't add hook definitions to a consumer-repo `.pre-commit-config.yaml`. If the canonical profile
-  doesn't cover something, add it to `nix-devenv`'s base profile or the matching language profile,
-  then each consumer pulls it in when the next `nix-devenv` release is relocked.
+  doesn't cover something, add it to `nix-devenv`'s base profile or the matching language profile.
 - Don't duplicate shared lint config files (`.markdownlint`, `.tflint.hcl`, `.ansible-lint`,
   `.yamllint`). Pull them via the Nix path (`fetch-shared-configs`) or copy at scaffold from
   `JacobPEvans/.github` (non-Nix path).
