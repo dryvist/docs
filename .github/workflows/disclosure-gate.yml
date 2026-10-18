@@ -2,7 +2,7 @@
 # Disclosure Gate — thin wrapper over the central reusable workflow
 #
 # Delegates the gitleaks and disclosure-denylist checks to
-# `JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@v1`.
+# `JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@b6c7d9be8f93af36e215831b2d28a60e13ab2227 # v1.23.3`.
 
 name: Disclosure Gate
 
@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@v1
+    uses: JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@b6c7d9be8f93af36e215831b2d28a60e13ab2227 # v1.23.3
     secrets:
       GITLEAKS_PRIVATE_CONFIG: ${{ secrets.GITLEAKS_PRIVATE_CONFIG }}
       GITLEAKS_LICENSE_KEY: ${{ secrets.GITLEAKS_LICENSE_KEY }}
