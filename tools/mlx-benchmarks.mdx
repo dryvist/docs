@@ -38,6 +38,20 @@ headroom and repeat short suites.
 - Deploys a [Gradio viewer](https://huggingface.co/spaces/JacobPEvans/mlx-benchmarks-viewer) to HF Spaces on a `main` push that touches `space/`,
   the dataset card, the run index or the dataset code, and daily at 05:43 UTC.
 
+## Dataset and viewer performance
+
+The viewer caches its dataset snapshot for 600 seconds. After expiry, it
+serves the current frame while a background refresh runs. The targets are to
+show data within 30 seconds on a cold page load and complete mode changes
+within 5 seconds. Interactions stay responsive after the TTL. The dated
+browser sample showed page-to-data times from 1.5 to 3.2 seconds. Its first
+mode change took 2.9 seconds; the next took 0.3 seconds. After a 660-second
+wait, three sessions switched modes in 5.0, 4.8, and 4.8 seconds. The full
+endpoint measurements, data checks, and repeatable commands live in the
+[viewer README](https://github.com/JacobPEvans/mlx-benchmarks/blob/main/space/README.md#performance-and-remeasurement).
+The current-code Space wake or restart and a full-history load through the
+`datasets` library remain unmeasured.
+
 ## How it fits
 
 {/*Shape: linear chain. nix-ai feeds inference; this repo is the envelope/publisher; HF stores and visualizes.*/}
