@@ -26,7 +26,7 @@ reads the same rules.
 
 | Layer | Repo / tool | What it owns |
 | --- | --- | --- |
-| **Universal config** | [Assistant rules](/ai-development/ai-assistant-instructions) | `CLAUDE.md`, `AGENTS.md`, rules, permissions, workflows: read by every AI tool |
+| **Universal config** | [Shared instructions](/automation/repos/ai-llm-prompts) | Shared rules for every AI tool |
 | **Hosted models** | Claude Code, Antigravity (`agy`), GitHub Copilot | The IDEs and CLIs that do the work |
 | **Local inference** | MLX | Apple Silicon-native model inference for typo fixes, quick edits, no cloud tokens |
 | **Extensions** | [Claude Code plugins](/ai-development/claude-code-plugins), `claude-code-routines`, `ai-workflows`, `raycast-smart-issue` | Commands, scheduled agents, Copilot workflows, Raycast UI on top of MLX |
@@ -43,10 +43,9 @@ made and governed. One endpoint sits in front of every backend, and callers ask
 for a role instead of a model name. It also covers the difference between a
 spend control that is enforced and one that is merely advised.
 
-Routing rules live in `~/CLAUDE.md` and `AGENTS.md`, sourced from
-[ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions). See [Repo
-boundaries](/ai-development/repo-boundaries) for how rules, plugins, and docs are split across
-three repositories.
+Shared routing rules live in the instructions catalog and arrive through its
+`instructions` flake package. See [Repo boundaries](/ai-development/repo-boundaries)
+for how instructions, plugins, and docs are split across repositories.
 
 ## Repos in this section
 
@@ -58,10 +57,10 @@ three repositories.
   How rules, plugins, and docs are split across three repositories.
 </Card>
 <Card
-  title="ai-assistant-instructions"
+  title="Shared instructions"
   icon="book"
-  href="/ai-development/ai-assistant-instructions">
-  Universal AI configuration layer. Rules, permissions, workflows, agents. Loaded by every AI tool.
+  href="/automation/repos/ai-llm-prompts">
+  The shared instruction source used by every AI tool.
 </Card>
 <Card
   title="claude-code-plugins"

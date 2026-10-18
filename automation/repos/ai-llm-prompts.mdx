@@ -14,14 +14,28 @@ Consumers reference the floating major tag (`?ref=vN`); their flake lock holds t
 
 | Directory | Prompt surface |
 | --- | --- |
-| `auto-ai-agent/` | Continuous local-agent behavior, curricula, and scheduled jobs |
+| `auto-ai-agent/` | Shared instructions, continuous local-agent behavior, curricula, and scheduled jobs |
 | `automation/` | Repository automation, cloud workflows, and routine prompts |
 | `applications/` | Application-facing system and user prompts |
 | `developer-tools/` | Model-visible hook, guard, and development-workflow prompts |
 
-The `auto-ai-agent/claude-code/` subtree holds the Claude Code subagent roster (`agents/haiku-xhigh.md`, `agents/opus-medium.md`) and the
-always-loaded `rules/brief-delegates.md` rule. The `nix-ai` flake module delivers both into Claude Code's home directory. Agents name a
-model family alias (`haiku`, `opus`), never a version.
+The shared instruction tree (`AGENTS.md`, `CLAUDE.md`, and `agentsmd/**`) lives
+in `auto-ai-agent/instructions/` with OKF metadata. The flake package named
+`instructions` strips OKF keys and keeps tool-native keys.
+
+The `auto-ai-agent/claude-code/` subtree has one model-neutral `executor`
+agent definition. It replaces the previous model-specific agent definitions.
+The default subagent model environment setting remains Haiku by operator
+choice. It applies only to spawns the router does not reroute. [Model routing](/ai-development/model-routing)
+documents the current delegation policy.
+
+Public rules name integration roles, such as incident tracker, task tracker,
+private docs site, secret store, credential delivery, and notification target.
+The catalog's [example role map](https://github.com/dryvist/ai-llm-prompts/blob/main/agentsmd/docs/tool-role-map.example.md)
+pairs those roles with sample products.
+
+Instruction-behavior changes ship through `feat:` or `fix:` commits. A `docs:`
+commit updates documentation and does not release a package.
 
 ## Autonomous-agent prompt limits
 

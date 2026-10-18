@@ -38,7 +38,7 @@ reusable packaging public and environment topology private.
 
 | Feeds into | Consumes |
 | --- | --- |
-| [macOS host](/nix/nix-darwin) overlay, [User environment](/nix/nix-home) packages, ad-hoc `nix shell` | [ai-assistant-instructions](/ai-development/ai-assistant-instructions) rule set |
+| [macOS host](/nix/nix-darwin) overlay, [User environment](/nix/nix-home) packages, ad-hoc `nix shell` | The `instructions` flake package from [ai-llm-prompts](/automation/repos/ai-llm-prompts) |
 
 <RepoFit>
 Anything that counts as an AI tool needed everywhere belongs here. Single-project AI experiments go in a project-local `nix-devenv`-style flake.
@@ -138,10 +138,10 @@ Set `userConfig.user.fullName` and any `homelab.*` / `telemetry.*` options in yo
 
 <CardGroup cols={2}>
 <Card
-  title="ai-assistant-instructions"
+  title="Shared instructions"
   icon="book"
   href="/ai-development/ai-assistant-instructions">
-  The rules layer. nix-ai packages the tools; this configures them.
+  The shared instruction source used by the packaged AI tools.
 </Card>
 <Card
   title="claude-code-plugins"

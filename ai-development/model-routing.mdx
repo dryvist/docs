@@ -69,10 +69,14 @@ the worst moment. An alias moves once, centrally.
 This extends to documentation. **A page that lists model names is wrong the
 moment the list changes**, and it is wrong silently. The right pattern is a
 single machine-readable registry that the routing config is generated from.
-Docs should point at it, or at the endpoint's own live model listing, instead of
-restating it. That is why this page names no models.
+Docs should point at it, or at the endpoint's own live model listing, instead
+of restating it. The public projection follows that rule.
 
 ## Delegation across capable tiers
+
+The shared endpoint selects a backend for a model call. The session policy
+below selects which executor handles a task.
+
 
 Once every agent can reach a shared endpoint, an agent no longer has to do all
 its own thinking on its own subscription. It can hand a bounded subtask to a

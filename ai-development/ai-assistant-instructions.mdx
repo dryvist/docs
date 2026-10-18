@@ -1,49 +1,29 @@
 ---
 title: "Assistant rules"
-description: "Vendor-agnostic framework for AI coding workflows. One set of rules, every AI tool reads them: Claude, Antigravity, Copilot, Codex."
+description: "Pointer to the shared vendor-agnostic instruction catalog and its tool-neutral rules."
 page_type: "repo"
 ---
 {/* projected from the authoring site; do not edit here */}
 import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
-> Configure once, every model behaves the same way.
+> Shared instructions for every agent tool.
 
-<RepoMeta language="Shell" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ai-assistant-instructions" />
+<RepoMeta language="Shell" status="active" repoUrl="https://github.com/dryvist/ai-assistant-instructions" />
 
-`ai-assistant-instructions` is the rules and conventions layer for every AI coding tool in the
-portfolio. The same files (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, etc.) are sourced from this
-repo so Claude Code, the Antigravity (`agy`) command-line tool, GitHub Copilot, and Codex all behave consistently.
+`ai-assistant-instructions` is the former rules repository. It now points to
+the shared instruction tree in
+[`ai-llm-prompts/auto-ai-agent/instructions/`](https://github.com/dryvist/ai-llm-prompts/tree/main/auto-ai-agent/instructions/).
+The catalog is the current source for shared agent instructions.
 
 ## What it does
 
-- Defines the canonical `CLAUDE.md` and `AGENTS.md` files used by every project
-- Sets the **autonomous orchestration defaults**: proceed on low-risk ambiguity, delegate context-heavy work, verify the
-  result, and keep user output compact
-- Owns the **model-routing policy**: when to reach for Claude vs Gemini vs Copilot vs local MLX
-- Owns the **tool-use rules**: Read over `cat`, Edit over `sed`, Bash for shell-only
-- Owns the git-flow branching/merge model and `git-flow-next` tool usage:
-  [`agentsmd/rules/on-demand/git-flow.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/git-flow.md);
-  the human-readable version lives in [Branch conventions](/conventions/branch-conventions) and
-  [PR conventions](/conventions/pr-conventions)
-- Owns AI-runtime concerns: skill execution semantics, subagent typing, LiteLLM-routing details
-- Provides the canonical rule source that generated command-line contexts and agent prompt bundles reuse
-- Owns the **autonomy-resilience rules** hardened after the 2026-07 overnight runs:
-  [`agentsmd/rules/on-demand/subagent-resilience.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/subagent-resilience.md)
-  (probe before fan-out, bounded concurrency, mandatory solo fallback),
-  [`agentsmd/rules/on-demand/loop-cadence.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/loop-cadence.md)
-  (every recurring loop gates itself on a durable min-interval marker), and
-  [`agentsmd/rules/on-demand/delegation-trust.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/delegation-trust.md)
-  (a denial binds to the action, not the requester; no permission laundering across agent hops)
-- Owns the **shared behavioral base (soul)** for every agent surface:
-  [`agentsmd/rules/soul.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/soul.md)
-  (ground truth before claims, verify before done, reversibility gates autonomy). Its
-  copy-paste rendering for non-Claude agents lives in `ai-llm-prompts`:
-  [`auto-ai-agent/autonomous-base.md`](https://github.com/dryvist/ai-llm-prompts/blob/main/auto-ai-agent/autonomous-base.md)
-- Defines autonomous-agent context budgets in
-  [`cost-aware-authoring.md`](https://github.com/dryvist/ai-assistant-instructions/blob/main/agentsmd/rules/on-demand/cost-aware-authoring.md):
-  use the serving tokenizer, consider every context lever, and never raise a
-  budget to fit the prompt
-- Symlinks the canonical files into every consuming repo via Nix or a `direnv` hook
+- The catalog owns shared `AGENTS.md`, `CLAUDE.md`, and `agentsmd/**` files.
+- Those files define cross-tool behavior, tool use, and on-demand rules.
+- The `instructions` flake package delivers the tree. See the
+  [catalog page](/automation/repos/ai-llm-prompts) for its render contract.
+- The catalog also contains a copy-paste rendering of the shared behavioral
+  base for non-Claude agents.
+- The former repository remains a pointer until the operator archives it through GitHub's administrator workflow.
 
 
 Cross-repo writing standards that humans also need to read live on this docs site. They
@@ -96,12 +76,8 @@ conventions, and tool guidance all belong in `AGENTS.md` (or files it `@imports`
 The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific
 files: each is a thin import of `AGENTS.md`.
 
-**The one exception is `ai-assistant-instructions` itself.** Its `AGENTS.md` is already
-auto-loaded globally on Nix-managed machines (the home-level `~/CLAUDE.md` imports it). A
-project-level `@AGENTS.md` import there would load the identical bytes twice in every
-session. That repo's `CLAUDE.md` is a stub explaining exactly this. Its auto-loaded rules
-likewise come from the global `~/.claude/rules` wiring rather than a per-repo
-`.claude/rules` symlink.
+There is no source-repository exception. The former `ai-assistant-instructions`
+repository now holds a pointer; it no longer owns the shared instruction files.
 
 ### How to migrate a repo
 
@@ -124,27 +100,25 @@ likewise come from the global `~/.claude/rules` wiring rather than a per-repo
 
 ## How it fits
 
-| Read by | Consumed by |
-| --- | --- |
-| Claude Code, Antigravity (`agy`), GitHub Copilot, Codex | [Claude Code plugins](/ai-development/claude-code-plugins) |
+Configured AI tools read the files rendered by the `instructions` flake
+package. See the [catalog page](/automation/repos/ai-llm-prompts) for its
+delivery contract.
 
 <RepoFit>
-The "rules of engagement." Every AI workflow elsewhere in the portfolio assumes this repo's content is in scope.
+This repository points to the shared instructions in the prompt catalog. The current rules live in that bundle.
 </RepoFit>
 
 ## Getting started
 
 <Steps>
-<Step title="Clone or symlink">
-`git clone https://github.com/dryvist/ai-assistant-instructions ~/.ai-assistant-instructions`
-and symlink the project files into the relevant repo, or import via the Nix module the README
-points to.
+<Step title="Use the shared bundle">
+Read the current files in
+[`auto-ai-agent/instructions/`](https://github.com/dryvist/ai-llm-prompts/tree/main/auto-ai-agent/instructions/).
+The `instructions` flake package renders the files for each tool.
 </Step>
-<Step title="Pick a profile">
-Profiles cover personal, work, and learning contexts. The README enumerates which rules each one activates.
-</Step>
-<Step title="Update from upstream regularly">
-The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](https://github.com/dryvist/claude-code-routines).
+<Step title="Follow catalog releases">
+The [catalog page](/automation/repos/ai-llm-prompts) explains how
+consumers pin the shared instruction package.
 </Step>
 </Steps>
 
@@ -176,9 +150,9 @@ The rules evolve. Pull weekly or set up a routine in [`claude-code-routines`](ht
   How rules + tools + automation become an actual development loop.
 </Card>
 <Card
-  title="Source on GitHub"
+  title="Current instruction source"
   icon="github"
-  href="https://github.com/dryvist/ai-assistant-instructions">
-  Rules, profiles, full README.
+  href="https://github.com/dryvist/ai-llm-prompts/tree/main/auto-ai-agent/instructions">
+  Shared agent instructions and on-demand rules.
 </Card>
 </CardGroup>
