@@ -1,6 +1,6 @@
 ---
 title: "Pull request conventions"
-description: "PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge into develop (or main on trunk-flow repos); merge-commit only for develop → main promotion."
+description: "PR title = the squash commit subject. Body leads with the why, ends with the test plan. Squash-merge into develop (enforced); merge-commit only into main on git-flow repos (enforced); any method on trunk-flow repos."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -46,14 +46,16 @@ Lead with the *why*. The diff already shows the *what*. PR descriptions that jus
 - **Squash-merge is the default.** One PR = one commit on `main`. The PR title becomes the commit
   subject; the PR description becomes the commit body. `release-please` walks this linear history to
   compute version bumps.
-- **No merge commits** on `main`. The Settings → "Allow merge commits" toggle stays off.
-- **Rebase-merge is allowed** for stacked PRs where each constituent commit is itself a clean conventional-commit and worth preserving separately. Rare. Default to squash.
+- **Any merge method is allowed.** Squash is the default; merge and rebase are fine when the
+  history is worth keeping. The merge button pre-fills the PR title as the subject, so it already
+  passes the commit-message rule.
 - **No force-push to `main`.** Force-push to your own feature branch is fine while the PR is open.
 
 ### git-flow repos (has `develop`)
 
-- **PRs target `develop` by default.** Squash-merge is the default there too: one PR, one commit on `develop`. Use a merge commit into `develop` only for stacked work.
-- **`develop` → `main` promotion is merge-commit only.** Squash and rebase into `main` are banned,
+- **PRs target `develop` by default.** Squash is the only method on `develop`, enforced by a ruleset:
+  one PR, one commit on `develop`.
+- **`develop` → `main` promotion is merge-commit only, enforced by a ruleset.** Squash and rebase into `main` are banned,
   no exceptions. The `release-please` release PR is not a `main` PR: it targets `develop`, squash-merges there,
   and the promotion carries it to `main`.
 - **`hotfix/*` is the one exception to PR targeting.** It branches from `main`, its PR targets

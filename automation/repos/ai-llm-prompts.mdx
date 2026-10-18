@@ -45,12 +45,8 @@ inputs.ai-llm-prompts.url = "github:dryvist/ai-llm-prompts?ref=vN";
 ```
 
 The flake lock records the exact release commit. Release tags are immutable.
-These release-tag consumer updates use a separate flow from Renovate; see the
-[release-dispatch policy](/infrastructure/cicd/dependency-automation#nix-flake-locks-are-outside-renovate).
-A bot opens one pull request per consumer when a release lands. Patch bumps
-auto-merge after the Merge Gate passes. Minor and major bumps wait for a person.
-AI agents may prepare compatible patch or minor changes. Major and breaking
-releases remain human-only decisions.
+See [Dependency automation](/infrastructure/cicd/dependency-automation#nix-flake-locks)
+for the shared lock-update policy.
 
 ## GitHub Agentic Workflows status
 

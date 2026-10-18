@@ -59,30 +59,26 @@ it. If a correction is needed, create a new release.
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
-- Generic CI, release, lint, and Renovate presets live in
-  [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github); AI review and agent workflows
-  live in [`JacobPEvans/.github-ai`](https://github.com/JacobPEvans/.github-ai). See
-  [Reusable workflow ownership](#reusable-workflow-ownership).
+- See [Reusable workflow ownership](#reusable-workflow-ownership) for the shared source.
 
 Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
 
 ## Dependency versioning
 
-See [Dependency automation](/infrastructure/cicd/dependency-automation) for the full trust-tier,
-scheduling, automerge, and version-pinning policy, including the pin form for dryvist and third-party
-sources.
+See [Dependency automation](/infrastructure/cicd/dependency-automation) for the shared Renovate
+source, update schedule, grouping, security alerts, and flake-lock policy.
 
 ### Scanner posture for self-references
 
-Shared reusable workflows in `JacobPEvans/.github` and `JacobPEvans/.github-ai` use the floating
-`@v1` tag, without a trailing version comment. Nix, Ansible, and Tofu sources use a floating major tag
-(`?ref=vN`), and the lock file holds the exact revision. Third-party actions stay pinned to full commit SHAs.
+Shared reusable workflows in `JacobPEvans/.github` use the floating `@v1` tag, without a trailing
+version comment. Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`), and the lock
+file holds the exact revision. Third-party actions stay pinned to full commit SHAs.
 The org scanners enforce that shape:
 
 - **Renovate.** Keeps shared workflow refs on the `@v1` major tag.
 - **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
-- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable. The full rule is
-  [dependency automation, rule 8](/infrastructure/cicd/dependency-automation).
+- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable. The source is in
+  [Dependency automation](/infrastructure/cicd/dependency-automation).
 - **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
   avoid the paid Code Security charge), managed as IaC in
   [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).
@@ -100,16 +96,8 @@ allows no variables there, and it does not follow repository move or rename redi
 references. So when a shared-CI repository changes ownership, every consumer must update its
 `uses:` reference at the same time.
 
-Shared workflows live in two public repositories. Generic CI, release, lint, and Renovate presets
-are in `JacobPEvans/.github`; AI review and agent workflows are in `JacobPEvans/.github-ai`.
-Callers use the literal owner and repository because GitHub does not redirect reusable workflow calls
-after a repository move or rename:
-
-| Workflow set | Current home | Status |
-| --- | --- | --- |
-| Generic CI, release, lint, and Renovate presets | `JacobPEvans/.github` | canonical |
-| AI review and agent workflows | `JacobPEvans/.github-ai` | canonical |
-
+See [Dependency automation](/infrastructure/cicd/dependency-automation) for the current shared
+workflow source and consumer config rules.
 
 ### Workflow Policy
 

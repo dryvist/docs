@@ -17,6 +17,10 @@ are not stylistic; they change what ships.
 - **Scopes use only lowercase letters, digits, hyphens, and underscores.** Write `fix(github):`, not `fix(.github):`. A scope with `.`, `/`, or a capital letter fails the branch ruleset.
 - **Every merge passes an explicit conventional subject.** Squash with `--subject "<type>(<scope>): <summary> (#N)"`. Promote with `--subject "chore: promote develop to main (#N)"`.
 - **Update a branch by rebase.** A `Merge branch ...` commit never lands as a trunk `main` subject.
+- **The merge button needs no edit.** Squash and merge commits both pre-fill the PR title as the
+  subject, so a conventional PR title is the whole requirement. The commit-message rule stays
+  enforced; `Merge ...` subjects are accepted only on non-default branches such as the git-flow `main`.
+  Merge methods per branch are in [PR conventions](/conventions/pr-conventions).
 - **`fix:`** for config tweaks, small improvements, incremental adjustments, dependency updates. Produces a patch bump.
 - **`feat:`** for genuinely new capabilities, integrations, or significant behavioral changes. Produces a minor bump.
 - **Major bumps are human-initiated only.** Edit `.release-please-manifest.json` manually.

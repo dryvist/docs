@@ -52,10 +52,10 @@ from a dashboard by removing it from config, not by relying on a query that stop
 
 ## Versions: bot pull requests only
 
-Renovate or the `flake.lock` relock workflow supplies every dependency and pipeline-component version
-bump. See Dependency automation coverage for the
-manager-by-pin-shape table, annotation contract, and hash gates. Do not hand-write bumps, pin hashes,
-or run `nix flake update` on bot-managed inputs in these repositories.
+Renovate supplies dependency and pipeline-component bumps, including flake locks. See
+[Dependency automation](/infrastructure/cicd/dependency-automation) for the shared schedule and
+lock policy. Do not hand-write bumps, pin hashes, or run `nix flake update` on bot-managed inputs in
+these repositories.
 
 ## Log pipeline
 
