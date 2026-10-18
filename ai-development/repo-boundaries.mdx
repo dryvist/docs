@@ -1,6 +1,6 @@
 ---
 title: "Repo boundaries"
-description: "How the AI configuration layer is split across three repositories (rules, plugins, and public docs), and why each one exists."
+description: "How the AI configuration layer is split across the instruction catalog, plugins, and docs, and why each repository has one owner."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -9,21 +9,24 @@ import { RepoFit } from "/snippets/repo-summary.mdx";
 > Three repositories. Each one owns a different layer of the AI development stack. No overlap, no duplication.
 
 The AI coding setup behind this site is split across three repositories on purpose. One holds the
-*rules* that every AI tool reads. One holds the *plugins* that extend Claude Code specifically. One
-holds the *documentation* you are reading right now. Keeping them separate means each layer can
-evolve at its own pace and any AI tool, not just Claude, can consume the rules.
+*shared instructions* that every AI tool reads. One holds the *plugins* that extend Claude Code
+specifically. One holds the *documentation* you are reading right now. Keeping them separate lets
+each layer evolve at its own pace.
 
 ## What each repo owns
 
 | Repository | Layer | Owns |
 | --- | --- | --- |
-| [`ai-assistant-instructions`](/ai-development/ai-assistant-instructions) | Rules | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, auto-loaded rules, the 5-step workflow |
+| [`ai-llm-prompts`](/automation/repos/ai-llm-prompts) | Shared instructions | `AGENTS.md`, `CLAUDE.md`, `agentsmd/**`, and prompt assets |
 | [`claude-code-plugins`](/ai-development/claude-code-plugins) | Plugins | Slash commands, skills, agents, hooks, the plugin marketplace |
 | [`docs`](/introduction) | Documentation | This site: architecture, narrative, public-facing diagrams |
 
-The rules repo is vendor-agnostic. Claude Code, Antigravity, GitHub Copilot, and Codex all read the
-same files. The plugins repo is Claude-Code-specific because plugins are a Claude Code concept. The
-docs repo is for humans (and any AI that wants to understand the system).
+The former `ai-assistant-instructions` repository now holds a pointer to the
+shared instruction tree and remains until an operator archives it.
+
+The instruction catalog is vendor-agnostic. Claude Code, Antigravity, GitHub Copilot, and Codex read
+the shared files. The plugins repo is Claude-Code-specific because plugins are a Claude Code concept.
+The docs repo is for humans and AI that need to understand the system.
 
 Tool *permissions* (the allow / ask / deny lists) are not in any of these
 repos. They live in the Nix layer at [`nix-claude-code`](/nix/nix-claude-code)
@@ -35,7 +38,7 @@ and are rendered into each tool's settings by `nix-ai`.
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart LR
-  Rules([ai-assistant-instructions<br/>rules · workflows])
+  Rules([ai-llm-prompts<br/>shared instructions · prompt assets])
   Plugins([claude-code-plugins<br/>commands · skills · agents · hooks])
   Docs([docs<br/>public-facing reference])
   Session([Developer session])
@@ -69,10 +72,8 @@ The rule of thumb: anything an AI tool needs at runtime lives in one of the firs
 
 Each repo releases on its own clock and notifies the others through plain GitHub mechanisms: no shared tooling required.
 
-- **`ai-assistant-instructions`** uses
-  [release-please](https://github.com/googleapis/release-please) for semantic versioning. A merge to
-  `main` triggers a webhook into [`nix-ai`](/nix/nix-ai), which rebuilds the Nix package that
-  ships the rules to every consumer.
+- **`ai-llm-prompts`** owns its release schedule. Its `instructions` flake package delivers the
+  shared files; the [catalog page](/automation/repos/ai-llm-prompts) explains its versioning.
 - **`claude-code-plugins`** also uses release-please. Published versions appear in the Claude Code plugin marketplace and are installed per-project on demand.
 - **`docs`** auto-deploys on push to `main` via the Mintlify GitHub app. No release tags: the site is always the current state of `main`.
 
@@ -97,10 +98,10 @@ repos.
   How the rules + plugins + automation compose into an actual development loop.
 </Card>
 <Card
-  title="ai-assistant-instructions"
+  title="ai-llm-prompts"
   icon="book"
-  href="/ai-development/ai-assistant-instructions">
-  The rules layer. AGENTS.md, auto-loaded rules, workflows.
+  href="/automation/repos/ai-llm-prompts">
+  The shared instructions and prompt catalog.
 </Card>
 <Card
   title="claude-code-plugins"

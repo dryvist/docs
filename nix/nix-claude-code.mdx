@@ -20,7 +20,7 @@ rules are all declared as Nix data. Nix pins the version in `flake.lock`, rolls 
 - **Every marketplace, wired up.** Anthropic's official marketplaces (`claude-plugins-official`, `anthropic-agent-skills`) plus 15+ curated community marketplaces, refreshing automatically.
 - **Plugins as data.** Every plugin you enable lands in `programs.claude.enabledPlugins`, pinned by `flake.lock`, rolled back with the rest of your generation.
 - **Permissions you can read.** Auto-approved tools, deny lists, and the WebFetch allowlist live as structured Nix data. The same data feeds Codex, Antigravity, and any other AI agent you wire up.
-  Codex runs through its own CLI runtime now, not an MCP tool, so `mcp__codex__*` is
+  Codex runs through its own command-line runtime now, not an MCP tool, so `mcp__codex__*` is
   no longer in the allow list.
 - **Statusline themes.** Pick `powerline`, `ccstatusline`, or `daniel3303` with a single option.
 - **MCP plumbing.** Surface `programs.claude.mcpServers` from your favorite MCP runtime; they wire
@@ -36,7 +36,7 @@ rules are all declared as Nix data. Nix pins the version in `flake.lock`, rolls 
 
 | Feeds into | Consumes |
 | --- | --- |
-| [User environment](/nix/nix-home) (home.packages), [AI tooling](/nix/nix-ai) overlay, scheduled-routine host | [ai-assistant-instructions](/ai-development/ai-assistant-instructions) rule set, [claude-code-plugins](/ai-development/claude-code-plugins) marketplace |
+| [User environment](/nix/nix-home) (home.packages), [AI tooling](/nix/nix-ai) overlay, scheduled-routine host | The `instructions` flake package from [ai-llm-prompts](/automation/repos/ai-llm-prompts), [claude-code-plugins](/ai-development/claude-code-plugins) marketplace |
 
 <RepoFit>
 The declarative path to a Claude Code install. If you want a single fully configured Claude Code that survives a workstation wipe, this is the layer that produces it.
