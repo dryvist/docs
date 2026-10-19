@@ -57,14 +57,14 @@ and inference power knobs. Its main option is `wiredLimitMb`: the
 volatile (it resets on reboot), so the module re-applies it from a launchd
 daemon at boot and again at every rebuild.
 
-The ceiling is not static. A link watcher flips the sysctl to the current mode's
-budget when the cluster cable is plugged or unplugged. The clustered budget
-applies on plug, the standalone budget on unplug. That is a live sysctl write, not a
-rebuild, so the mode's memory envelope moves without one. Each host declares two
-budgets against its job. The headless host carries higher ones because it
-reclaims the desktop working set the laptop must leave free. The values are not
-typed by hand; each is derived from a memory budget, `wiredLimitMb =
-maxLocalLlmGb × 1024`. The
+The cluster ceiling changes during the manual lifecycle. `cluster-join` applies
+102400 MB on the coordinator and 90000 MB on the worker; `cluster-detach`
+reverses the clustered state. The operator starts the join on the coordinator,
+which drives the worker over SSH before joining locally. The full preflight and
+formation sequence is in Two-Mac MLX cluster operations.
+Each host's standalone ceiling remains declared separately. The values are not
+typed by hand; each host derives its declared ceiling from a memory budget,
+`wiredLimitMb = maxLocalLlmGb × 1024`. The
 [historical memory-ceilings guide](/local-llm/memory-ceilings) covers retired
 `vllm-mlx` controls; the current `mlx-lm` wrapper appears below.
 The per-host budgets live in the gated operational reference.
@@ -156,8 +156,11 @@ Two real failures, both found and fixed on 2026-07-27, show the shape:
 
 | Construct | What bash 3.2 does with it | How it surfaced |
 | --- | --- | --- |
-| `case` inside a `$( … )` command substitution | The parser ends the substitution at the first `)` in a case pattern | A link watcher's carrier detection silently returned garbage. The two-machine cluster could not self-form for **weeks**, and the symptom looked exactly like an unplugged cable. |
+| `case` inside a `$( … )` command substitution | The parser ends the substitution at the first `)` in a case pattern | The former link watcher's carrier detection silently returned garbage. The two-machine cluster could not self-form for **weeks**, and the symptom looked exactly like an unplugged cable. |
 | `mapfile` (a bash 4 builtin) | Not a builtin: the call fails and the target array stays empty | An orphan-process reaper found nothing, every time. Stale workers held their ports, and requests came back as `HTTP 200` with a zero-byte body. |
+
+The watcher path in this historical incident was removed on 2026-10-18 in
+favour of manual `cluster-join` and `cluster-detach`.
 
 Both failures had been chased down the wrong path for a long time, because
 neither produced an error anyone saw. The durable fix is not the two patches.
@@ -176,26 +179,25 @@ through these ports. See
 
 ## The memory-safety control plane
 
-Two memory behaviours ride on one flag, over a wired ceiling that must move with
-the serving mode. Setting either by hand is the usual reason a well-sized host
-still pages. But the safety is not baked in at build time. Models and modes
-change while the host runs, and rebuilding to swap a model is friction the stack
-avoids. Nix ships the control plane; the plane enforces at runtime.
+The model worker uses a wired ceiling plus per-process memory and cache limits.
+The former link-watcher control was removed on 2026-10-18. The cluster ceiling
+changes only during an explicit join or detach; cable movement does not change
+it.
 
 Nix's build-time job is narrow:
 
-- **the mode-aware budgets**: one `maxLocalLlmGb` for standalone serving and a
-  larger one for clustered mode, per host.
-- **the sysctl mechanism and the mode-switch watcher**: the launchd daemon that
-  applies `iogpu.wired_limit_mb`, and the link watcher that flips it to the
-  current mode's budget on plug or unplug.
+- **the host ceilings**: each host declares its standalone ceiling and its
+  cluster-mode value.
+- **the lifecycle controls**: the manual join checks the link, sets the
+  cluster-mode ceiling, quiesces declared workloads, checks room and versions,
+  and starts aligned ranks. Detach reverses the joined state.
 - **the launch wrapper and the model data**: the wrapper that sets MLX's
   in-process memory and cache limits, and the catalog fields it reads.
 
-Runtime does the rest, with no rebuild:
+Runtime applies the declared values at the required boundaries:
 
-- **the link watcher** raises or lowers the wired ceiling to the mode's budget
-  when the cluster cable changes.
+- **the manual lifecycle** applies cluster-mode ceilings during join and
+  restores the standalone state during detach.
 - **the launch wrapper** sets the MLX memory and cache limits from the live
   ceiling at each worker start. Swapping a model needs no nix change.
 

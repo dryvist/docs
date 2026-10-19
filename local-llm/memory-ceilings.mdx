@@ -10,13 +10,14 @@ page_type: "explanation"
 
 This page covers memory controls for the retired `vllm-mlx` backend. See the
 [Nix serving stack](/local-llm/nix-serving-stack) for current `mlx-lm`
-memory and cache controls.
+memory and cache controls. The former link-watcher mode switch was removed on
+2026-10-18 in favour of manual `cluster-join` and `cluster-detach`.
 
 </Warning>
 
-> Two memory behaviours ride on one flag, over a wired ceiling that moves with
-> the serving mode. The stack tunes them at runtime. A model or mode swap needs
-> no rebuild. But the GPU cap alone is necessary, not sufficient.
+> The retired `vllm-mlx` design tied two memory behaviours to one flag and a
+> wired ceiling that moved with serving mode. The GPU cap alone is necessary,
+> not sufficient.
 
 A local MLX serving stack is a swapping proxy in front of one or more
 inference workers. It has a single flag, `--gpu-memory-utilization`, that
@@ -260,16 +261,13 @@ one for clustered mode. In clustered mode the desktop is quiesced, so more
 memory is free for a shard. The operator sets the numbers; the running mode
 picks which one applies.
 
-### Enforcement point one: the live mode-aware sysctl cap
+### Enforcement point one: the wired ceiling
 
-The OS wired ceiling, `iogpu.wired_limit_mb`, is a live sysctl. A link watcher
-flips it to the current mode's budget the moment the cluster cable is plugged
-or unplugged. Plugging in applies the clustered budget; unplugging applies the
-standalone budget. No reboot, no rebuild. In clustered mode both Macs raise the
-same higher cap.
-This is the hard kernel backstop on GPU-wired memory, and it moves with the
-mode. It stays high, set to the mode's budget, and is never lowered as a quick
-fix.
+The OS wired ceiling, `iogpu.wired_limit_mb`, is a live sysctl. The former
+link-watcher mode switch was removed on 2026-10-18. Manual `cluster-join` applies
+102400 MB on the coordinator and 90000 MB on the worker; `cluster-detach`
+reverses the clustered state. The rebuild gate refuses while a rank is live.
+The remaining controls on this page describe the retired `vllm-mlx` design.
 
 ### Enforcement point two: per-model load-time admission control
 
@@ -423,7 +421,7 @@ footprints, and the utilization figures derived from them.
   title="Nix serving stack"
   icon="boxes-stacked"
   href="/local-llm/nix-serving-stack">
-  How the Nix modules ship the mode-aware budgets, the load-time admission wrapper, and the link watcher — then launch the worker.
+  How the Nix modules ship the mode-aware budgets, the load-time admission wrapper, and the removed link watcher.
 </Card>
 <Card
   title="Apple Silicon stack"
