@@ -330,8 +330,8 @@ sweep in priority order <order>.
 
 Three full goal statements, one per objective type. Character counts are
 measured on the raw text as shown (`wc -c`), all under the 4,000 limit.
-They are frontier-targeted: a 30B target gets one lane per session and a
-rewrite per [writing prompts for small models](/agent-ops/small-model-prompts).
+They are frontier-targeted. For 30-billion-parameter targets, use one lane
+per session and the rewrite in [writing prompts for small models](/agent-ops/small-model-prompts).
 Compositions that delegate (A and C) get the
 [X2 denial list](/agent-ops/prompt-blocks#restrictions-and-denials)
 appended at fill time, filled in, or explicitly "(none this session)."

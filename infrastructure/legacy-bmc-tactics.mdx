@@ -53,7 +53,7 @@ flowchart LR
 Pattern 1 covers most needs at the lowest cost. Reach for Pattern 2 or 3/4 only when Pattern 1
 can't do the job.
 
-## Pattern 1 — Reverse-engineer the hidden HTTP API
+## Pattern 1: Reverse-engineer the hidden HTTP API
 
 Before fighting the Java applet, look at what its parent web UI is doing
 over plain HTTP. Open the BMC web UI in a modern browser, accept the
@@ -94,10 +94,10 @@ curl -k --tlsv1 --tls-max 1.2 -b session.jar \
 ```
 
 For active interaction (typing into BIOS, clicking through GRUB), the
-Java applet is still the only option. For *monitoring* — "is the
-installer running? did POST finish? what's the panic message?" — the
-HTTP screenshot path wins every dimension: no Java install, no
-unsigned-jar dance, no TLS cipher negotiation, just `curl` and a PNG.
+Java applet is still the only option. For *monitoring*, the HTTP screenshot path
+shows whether the installer runs, POST finishes, or a panic appears. It needs
+no Java installation or unsigned-jar handling, avoids TLS cipher negotiation,
+and uses `curl` to return a PNG.
 
 ### Why this is safe to publish
 
@@ -109,7 +109,7 @@ can then build better monitoring tools instead of forcing brittle
 Java applets onto
 modern workstations.
 
-## Pattern 2 — Wrap the Java applet, do not replace it
+## Pattern 2: Wrap the Java applet, do not replace it
 
 When you do need interactive vKVM and the only path is the BMC's
 unsigned Java applet:
@@ -149,7 +149,7 @@ Sharp edges to budget for:
   KVM connect on modern Java TLS stacks. If the BMC is on a trusted
   out-of-band VLAN, turn it off.
 
-## Pattern 3 — Headless installs on hardware without VGA
+## Pattern 3: Headless installs on hardware without VGA
 
 For installing a modern OS onto a chassis where:
 
@@ -191,7 +191,7 @@ This is the same shape as a PXE-boot install. It works without any
 network-side infrastructure, though (no DHCP option 66/67, TFTP server,
 or HTTP boot server). The USB stick is the entire delivery mechanism.
 
-## Pattern 4 — PXE-boot as the override of last resort
+## Pattern 4: PXE-boot as the override of last resort
 
 USB-boot sometimes keeps falling through to the wrong OS on internal
 disks. On many firmwares, the legacy BMC's `bootdev=floppy

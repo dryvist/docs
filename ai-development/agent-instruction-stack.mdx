@@ -103,7 +103,8 @@ what the model does on the next task?* If yes on every task, it is core. If yes 
 a certain file is open, it is path-scoped. If yes only when a certain activity starts, it
 is on-demand.
 
-This split matters most for smaller open-weight models. On a 30B-class local model, the
+This split matters most for smaller open-weight models. On a local model in
+the 30-billion-parameter class, the
 always-on core is the biggest lever you have. Every token of irrelevant standing context
 costs more there than it does on a frontier model, so a shorter core measurably improves
 results. The tiers are how you keep the core short without losing the rest of the rules.

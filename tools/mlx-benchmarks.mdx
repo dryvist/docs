@@ -21,6 +21,14 @@ such as power draw, temperature, utilization, clocks, and fan speed, internal.
 Give intelligence and speed equal weight in comparisons; prefer suites with
 headroom and repeat short suites.
 
+The current release is [0.59.1](https://github.com/dryvist/mlx-benchmarks/blob/main/pyproject.toml#L3).
+Current rows use a canonical machine label. Nullable
+`campaign_hardware_interconnect` and `campaign_hardware_world_size` columns
+record cluster dimensions. MoE rows include `moe_cpu_offload` and
+`moe_cpu_layers`. Concurrent throughput rows record per-run concurrency. See the
+[schema guide](https://github.com/dryvist/mlx-benchmarks/blob/main/docs/schema.md)
+and [campaign dimensions](https://github.com/dryvist/mlx-benchmarks/blob/main/docs/campaign-dimensions.md).
+
 ## What it does
 
 - Defines **envelope v1** in `schema.json`: the authoritative, versioned contract every published shard validates against.
@@ -43,11 +51,10 @@ headroom and repeat short suites.
 The viewer caches its dataset snapshot for 600 seconds. After expiry, it
 serves the current frame while a background refresh runs. The targets are to
 show data within 30 seconds on a cold page load and complete mode changes
-within 5 seconds. Interactions stay responsive after the TTL. The dated
-browser sample showed page-to-data times from 1.5 to 3.2 seconds. Its first
-mode change took 2.9 seconds; the next took 0.3 seconds. After a 660-second
-wait, three sessions switched modes in 5.0, 4.8, and 4.8 seconds. The full
-endpoint measurements, data checks, and repeatable commands live in the
+within 5 seconds. Interactions stay responsive after the TTL. The 2026-10-18
+live sample measured a cold page-to-data load of about 3.1 seconds. A mode
+switch took about 0.3 seconds. Suite switches took 0.3–0.4 seconds. The full endpoint
+measurements, data checks, and repeatable commands live in the
 [viewer README](https://github.com/JacobPEvans/mlx-benchmarks/blob/main/space/README.md#performance-and-remeasurement).
 The current-code Space wake or restart and a full-history load through the
 `datasets` library remain unmeasured.
