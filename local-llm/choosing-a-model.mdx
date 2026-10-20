@@ -10,13 +10,13 @@ page_type: "reference"
 This page trades confidence for citations: every conclusion below is sourced
 rather than asserted. Two hardware envelopes frame it:
 
-- **A single 128 GB Apple Silicon machine** — roughly 95 GiB usable for
+- **A single 128 GB Apple Silicon machine:** roughly 95 GiB is usable for
   inference. `hw.memsize` on a "128 GB" Mac is exactly `137,438,953,472` bytes
   (128 GiB), and the commonly quoted default GPU wired ceiling of ~75% of RAM
   puts the cap near 96 GiB. That 75% figure is a rule of thumb, not a
-  guarantee — [measure the real ceiling](/local-llm/memory-ceilings) instead of
+  guarantee. [Measure the real ceiling](/local-llm/memory-ceilings) instead of
   assuming it.
-- **Two clustered 128 GB machines** — roughly 190–200 GiB usable, at the cost
+- **Two clustered 128 GB machines:** roughly 190–200 GiB usable, at the cost
   of an interconnect and a much more fragile serving path. See
   [distributed serving](/local-llm/distributed).
 
@@ -160,8 +160,8 @@ same model.
   or below 32 B**, on two reasoning benchmarks, in a non-peer-reviewed preprint,
   and is driven substantially by KV-cache-dominated memory rather than weight
   damage.
-- It is **unverified at the 100–235 B MoE tier** — no paper in this set tested a
-  MoE model at all.
+- It is **unverified at the 100–235 B MoE tier**. No paper in this set tested a
+  MoE model.
 - The only large-scale evidence at the 405 B tier points the **other** way, and it
   is vendor-reported.
 - A separate line of evidence (flips) suggests aggregate-score recovery is the
@@ -180,7 +180,7 @@ Benchmark scores are the last thing to check, not the first. Two runtime gates
 stop a model outright regardless of how well it scores, and both are
 under-documented.
 
-### Gate 1 — Can the server emit structured tool calls?
+### Gate 1: Can the server emit structured tool calls?
 
 In `mlx-lm`, the tool-call parser is **not** something you choose on the command
 line. It is resolved at model load time, and if no parser matches, the server
@@ -211,11 +211,11 @@ fallback. No match returns `None`, and the server sets `tool_parser = None`.
 
 **There is a per-model override, and it is undocumented.** The `tool_parser_type`
 key is read from the model's `tokenizer_config.json` and **wins over** template
-inference — `dict.get` only evaluates the fallback when the key is absent. It
+inference. `dict.get` only evaluates the fallback when the key is absent. It
 works on a stock `pip install mlx-lm` (present in `v0.31.3`, PyPI's latest as of
 2026-07-27). It is mentioned nowhere in the README or `SERVER.md`, so treat it as
 an implementation detail that can change without notice. Critically, it only
-lets you **pin to a parser that already exists** — the value becomes a module
+lets you **pin to a parser that already exists**: the value becomes a module
 name under `mlx_lm.tool_parsers.`, and an unknown name raises `ModuleNotFoundError`.
 
 The parsers that exist, verified by directory listing on
@@ -239,8 +239,8 @@ The parsers that exist, verified by directory listing on
 grep for `deepseek`, `harmony`, and `gpt.oss` across the parser directory and the
 loader returns zero hits. The practical consequence is narrow and worth stating
 precisely: **`mlx_lm.server` does not return structured `tool_calls` for those
-model families** — not that the models are incapable. A client that reads the raw
-text stream and parses the tool syntax itself is unaffected. If your agent
+model families**. This does not mean the models are incapable. A client that
+reads the raw text stream and parses tool syntax itself is unaffected. If your agent
 framework expects OpenAI-shaped `tool_calls`, that gap is the whole problem.
 
 The DeepSeek half of that may not last.
@@ -252,10 +252,10 @@ the directory listing yourself rather than trusting this paragraph's date.
 
 Open issues confirming the gpt-oss side, both still open on 2026-07-27:
 
-- [#613](https://github.com/ml-explore/mlx-lm/issues/613) — generation does not
+- [#613](https://github.com/ml-explore/mlx-lm/issues/613): generation does not
   stop at `<|call|>`, so gpt-oss keeps emitting instead of producing a tool call
   (opened 2025-11-15).
-- [#875](https://github.com/ml-explore/mlx-lm/issues/875) — channel-token
+- [#875](https://github.com/ml-explore/mlx-lm/issues/875): channel-token
   leakage, tool calls stripped to empty responses, hallucinated tool execution;
   root cause given as mlx-lm lacking special-token protocol awareness for
   multi-channel models (opened 2026-02-11).
@@ -284,16 +284,16 @@ What it adds is an `INFO` log naming the detected parser at model load. That is
 genuinely useful. It converts a silent failure into a visible one, but it
 changes no behavior. Both the issue and the PR remain open.
 
-### Gate 2 — Can you control the reasoning mode?
+### Gate 2: Can you control the reasoning mode?
 
 A model that never exits its thinking phase inside the output budget returns a
 `content` field of `""`. The work happened; you cannot use it. This is a
 documented, reproducible failure across several runtimes:
 
 - [`lmstudio-ai/mlx-engine#337`](https://github.com/lmstudio-ai/mlx-engine/issues/337)
-  (opened 2026-06-14, open on 2026-07-27): "reasoning never terminates on MLX —
-  fills max_tokens with reasoning_content, empty content". The reported response
-  has `"content": ""`, ~16k tokens of `reasoning_content`, and
+  (opened 2026-06-14, open on 2026-07-27): The issue reports that MLX reasoning
+  can consume the full `max_tokens` budget and leave `content` empty. The reported
+  response has `"content": ""`, ~16k tokens of `reasoning_content`, and
   `"finish_reason": "length"`.
 - [`ollama/ollama#16583`](https://github.com/ollama/ollama/issues/16583)
   (opened 2026-06-06, open): "thinking mode consumes the entire `num_predict`

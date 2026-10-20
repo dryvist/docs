@@ -12,8 +12,8 @@ its sibling for the AI component tier. Every component, including `dify`,
 OpenTelemetry for every LLM call. So does the proxy and router tier that
 those components call through. Cribl Edge collects on the endpoint, Cribl Stream
 tags and fans out, and the spans land in Langfuse and [Arize Phoenix](/observability/phoenix).
-There are zero direct-to-backend paths. Splunk gets the same estate's other telemetry, but never
-traces — traces don't fit its event model; see the [fan-out default](/architecture/data-pipelines#fan-out-every-source-to-every-destination).
+There are zero direct-to-backend paths. Splunk gets the same estate's other telemetry, but not
+traces because they don't fit its event model; see the [fan-out default](/architecture/data-pipelines#fan-out-every-source-to-every-destination).
 
 These Cribl routing changes are **MERGED in git; NOT DEPLOYED**. Alert delivery
 through Stream is in

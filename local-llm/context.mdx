@@ -24,7 +24,7 @@ Docs written for humans are also the raw material an agent runs on. Three small,
 boring conventions make that work without bespoke scraping, and none of them
 needs a human in the loop.
 
-## llms.txt — read the whole thing
+## llms.txt: read the whole thing
 
 This site emits the [llmstxt.org](https://llmstxt.org) files at build time:
 
@@ -36,7 +36,7 @@ An agent fetches `llms-full.txt` when it wants the entire corpus in context, and
 URLs, so consuming them is a single HTTP GET. No crawler and no sitemap parsing
 are needed.
 
-## The registry — resolve a model or an endpoint
+## The registry: resolve a model or an endpoint
 
 Hard-coding a model id or an endpoint into an agent is how it breaks the next
 time either changes. The pattern instead is a small machine-readable registry.
@@ -54,7 +54,7 @@ rebuild and lands at a stable path the agent reads. An agent resolves
 literals. See [backends and tool calling](/local-llm/backends) for why the
 tool-calling role is the one that actually matters.
 
-## RAG — ask one question
+## RAG: ask one question
 
 For a targeted question, whole-site context is wasteful. The retrieval pattern
 embeds the docs into a vector store and answers by similarity:

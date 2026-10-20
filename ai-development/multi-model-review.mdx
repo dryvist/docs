@@ -11,7 +11,7 @@ This is the working recipe for fanning a plan or diff out to **Codex**,
 different invocation paths, plus the one gotcha each hits, so the fan-out is
 repeatable instead of rediscovered every time.
 
-## Codex — via the codex plugin, not MCP
+## Codex: via the codex plugin, not MCP
 
 Use the `codex` Claude Code plugin's `/codex-review` or
 `/codex-adversarial-review` command, which shells out to the Codex CLI
@@ -36,7 +36,7 @@ parameter entirely** and let the session use its account default. Only pass
 an explicit model on an API-key-backed Codex session.
 </Warning>
 
-## Gemini — via the Antigravity (`agy`) CLI
+## Gemini: via the Antigravity (`agy`) CLI
 
 The reliable command-line path for a Gemini review is Google's **Antigravity `agy` CLI**, not a raw Gemini API call.
 
@@ -64,7 +64,7 @@ stale-cutoff small model isn't reliable for this task. Use the
 strongest reasoning tier available (for example `Gemini 3.1 Pro (High)`).
 </Warning>
 
-## Local model — direct HTTP call
+## Local model: direct HTTP call
 
 A locally served model that speaks the OpenAI-compatible API needs no wrapper.
 Call the endpoint directly with the review prompt (see
@@ -101,10 +101,10 @@ curl -sf http://localhost:11434/v1/chat/completions \
 <Note>
 **Ground the small model**
 
-A 30B-class local model, and any stale-cutoff cloud model, can confidently
-claim current tools "don't exist." Add a system line naming your current
-toolchain as real and current. For example: *"Claude Code, Codex CLI, and
-Gemini CLI are all real, current tools."* This keeps the review grounded.
+A local model with 30 billion parameters can confidently claim current tools
+"don't exist." Stale-cutoff cloud models can do the same. Name current tools in
+the system prompt to ground the review. For example: *"Claude Code, Codex CLI,
+and Gemini CLI are all real, current tools."*
 </Note>
 
 ## Quick reference

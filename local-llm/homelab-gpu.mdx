@@ -100,7 +100,7 @@ Technitium and carries the wildcard certificate, so it is HTTPS end to end.
 | --- | --- | --- |
 | LiteLLM router pool | Stateless proxies hold the model table, tier fallbacks, and the heavy-backend bearer | `https://llm.<domain>/v1` (pooled) |
 | GPU deployments | Eligible members of the `small` and `medium` capabilities | via the router |
-| CPU 9B candidate | `qwen3.5-9b` in `small`, order 3; omitted without a backend | not routed |
+| CPU candidate (9-billion-parameter model) | `qwen3.5-9b` in `small`, order 3; omitted without a backend | not routed |
 | `llm-light` | CPU deployment for the `embed` capability | via the router |
 | free hosted tier | Reached through a stable handle only for keys with an explicit cloud grant; not an automatic fallback | via the router |
 | paid providers | Reached through configured fallback or an explicit model identifier, only for keys with an explicit cloud grant | via the router |

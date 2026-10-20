@@ -7,16 +7,16 @@ page_type: "explanation"
 The [goal-statement components](/agent-ops/goal-statement-library) and
 [prompt blocks](/agent-ops/prompt-blocks) are written to work on a frontier
 model. This page is the rewrite discipline for running the same work on a
-~30 GB local model. That means the Qwen3.x / GLM-4.x 30B class, a
-single-node serving tier.
+~30 GB local model. That means Qwen3.x and GLM-4.x models in the
+30-billion-parameter class, in the single-node serving tier.
 
 ## The governing result: shorter is better
 
-The measured result that governs everything here: cutting a 30B-class
-agent's prompt by more than half **improved** success rate, latency, and
-cost. Restating a model's default competence wastes tokens and dilutes the
-task-specific signal. The test for every line: *if deleting it would not
-change what a 30B-class model does, delete it.*
+The measured result is simple. Cutting the prompt by more than half improved
+success rate, latency, and cost for agents using models with 30 billion
+parameters. Restating a model's default competence wastes tokens and
+dilutes the task-specific signal. Keep a line only if deleting it changes what
+the model does.
 
 A small model does not fail by ignoring your prompt. It fails by weighting
 all of it equally. A paragraph of context then costs the same attention as
@@ -80,7 +80,8 @@ When shrinking a frontier-targeted goal statement to small-model size:
 
 The same requirement, written for each tier.
 
-**Frontier-targeted** (fine for a large model, unreliable on 30B):
+**Frontier-targeted** (fine for a large model, unreliable on a
+30-billion-parameter model):
 
 ```text
 Investigate the recent errors across the fleet, correlate them with open
@@ -88,8 +89,8 @@ issues, and file well-evidenced issues for anything actionable, being
 careful to verify claims and avoid duplicates.
 ```
 
-**30B-targeted rewrite** (a template: fill the remaining placeholders
-before dispatch, per rule 7):
+**Rewrite for 30-billion-parameter models** (a template: fill the remaining
+placeholders before dispatch, per rule 7):
 
 ```text
 Scope—do each step, in order:
@@ -115,10 +116,10 @@ format contract.
 
 ## Choosing the tier at all
 
-Prompt tuning does not make a 30B model deep. Route tasks by what they
-need. High reasoning depth or cross-source synthesis belongs on the
-deep-reasoning tier. Long-but-shallow tool chains run fine on the 30B tier
-with a checklist prompt. The
+Prompt tuning does not give a model in the 30-billion-parameter class deep
+reasoning. Route tasks by what they need. High reasoning depth or
+cross-source synthesis belongs on the deep-reasoning tier. Long-but-shallow
+tool chains run fine on that model tier with a checklist prompt. The
 [T2 escalation rubric](/agent-ops/prompt-blocks#stop-and-escalation-conditions)
 is the routing contract; [choosing a local model](/local-llm/choosing-a-model)
 holds more on verifying a model before you trust it.

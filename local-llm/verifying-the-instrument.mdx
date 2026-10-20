@@ -12,7 +12,7 @@ page_type: "explanation"
 There are two routes to it. Both were observed in a single deployment; treat the
 specifics as one estate's experience and the shape as general.
 
-### Mechanism A — a collapse that grafts physical ids as aliases
+### Mechanism A: a collapse that grafts physical ids as aliases
 
 <Note>
   This mechanism has since been **fixed** in the estate it was observed in.
@@ -45,7 +45,7 @@ The distinction the generator lost is between two kinds of name:
 Treating them as interchangeable is what makes the failure invisible. Nothing
 downstream caught it, because the two obvious checks are not checks.
 
-### Mechanism B — a router alias that falls through instead of failing
+### Mechanism B: a router alias that falls through instead of failing
 
 The second route needs no bad config generator. A router carries an alias
 pointing at a model the backend does not actually serve. Instead of returning an
