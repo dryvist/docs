@@ -41,6 +41,7 @@ job, and end. Cribl's free hosted tier collects OTLP telemetry for runner perfor
 ## What it does
 
 - Deploys the RunsOn control plane (ECS/Fargate + Lambda + API Gateway) on AWS
+- Pins the RunsOn Terraform module to version `3.1.3` in [`main.tf`](https://github.com/dryvist/tofu-runs-on/blob/main/main.tf)
 - Spins up EC2 spot runners on demand across 3 availability zones in `us-east-2`
 - Falls back to on-demand instances automatically if spot capacity goes thin (spot circuit breaker)
 - Tags every runner with workflow/job/repo for AWS cost allocation
@@ -92,6 +93,7 @@ GitHub-hosted one.
 CI runs offline validation only. Credentialed plans and applies run in the
 Terrakube workspace, with approval and the full plan kept inside the homelab
 control plane.
+
 
 ## Related repos
 

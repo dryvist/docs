@@ -21,7 +21,9 @@ provider drives the controller API. Typed HCL inputs and locals resolve subnets.
 
 One generic module per resource type covers the controller's data plane:
 
-- Infrastructure VLANs / networks, WLANs, and per-role port profiles
+- Infrastructure VLANs / networks, WLANs, and per-role port profiles, including
+  egress rate limits and broadcast, multicast, and unicast storm-control fields
+  ([#255](https://github.com/dryvist/tofu-unifi/pull/255))
 - MAC-pinned fixed-IP reservations
 - Firewall groups (the port/address sets). Firewall *rules* (including a generic established/related
   stateful-return rule) are written but deferred. See [provider
