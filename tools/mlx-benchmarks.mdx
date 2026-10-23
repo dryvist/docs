@@ -22,7 +22,12 @@ Give intelligence and speed equal weight in comparisons; prefer suites with
 headroom and repeat short suites.
 
 The current release is [0.59.1](https://github.com/dryvist/mlx-benchmarks/blob/main/pyproject.toml#L3).
-Current rows use a canonical machine label. Nullable
+Rows use canonical machine labels. Normalization projects accelerator model and
+memory from retained `hardware` metadata into `campaign_hardware_accelerator_model`
+and `campaign_hardware_accelerator_memory_gb`. It validates machine labels
+([#488](https://github.com/dryvist/mlx-benchmarks/pull/488)). Recent-data
+generation refreshes hardware projections from canonical shards
+([#490](https://github.com/dryvist/mlx-benchmarks/pull/490)). Nullable
 `campaign_hardware_interconnect` and `campaign_hardware_world_size` columns
 record cluster dimensions. MoE rows include `moe_cpu_offload` and
 `moe_cpu_layers`. Concurrent throughput rows record per-run concurrency. See the
