@@ -171,6 +171,34 @@ may pass an approved self-hosted or RunsOn runner label. A role without a Molecu
 Set job concurrency from measured runner capacity. Reassess the limit after
 measuring peak CPU and memory use.
 
+### Shared Molecule workflow
+
+The reusable [`_molecule.yml@v1` workflow](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_molecule.yml)
+runs the caller repository's Molecule scenarios. The caller owns scenario filters, required gates,
+and repository-specific checks. All `workflow_call` inputs are optional; the source defines their
+types and defaults.
+
+- **Scenario discovery:** `scenarios`, `full_suite`, `scenario_discovery`,
+  `scenario_discovery_script`, `scenario_name_profile`, `scenario_require_molecule_yml`.
+- **Caller checks and setup:** `preflight_command`, `static_checks`, `pre_steps_script`, `extra_env`.
+- **Runner and limits:** `discover_runner`, `runner_label`, `public_and_fork_hosted`,
+  `discover_timeout_minutes`, `pull_request_discover_timeout_minutes`, `timeout_minutes`,
+  `pull_request_timeout_minutes`, `scenario_timeout_floors`, `fail_fast`, `max_parallel`,
+  `serialize_scenario`.
+- **Python and Ansible Galaxy:** `python_version`, `python_install_mode`, `requirements_files`,
+  `uv_cache`, `ansible_home_mode`, `molecule_roles_path`, `galaxy_cache_enabled`,
+  `galaxy_cache_prefix`, `galaxy_cache_restore_prefix`, `galaxy_install_mode`,
+  `galaxy_install_script`, `galaxy_force_install`, `galaxy_retry_attempts`,
+  `galaxy_retry_wait_seconds`, `galaxy_step_timeout_minutes`, `galaxy_server_timeout_seconds`,
+  `galaxy_refresh_contracts_v5`.
+- **Molecule runtime:** `docker_timeout_seconds`, `docker_prune`, `nix_scenarios`, `molecule_args`,
+  `molecule_workdir_mode`, `molecule_scenario_arg`, `instance_suffix`,
+  `isolate_ephemeral_directory`.
+- **Test credentials:** `doppler_enabled`, `test_secret_env_map`, `use_homarr_token`.
+
+The test command stays fixed at `molecule test -s "$MOLECULE_SCENARIO"`, with optional Molecule
+arguments appended as argv. Only explicitly mapped Doppler outputs reach the final Molecule step.
+
 ### Shared CI gate
 
 The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules below to every caller.
@@ -186,6 +214,13 @@ The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules be
   creation time. It stops watching after `WATCH_MAX_MINUTES` (default 55) and exits 0 without cancelling. The job's
   timeout is 60 minutes. Jobs waiting for environment approval are never cancelled. The `Queue Watchdog` and
   `Merge Gate` jobs are exempt, including the prefixed names that called workflows give them.
+
+### Flake input freshness
+
+The reusable [`_flake-lock-fresh.yml` workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_flake-lock-fresh.yml)
+accepts `runner_label` and the numeric `max_age_days` input. `max_age_days` defaults to `0`, which
+disables the age check for root GitHub inputs; the owned-input freshness check still runs. Set
+`max_age_days: 30` to check for updates older than 30 days on each locked ref.
 
 ### On-prem runner requirements
 

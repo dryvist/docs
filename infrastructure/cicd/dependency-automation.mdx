@@ -6,33 +6,74 @@ page_type: "reference"
 {/* projected from the authoring site; do not edit here */}
 ## Master and repo config
 
-[JacobPEvans/.github](https://github.com/JacobPEvans/.github) is the single master for Renovate presets and
-reusable workflows. The master preset is `github>JacobPEvans/.github`. It owns [`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json)
-and [`renovate-nix.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-nix.json).
-Consumer configs extend the master with one `extends` line, then list only repo-specific holds. They
-do not set `schedule`, `timezone`, or `automergeSchedule`. `dryvist/.github` is being retired, and no
-consumer extends it.
+[JacobPEvans/.github](https://github.com/JacobPEvans/.github) is the Renovate policy master. Its
+[`renovate-presets.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json)
+owns the shared policy. The `github>JacobPEvans/.github` entry point is defined in
+[`default.json`](https://github.com/JacobPEvans/.github/blob/main/default.json), and
+[`renovate-nix.json`](https://github.com/JacobPEvans/.github/blob/main/renovate-nix.json) adds Nix
+support.
+
+[`dryvist/.github`'s `default.json`](https://github.com/dryvist/.github/blob/main/default.json)
+keeps the `local>dryvist/.github` and `github>dryvist/.github` entry points. It combines
+`config:recommended` with the master preset. Its
+[`renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json)
+re-exports the JacobPEvans master preset unchanged; dryvist/.github owns no separate policy.
+Consumer configs extend the shared preset, then list only repo-specific holds.
 
 ## Schedule and grouping
 
-- Non-security dependency update PRs open Saturday from 12:00 to 15:59 UTC.
-- Renovate's built-in `group:all` opens one PR per repo, with majors included.
-- Renovate vulnerability alerts open security PRs Wednesday or Saturday from 12:00 to 15:59 UTC.
-  They have no release-age hold.
-- Release-age holds and auto-merge tiers are in
-  [SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
+The shared schedule is Saturday 00:00–05:59 in `America/Indiana/Indianapolis`. Renovate's built-in
+`group:all` opens one PR per repository, with majors included.
+
+| Update | Release-age hold | Merge policy |
+| --- | --- | --- |
+| Minor, patch, digest, and pin updates | 7 days | Auto-merge after required checks pass |
+| Other major updates | 30 days | Auto-merge after required checks pass |
+| First-party updates, including majors | 0 days | Auto-merge after required checks pass |
+| Trusted-organization majors | 7 days | Auto-merge after checks; `dep:review` adds dependency review |
+| Vulnerability alerts | 1 day | Auto-merge after required checks pass; alerts may open at any time |
+
+The complete trust tiers live in
+[`SECURITY.md`](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
 
 ## Nix flake locks
 
 Nix repos also extend the shared [`renovate-nix` preset](https://github.com/JacobPEvans/.github/blob/main/renovate-nix.json).
-Renovate's `nix` manager and `lockFileMaintenance` relock `flake.lock` in the Saturday window. The old
-custom flake-lock workflows are removed.
+Renovate's `nix` manager and `lockFileMaintenance` relock `flake.lock` in the Saturday window.
+For `lockFileMaintenance`, Renovate sets `minimumReleaseAge` to `null` because it delegates version
+selection to the package manager. That manager's own release-age setting controls which versions
+enter the lockfile.
+
+## Package-manager release ages
+
+Project-level package managers use native settings for a seven-day release age:
+
+- **uv in `nix-ai` orchestrator.** Set `exclude-newer = "7 days"` and
+  `required-version = ">=0.9.17"` in
+  [`orchestrator/pyproject.toml`](https://github.com/dryvist/nix-ai/blob/develop/orchestrator/pyproject.toml).
+- **Bun in `ai-workflows-testing`.** Set `minimumReleaseAge = 604800` seconds in
+  [`bunfig.toml`](https://github.com/dryvist/ai-workflows-testing/blob/main/bunfig.toml).
+- **pnpm in three projects.** Set `minimumReleaseAge: 10080` minutes in each project's
+  `tests/pnpm-workspace.yaml`:
+  - [`cc-edge-pack-template`](https://github.com/dryvist/cc-edge-pack-template/blob/main/tests/pnpm-workspace.yaml)
+  - [`cc-edge-codex-io`](https://github.com/dryvist/cc-edge-codex-io/blob/main/tests/pnpm-workspace.yaml)
+  - [`cc-stream-openrouter-rest-io`](https://github.com/dryvist/cc-stream-openrouter-rest-io/blob/main/tests/pnpm-workspace.yaml)
+
+The
+[`nix-home` Home Manager package config](https://github.com/dryvist/nix-home/blob/develop/modules/home-manager/npm/config.nix)
+also writes user-level settings:
+
+- npm's `.npmrc` sets `min-release-age=7`.
+- Bun's `~/.bunfig.toml` and `~/.config/.bunfig.toml` set `minimumReleaseAge = 604800` seconds.
+- uv's `~/.config/uv/uv.toml` sets `exclude-newer = "7 days"`.
+- pip's `~/.config/pip/pip.conf` sets `uploaded-prior-to = P7D`.
 
 ## Container image pins
 
 One shared custom manager tracks `*_image:` keys in Ansible role defaults. It accepts quoted,
 unquoted, and folded values, with an optional `sha256` digest. Use concrete tags, not `latest` or
 `stable`.
+
 
 ## Dependabot security updates
 
