@@ -18,7 +18,7 @@ eliminates that duplication so a single source of truth drives every consumer.
 | Artifact | Canonical home | How consumers pull it |
 | --- | --- | --- |
 | Hook definitions (Nix path) | [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) `lib/pre-commit-hooks.nix` + `flake-modules/profiles/<name>.nix` | `imports = [ inputs.nix-devenv.flakeModules.<profile> ]` in the consumer's `flake.nix` |
-| Hook definitions (non-Nix path) | [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh |
+| Hook definitions (non-Nix path) | [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh ([policy](/infrastructure/cicd/dependency-automation)) |
 | `.markdownlint-cli2.yaml` | `JacobPEvans/.github` at the root | Same root location pre-dates the precommit layer; kept for the existing markdownlint workflow's benefit |
 | `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `JacobPEvans/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold |
 | `zizmor.yml` workflow-security policy | `JacobPEvans/.github` at the root | Passed as `--config` by the base profile's zizmor hook |

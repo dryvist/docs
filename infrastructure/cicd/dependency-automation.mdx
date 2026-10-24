@@ -1,9 +1,51 @@
 ---
 title: "Dependency automation"
-description: "Shared Renovate policy for update schedules, grouping, security alerts, and Nix flake locks."
+description: "Shared dependency policies and scanner coverage for Renovate, Ansible pins, and Nix flake locks."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
+## Scanner coverage
+
+Renovate keeps first-party shared workflow references on the floating `@v1` major tag.
+
+| Pin shape | Mechanism |
+| --- | --- |
+| Container image pins in role defaults | [Shared image manager](#container-image-pins) |
+| Annotated version pins | Shared custom managers for supported Ansible, Nix, Packer, shell, `.env.example`, and workflow files |
+| Version embedded in a URL | Bespoke manager; the annotation manager would capture the whole URL |
+| Commit SHA inside a flake URL | Bespoke manager tracking it as a git ref |
+| Actions, collections, and lockfiles | Built-in managers |
+
+The shared custom managers use a `# renovate:` comment to track annotated
+version pins in supported files. These include Ansible defaults, vars, tasks,
+templates, inventory, group vars, host vars, playbooks, and scripts; Nix and
+Packer files; shell files; `.env.example`; and GitHub workflow YAML.
+
+```yaml
+# renovate: datasource=<ds> depName=<name> [versioning=<v>]
+some_component_version: "1.2.3"
+```
+
+Place the annotation immediately before the value it tracks. The annotation
+can set a `versioning` value; otherwise the manager uses `semver-coerced`.
+Date-shaped or ragged tags need `loose` versioning.
+
+The image manager covers both `defaults/main.yml` and `defaults/main/` layouts.
+A self-test checks those paths against the shared preset.
+
+Some pins have a companion checksum the scanner cannot calculate. Use an
+update-branch fixer to recalculate it and a pull-request gate to reject a
+version/hash mismatch. The fixer alone cannot enforce the relationship.
+Test the gate with a deliberate mismatch and confirm that it fails.
+
+The shared preset disables the Dependency Dashboard. When changing a manager,
+use the [coverage self-test](https://github.com/JacobPEvans/.github/blob/main/nix/renovate-manager-coverage-selftest.nix)
+to check both role-default layouts. Extend the scanner for any new file shape
+and add a pull-request gate for companion hashes or coupled versions.
+Hindsight has coupled client and server pins.
+Proxmox guest tags use validation
+rather than schema enforcement.
+
 ## Master and repo config
 
 [JacobPEvans/.github](https://github.com/JacobPEvans/.github) is the Renovate policy master. Its
@@ -22,8 +64,9 @@ Consumer configs extend the shared preset, then list only repo-specific holds.
 
 ## Schedule and grouping
 
-The shared schedule is Saturday 00:00–05:59 in `America/Indiana/Indianapolis`. Renovate's built-in
-`group:all` opens one PR per repository, with majors included.
+The shared schedule is Saturday 00:00–05:59 in
+`America/Indiana/Indianapolis`. Renovate's built-in `group:all` opens one PR
+per repository, with majors included.
 
 | Update | Release-age hold | Merge policy |
 | --- | --- | --- |

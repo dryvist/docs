@@ -18,14 +18,14 @@ lines; the AI work all lives in the upstream reusable workflow.
 | 1 | `issues: [opened]` | `issue-triage.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-triage.yml` | Categorizes, deduplicates, labels |
 | 2 | `issues: [opened]` | `issue-resolver.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-resolver.yml` | Creates a ready PR labeled `human:review` if the issue is well-scoped and not on the excluded-labels list |
 | 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller: handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
-| 4 | `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | `JacobPEvans/.github-ai/.github/workflows/ci-fix.yml` | Reads the failed CI log, pushes a fix commit (up to 2 attempts per PR, 5 per day) |
+| 4 | Failed CI completion | — | — | See CI resolver for the repair path and cutover status. |
 | 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `JacobPEvans/.github-ai/.github/workflows/project-router.yml` | Routes the item to the right GitHub Project with smart field assignment |
 | 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `JacobPEvans/.github-ai/.github/workflows/post-merge-docs-review.yml` | After merge, audits docs touched by the commit and creates fix PRs if needed |
 | 7 | Human clicks **Merge** | n/a | n/a | The only manual step |
 
 ## How the six callers connect
 
-{/*Shape: hub-and-spokes. 1 hub, 6 leaves stacked via invisible links. */}
+{/*Shape: hub-and-spokes. 1 hub, 4 leaves stacked via invisible links. */}
 {/* Aspect: ~4:3 (LR). Pass.*/}
 
 ```mermaid
@@ -38,10 +38,9 @@ lines; the AI work all lives in the upstream reusable workflow.
   direction TB
   A([issue-triage])
   B([issue-resolver])
-  C([ci-fix])
   E([project-router])
   F([post-merge-docs-review])
-  A ~~~ B ~~~ C ~~~ E ~~~ F
+  A ~~~ B ~~~ E ~~~ F
   end
 
   R --> A
@@ -50,7 +49,7 @@ lines; the AI work all lives in the upstream reusable workflow.
   classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
 
   class R host
-  class A,B,C,E,F ai
+  class A,B,E,F ai
 ```
 
 The hub is the consumer repo; each caller is a one-shot wrapper around an upstream reusable workflow. They run independently when their trigger fires.
@@ -76,7 +75,6 @@ jobs:
 
 Two patterns are slightly larger:
 
-- **`ci-fix.yml`** passes a `repo_context` and `ci_structure` describing what the repo is and what CI runs, so the AI knows what to fix.
 - **`post-merge-docs-review.yml`** uses the [Post-Merge Dispatch
   Pattern](https://github.com/JacobPEvans/.github-ai/blob/main/docs/PATTERNS.md#post-merge-dispatch-pattern).
   It is a two-job file because `push` events aren't supported by `claude-code-action@v1`, so the caller
@@ -97,7 +95,6 @@ Two patterns are slightly larger:
 The reusable workflows enforce conservative defaults so a runaway loop can't burn cloud spend:
 
 - **`issue-resolver.yml`**: `max_attempts: 1` per issue, `daily_limit: 5` per repo, and it skips any issue labeled `excluded_labels: "type:security,type:feature,type:breaking,size:l,size:xl"`
-- **`ci-fix.yml`**: `daily_run_limit: 5` per repo, max 2 fix attempts per PR
 - **All workflows**: fork PRs blocked by `if:` guards, branch protection enforces the final merge gate
 
 ## The pieces this doesn't include
