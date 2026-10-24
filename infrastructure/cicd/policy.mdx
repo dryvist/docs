@@ -1,10 +1,10 @@
 ---
 title: "CI/CD policy"
-description: "Marketplace actions over scripts, release-please for versioning, version-pinned dependencies, runner choice by workload."
+description: "Marketplace actions over scripts, release-please for versioning, and version-pinned dependencies."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
-{/*TIER-GUARD: reference page — runner catalogs and release rules need to live together.*/}
+{/*TIER-GUARD: release policy lives here.*/}
 
 > The CI tier is whatever the workload actually needs. Build it from marketplace actions, version-pin every dependency, and treat releases as permanent.
 
@@ -55,7 +55,9 @@ it. If a correction is needed, create a new release.
   - **Patch** bumps come from `fix:` commits
   - **Minor** bumps come from `feat:` commits
   - **Major** bumps are **human-initiated only**: edit `.release-please-manifest.json` manually. The release workflow blocks automated major bumps, including from `BREAKING CHANGE:` footers
-  - **Release PRs** are never auto-merged. A person merges each one when the batch of changes is ready.
+  - **Release PRs** auto-merge after required checks pass. The sweep handles
+    missed release PRs ([release workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_release-please.yml),
+    [bot PR sweep](https://github.com/dryvist/.github/blob/main/.github/workflows/bot-pr-automerge-sweep.yml)).
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
@@ -67,10 +69,31 @@ no longer hidden.
 
 Conventional Commits and the no-emoji rule for commit subjects live in [Commit conventions](/conventions/commit-conventions).
 
+## Required merge gate
+
+The enterprise `required-merge-gate` rule is active in all eight
+organizations. It requires `gate / Merge Gate` on `main` or `develop` when
+the repository property `ci_gate` is `true`. Organization admins may bypass
+it only through a pull request.
+
+
+## Public projection destination rulesets
+
+
+## CI health metrics and alerts
+
+The PR and CI health dashboard and alerts use metrics from the Cribl GitHub
+collector. It polls the GitHub Actions API every five minutes. Grafana alert
+rules consume those metrics. Alerts route through Grafana, Cribl, and ntfy to
+Slack. The collector is configured in
+[`56-github-actions.yml`](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/cribl_stream/defaults/main/56-github-actions.yml).
+Rules live in
+[`rules-github-actions.yml.j2`](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/grafana_stack/templates/alerting/rules-github-actions.yml.j2).
+
 ## Dependency versioning
 
-See [Dependency automation](/infrastructure/cicd/dependency-automation) for the shared Renovate
-source, update schedule, grouping, security alerts, and flake-lock policy.
+Shared dependency scanning, Renovate policy, and flake-lock updates live in
+[Dependency automation](/infrastructure/cicd/dependency-automation).
 
 ### Scanner posture for self-references
 
@@ -83,7 +106,6 @@ Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`), and the
 lock file holds the exact revision.
 The org scanners enforce that shape:
 
-- **Renovate.** Keeps shared workflow refs on the `@v1` major tag.
 - **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
 - **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable. The source is in
   [Dependency automation](/infrastructure/cicd/dependency-automation).
@@ -127,49 +149,60 @@ flowchart LR
 
 ## Runner choice
 
-RunsOn (AWS EC2 spot via [`tofu-runs-on`](/infrastructure/cicd/tofu-runs-on)) is the default for
-Linux jobs. The control plane carries a small fixed monthly cost regardless of job volume. Once it
-is paid for, workflows that stay on `ubuntu-latest` spend GitHub Actions minutes that do not need to
-be spent.
-
-On-prem self-hosted is the documented exception for jobs that genuinely need local hardware. It is not a routine choice.
-
-| Workload | Runner |
-| --- | --- |
-| Linux job (lint, validate, build, test) | RunsOn: `runs-on=${{ github.run_id }}/runner=2cpu-linux-x64` |
-| Nix `flake check` (Linux) | RunsOn with more RAM: `runs-on=${{ github.run_id }}/cpu=4/ram=16/family=m7+c7/extras=s3-cache` |
-| `macos-latest` | GitHub-hosted: RunsOn EC2 Mac has a 24-hour minimum allocation. For short jobs `macos-latest` is cheaper despite the 10× billing multiplier |
-| `windows-latest` | RunsOn: supports Windows, case-by-case |
-| Disabled-schedule workflow (manual `workflow_dispatch` only) | GitHub-hosted: migration saves nothing |
-| Job requiring the always-on Mac Studio (LAN, local MLX, Apple-container Linux ARM64) | **mac-fleet**: `[self-hosted, Linux, ARM64, apple-container]`. GitHub runner group is still named `llm-runners`. This is **not** `macos-latest` and **not** the laptop |
-| Job requiring OrbStack on a powered-on laptop | **on-prem self-hosted**: `[self-hosted, Linux, ARM64]` in `orbstack-kubernetes`. Do not confuse with mac-fleet |
-| Job requiring Proxmox LAN / Docker on the homelab Linux x64 runner host | **proxmox-fleet**: `[self-hosted, Linux, X64, proxmox]` (`ansible-proxmox-apps`). See "On-prem runner requirements" below |
-
-The leading `runs-on=${{ github.run_id }}` segment is **required** so the RunsOn control plane can
-correlate the GitHub Actions `workflow_job` webhook back to the originating run. Without it, the
-job hangs in `queued`. The shared reusable workflows accept a `runner_label` input (default
-`ubuntu-latest`). Callers opt in by passing the RunsOn label string.
-
-Full RunsOn label catalog, prereqs (GitHub App allowlist), rollout playbook, and verification steps
-live in
-[`tofu-runs-on/docs/migration-guide.md`](https://github.com/dryvist/tofu-runs-on/blob/main/docs/migration-guide.md).
+Runner tiers, job selection, labels, and on-prem requirements live in
+GitHub Actions runner fleets.
 
 ### Ansible checks
 
-Every Ansible repository calls `JacobPEvans/.github` for lint, change detection, and Molecule selection.
-Pull requests into `develop` and `main` run lint, syntax, and repository contract checks, plus Molecule
-scenarios mapped to changed paths. Non-main branch pushes use the same focused selection. Declared
-full-matrix paths defer Molecule to the post-merge push to `main`; only that push runs the full matrix
-and configured integration checks. Unmapped changes under `.github/` select no scenario; a caller runs
-the full set for one by mapping it into every scenario filter. Other unmapped changes fail selection
-instead of widening to all scenarios. Each caller's single `Merge Gate` requires Molecule and every
-repository-specific check.
-Public repositories and fork pull requests use GitHub-hosted runners. Eligible private repositories
-may pass an approved self-hosted or RunsOn runner label. A role without a Molecule scenario may use
-`molecule_contract_filters` only when its contract test runs inside that same `Merge Gate`.
+Every Ansible repository calls `JacobPEvans/.github` for lint, change
+detection, and Molecule selection. Pull requests into `develop` or `main` run
+lint, syntax, repository contracts, and Molecule scenarios mapped to changed
+paths. Non-main branch pushes use the same focused selection. Pushes to `main`
+run the full Molecule matrix and configured integration checks. Declared
+full-matrix paths may defer Molecule until that post-merge run.
 
-Set job concurrency from measured runner capacity. Reassess the limit after
-measuring peak CPU and memory use.
+The selector fails closed on an unmapped path. An unmapped `.github/` path may
+select no scenario. To get full coverage for such a path, a caller maps it into
+every scenario filter. Required contracts and selected Molecule scenarios stay
+inside the same `Merge Gate`. Selector, contract, or required-check failures
+fail that gate. A role without a Molecule scenario may use
+`molecule_contract_filters` only when its contract test runs inside the gate.
+
+`ansible-proxmox-ai` runs full Data Contract and Molecule suites on promotion
+pull requests to `main` and pushes to `main`. Regular `develop` changes keep
+the declared scope. `ansible-proxmox-apps` also runs full Data Contract and
+Molecule suites for pull requests to `main` and pushes to `main`.
+
+In `ansible-proxmox-ai`, Data Contract selects scope from the event and runs
+independently from shared lint. `Merge Gate` waits for contract, shared CI,
+and selected Molecule results. `ansible-proxmox-apps` maps its dependency
+manifest and contract workflows to required contract jobs. Its gate and local
+Molecule harness use the default smoke scenario.
+
+The content-aware classifier applies these rules in order:
+
+- A `develop` to `main` promotion, lockfile change, or requirements change
+  selects full validation.
+- A documentation-only pull request selects lint only and no Molecule.
+- Other pull requests use the model rubric. A failed, timed-out, or invalid
+  answer selects full validation.
+- Non-pull-request events select full validation.
+
+The classifier cannot expand a caller's declared scenario mapping. Unrelated
+security scans remain unconditional.
+
+The `ansible-proxmox-ai` router contract uses bounded batches and retains
+every declared playbook. Its selector derives groups from the manifest and
+selects full groups for changed playbooks. Each playbook runs in a fresh
+`ansible-playbook` process. A repository guard checks coverage and process
+isolation. See the [router contract workflow](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/workflows/_llm-router-contract.yml),
+[scope selector](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/scripts/select-contract-scope.py),
+and [batch guard](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/tests/repo_guards/test_router_contract_batches.py).
+
+The shared workflow does not widen checks because a pull request targets
+`main`. Local Molecule workflows consume the shared scope output or derive
+role coverage from the repository tree. Queue time counts toward wall time.
+Compare queue and execution durations instead of skipped-job counts.
 
 ### Shared Molecule workflow
 
@@ -181,8 +214,7 @@ types and defaults.
 - **Scenario discovery:** `scenarios`, `full_suite`, `scenario_discovery`,
   `scenario_discovery_script`, `scenario_name_profile`, `scenario_require_molecule_yml`.
 - **Caller checks and setup:** `preflight_command`, `static_checks`, `pre_steps_script`, `extra_env`.
-- **Runner and limits:** `discover_runner`, `runner_label`, `public_and_fork_hosted`,
-  `discover_timeout_minutes`, `pull_request_discover_timeout_minutes`, `timeout_minutes`,
+- **Discovery limits:** `discover_timeout_minutes`, `pull_request_discover_timeout_minutes`, `timeout_minutes`,
   `pull_request_timeout_minutes`, `scenario_timeout_floors`, `fail_fast`, `max_parallel`,
   `serialize_scenario`.
 - **Python and Ansible Galaxy:** `python_version`, `python_install_mode`, `requirements_files`,
@@ -203,9 +235,6 @@ arguments appended as argv. Only explicitly mapped Doppler outputs reach the fin
 
 The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules below to every caller.
 
-- **Fork pull requests.** Every caller-selected `runs-on` and `runner_label` in `_ci-gate.yml` and `_ansible-ci.yml`
-  resolves to `ubuntu-24.04` when the event payload carries a pull request from another repository. That includes
-  `pull_request_target`.
 - **Release-please metadata.** `VERSION`, `.release-please-manifest.json` and `release-please-config.json` are not
   unmapped paths, as Markdown files are not. A change that touches only these files emits no warning and sets `full=false`.
 - **Python profile.** The `requirements*.txt` filter matches at any depth (`**/requirements*.txt`).
@@ -218,24 +247,9 @@ The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules be
 ### Flake input freshness
 
 The reusable [`_flake-lock-fresh.yml` workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_flake-lock-fresh.yml)
-accepts `runner_label` and the numeric `max_age_days` input. `max_age_days` defaults to `0`, which
-disables the age check for root GitHub inputs; the owned-input freshness check still runs. Set
-`max_age_days: 30` to check for updates older than 30 days on each locked ref.
-
-### On-prem runner requirements
-
-On-prem self-hosted runners are a single point of failure when the job has E2E coverage and the runner is broken or stale. Every on-prem runner must:
-
-1. **Authenticate via a GitHub App** (`APP_ID` + `APP_PRIVATE_KEY`), never a personal access token.
-2. **Pin the runner image (or VM template) by digest**, with Renovate tracking the digest. No floating tags.
-3. **Expose a process-level healthcheck** (Docker `healthcheck:`, systemd `WatchdogSec`, or equivalent) so failed state surfaces in standard inspection tools.
-4. **Emit a periodic heartbeat** to a dead-man's-switch endpoint (healthchecks.io or equivalent) so silent death pages someone.
-5. **Check required environment variables** so the workflow fails when any are missing.
-6. **Build the runner image off-node.** Build it on a dedicated build host and `docker load` it
-   onto the runner host. Never build it in-place on a hypervisor node. A heavy image build can
-   overload the node that also runs production guests.
-
-Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that repo's `Makefile` `runner-*` targets and `TESTING.md`.
+accepts the numeric `max_age_days` input. `max_age_days` defaults to `0`, which disables the age check for root GitHub
+inputs; the owned-input freshness check still runs. Set `max_age_days: 30` to check for updates older
+than 30 days on each locked ref.
 
 ## Where to go next
 
@@ -247,12 +261,6 @@ Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that
   Identity per execution context and the App-token pattern that signs every AI-authored commit.
 </Card>
 <Card
-  title="tofu-runs-on"
-  icon="play"
-  href="/infrastructure/cicd/tofu-runs-on">
-  The RunsOn runner pool itself — provisioning, OIDC trust, migration guide.
-</Card>
-<Card
   title="OpenTofu check placement"
   icon="list-check"
   href="/infrastructure/tofu-check-placement">
@@ -262,6 +270,6 @@ Reference implementation: `orbstack-kubernetes/docker/actions-runner/`. See that
   title="CI/CD overview"
   icon="server"
   href="/infrastructure/cicd/overview">
-  Runner tiers in context, plan/apply gating, branch rulesets.
+  CI and remote OpenTofu in the wider infrastructure plan.
 </Card>
 </CardGroup>

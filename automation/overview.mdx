@@ -1,6 +1,6 @@
 ---
 title: "Automation"
-description: "How an issue becomes a merged PR with minimal human touch: ai-workflows in the cloud, claude-code-routines on cron, claude-code-plugins on the laptop."
+description: "How an issue becomes a merged PR with minimal human input: ai-workflows in the cloud, claude-code-routines on cron, claude-code-plugins on the laptop."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -47,13 +47,11 @@ A human files the issue, reviews the PR, and clicks merge. The `human:review` la
 
 | Layer | Where it lives | When it runs | What it owns |
 | --- | --- | --- | --- |
-| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues, PRs, CI failures) | Triage, ready PRs labeled `human:review`, CI auto-fix, final review gate, project routing |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues and PRs) | Triage, ready PRs labeled `human:review`, final review gate, project routing |
 | [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
 | [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch: finalize a PR you're iterating on |
 
-Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
-path until cutover; ci-resolver replaces them,
-and those workflows retire after cutover.
+CI repair workflows and their cutover status live in CI resolver.
 
 ## Where to go next
 

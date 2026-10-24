@@ -1,6 +1,6 @@
 ---
 title: "AI workflows"
-description: "Reusable GitHub Actions workflows that turn issues into ready PRs, fix CI failures automatically, and gate merges with pinned catalog prompts."
+description: "Reusable GitHub Actions workflows that turn issues into ready PRs and gate merges with pinned catalog prompts."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -18,16 +18,13 @@ These run on GitHub events. Wire one caller per workflow you want.
 | --- | --- | --- |
 | `issue-triage.yml` | `issues: [opened]` | Categorizes, deduplicates, labels new issues |
 | `issue-resolver.yml` | `issues: [opened]` | Creates a ready PR labeled `human:review` when the issue is well-scoped and not excluded by labels |
-| `ci-fix.yml` | `workflow_run` of your CI workflow, `conclusion: failure` | Reads the failed log, pushes a fix commit |
 | `project-router.yml` | `issues/pull_request: [opened, labeled]` | Routes items to GitHub Projects with smart field assignment |
 | `post-merge-docs-review.yml` | `push: [main]` → dispatch | After merge, audits docs touched by the commit, creates fix PRs |
 | `post-merge-tests.yml` | `push: [main]` → dispatch | After merge, analyzes the code changes and drafts targeted tests |
 | `issue-linker.yml` | `pull_request: [opened, closed]` | Links open issues to PRs on open; closes resolved issues on merge |
 | `notify-ai-pr.yml` | `pull_request: [opened]` from a bot | Slack notification when an AI-authored PR opens |
 
-Per-repo `cc-ci-fix` and `suite-ci` workflows remain the live CI auto-fix
-path until cutover; ci-resolver replaces them,
-and those workflows retire after cutover.
+CI repair workflows and their cutover status live in CI resolver.
 
 ## Scheduled workflows
 
@@ -61,8 +58,8 @@ jobs:
     secrets: inherit
 ```
 
-Permission shape varies per workflow. `issue-resolver` needs `pull-requests: write`, `ci-fix` needs
-`actions: read`, and `post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller
+Permission shape varies per workflow. `issue-resolver` needs `pull-requests: write`, and
+`post-merge-*` needs `actions: write` for the re-dispatch. The [canonical caller
 templates](https://github.com/JacobPEvans/.github-ai/blob/main/docs/GETTING_STARTED.md) list the exact
 permission block for each.
 
@@ -74,10 +71,7 @@ triggers, permissions, publishing, and provider configuration.
 
 ## Versioning
 
-Per [CI/CD policy](/infrastructure/cicd/policy#scanner-posture-for-self-references),
-callers use the floating major tag: `uses: JacobPEvans/.github-ai/.github/workflows/<file>@v1`, without
-a trailing version comment. Renovate keeps the ref on that major tag. See [scanner
-posture](/infrastructure/cicd/policy#scanner-posture-for-self-references).
+Shared workflow dependency pins and Renovate policy live in [Dependency automation](/infrastructure/cicd/dependency-automation).
 
 
 ## Authentication

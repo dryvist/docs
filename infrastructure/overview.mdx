@@ -73,7 +73,7 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
 | Repo | Purpose |
 | --- | --- |
 | `tofu-aws` (private) | Splunk DR footprint: cold capacity for failover |
-| [`tofu-runs-on`](https://github.com/dryvist/tofu-runs-on) | Self-hosted GitHub Actions runners on AWS spot instances |
+| [`tofu-runs-on`](https://github.com/dryvist/tofu-runs-on) | AWS runner implementation; current GitHub Actions runner policy |
 | [`tofu-splunk-aws`](https://github.com/dryvist/tofu-splunk-aws) | Cost-optimised Splunk deployment on AWS |
 
 ## Repos in this section
@@ -110,7 +110,7 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
   title="CI/CD"
   icon="play"
   href="/infrastructure/cicd/overview">
-  GitHub Actions strategy: self-hosted RunsOn AWS spot, OIDC, plan/apply pattern.
+  GitHub Actions policy and remote plan/apply pattern.
 </Card>
 <Card
   title="orbstack-kubernetes"
@@ -160,7 +160,7 @@ OpenTofu builds VMs and LXCs (coral). Ansible takes the inventory and configures
 | Home Assistant | LXC | Native install via supervised path |
 | Self-hosted Netflix | LXC chain on a dedicated VLAN | Governed by the same UniFi policy + Proxmox placement patterns as the rest of the homelab |
 | docker-host | VM | Isolated landing pad for vendor Docker images |
-| GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral container-per-job, isolated `ci_runners` network; the LLM-box runner handles workflows that need live access to homelab infrastructure |
+| GitHub Actions runners | Docker on docker-host VM + dedicated runner on LLM box | Ephemeral per-job; see runner fleets for current routing |
 | Qdrant (vector DB) | LXC (nesting) | Vendor Docker image, lightweight, RAG workload |
 | Local LLM inference | Bare-metal NixOS | GPU-bound; kept off Proxmox to avoid passthrough overhead and to run whatever OS gives the fastest ROCm path |
 

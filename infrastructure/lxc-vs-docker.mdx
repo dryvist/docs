@@ -88,7 +88,7 @@ its own VM so its virtualized networking can't leak into the bare-metal data pla
 | --- | --- | --- |
 | Splunk Enterprise | Bare-metal-ish VM | Vendor Docker ruled out for network volume |
 | Qdrant (vector DB) | LXC with nesting | Vendor Docker image, lightweight, RAG workload; nesting keeps it on LXC's network |
-| GitHub Actions runners | Docker on `docker-host` + a dedicated runner on the LLM box | Ephemeral per-job; the LLM-box runner needs live homelab access for some workflows |
+| GitHub Actions runners | Docker on `docker-host` + a dedicated runner on the LLM box | Ephemeral per-job; see runner fleets for current routing |
 | Cribl Edge / Stream / HAProxy | LXC | Native packages, network-heavy data plane |
 | Home Assistant | LXC | Native install via supervised path |
 

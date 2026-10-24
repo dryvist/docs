@@ -1,36 +1,35 @@
 ---
 title: "Cloud pipelines"
-description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become ready PRs labeled human:review, CI failures get fixed, and merge readiness is gated."
+description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become ready PRs labeled human:review, and merge readiness is gated."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Event in (`issues.opened`, `workflow_run`, `pull_request`). PR out. Every step runs on GitHub-hosted runners or RunsOn spot, attributable to the AI-bot App identity.
+> Event in (`issues.opened`, `pull_request`). PR out. Jobs use GitHub-hosted or RunsOn runners and the AI-bot App identity.
 
-Cloud pipelines are the **event-driven** half of the automation surface. Something happens in GitHub:
-an issue is filed, a CI run fails, or a PR is opened. The reusable workflows in
+GitHub Actions handle the event-driven side of automation. Something happens in GitHub:
+an issue is filed or a PR is opened. The reusable workflows in
 [`JacobPEvans/.github-ai`](/automation/repos/ai-workflows) react. The result lands as a
-ready PR labeled `human:review` or a commit on an existing PR, signed by
+ready PR labeled `human:review`, signed by
 [`JacobPEvans-claude[bot]`](/infrastructure/cicd/git-signing) and ready for review.
 
 The cron-driven sibling (work that runs on a schedule rather than in response to an event) is documented under [Scheduled routines](/automation/scheduled-routines/overview).
 
-{/*Shape: 3 parallel event->workflow->outcome lanes. Nodes: 9. Aspect: ~2:1 TB. Pass.*/}
+{/*Shape: 2 parallel event->workflow->outcome lanes. Nodes: 6. Aspect: ~2:1 TB. Pass.*/}
 
 ```mermaid
 %%{init:
   {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
   flowchart TB
   E1([issues.opened]) --> W1([issue-resolver.yml]) --> O1([Ready PR])
-  E2([workflow_run failure]) --> W2([ci-fix.yml]) --> O2([Fix commit])
   E3([pull_request]) --> W3([code-simplifier.yml]) --> O3([Review comments])
 
   classDef evt fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   classDef wf  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
   classDef out fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
 
-  class E1,E2,E3 evt
-  class W1,W2,W3 wf
-  class O1,O2,O3 out
+  class E1,E3 evt
+  class W1,W3 wf
+  class O1,O3 out
 ```
 
 ## How they fit
@@ -38,10 +37,9 @@ The cron-driven sibling (work that runs on a schedule rather than in response to
 | Trigger | Reusable workflow | Outcome |
 | --- | --- | --- |
 | `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Ready PR labeled `human:review` implementing the issue |
-| `workflow_run` on `CI`, `conclusion: failure` | `ci-fix.yml` | Fix commit pushed back to the failing PR |
 | `pull_request` opened or `synchronize` | `code-simplifier.yml` | Review comments when ready |
 
-The full caller catalog and the post-merge dispatch chain live on the [ai-workflows page](/automation/repos/ai-workflows).
+CI failure repair and cutover status live in CI resolver.
 
 ## Where to go next
 
