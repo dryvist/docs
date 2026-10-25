@@ -42,7 +42,7 @@ flowchart LR
 - Places guests across cluster nodes via a per-resource `node_name` (defaults to the primary node)
 - Declares per-node ZFS storage (`node_storage`) that Ansible provisions. OpenTofu references the datastore by id and never creates the pool itself (`zpool create` is an OS-level operation)
 - Uses typed HCL inputs and locals to share values without generated configuration
-- Outputs a list of provisioned hosts that Ansible inventories consume directly
+- Outputs the provisioned-host list that Ansible inventories consume, and publishes workstation identities in it for the `workstations` group
 - Provisions the **object_storage** module: RustFS LXC (S3-compatible, active)
 
 ## How it fits

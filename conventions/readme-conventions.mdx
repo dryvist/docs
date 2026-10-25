@@ -44,8 +44,8 @@ A README names exactly one repo: this one. Concretely:
   catalog](/repositories), maintained once.
 - **Don't describe what another repo does.** If you must reference a sibling, link to its hub page or GitHub, don't summarize it. The summary drifts the instant the sibling changes.
 - **Dependencies are contracts, not names.** When this repo consumes another's output, describe the
-  *shape* it expects, such as "reads an inventory matching `<schema>`" or "expects `NETWORK_CIDR_*` in the
-  environment," not "run the provisioning repo first." The contract is what you actually depend on,
+  *shape* it expects, such as "reads an inventory matching `<schema>`" or "expects `<field>` in its
+  input object," not "run the provisioning repo first." The contract is what you actually depend on,
   and it's stable; the sibling that satisfies it today might be replaced tomorrow. Pin the contract;
   link the map.
 
