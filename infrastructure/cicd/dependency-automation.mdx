@@ -1,18 +1,17 @@
 ---
 title: "Dependency automation"
-description: "Shared dependency policies and scanner coverage for Renovate, Ansible pins, and Nix flake locks."
+description: "Shared dependency policies and scanner coverage for GitHub Actions, Renovate, Ansible pins, and Nix flake locks."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
 ## Scanner coverage
 
-Renovate keeps first-party shared workflow references on the floating `@v1` major tag.
-
 | Pin shape | Mechanism |
 | --- | --- |
 | Container image pins in role defaults | [Shared image manager](#container-image-pins) |
 | Annotated version pins | Shared custom managers for supported Ansible, Nix, Packer, shell, `.env.example`, and workflow files |
-| Version embedded in a URL | Bespoke manager; the annotation manager would capture the whole URL |
+| Annotated GitHub flake input tag in a Nix URL | Shared custom manager reads the version tag from the annotated `url` field |
+| Other versions embedded in a URL | Bespoke manager; the annotation manager would capture the whole URL |
 | Commit SHA inside a flake URL | Bespoke manager tracking it as a git ref |
 | Actions, collections, and lockfiles | Built-in managers |
 
@@ -46,6 +45,30 @@ Hindsight has coupled client and server pins.
 Proxmox guest tags use validation
 rather than schema enforcement.
 
+## Action and source pin policy
+
+First-party references in enterprise-owned organizations float on `@vN`.
+Renovate keeps shared workflow references on the floating `@v1` major tag.
+Third-party actions use a full commit SHA with a trailing `# vX.Y.Z` comment.
+The enterprise `Workflow Policy` check enforces this rule. `pinact run` pins
+action references, so revert any first-party line it pins to keep that `@vN`
+ref floating.
+
+Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`), and the
+lock file holds the exact revision. The org scanners enforce that shape:
+
+- **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
+- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable.
+- **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
+  avoid the paid Code Security charge), managed as IaC in
+  [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).
+  `tofu-github` also requires CodeQL results through an org ruleset on the same public repositories.
+  No committed query-filter config.
+- **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning.
+
+The full per-scanner posture lives in [`JacobPEvans/.github`
+→ SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md).
+
 ## Master and repo config
 
 [JacobPEvans/.github](https://github.com/JacobPEvans/.github) is the Renovate policy master. Its
@@ -68,6 +91,12 @@ The shared schedule is Saturday 00:00–05:59 in
 `America/Indiana/Indianapolis`. Renovate's built-in `group:all` opens one PR
 per repository, with majors included.
 
+The shared preset sets `prCreation` to `not-pending`, so Renovate waits for
+branch status checks to finish before it creates a pull request.
+
+The shared preset sets `internalChecksFilter` to `strict`. Updates with the
+seven-day release-age hold wait until that age passes.
+
 | Update | Release-age hold | Merge policy |
 | --- | --- | --- |
 | Minor, patch, digest, and pin updates | 7 days | Auto-merge after required checks pass |
@@ -79,13 +108,19 @@ per repository, with majors included.
 The complete trust tiers live in
 [`SECURITY.md`](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
 
+Renovate does not apply `minimumReleaseAge` to lock-file maintenance, so the
+shared preset disables npm lock-file maintenance org-wide. Terraform/OpenTofu
+lock-file maintenance is also disabled org-wide because those locks must move
+with their exact provider pins.
+
 ## Nix flake locks
 
 Nix repos also extend the shared [`renovate-nix` preset](https://github.com/JacobPEvans/.github/blob/main/renovate-nix.json).
 Renovate's `nix` manager and `lockFileMaintenance` relock `flake.lock` in the Saturday window.
-For `lockFileMaintenance`, Renovate sets `minimumReleaseAge` to `null` because it delegates version
-selection to the package manager. That manager's own release-age setting controls which versions
-enter the lockfile.
+The shared presets set no `minimumReleaseAge` on `lockFileMaintenance`, because Renovate cannot apply
+release-age filtering to lock-file maintenance.
+In Nix repositories, Go directive and toolchain bumps come in their own
+review-required PRs.
 
 ## Package-manager release ages
 
@@ -94,13 +129,20 @@ Project-level package managers use native settings for a seven-day release age:
 - **uv in `nix-ai` orchestrator.** Set `exclude-newer = "7 days"` and
   `required-version = ">=0.9.17"` in
   [`orchestrator/pyproject.toml`](https://github.com/dryvist/nix-ai/blob/develop/orchestrator/pyproject.toml).
-- **Bun in `ai-workflows-testing`.** Set `minimumReleaseAge = 604800` seconds in
+- **Bun in `ai-workflows-testing`, `raycast-smart-issue`, and `JacobPEvans/.github-ai`.** Set `minimumReleaseAge = 604800` seconds in
   [`bunfig.toml`](https://github.com/dryvist/ai-workflows-testing/blob/main/bunfig.toml).
+- **uv in `python-template`.** Set `exclude-newer = "7 days"` and `required-version = ">=0.9.17"` in
+  `pyproject.toml`. It also lists reviewed exceptions in `exclude-newer-package`, which hold a named package to a
+  later cutoff so a release that fixes a published advisory can resolve.
+- **Private repositories.** Several set the same seven-day npm and uv windows in their own config.
 - **pnpm in three projects.** Set `minimumReleaseAge: 10080` minutes in each project's
   `tests/pnpm-workspace.yaml`:
   - [`cc-edge-pack-template`](https://github.com/dryvist/cc-edge-pack-template/blob/main/tests/pnpm-workspace.yaml)
   - [`cc-edge-codex-io`](https://github.com/dryvist/cc-edge-codex-io/blob/main/tests/pnpm-workspace.yaml)
   - [`cc-stream-openrouter-rest-io`](https://github.com/dryvist/cc-stream-openrouter-rest-io/blob/main/tests/pnpm-workspace.yaml)
+- **npm in `homelab-wall`.** Set `min-release-age=7` in
+  [`.npmrc`](https://github.com/dryvist/homelab-wall/blob/main/.npmrc).
+
 
 The
 [`nix-home` Home Manager package config](https://github.com/dryvist/nix-home/blob/develop/modules/home-manager/npm/config.nix)
@@ -116,6 +158,11 @@ also writes user-level settings:
 One shared custom manager tracks `*_image:` keys in Ansible role defaults. It accepts quoted,
 unquoted, and folded values, with an optional `sha256` digest. Use concrete tags, not `latest` or
 `stable`.
+
+The shared Molecule image manager tracks `image:` entries in any
+`molecule/*/molecule.yml` file. Put
+`# renovate: datasource=<ds> depName=<image>` above the `image:` line. The value
+may use plain YAML or folded `>-` form and must pin `tag@sha256:digest`.
 
 
 ## Dependabot security updates

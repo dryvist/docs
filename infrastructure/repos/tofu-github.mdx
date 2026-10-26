@@ -34,6 +34,10 @@ Team plan) let dryvist define this once and apply it to every repo automatically
   administrator-only bypass so administrators can merge their own PRs while bots and other contributors still need
   the review.
 - **Markdown lint.** Requires the markdownlint workflow (defined once in the org's `.github` repo) to pass on every ref of every repo, with new repos exempted until their default branch exists.
+- **Code scanning.** An org ruleset requires CodeQL results on the default branch and `main`
+  of every public, unarchived, non-fork repository in the org. The same set gets its CodeQL
+  default setup from this repo.
+- **Repository family.** `family` is an optional single-select repository property. Only a repository whose `repos.yml` entry sets a `family` receives a value. All others stay unset.
 - **Labels.** [`labels.yml`](https://github.com/dryvist/tofu-github/blob/main/labels.yml) is the one
   label definition, and OpenTofu applies it to every unarchived repo, forks included. A `moved`
   block moved the label state from its first resource address to the org-wide one. A data-driven

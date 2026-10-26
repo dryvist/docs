@@ -55,9 +55,9 @@ it. If a correction is needed, create a new release.
   - **Patch** bumps come from `fix:` commits
   - **Minor** bumps come from `feat:` commits
   - **Major** bumps are **human-initiated only**: edit `.release-please-manifest.json` manually. The release workflow blocks automated major bumps, including from `BREAKING CHANGE:` footers
-  - **Release PRs** auto-merge after required checks pass. The sweep handles
-    missed release PRs ([release workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_release-please.yml),
-    [bot PR sweep](https://github.com/dryvist/.github/blob/main/.github/workflows/bot-pr-automerge-sweep.yml)).
+  - **Release PRs** auto-merge through the [bot PR sweep](https://github.com/dryvist/.github/blob/main/.github/workflows/bot-pr-automerge-sweep.yml)
+    after required checks pass. The [release-please workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_release-please.yml)
+    opens them.
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
   - `feat:` reserved for genuinely new capabilities, integrations, or significant behavioral changes
@@ -71,52 +71,34 @@ Conventional Commits and the no-emoji rule for commit subjects live in [Commit c
 
 ## Required merge gate
 
-The enterprise `required-merge-gate` rule is active in all eight
-organizations. It requires `gate / Merge Gate` on `main` or `develop` when
-the repository property `ci_gate` is `true`. Organization admins may bypass
-it only through a pull request.
+The `org-merge-gate-*` rulesets in
+[`tofu-github`](https://github.com/dryvist/tofu-github) enforce each repository's
+selected status check. The enterprise `required-merge-gate` rule is active in
+all eight organizations. It requires `gate / Merge Gate` on `main` or `develop`
+when the repository property `ci_gate` is `true`. Organization admins may
+bypass it only through a pull request.
 
+
+### Auto-merge arming
+
+The organization `PR Auto-Merge` workflow runs in every repository. It arms squash
+auto-merge only when all of these hold:
+
+- The pull request is authored by the session bot (`jacobpevans-claude[bot]`) and comes from the same repository.
+- The pull request is not a draft and does not carry `human:review`.
+- The pull request is not a `develop` to `main` promotion.
+- The base branch has an active rule that requires a `Merge Gate` status check. Without one, the job warns and arms nothing.
+
+A `human:review` label added after arming turns auto-merge off.
 
 ## Public projection destination rulesets
 
 
-## CI health metrics and alerts
-
-The PR and CI health dashboard and alerts use metrics from the Cribl GitHub
-collector. It polls the GitHub Actions API every five minutes. Grafana alert
-rules consume those metrics. Alerts route through Grafana, Cribl, and ntfy to
-Slack. The collector is configured in
-[`56-github-actions.yml`](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/cribl_stream/defaults/main/56-github-actions.yml).
-Rules live in
-[`rules-github-actions.yml.j2`](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/grafana_stack/templates/alerting/rules-github-actions.yml.j2).
 
 ## Dependency versioning
 
-Shared dependency scanning, Renovate policy, and flake-lock updates live in
+Shared dependency scanning, action and source pin policy, Renovate policy, and flake-lock updates live in
 [Dependency automation](/infrastructure/cicd/dependency-automation).
-
-### Scanner posture for self-references
-
-First-party references (any enterprise-owned organization) float on `@vN`. Third-party actions must use a full commit SHA with a trailing
-`# vX.Y.Z` comment. The enterprise `Workflow Policy` check enforces this rule.
-`pinact run` pins action references, so revert any first-party line it pins to
-keep that `@vN` ref floating.
-
-Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`), and the
-lock file holds the exact revision.
-The org scanners enforce that shape:
-
-- **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
-- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable. The source is in
-  [Dependency automation](/infrastructure/cicd/dependency-automation).
-- **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
-  avoid the paid Code Security charge), managed as IaC in
-  [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).
-  No committed query-filter config.
-- **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning.
-
-The full per-scanner posture lives in [`JacobPEvans/.github`
-→ SECURITY.md](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md).
 
 ## Reusable workflow ownership
 
@@ -195,7 +177,9 @@ The `ansible-proxmox-ai` router contract uses bounded batches and retains
 every declared playbook. Its selector derives groups from the manifest and
 selects full groups for changed playbooks. Each playbook runs in a fresh
 `ansible-playbook` process. A repository guard checks coverage and process
-isolation. See the [router contract workflow](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/workflows/_llm-router-contract.yml),
+isolation. Before the contract jobs, a lock step resolves the router's hashed
+requirements with `uv` for the router guest's Python on x86_64. Conflicting pins
+fail the pull request. See the [router contract workflow](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/workflows/_llm-router-contract.yml),
 [scope selector](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/scripts/select-contract-scope.py),
 and [batch guard](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/tests/repo_guards/test_router_contract_batches.py).
 
@@ -226,6 +210,8 @@ types and defaults.
 - **Molecule runtime:** `docker_timeout_seconds`, `docker_prune`, `nix_scenarios`, `molecule_args`,
   `molecule_workdir_mode`, `molecule_scenario_arg`, `instance_suffix`,
   `isolate_ephemeral_directory`.
+- **Runners:** runner inputs, defaults, and public/fork routing live in
+  GitHub Actions runner fleets.
 - **Test credentials:** `doppler_enabled`, `test_secret_env_map`, `use_homarr_token`.
 
 The test command stays fixed at `molecule test -s "$MOLECULE_SCENARIO"`, with optional Molecule
@@ -246,10 +232,24 @@ The shared `_ci-gate.yml` workflow in `JacobPEvans/.github` applies the rules be
 
 ### Flake input freshness
 
-The reusable [`_flake-lock-fresh.yml` workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_flake-lock-fresh.yml)
+The reusable [`_flake-lock-fresh.yml` workflow](https://github.com/JacobPEvans/.github/blob/main/.github/workflows/_flake-lock-fresh.yml)
 accepts the numeric `max_age_days` input. `max_age_days` defaults to `0`, which disables the age check for root GitHub
 inputs; the owned-input freshness check still runs. Set `max_age_days: 30` to check for updates older
 than 30 days on each locked ref.
+
+The shared `_ci-gate.yml` in `JacobPEvans/.github` takes `flake_lock_max_age_days` (default `0`). Above
+zero, it runs the same check as a `Flake Lock Fresh` job and the merge gate waits for it.
+
+### Secret scans
+
+The reusable [`_ci-gate.yml` workflow in `dryvist/.github`](https://github.com/dryvist/.github/blob/main/.github/workflows/_ci-gate.yml)
+runs two secret scanners, gitleaks and trufflehog, on every pull request. Path filters do not apply to them.
+Each scanner checks only the commits the pull request adds (`base..head`), so existing history cannot fail a PR.
+
+- The `secret_scan` input (default `true`) turns both scanners off.
+- The gitleaks job ignores the repository's own `.gitleaksignore` and `gitleaks:allow` comments. A pull request cannot allowlist its own finding.
+- The trufflehog job fails on verified credentials, on candidates the verifier could not check, and on inline `trufflehog:ignore` comments.
+- Each job has a five-minute timeout.
 
 ## Where to go next
 

@@ -78,7 +78,11 @@ Run `ansible-proxmox` first. Hosts need their ZFS, networking, and monitoring ag
 </Steps>
 
 <Note>
-This repository currently ships **roles only**. It has no site playbook or dynamic tofu-inventory loader yet. Deploy orchestration is a tracked follow-up.
+This repository includes its own site playbook and dynamic OpenTofu inventory
+loader. It converges the AI fleet without `ansible-proxmox-apps`. See the
+[site playbook](https://github.com/dryvist/ansible-proxmox-ai/blob/main/playbooks/site.yml).
+The [inventory loader](https://github.com/dryvist/ansible-proxmox-ai/blob/main/inventory/load_tofu.yml)
+lives here too.
 </Note>
 
 ## Release process

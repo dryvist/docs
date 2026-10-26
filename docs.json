@@ -317,7 +317,6 @@
                   "infrastructure/cicd/policy",
                   "infrastructure/cicd/dependency-automation",
                   "infrastructure/cicd/git-signing",
-                  "infrastructure/cicd/tofu-runs-on",
                   "infrastructure/tofu-check-placement"
                 ]
               },

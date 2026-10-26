@@ -1,6 +1,6 @@
 ---
 title: "Branch conventions"
-description: "git-flow-next branch types (`feature/<issue>-slug`, `release/*`, `hotfix/*`) on `develop`-based repos; Conventional Branch short types (`feat/<name>`, never `feature/<name>`) on trunk-flow repos."
+description: "Every repo names branches with Conventional Branch short types (`feat/<name>`, never `feature/<name>`); git-flow repos add `hotfix/*` and the release-please branch."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -48,14 +48,14 @@ locally:
 
 ## git-flow branch types (repos with `develop`)
 
-git-flow repos follow the model implemented by [git-flow-next](https://github.com/gittower/git-flow-next).
-The `git flow` command-line tool is installed and configured globally (nix-managed `gitflow.*` git config).
+git-flow repos use the branch model below. [Git Town](https://www.git-town.com) starts and syncs
+branches. It is installed and configured globally (nix-managed `git-town.*` git config).
 
 | Branch | Role | Gets changes by |
 | --- | --- | --- |
 | `main` | Production. Protected; no direct pushes. | **Merge commits only**: squash and rebase into `main` are banned, no exceptions. |
 | `develop` | Default integration branch. Protected but direct pushes allowed. | Squash-merged feature PRs (the default); merge commits for stacked work. |
-| `feature/<issue>-<slug>` | One change's work | Branched from fresh `develop`. |
+| `<type>/<slug>` | One change's work. `<type>` is a [short type](#allowed-types-short-forms-only), never `feature`. | Branched from fresh `develop`. |
 | `release-please--branches--develop` | The release PR | Opened and kept current by release-please against `develop`; auto-merges (squash) once checks pass. |
 | `hotfix/<slug>` | Urgent production fix | Branched from `main`; PR to `main`, merge commit; a second PR from the hotfix branch carries the fix to `develop`. |
 
@@ -83,11 +83,11 @@ promotion as part of finishing work, not a separate ceremony:
 ### Working a change
 
 1. Create or switch to a fresh worktree based on `origin/develop`.
-2. Start the branch there with `git flow feature start <name>`. `git-flow-next` prepends the `feature/`
-   prefix itself, so `<name>` is the slug only. `git flow feature start 123-fix-inventory-loader`
-   produces `feature/123-fix-inventory-loader`; passing the prefix yourself doubles it. Include the
-   GitHub issue number when one exists. Never invent an issue number; use a short descriptive slug
-   for issue-less maintenance.
+2. Start the branch there with `git town hack <name>`, or let the harness worktree create it. Git Town
+   fetches first and bases the branch on the fresh `develop` tip. It adds no prefix, so `<name>` is
+   the full branch name, for example `git town hack fix/123-inventory-loader`. Start it with the
+   [short type](#allowed-types-short-forms-only) of the eventual commit. Lead the slug with the
+   GitHub issue number when one exists. Never invent an issue number.
 3. Commit atomically: one fix, one feature, or one coherent section of updates per commit. Follow
    [Commit conventions](/conventions/commit-conventions) and reference the issue (`#123`), using
    a closing keyword (`fixes #123`) when the change closes it.
@@ -99,18 +99,22 @@ promotion as part of finishing work, not a separate ceremony:
    `main`) carries the fix into `develop`.
 6. Small direct pushes to `develop` are fine; open a PR for anything reviewable.
 
-### git-flow-next usage
+### Git Town usage
 
-- `git flow feature start <name>` / `git flow hotfix start <name>` create correctly based branches. Releases are not started by hand: release-please opens the release PR on `develop`.
-- `git flow finish` detects the branch type from any topic branch. Prefer finishing through the PR
-  flow in the preceding steps; use `finish` directly only where a PR is overkill (for example,
-  local-only cleanup) and the branch target allows direct pushes.
-- Config keys live in git config (`gitflow.branch.*`), set globally via Nix. Don't override them per-repo without a recorded reason.
+- **Start:** `git town hack <name>`. Never branch from a local `main` or `develop`. The agent hooks
+  deny `checkout -b`, `switch -c` and a worktree add whose start point is not `origin/…`.
+- **Sync:** `git town sync` rebases the branch onto the fresh parent and pushes with lease. Never
+  merge the base into a PR branch: a merge commit fails the org's Conventional Commit ruleset.
+- **Propose:** `git town propose` opens the PR against the parent.
+- **Hotfix:** `git worktree add --no-track -b hotfix/<name> <abs-path> origin/main`.
+- **Releases** are not started by hand: release-please opens the release PR on `develop`.
+- **Per-repo config:** a git-flow repo commits `.git-branches.toml` with `main = "develop"` (or sets
+  `git-town.main-branch=develop`). Everything else comes from the global Nix config.
 
 ## Trunk-flow branch types (Conventional Branch)
 
-Repos without a `develop` branch use trunk-based flow: no `feature/*`, `release/*`, or `hotfix/*`
-git-flow types, and PRs squash-merge straight into `main` (see [PR
+Repos without a `develop` branch use trunk-based flow: no `hotfix/*` or release-please
+`develop` branch, and PRs squash-merge straight into `main` (see [PR
 conventions](/conventions/pr-conventions)).
 
 Branch names follow [Conventional Branch](https://conventional-branch.github.io): a short type
@@ -126,7 +130,7 @@ the branch name predicts the changelog entry.
 
 - `<type>` is one of the allowed short forms below, never the long form.
 - `<short-kebab-case-name>` is lowercase, hyphen-separated, descriptive but tight (≤ 5 words is usually enough).
-- No issue numbers, no usernames, no dates. Those belong in commit bodies and PR descriptions, not branch names.
+- An issue number may lead the name (`fix/123-dns-resolver-restart`). No usernames, no dates.
 
 Examples:
 
@@ -159,9 +163,9 @@ If two types fit, pick the one that produces the right version bump. `feat:` →
 patch, everything else → no version bump (per
 [release-please](https://github.com/googleapis/release-please) defaults).
 
-## Why short forms, on trunk-flow repos
+## Why short forms
 
-On a trunk-flow repo, the long forms (`feature`, `bugfix`) don't appear in any Conventional Commits
+The long forms (`feature`, `bugfix`) don't appear in any Conventional Commits
 / Conventional Branch spec. Mixing both creates two parallel taxonomies that release tooling, branch
 protection rules, and CODEOWNERS regexes have to match independently. One canonical set keeps
 everything (CI, automation, AI agents, humans skimming `git branch`) on the same page.
@@ -170,8 +174,8 @@ The full Conventional Branch spec lives at
 [conventional-branch.github.io](https://conventional-branch.github.io); the commitlint config that
 enforces the matching commit prefixes is
 [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional).
-Its own `release/` and `hotfix/` types are distinct from git-flow-next's identically named branch
-categories in the preceding sections. Trunk-flow repos use neither; git-flow repos use git-flow-next's.
+Its `hotfix/` type matches the git-flow hotfix branch above. Trunk-flow repos use neither
+`hotfix/` nor `release/`.
 
 ## What this connects to
 

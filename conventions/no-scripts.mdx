@@ -64,6 +64,8 @@ Hook blocks are terminal denials. Do not route around them by moving the logic t
 
 Wrong:
 
+This loop arms every open PR in its time window, ignoring drafts and `human:review` holds.
+
 ```yaml
 - run: |
     for pr in $(gh pr list --json number -q '.[].number'); do
@@ -73,12 +75,7 @@ Wrong:
     done
 ```
 
-Right: extract to a script file, or use a native action:
-
-```yaml
-- run: .github/scripts/merge-if-quiet.sh
-- uses: peter-evans/enable-pull-request-automerge@v3
-```
+Right: let the org `pr-automerge` workflow arm eligible PRs. Keep a PR as a draft or add `human:review` when it must wait.
 
 ### Multi-line Bash control flow
 

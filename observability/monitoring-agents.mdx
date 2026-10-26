@@ -7,7 +7,7 @@ page_type: "explanation"
 > One picture: every collector, what it collects, where it runs, what it forwards to.
 
 The monitoring stack runs across four hosts. These are the homelab Proxmox cluster, the macOS workstation, the
-[OrbStack K8s cluster](/infrastructure/repos/orbstack-kubernetes) on that workstation, and the
+OrbStack K8s cluster on that workstation, and the
 AWS-side Splunk install. Each tier picks the lowest-overhead path the host OS supports natively.
 This page maps every collector to a host and a destination.
 
@@ -50,13 +50,11 @@ This page maps every collector to a host and a destination.
   class splunk,langfuse,phoenix sink
   class awsdr external
 
-  click splunk "/observability/repos/ansible-splunk" "The homelab Splunk install"
-  click awsdr "/observability/repos/tofu-splunk-aws" "The AWS DR footprint"
-
   linkStyle 0,1,2,3,4 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
   linkStyle 5,6 stroke:#4FB3A9,stroke-width:2px;
   linkStyle 7 stroke:#E6B35A,stroke-width:1.5px,stroke-dasharray:2 4;
 ```
+
 
 Every Edge feeds a Stream. In the homelab AI path, supported logs and metrics
 go to Splunk while traces are routed to Langfuse and Phoenix.
@@ -67,13 +65,15 @@ The AWS tier is one routing-rule flip away. Detail per collector below.
 
 | Collector | Where it runs | What it collects | Forwards to |
 | --- | --- | --- | --- |
-| `cribl-edge` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
-| `cribl-stream` (homelab) | LXC on Proxmox, deployed by [`ansible-proxmox-apps`](/infrastructure/repos/ansible-proxmox-apps) | Edge events, volume reduction, routing | Supported logs and metrics to Splunk; AI traces to Langfuse and Phoenix (merged, not yet deployed) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack); AI command-line tools / LLM stack / audit log files (tcpjson 10311–10315, 10321–10323, 10331) | `cribl-stream` (homelab), tcpjson over Cribl S2S |
-| `cribl-edge-standalone` (OrbStack) | StatefulSet in [`orbstack-kubernetes`](/infrastructure/repos/orbstack-kubernetes) `monitoring` namespace | AI tool telemetry: Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
-| `cribl-edge-managed` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Subset of telemetry tagged for Cribl's hosted service | Cribl's hosted service |
-| `cribl-stream-standalone` (OrbStack) | StatefulSet in `orbstack-kubernetes` | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
-| `otel-collector` (OrbStack) | StatefulSet in `orbstack-kubernetes` | OTLP from Claude Code SDK, any in-cluster OTLP source | `cribl-stream-standalone` (OrbStack) |
+| `cribl-edge` (homelab) | LXC on Proxmox, deployed by Ansible | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
+| `cribl-stream` (homelab) | LXC on Proxmox, deployed by Ansible | Edge events, volume reduction, routing | Supported logs and metrics to Splunk; AI traces to Langfuse and Phoenix (merged, not yet deployed) |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via the macOS host telemetry pack; AI command-line tools / LLM stack / audit log files | `cribl-stream` (homelab), tcpjson over Cribl S2S |
+| `cribl-edge-standalone` (OrbStack) | StatefulSet in the OrbStack cluster's `monitoring` namespace | AI tool telemetry: Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
+| `cribl-edge-managed` (OrbStack) | StatefulSet in the OrbStack cluster | Subset of telemetry tagged for Cribl's hosted service | Cribl's hosted service |
+| `cribl-stream-standalone` (OrbStack) | StatefulSet in the OrbStack cluster | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
+| `otel-collector` (OrbStack) | StatefulSet in the OrbStack cluster | OTLP from Claude Code SDK, any in-cluster OTLP source | `cribl-stream-standalone` (OrbStack) |
+
+
 
 
 ## Splunk egress paths
@@ -81,16 +81,18 @@ The AWS tier is one routing-rule flip away. Detail per collector below.
 Standard Edge events go to Stream for routing to Splunk. Homelab AI traces take
 separate Cribl routes to Langfuse and Phoenix (merged, not yet deployed); Splunk
 receives no traces.
-On OrbStack, network policies lock Edge egress to Stream on HEC port 8088 only.
+On OrbStack, network policies lock Edge egress to Stream on the HEC port only.
 For other homelab Edge events, the single Stream tier remains the Splunk egress;
-firewall rules in `tofu-proxmox/modules/firewall/` reinforce that path.
+firewall rules reinforce that path.
+
 
 For the routed Edge-to-Stream path, two as-built details are:
 
-- **Edge → Stream rides Cribl S2S** as tcpjson on the dedicated `cribl_s2s` service port (a pipeline constant from the infrastructure repo, never hardcoded).
+- **Edge → Stream rides Cribl S2S** as tcpjson.
 - **Stream → Splunk is one HEC output per index**, each with its own token
   scoped to one index. See the [full family/port/index
   map](/observability/overview#syslog-intake-families).
+
 
 ## Per-tool Cribl Edge packs
 
@@ -103,10 +105,10 @@ The AI-coding-tool packs sit on top of the OrbStack cluster's `cribl-edge-standa
 | [`cc-edge-vscode-io`](https://github.com/JacobPEvans-personal/cc-edge-vscode-io) | VS Code (logs + telemetry) |
 | [`cc-edge-gemini-antigravity-io`](https://github.com/JacobPEvans-personal/cc-edge-gemini-antigravity-io) | Gemini Antigravity |
 
-The macOS host telemetry pack [`cc-edge-the-mac-pack`](/observability/repos/cc-edge-the-mac-pack)
-was renamed from `cc-edge-macos-system`. It targets the **native macOS** Cribl Edge install, not the
+The macOS host telemetry pack targets the **native macOS** Cribl Edge install, not the
 OrbStack-deployed one. Its exec inputs call macOS-only binaries that need host access, not a Linux
 container.
+
 
 ## Configuration ownership
 
@@ -128,7 +130,8 @@ APIs. That is closer to the routing layer's responsibility than the host-side ca
 
 | Collector | Where | Role |
 | --- | --- | --- |
-| `otel-collector` (OrbStack) | StatefulSet in `orbstack-kubernetes` | OTLP gRPC/HTTP receiver (ports 4317/4318, NodePorts 30317/30318), forwards to `cribl-stream-standalone` |
+| `otel-collector` (OrbStack) | StatefulSet in the OrbStack cluster | OTLP gRPC/HTTP receiver, forwards to `cribl-stream-standalone` |
+
 
 Anything inside the OrbStack cluster that speaks OTLP gets pointed at the in-cluster OTel collector.
 Anything outside the cluster but on the same Mac (Claude Code, Gemini Antigravity, VS Code) talks to
@@ -157,7 +160,7 @@ discovered at search time.
 ## Forwarding to AWS DR
 
 The Splunk install behind `cribl-stream` is the homelab indexer.
-[`tofu-splunk-aws`](/observability/repos/tofu-splunk-aws) provisions the AWS-side DR footprint:
+The AWS-side DR footprint is provisioned separately:
 same data shape, smaller indexer tier, ready to take a failover. Cribl Stream's output config can be
 flipped from the homelab Splunk to the AWS HEC endpoint via a routing-rule change. Downstream
 AI-observability dashboards keep working because they target the same indexes regardless of which
@@ -172,22 +175,5 @@ Splunk tier is live.
   href="/observability/overview">
   Cribl routes supported logs and metrics to Splunk. Trace routes to Langfuse and Phoenix are merged, not yet deployed.
 </Card>
-<Card
-  title="orbstack-kubernetes"
-  icon="cube"
-  href="/infrastructure/repos/orbstack-kubernetes">
-  The OrbStack K8s cluster running the macOS-side monitoring stack.
-</Card>
-<Card
-  title="cc-edge-the-mac-pack"
-  icon="apple"
-  href="/observability/repos/cc-edge-the-mac-pack">
-  The macOS host telemetry pack — what runs on the native Edge install.
-</Card>
-<Card
-  title="ansible-splunk"
-  icon="screwdriver-wrench"
-  href="/observability/repos/ansible-splunk">
-  The Splunk install everything routes into.
-</Card>
 </CardGroup>
+
