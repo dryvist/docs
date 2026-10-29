@@ -94,6 +94,10 @@ The rule that decides which bucket a dataset lands in is simple:
 
 ## How replication flows
 
+The current daily and weekly maintenance start times are on the
+maintenance window page. This page owns
+the replication and snapshot cadence.
+
 Two always-on nodes replicate to each other on a nightly incremental schedule. Only changed blocks
 move, so even large datasets sync in seconds once seeded. A third node stays **powered down most of
 the time**. When it wakes, it **pulls** the latest snapshots from both always-on nodes, then shuts

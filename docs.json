@@ -292,7 +292,6 @@
               {
                 "group": "Storage and media",
                 "pages": [
-                  "infrastructure/zfs-pool-naming",
                   "infrastructure/zfs-backup-replication",
                   "infrastructure/data-platform-resilience",
                   "infrastructure/media-stack"

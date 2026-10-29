@@ -56,6 +56,26 @@ tuning, users, hardening, and monitoring agents.
 Run once per host after OpenTofu finishes. Re-running is safe. Every role is idempotent.
 </RepoFit>
 
+## Inventory conventions
+
+- **Declare once.** A value true for every Proxmox node lives in `inventory/group_vars/proxmox/`; one true for
+  both rack servers lives in `group_vars/rack_servers.yml`. Never copy it into `host_vars`.
+- **Group plus node maps.** A map that needs per-node additions is a group `<var>_common` merged with a host
+  `<var>_node` through `combine(..., recursive=True)`. `sanoid_datasets` and `zfs_pools_vm_disk_properties`
+  use this pattern.
+- **Split at the token limit.** CI caps each file's size. A file that grows past it becomes a directory of
+  numbered files (`00-core.yml`, `01-storage.yml`); Ansible loads them with the same precedence.
+- **Name the storage, not the pool.** `pve_dataset_root_by_storage` maps each Proxmox storage id to its ZFS
+  dataset root from the node's own declared storage. Snapshot policies reference a storage, so they follow a
+  guest whose disk moves tier.
+- **Null-safe defaults.** Expressions over the published inventory use `default(x, true)`. The one-argument
+  form replaces only undefined values, so a published `null` passes through and fails later with an unrelated
+  parse error.
+- **Snapshots feed replication.** Replication pulls with `--no-sync-snap`, so a dataset without a local
+  snapshot policy is never copied off the node.
+- **Tests use synthetic values.** Test inventories and fixtures use placeholder names, never real node, pool or
+  dataset names.
+
 ## Getting started
 
 <Steps>

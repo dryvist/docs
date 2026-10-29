@@ -25,8 +25,9 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
   runs with **thinking ON** and carries sampling guardrails for quantized brains.
 - **Memory:** the built-in `MEMORY.md` / `USER.md`, stored under `$HERMES_HOME`
   on a dedicated volume that is snapshotted and replicated off-node, plus the
-  **Hindsight** provider (knowledge-graph recall): a separate self-hosted
-  service the agent reaches over the network rather than an in-process store.
+  **Hindsight** provider: a separate self-hosted service the agent reaches over
+  the network rather than an in-process store. Recall runs on some turns, not
+  all, so a healthy service does not show that memory works.
 - **Containment:** the LXC is the blast-radius boundary, with deliberately narrow
   egress. Within one agent, named *profiles* scope which tools and credentials a
   job gets. It is a tool/credential boundary, not an OS sandbox: every profile runs as
@@ -101,6 +102,23 @@ Deployment is fully IaC: a Terraform-managed container plus an Ansible `hermes_a
 role install and configure it. Updates are managed declaratively through Ansible to
 prevent configuration drift.
 
+## Plugins
+
+Hermes plugins add hooks and providers to the agent. The platform runs
+first-party plugins only, plus a short list of reviewed exceptions. Each plugin
+is pinned to a commit and checked before it installs.
+
+| Plugin | Purpose | Status |
+| --- | --- | --- |
+| Langfuse | Traces each agent turn, with model, tool, and subagent steps. | Planned |
+| Hindsight | Memory provider for recall across sessions. | Live |
+| Agent-to-agent (A2A) | Inbound calls through the gateway, with per-peer tokens and an audit log. Outbound calls to peer agents are planned. | Live (inbound) |
+| Home Assistant | Read-only device state and notifications. | Planned |
+| Guardrails | Blocks tool calls outside each profile's allowed actions. | Declared |
+
+A plugin marked planned or declared is not confirmed live. Statuses describe the
+platform as of this page's last update.
+
 ## Reliability: long-generation timeouts
 
 Agentic tool calls can generate for many minutes. A timeout anywhere in the
@@ -134,6 +152,7 @@ After recovery, operators verify the rebuilt schedule count and service state.
 They then wait for a normal scheduled delivery before declaring the incident
 resolved. This last check proves the complete scheduler-to-messaging path rather
 than only proving that configuration rendered successfully.
+
 
 ## LLM knowledge base (second brain)
 

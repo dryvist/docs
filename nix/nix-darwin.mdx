@@ -19,6 +19,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Imports [`nix-home`](/nix/nix-home) as `home-manager` input for user-level config
 - Imports [`nix-ai`](/nix/nix-ai) for AI tooling that should live on the system PATH
 - Pins the nixpkgs channel and applies overlays once for the whole machine
+- Runs the `dev.local.ws-monitor` LaunchDaemon, which saves WindowServer captures on a freeze
+  ([module](https://github.com/dryvist/nix-darwin/blob/v4.11.0/modules/darwin/ws-monitor.nix))
+- Enables tailspin during activation
 
 ## How it fits
 
@@ -29,6 +32,35 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 <RepoFit>
 The orchestrator. If a tool needs to be on every shell session by default, it belongs here.
 </RepoFit>
+
+## Dock apps and their providers
+
+Every Dock entry names the provider that installs it, and a build-time assertion on every host checks the pair. The Dock list in
+[`persistent-apps.nix`](https://github.com/dryvist/nix-darwin/blob/develop/modules/darwin/dock/persistent-apps.nix) is derived from those entries.
+The contract lives in [`lib/dock-apps.nix`](https://github.com/dryvist/nix-darwin/blob/develop/lib/dock-apps.nix).
+
+```mermaid
+flowchart LR
+  E[Dock entry<br/>path + provider] --> A{Assertion<br/>on every host build}
+  A -->|provider declared<br/>and path matches| D[Dock list]
+  A -->|otherwise| X[Build fails<br/>and names the entry]
+  D --> P[Post-activation presence check<br/>logs each missing path]
+```
+
+| Provider | Declared in | Installs under |
+| --- | --- | --- |
+| `system` | macOS | shipped with macOS |
+| `cask` | `homebrew.casks` | `/Applications` |
+| `mas` | `homebrew.masApps` | `/Applications` |
+| `nixpkgs` | a home-manager `home.packages` | `~/Applications/Home Manager Apps` |
+| `manual` | outside this configuration, with a written reason | any path |
+
+The `dock-providers` flake check runs the contract against a fixture for each failure mode and confirms every Mac host carries the assertion.
+The macOS build job on `main` runs `nix flake check`, which builds every `checks.aarch64-darwin` output, including `dock-providers` and `system-eval` (the assertion for every host).
+A check declared in `flake.nix` runs there without a second list.
+The Obsidian package puts the app bundle under Home Manager Apps and links the `obsidian` command to the app's socket CLI; the GUI executable is not on `PATH`.
+Workstation Homebrew cleanup runs in `check` mode: activation stops and lists every installed cask or formula the configuration does not declare, and removes nothing.
+To add or move an app, change the provider declaration and the Dock entry together.
 
 
 ## Getting started
