@@ -19,6 +19,9 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 - Pins toolchain versions so every project on the same shell gets the same `tofu` / `terraform` / `kubectl` / `ansible`
 - Activated per-project via direnv (`.envrc` is committed; `.direnv/` is gitignored)
 
+The Ansible shell sets `DOCKER_HOST` to the OrbStack socket when the variable
+is unset. Its [shell definition](https://github.com/dryvist/nix-devenv/blob/main/shells/ansible/default.nix) owns this default.
+
 ## How it fits
 
 | Provides | Activated by |
