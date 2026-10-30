@@ -1,12 +1,12 @@
 ---
 title: "Data platform resilience"
-description: "How the shared app database survives a node loss: a replicated primary and standby, layered backups, and rehearsed restores."
+description: "How the shared app database survives a node loss: a replicated primary and standby, and layered backups."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
 <Note>
 Status: **live.** Failover management, streaming replication, and both backup
-tiers run today; the on-site restore drill passes.
+tiers run today.
 </Note>
 
 > Everything else is rebuildable from source. The data is not. So the data gets
@@ -41,12 +41,12 @@ the data with it.
 | --- | --- |
 | On-site versioned object store | Fast local restores; keeps historical versions, not just the latest |
 | Off-site immutable copy | Object-lock retention that an operator cannot delete or overwrite early; survives ransomware and fat-finger alike |
-| Restore drills | The restore path is rehearsed on a schedule, because an untested backup is a hope, not a backup |
 
-The on-site tier is live and rehearsed. The database ships every write to it
+The on-site tier is live. The database ships every write to it
 continuously. It also takes a full base backup weekly with incrementals in between.
 So a restore can land on any point in time, rather than on the last nightly
-snapshot. A restore drill passes: the databases come back queryable.
+snapshot. Current backup start times are on the
+maintenance window page.
 
 The off-site copy is meant to be identical to the on-site one: same layout, same
 names. So a restore reads the same paths either way and only swaps which store it
@@ -54,8 +54,7 @@ points at.
 
 The off-site copy is rebuilt and verified at the object level: every object
 matches the on-site tier. The check asks for the specific manifest file a
-restore needs, rather than trusting a directory listing. Restore rehearsal
-covers the on-site tier. The database can also write to both stores natively
+restore needs, rather than trusting a directory listing. The database can also write to both stores natively
 as twin repositories, which retires the mirror step entirely. That mode is
 built and tested but not yet switched on.
 

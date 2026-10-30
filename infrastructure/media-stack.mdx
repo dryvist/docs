@@ -58,9 +58,8 @@ The same self-hosted footprint replaces two cloud subscriptions with services th
   Machine target (Samba's `vfs_fruit` advertises it as an Apple Time Capsule). The same NAS serves
   read-only media shares for Infuse on Apple TV.
 
-These are backup *targets*, and they are themselves protected: their datasets ride the
-[ZFS snapshot + replication layers](/infrastructure/zfs-backup-replication) like everything else.
-A backup that isn't backed up is a single point of failure.
+Time Machine backups are not themselves snapshotted or replicated. See the
+[ZFS snapshot and replication policy](/infrastructure/zfs-backup-replication).
 
 ## Insights dashboard
 

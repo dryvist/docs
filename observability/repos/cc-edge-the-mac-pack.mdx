@@ -38,10 +38,11 @@ Data lands in two Splunk indexes:
 | Index | Content | Used by |
 | --- | --- | --- |
 | `os` | macOS unified logs (every Apple subsystem) and host-event signals | General OS troubleshooting, security event search |
-| `mac_perf` | Host CPU/memory/disk/network/process metrics and per-process energy | Performance dashboards, capacity planning |
+| `mac_perf` | Host CPU/memory/disk/network/process metrics and WindowServer monitor samples | Performance dashboards, capacity planning, WindowServer freeze alerting |
 
 Per-use-case filtering lives in [Cribl Stream pipelines](/observability/monitoring-agents) downstream of
 this Edge install, not in the pack itself. That includes security event extraction, performance triage, and alerting rules.
+
 
 ## Install
 

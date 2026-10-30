@@ -79,6 +79,17 @@ when the repository property `ci_gate` is `true`. Organization admins may
 bypass it only through a pull request.
 
 
+### Up-to-date check
+
+A second ruleset, `org-merge-gate-strict-*`, requires the same status checks on the same repositories and refs.
+It also requires a pull request to be up to date with its base branch before it merges. The organization administrator role,
+the triage-merge and release apps, and Renovate can bypass it. AI-agent apps cannot.
+
+The rule is defined in [`tofu-github`](https://github.com/dryvist/tofu-github/blob/main/merge-gate-strict.tf). It takes
+effect after an approved apply of that workspace. Until its enforcement setting is `active`, the rule only reports and
+does not block merges. The setting and its current default live in
+[`variables.tf`](https://github.com/dryvist/tofu-github/blob/main/variables.tf).
+
 ### Auto-merge arming
 
 The organization `PR Auto-Merge` workflow runs in every repository. It arms squash
@@ -97,7 +108,7 @@ A `human:review` label added after arming turns auto-merge off.
 
 ## Dependency versioning
 
-Shared dependency scanning, action and source pin policy, Renovate policy, and flake-lock updates live in
+Shared dependency scanning, pin policy for actions and sources, Renovate policy, and flake-lock updates live in
 [Dependency automation](/infrastructure/cicd/dependency-automation).
 
 ## Reusable workflow ownership
@@ -131,8 +142,8 @@ flowchart LR
 
 ## Runner choice
 
-Runner tiers, job selection, labels, and on-prem requirements live in
-GitHub Actions runner fleets.
+Runner tiers and job selection live in
+GitHub Actions runner fleets. Labels and on-prem requirements live there too.
 
 ### Ansible checks
 

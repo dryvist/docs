@@ -67,7 +67,7 @@ The AWS tier is one routing-rule flip away. Detail per collector below.
 | --- | --- | --- | --- |
 | `cribl-edge` (homelab) | LXC on Proxmox, deployed by Ansible | HAProxy syslog/NetFlow, host telemetry from Proxmox guests | `cribl-stream` (homelab) |
 | `cribl-stream` (homelab) | LXC on Proxmox, deployed by Ansible | Edge events, volume reduction, routing | Supported logs and metrics to Splunk; AI traces to Langfuse and Phoenix (merged, not yet deployed) |
-| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via the macOS host telemetry pack; AI command-line tools / LLM stack / audit log files | `cribl-stream` (homelab), tcpjson over Cribl S2S |
+| `cribl-edge` (Mac native) | Native macOS Cribl Edge, **standalone**. It uses nix-darwin GitOps, with no Leader, no hosted-service fleet enrollment | macOS unified logs, system metrics, thermal, powermetrics, battery via the macOS host telemetry pack, WindowServer monitor samples and capture summaries; AI command-line tools / LLM stack / audit log files | `cribl-stream` (homelab), tcpjson over Cribl S2S |
 | `cribl-edge-standalone` (OrbStack) | StatefulSet in the OrbStack cluster's `monitoring` namespace | AI tool telemetry: Claude Code (OTLP), Gemini Antigravity, VS Code | `cribl-stream-standalone` (OrbStack) |
 | `cribl-edge-managed` (OrbStack) | StatefulSet in the OrbStack cluster | Subset of telemetry tagged for Cribl's hosted service | Cribl's hosted service |
 | `cribl-stream-standalone` (OrbStack) | StatefulSet in the OrbStack cluster | Edge events + REST poll from `cc-stream-github-copilot-rest-io` | Splunk HEC |
@@ -154,6 +154,7 @@ Heartbeats prove the pipeline is up; **per-index silence detectors** prove the d
 Every Splunk index carries an alert that fires when the index receives no events within its expected
 cadence. A dead sender, port, or token then surfaces as "index went quiet" rather than a gap
 discovered at search time.
+
 
 
 

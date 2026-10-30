@@ -58,7 +58,7 @@ volatile (it resets on reboot), so the module re-applies it from a launchd
 daemon at boot and again at every rebuild.
 
 The cluster ceiling changes during the manual lifecycle. `cluster-join` applies
-102400 MB on the coordinator and 90000 MB on the worker; `cluster-detach`
+90,000 MiB on the MacBook Pro and 102,400 MiB on the Mac Studio; `cluster-detach`
 reverses the clustered state. The operator starts the join on the coordinator,
 which drives the worker over SSH before joining locally. The full preflight and
 formation sequence is in Two-Mac MLX cluster operations.
@@ -231,7 +231,7 @@ The Nix hosts derive their serving from these shared inputs:
 - the preload list, resident-worker count, and role-to-id registry come from
   the map; per-model concurrency defaults come from the shared catalog, with
   host-specific `modelConcurrency` overrides;
-- the per-worker memory limit derives to 48 GiB on both Macs;
+- the MacBook's per-worker memory limit derives to 30 GiB;
 - `vllm-mlx` is removed, and its options now fail with a removal message.
 
 
