@@ -6,8 +6,9 @@ page_type: "overview"
 {/* projected from the authoring site; do not edit here */}
 > If an AI agent touched code, there's a trace.
 
-Every AI coding interaction emits OpenTelemetry, covering IDE events, model calls, token counts,
-latency, and cost. The Cribl Edge tier collects and reshapes it. Cribl Stream routes it. Splunk indexes it.
+Every AI coding interaction emits OpenTelemetry. It covers IDE events and model calls. It also records
+token usage. The telemetry includes latency and cost. The Cribl Edge tier collects and reshapes it.
+Cribl Stream routes it. Splunk indexes it.
 Purpose-built Splunk apps make it readable.
 
 ## AI telemetry pipeline
@@ -57,8 +58,9 @@ Purpose-built Splunk apps make it readable.
 
 Coral dashed edges are telemetry; solid green are the routing hops. Per-tool packs keep parsing isolated. A Copilot schema change doesn't break the Claude pipeline.
 
-Diagram walkthroughs for every intake path live on [Pipeline flows](/observability/pipeline-flows). That
-covers syslog families, AI command-line tool shipping, the LLM stack, OTLP fan-out, NetFlow, and HEC fan-in.
+Diagram walkthroughs for every intake path live on [Pipeline flows](/observability/pipeline-flows).
+That page covers each syslog family and AI command-line tool shipping. It also covers the LLM stack's
+OTLP path, with separate NetFlow and HEC fan-in paths.
 
 ## Syslog intake families
 
@@ -83,6 +85,9 @@ Port numbers are pipeline constants defined once in the infrastructure repo and 
 
 Two family notes:
 
+- **Managed Linux guests.** Supported guests forward OS logs through the
+  `linux` family. The [syslog forwarder role](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/syslog_forwarder/README.md)
+  owns the source group and destination mapping.
 - **Hypervisor firewall drops** ride the `linux` family: the node firewall
   logs every default-policy DROP to a file (never the journal), so each node's
   rsyslog tails that file with `imfile` and forwards it alongside the journal
@@ -154,8 +159,8 @@ repositories. Two pieces matter on this site:
 
 Cribl pipeline and route logic lives in function-specific Cribl packs. Splunk
 apps and knowledge objects live in function-specific app repositories.
-Ansible carries environment wiring such as outputs, hosts, ports, and
-credential references, plus pack or app pins. Each Cribl pack lives in one
+Ansible carries environment wiring, including output destinations and endpoint details.
+It also carries credential references and pack or app pins. Each Cribl pack lives in one
 function-specific repository.
 
 | Repo | Collects from |
