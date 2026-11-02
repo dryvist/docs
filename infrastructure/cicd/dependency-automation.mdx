@@ -88,8 +88,9 @@ Consumer configs extend the shared preset, then list only repo-specific holds.
 ## Schedule and grouping
 
 The shared schedule is Saturday 00:00–05:59 in
-`America/Indiana/Indianapolis`. Renovate's built-in `group:all` opens one PR
-per repository, with majors included.
+`America/Indiana/Indianapolis`. Renovate's built-in `group:allNonMajor` opens one
+PR per repository for minor, patch and digest updates; each major update opens
+its own PR.
 
 The shared preset sets `prCreation` to `not-pending`, so Renovate waits for
 branch status checks to finish before it creates a pull request.
