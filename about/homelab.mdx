@@ -73,7 +73,7 @@ A stalled POST is often diagnostic, not electrical. A single unhealthy
 component can cause it, such as a failing drive or a RAID controller
 flagging an issue in UEFI. That component can halt POST at an interactive
 prompt with no visible symptom on a headless machine. Firmware jobs queued
-behind that prompt never get a window to run. Modern BMCs can export a
+behind that prompt never get a window to run. Newer BMCs can export a
 screenshot of the console over the management API, turning an unexplained
 hang into a one-line diagnosis. The oldest firmware generations lack that
 capability.
@@ -95,15 +95,15 @@ UniFi gear and host telemetry feed HAProxy → Cribl Edge → Splunk → AWS DR.
 
 ## Container philosophy
 
-LXC is the default for production homelab services; Docker is the exception, fenced off to a
-dedicated `docker-host` VM whenever a vendor ships Docker-only images. The four-question decision
+LXC is the default for production homelab services; Docker is the exception. It runs on a shared
+Docker host, and only when a vendor ships Docker-only images. The four-question decision
 tree: [LXC vs Docker](/infrastructure/lxc-vs-docker).
 
 ## What runs where
 
 Most workloads run as LXC on the Proxmox cluster, including HAProxy, Cribl Edge, Home Assistant, and Qdrant.
-Splunk Enterprise gets a bare-metal-ish VM for network volume. Docker is fenced off to a single
-`docker-host` VM. Local LLM inference runs bare-metal on NixOS to dodge passthrough overhead. Full
+Splunk Enterprise gets a bare-metal-ish VM for network volume. Docker runs on shared Docker hosts.
+Some older guests still run Docker inside an LXC, and moving them is planned. Local LLM inference runs bare-metal on NixOS to dodge passthrough overhead. Full
 per-workload inventory: [Infrastructure overview](/infrastructure/overview).
 
 ## Provisioning + configuration
