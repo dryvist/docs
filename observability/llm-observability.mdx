@@ -138,6 +138,23 @@ price, so its cost is reported as zero. That zero is a statement about billing,
 not about resource use. The call still consumed power, memory, and time. Read cost
 figures as "what a vendor invoiced," and never as "what this workload consumed."
 
+## Client endpoint rule
+
+Clients reach Langfuse through the ingress name, the same pattern as the other
+gated services. The bare service name resolves to a backend address on the
+service subnet. Only hosts on that subnet can reach that address directly.
+
+- A workstation, or any host off the service subnet, gets a timeout on the bare
+  name. The ingress name returns a healthy response from the same workstation.
+- Gatus checks the backend from its own segment, so its green result does not
+  prove a workstation can reach the service.
+- Every config source in the estate composes the ingress name from the
+  environment, so a client that sets the bare name is the exception to fix.
+- Probes and trace checks from a workstation use the ingress name.
+
+Decision: no DNS or routing change. Keep the ingress name in client config and
+in probes.
+
 ## Why Langfuse
 
 | Criterion | Langfuse |
