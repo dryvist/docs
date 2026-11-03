@@ -120,7 +120,10 @@ references. So when a shared-CI repository changes ownership, every consumer mus
 
 The shared `_release-please.yml` job uses the concurrency group
 `release-please-<repo>-<ref>` with `cancel-in-progress: false`. It shipped in
-v1.25.1, and the `v1` tag now points to that release.
+v1.25.1; the shared `v1` ref now points to v1.40.4.
+
+The shared `_tofu-ci.yml` workflow passes `GITHUB_TOKEN` to TFLint plugin
+initialization ([JacobPEvans/.github #155](https://github.com/JacobPEvans/.github/pull/155)).
 
 See [Dependency automation](/infrastructure/cicd/dependency-automation) for the current shared
 workflow source and consumer config rules.
