@@ -67,8 +67,10 @@ published endpoint list.
 - Compare the object version when writing so concurrent edits fail cleanly.
 - Run `tofu state list` before adopting an existing resource; its key must
   match the desired-state key.
-- Never use a targeted apply. It can publish inventory that describes only a
-  subset of the estate.
+- Run a targeted apply through the gated targeted path. Its plan must destroy
+  nothing. A targeted run that leaves out the inventory object does not publish
+  inventory. See the
+  [targeted-apply runbook](https://github.com/dryvist/iac-platform/blob/main/docs/targeted-apply.md).
 - Provider and object-store credentials are not workspace secret variables.
 
 Independent Terrakube workspaces have independent locks. Cross-workspace
