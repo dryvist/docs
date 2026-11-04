@@ -1,10 +1,10 @@
 ---
 title: "Issue to PR pipeline"
-description: "The eight-step cloud flow that turns a new GitHub issue into a ready PR labeled human:review, with green CI, AI review, and no auto-merge."
+description: "The eight-step cloud flow that turns a new GitHub issue into a ready PR, with green CI, AI review, and no auto-merge."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Open issue. Don't open the dashboard. Come back in five minutes to a ready PR labeled `human:review`.
+> Open issue. Don't open the dashboard. Come back in five minutes to a ready PR.
 
 The pipeline on this repo, [`dryvist/docs`](https://github.com/dryvist/docs), uses six thin
 caller files in `.github/workflows/` that delegate to reusable workflows in
@@ -16,7 +16,7 @@ lines; the AI work all lives in the upstream reusable workflow.
 | Step | Trigger | Caller file | Reusable workflow | What it does |
 | --- | --- | --- | --- | --- |
 | 1 | `issues: [opened]` | `issue-triage.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-triage.yml` | Categorizes, deduplicates, labels |
-| 2 | `issues: [opened]` | `issue-resolver.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-resolver.yml` | Creates a ready PR labeled `human:review` if the issue is well-scoped and not on the excluded-labels list |
+| 2 | `issues: [opened]` | `issue-resolver.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-resolver.yml` | Creates a ready PR if the issue is well-scoped and not on the excluded-labels list |
 | 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller: handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
 | 4 | Failed CI completion | — | — | See CI resolver for the repair path and cutover status. |
 | 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `JacobPEvans/.github-ai/.github/workflows/project-router.yml` | Routes the item to the right GitHub Project with smart field assignment |
@@ -99,7 +99,7 @@ The reusable workflows enforce conservative defaults so a runaway loop can't bur
 
 ## The pieces this doesn't include
 
-The cloud pipeline opens a ready PR labeled `human:review` and provides AI review. It does NOT:
+The cloud pipeline opens a ready PR and provides AI review. It does NOT:
 
 - Mark the PR ready for merge: that's a human decision
 - Click the merge button: never automated
