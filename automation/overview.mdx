@@ -4,7 +4,7 @@ description: "How an issue becomes a merged PR with minimal human input: ai-work
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-> File an issue. Walk away. Come back to a ready PR labeled `human:review`, with green CI and AI review.
+> File an issue. Walk away. Come back to a ready PR, with green CI and AI review.
 
 This is the **issue → mergeable PR** pipeline. Three repos collaborate: `ai-workflows` runs on
 GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's cloud cron,
@@ -41,13 +41,13 @@ GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's clo
   class M sink
 ```
 
-A human files the issue, reviews the PR, and clicks merge. The `human:review` label marks the gate; auto-merge stays off.
+A human files the issue, reviews the PR, and clicks merge. Auto-merge stays off.
 
 ## The three layers
 
 | Layer | Where it lives | When it runs | What it owns |
 | --- | --- | --- | --- |
-| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues and PRs) | Triage, ready PRs labeled `human:review`, final review gate, project routing |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues and PRs) | Triage, ready PRs, final review gate, project routing |
 | [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
 | [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch: finalize a PR you're iterating on |
 
