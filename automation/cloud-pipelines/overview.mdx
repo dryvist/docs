@@ -1,6 +1,6 @@
 ---
 title: "Cloud pipelines"
-description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become ready PRs labeled human:review, and merge readiness is gated."
+description: "Event-triggered automation that runs in GitHub Actions per consumer repo. Issues become ready PRs, and merge readiness is gated."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -9,7 +9,7 @@ page_type: "overview"
 GitHub Actions handle the event-driven side of automation. Something happens in GitHub:
 an issue is filed or a PR is opened. The reusable workflows in
 [`JacobPEvans/.github-ai`](/automation/repos/ai-workflows) react. The result lands as a
-ready PR labeled `human:review`, signed by
+ready PR signed by
 [`JacobPEvans-claude[bot]`](/infrastructure/cicd/git-signing) and ready for review.
 
 The cron-driven sibling (work that runs on a schedule rather than in response to an event) is documented under [Scheduled routines](/automation/scheduled-routines/overview).
@@ -36,7 +36,7 @@ The cron-driven sibling (work that runs on a schedule rather than in response to
 
 | Trigger | Reusable workflow | Outcome |
 | --- | --- | --- |
-| `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Ready PR labeled `human:review` implementing the issue |
+| `issues.opened` (label: `agentic-implement`) | `issue-resolver.yml` | Ready PR implementing the issue |
 | `pull_request` opened or `synchronize` | `code-simplifier.yml` | Review comments when ready |
 
 CI failure repair and cutover status live in CI resolver.
