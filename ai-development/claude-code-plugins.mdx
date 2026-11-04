@@ -44,13 +44,6 @@ Reads rules from [Assistant rules](/ai-development/ai-assistant-instructions); i
 Workflow logic. Anything that guides Claude Code's approach to a task lives here. Shared rules live in the [instruction catalog](/automation/repos/ai-llm-prompts).
 </RepoFit>
 
-**MERGED in git; NOT DEPLOYED:** [PR #559](https://github.com/dryvist/claude-code-plugins/pull/559)
-centralizes the definition of when `human:review` applies. The definition requires all of these: the
-PR targets `main`, it is risky, and a second-agent review cannot settle it. Risky means at least 400
-lines, at least 15 files, or a cross-repository change. The `ship`, `finalize-pr` and `resolve-pr-threads`
-skills report a held or escalated PR by status word only and apply no label
-([PR #584](https://github.com/dryvist/claude-code-plugins/pull/584)).
-
 ## Getting started
 
 <Steps>
