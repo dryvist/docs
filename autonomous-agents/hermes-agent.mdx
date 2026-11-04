@@ -193,7 +193,7 @@ knowledge once, reuse often": it provides inspectable Markdown instead of opaque
 The agent can read public repositories and open documentation pull requests on its own as a dedicated GitHub App bot identity. Key properties of this workflow include:
 
 - Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
-- PRs open ready with the `human:review` label, and the bot has **no merge authority**. A human always reviews and merges; auto-merge stays off.
+- PRs open ready, and the bot has **no merge authority**. A human always reviews and merges; auto-merge stays off.
 - **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo
   daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so
   sensitive material never lands in a public PR.

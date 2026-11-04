@@ -96,11 +96,9 @@ The organization `PR Auto-Merge` workflow runs in every repository. It arms squa
 auto-merge only when all of these hold:
 
 - The pull request is authored by the session bot (`jacobpevans-claude[bot]`) and comes from the same repository.
-- The pull request is not a draft and does not carry `human:review`.
+- The pull request is not a draft.
 - The pull request is not a `develop` to `main` promotion.
 - The base branch has an active rule that requires a `Merge Gate` status check. Without one, the job warns and arms nothing.
-
-A `human:review` label added after arming turns auto-merge off.
 
 ## Public projection destination rulesets
 
