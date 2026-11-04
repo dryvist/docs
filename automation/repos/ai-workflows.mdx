@@ -17,7 +17,7 @@ These run on GitHub events. Wire one caller per workflow you want.
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
 | `issue-triage.yml` | `issues: [opened]` | Categorizes, deduplicates, labels new issues |
-| `issue-resolver.yml` | `issues: [opened]` | Creates a ready PR labeled `human:review` when the issue is well-scoped and not excluded by labels |
+| `issue-resolver.yml` | `issues: [opened]` | Creates a ready PR when the issue is well-scoped and not excluded by labels |
 | `project-router.yml` | `issues/pull_request: [opened, labeled]` | Routes items to GitHub Projects with smart field assignment |
 | `post-merge-docs-review.yml` | `push: [main]` → dispatch | After merge, audits docs touched by the commit, creates fix PRs |
 | `post-merge-tests.yml` | `push: [main]` → dispatch | After merge, analyzes the code changes and drafts targeted tests |
