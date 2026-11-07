@@ -1,6 +1,6 @@
 ---
 title: "Mermaid style guide"
-description: "Canonical, byte-for-byte Mermaid authoring rules for docs.jacobpevans.com: theme directive, shape vocabulary, classDef and linkStyle palettes, the four narrative shapes, and density caps."
+description: "Mermaid authoring rules for docs.jacobpevans.com: the site theme, shape vocabulary, house node classes, edge palette, the four narrative shapes, and density caps."
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -11,26 +11,15 @@ navigable, see [`conventions/mermaid-links`](/conventions/mermaid-links).
 
 ## Diagram style
 
-Inline ` ```mermaid ` fenced blocks render natively in Mintlify with ELK layout.
 One diagram per concern. Do not combine.
 
-### The canonical theme directive (use **exactly this**, byte-for-byte)
+### The site theme
 
-Every Mermaid block on the site MUST begin with this directive. The
-`look:'handDrawn'` is non-negotiable; it gives the diagrams personality
-that matches the site's voice. Any deviation (different fontSize, missing
-`look`, different palette) is a bug.
+The site applies one theme to every diagram: the `base` theme with the
+`look:'handDrawn'` style, colored from the site's color tokens. Diagrams
+follow the reader's light or dark setting. So a diagram never carries its
+own `%%{init}` directive; the documentation standards (rule P11) reject one.
 
-```text
-%%{init: {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-```
-
-To check the site is consistent:
-
-```bash
-grep -h '%%{init:' --include='*.mdx' -r . | sort -u | wc -l
-# Must return 1.
-```
 
 ### Shape vocabulary
 
@@ -42,33 +31,24 @@ grep -h '%%{init:' --include='*.mdx' -r . | sort -u | wc -l
 - Subgraphs for things that physically or logically co-locate
   (a cluster, a host, a network, a repo group). **Never** for roles or phases
 
-### Canonical classDef palette
+### House node classes
 
-Use the semantic class names below. Pick ONE per node based on what it
-represents; don't invent new classes per page. This keeps the same color
-meaning the same idea everywhere.
+Color nodes with the house classes below. The site defines them once and adds
+them to every flowchart, in light and dark. Assign one per node with
+`class A,B hop` or `A:::hop`. Never write a `classDef` in a diagram; the
+documentation standards (rule P15) reject one. A new kind of node gets a new
+house class, not a one-off color.
 
-```text
-classDef src      fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-classDef hop      fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-classDef sink     fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
-classDef gate     fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-classDef host     fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-classDef ai       fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-classDef auto     fill:#102937,stroke:#F4EFE6,stroke-width:1.5px,color:#F4EFE6;
-```
-
-All classes share the same dark fill (`#102937`) so the diagram blends
-with the page; the **border color** is what carries the semantic
-meaning. Text is always paper (`#F4EFE6`), readable against the dark fill.
+Every class shares one fill and text color. The **border color** carries the
+meaning.
 
 | Class | Border | Meaning |
 | --- | --- | --- |
-| `src` / `ai` / `gate` | Coral `#E06B4A` | Origin, AI-touched, or a decision gate. |
-| `hop` / `host` | Bright green `#4FB3A9` | Intermediate hops, the parent shell, hosts. |
-| `sink` / `auto` | Paper `#F4EFE6` | Sinks (Splunk indexer), automation steps. |
-| `external` | Amber `#E6B35A` | External actors (Internet, AWS DR). |
+| `src` / `ai` / `gate` | Coral | Origin, AI-touched, or a decision gate (`gate` draws a heavier line). |
+| `hop` / `host` | Reef green | Intermediate hops, the parent shell, hosts. |
+| `sink` / `auto` | Text color | Sinks (Splunk indexer), automation steps (`auto` draws a lighter line). |
+| `external` | Amber | External actors (Internet, AWS DR). |
+
 
 ### Canonical edge palette (indexed `linkStyle`)
 
@@ -116,7 +96,7 @@ can't pick one, you have two concerns. Split into two diagrams.
 
 - **LINEAR CHAIN**: `A → B → C → D → E`. Use `flowchart LR`. No subgraphs
   for "roles" or "phases" (they always cause zigzag). To show role/owner,
-  color nodes via `classDef`. Don't put them in columns.
+  color nodes with the house classes. Don't put them in columns.
 - **PARALLEL CONVERGENCE**: two chains that join at the end. Use
   `flowchart LR`. Declare the longer chain first (its nodes appear higher
   in source). ELK ranks the shorter chain on the second row.
@@ -140,13 +120,10 @@ physically or logically co-locates, do NOT make it a subgraph.
 - **Allowed** subgraph names, for actual co-location: `Proxmox cluster`,
   `Cribl tier`, `UniFi network`, `AWS DR`, `Edge`, `Infrastructure`,
   `Configuration`, `Nix`, `AI Development`, `Observability`.
-- For role/owner: use `classDef`, color the nodes. The chain stays linear.
+- For role/owner: color the nodes with the house classes. The chain stays linear.
 
 ```text
-classDef human  fill:#FBF7EE,stroke:#2F7E78,stroke-width:2px;
-classDef ai     fill:#FFE7DC,stroke:#E06B4A,stroke-width:2px;
-classDef auto   fill:#F4EFE6,stroke:#0B1D2A,stroke-width:1.5px;
-class H1,H3 human
+class H1,H3 sink
 class A1,A2,A3 ai
 class T1,T2,T3 auto
 ```
@@ -167,9 +144,9 @@ Aspect-ratio sanity check (mentally render before emitting):
 - Taller than 1:1.2 → too many siblings somewhere (cap at 5)
 - Goal: between 16:9 and 4:3.
 
-### Rule 4 · `classDef` always, `linkStyle` by index
+### Rule 4 · House classes always, `linkStyle` by index
 
-- **Never emit per-node `style` statements.** Always use `classDef`. A
+- **Never emit per-node `style` statements.** Always use a house class. A
   diagram with 8 identical `style X fill:...` lines is a code smell. The
   8 nodes share a category; give them a class.
 - **Never emit a global `linkStyle default stroke:#E06B4A`**. It paints
@@ -199,7 +176,7 @@ Standard edge palette for this site:
 - [ ] No subgraph is named for a role (Human, AI, Phase 1, etc.)
 - [ ] Every rank ≤5 nodes, every subgraph ≤5 nodes, total ≤12
 - [ ] Every edge crosses ≤1 subgraph boundary
-- [ ] Zero `style` statements; all visual grouping via `classDef`
+- [ ] Zero `style` and `classDef` statements; all visual grouping via the house classes
 - [ ] Zero `linkStyle default`; edges colored by semantic category
 - [ ] Mentally rendered aspect ratio between 4:3 and 16:9
 

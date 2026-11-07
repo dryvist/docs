@@ -4,10 +4,10 @@ description: "How the prompt cache, concurrency, and the paged KV pool share one
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Three consumers share one budget: model weights, the live KV pool, and the
-> prompt cache. Weights and live KV are fixed by the shape you serve, so the
-> prompt cache absorbs whatever is left. That's why the context window that
-> "fits in memory" can still be the wrong one.
+Three consumers share one budget: model weights, the live KV pool, and the
+prompt cache. Weights and live KV are fixed by the shape you serve, so the
+prompt cache absorbs whatever is left. That's why the context window that
+"fits in memory" can still be the wrong one.
 
 [Memory ceilings](/local-llm/memory-ceilings) covers the layered budget: the
 wired ceiling, `--gpu-memory-utilization` as a cap rather than a reservation,
@@ -20,7 +20,16 @@ actually costs once the cache is in the picture.
 A serving worker's memory divides three ways:
 
 ```mermaid
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
 flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   B["Per-worker budget"] --> W["Model weights<br/>fixed by the model"]
   B --> K["Live KV pool<br/>concurrency x window"]
   B --> P["Prompt cache<br/>whatever remains"]

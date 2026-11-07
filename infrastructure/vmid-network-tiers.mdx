@@ -4,9 +4,9 @@ description: "A structured 6- or 7-digit VMID and a trust-ordered set of VLAN ti
 page_type: "decision"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Every guest gets a 6- or 7-digit identity number, every network is a trust-ordered tier, and the two are
-> wired together: a guest's VMID announces which tier it belongs to, and that tier *is* its VLAN.
-> Identity and placement stop being two facts to keep in sync. They become one fact, encoded once.
+Every guest gets a 6- or 7-digit identity number, every network is a trust-ordered tier, and the two are
+wired together: a guest's VMID announces which tier it belongs to, and that tier *is* its VLAN.
+Identity and placement stop being two facts to keep in sync. They become one fact, encoded once.
 
 Most homelabs hand out VM IDs in arrival order (`100`, `101`, `102`) and pick a VLAN per service
 by hand. That works until it doesn't. Nothing about ID `137` tells you what it is or where it lives.
@@ -140,7 +140,7 @@ Treat the preceding tables as the destination. The detailed, per-guest allocatio
 
 ## What this connects to
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="tofu-unifi"
   icon="network-wired"

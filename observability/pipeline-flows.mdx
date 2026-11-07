@@ -4,7 +4,7 @@ description: "One diagram per concern: syslog families, AI command-line shipping
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> One overview, six zooms. Every source, every port, every index: this page shows which legs are live versus planned.
+One overview, six zooms. Every source, every port, every index: this page shows which legs are live versus planned.
 
 Every log and metric in this homelab converges on the same spine. Sources reach an ingress load
 balancer or a local Cribl Edge. Cribl Stream then routes each log, and Splunk indexes it over
@@ -22,9 +22,16 @@ Langfuse and Phoenix each receive OTLP traces; Splunk receives no traces.
 {/* Ranks: 5 sources max. Total nodes: 12 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Gear([fa:fa-network-wired Network gear])
   Hosts([fa:fa-server Linux · Windows · Mac])
   CLIs([fa:fa-robot AI CLIs])
@@ -52,11 +59,6 @@ Langfuse and Phoenix each receive OTLP traces; Splunk receives no traces.
   Stream -->|OTLP traces| LF
   Stream -->|OTLP traces| PX
 
-  classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
-
   class Gear,Hosts,Audit src
   class CLIs,LLM ai
   class HAP,NGX,Edge,Stream hop
@@ -83,9 +85,16 @@ from the pipeline constants in the infrastructure repo; the pipeline never hardc
 {/* Ranks: 5 sources max. Total nodes: 8 (≤12). Aspect: ~2.5:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   U([UniFi · 514 · 1514 · 520])
   FW([Palo Alto · ASA<br/>515 · 516])
   OS([Linux · Windows · macOS<br/>517 · 518 · 521])
@@ -103,10 +112,6 @@ from the pipeline constants in the infrastructure repo; the pipeline never hardc
   DQ --> HAP
   HAP --> Edge
   Edge --> SP
-
-  classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class U,FW,OS,HP,DQ src
   class HAP,Edge hop
@@ -142,9 +147,16 @@ carries no year and no timezone, and workstations deliberately keep local time.
 {/* Ranks: ≤3 in subgraph. Total nodes: 5 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   subgraph mb["MacBook"]
   CLI([fa:fa-robot AI CLIs])
   Files[(JSONL logs)]
@@ -157,10 +169,6 @@ carries no year and no timezone, and workstations deliberately keep local time.
   Files --> Edge
   Edge -->|tcpjson 10311–10315| Stream
   Stream --> SP
-
-  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class CLI ai
   class Files,Edge,Stream hop
@@ -182,9 +190,16 @@ host's Cribl Edge on tcpjson ports 10321–10323.
 {/* Ranks: ≤2 siblings. Subgraph: 5 nodes (cap). Total: 7 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Client((Clients))
   subgraph ms["Mac Studio"]
   Gate{"caddy gate<br/>:11434"}
@@ -203,11 +218,6 @@ host's Cribl Edge on tcpjson ports 10321–10323.
   W1 -.-> Edge
   W2 -.-> Edge
   Edge -->|tcpjson 10321–10323| Stream
-
-  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
 
   class Client external
   class Gate gate
@@ -240,9 +250,16 @@ for the signal-specific destinations.
 {/* Ranks: ≤2. Total nodes: 4 (≤12). Aspect: ~3:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Apps([Orchestration apps<br/>OpenLLMetry])
   Edge([Cribl Edge<br/>OTLP HTTP])
   Stream([Cribl Stream<br/>S2S])
@@ -253,10 +270,6 @@ for the signal-specific destinations.
   Edge -->|S2S| Stream
   Stream -->|traces| LF
   Stream -->|traces| PX
-
-  classDef ai   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Apps ai
   class Edge,Stream hop
@@ -282,9 +295,16 @@ the console claims) is version-controlled in the network IaC repo.
 {/* Ranks: 1 per column. Total nodes: 4 (≤12). Aspect: ~4:1 LR (short chain). Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Gear([fa:fa-network-wired Gateway · switches])
   NGX([nginx UDP LB])
   Edge([Cribl Edge<br/>NetFlow pipeline])
@@ -293,10 +313,6 @@ the console claims) is version-controlled in the network IaC repo.
   Gear -."no export (gateway gap)".-> NGX
   NGX -.-> Edge
   Edge -.-> SP
-
-  classDef src  fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Gear src
   class NGX,Edge hop
@@ -316,9 +332,16 @@ index**. Every output carries its own token.
 {/* Subgraphs: 4 + 3 nodes (≤5 each). Total nodes: 8 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Stream([Cribl Stream<br/>one output per index])
   subgraph net["Network indexes"]
   direction TB
@@ -341,9 +364,6 @@ index**. Every output carries its own token.
   Stream -->|per-index HEC| Io
   Io ~~~ Ih
   Ih ~~~ Ia
-
-  classDef hop  fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2px,color:#F4EFE6;
 
   class Stream hop
   class Iu,If,Id,Ip,Io,Ih,Ia sink
@@ -386,9 +406,16 @@ tier is a log source.
 {/* Subgraphs: 5 + 4 nodes (≤5 each). Total nodes: 10 (≤12). Aspect: ~2:1 LR. Pass.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   GW((UniFi<br/>gateway))
   subgraph upper["Tiers 10–50 · most trusted"]
   direction TB
@@ -416,10 +443,6 @@ tier is a log source.
   T7 ~~~ T8
   T8 ~~~ T9
 
-  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-
   class GW external
   class T1,T2,T3,T5,T6,T7,T8,T9 host
   class T4 gate
@@ -433,7 +456,7 @@ The full VMID ↔ VLAN convention is on [VMID & network tier model](/infrastruct
 
 ## See also
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Observability overview"
   icon="chart-line"

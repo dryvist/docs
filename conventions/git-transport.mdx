@@ -4,7 +4,7 @@ description: "SSH for public repos, HTTPS for private repos. Visibility decides,
 page_type: "reference"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Two transports, one rule: pick by **visibility**, not by owner.
+Two transports, one rule: pick by **visibility**, not by owner.
 
 Every repo across the org has exactly one canonical transport. The visibility of the repo decides which.
 
@@ -70,7 +70,7 @@ gh repo view <owner>/<repo> --json visibility --jq .visibility
 
 ## What this connects to
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Branch conventions"
   icon="code-branch"
