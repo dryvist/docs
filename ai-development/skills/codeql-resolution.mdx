@@ -4,7 +4,7 @@ description: "CodeQL alerts are a separate gate from CI checks. /resolve-codeql 
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
-> CodeQL is not in `statusCheckRollup`. If you only check CI, you miss the CodeQL gate. `/resolve-codeql` fixes that.
+CodeQL is not in `statusCheckRollup`. If you only check CI, you miss the CodeQL gate. `/resolve-codeql` fixes that.
 
 CodeQL is GitHub's static-analysis security scanner. It runs on every PR via the `Analyze (actions)`
 or `Analyze (javascript)` jobs (depending on what's enabled for the repo). When it finds a
@@ -78,7 +78,7 @@ still-running CodeQL run as a hard failure and bail out.
 
 ## Where to go next
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="/ship and /finalize-pr"
   icon="ship"

@@ -4,9 +4,9 @@ description: "The path from one host file to a running inference worker, and the
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> One host file names a couple of numbers. Nix turns them into a sysctl, a set
-> of serve flags, a swap policy, and a build-time safety check. It then launches
-> the worker. This page follows that path from top to bottom.
+One host file names a couple of numbers. Nix turns them into a sysctl, a set
+of serve flags, a swap policy, and a build-time safety check. It then launches
+the worker. This page follows that path from top to bottom.
 
 Two Apple Silicon Macs run local models. Neither is an agent. Each exposes an
 OpenAI-compatible API on loopback. The agent layer calls in over HTTP.
@@ -77,7 +77,7 @@ None of that picks a model; it shapes the box the model runs in.
 
 `nix-ai` holds four kinds of file under `modules/mlx/`:
 
-<CardGroup cols={2}>
+<CardGroup>
   <Card title="catalog-data.nix: the facts" icon="layer-group">
     One entry per known model. It holds the Hugging Face id, 4-bit weight
     footprint (`weightGb`), and the family serve args (parser stack,
@@ -237,7 +237,7 @@ The Nix hosts derive their serving from these shared inputs:
 
 ## Related
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Mac Studio serving"
   icon="desktop"

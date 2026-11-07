@@ -4,7 +4,7 @@ description: "Backup, replication and failover are three different things solvin
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> "It's replicated" and "it recovers" are not the same sentence. The gap between them is where outages live.
+"It's replicated" and "it recovers" are not the same sentence. The gap between them is where outages live.
 
 Three mechanisms get discussed as though they were one. They are not, and the difference matters at exactly the moment you cannot afford to be confused.
 
@@ -46,9 +46,16 @@ Failover is the piece that turns a copy into a recovery. The cluster notices a h
 {/* Boundary crossings: 0. Aspect ratio ~4:1, acceptable for a pure sequence.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Fail((Host stops))
   Detect([Cluster notices])
   Vote{Enough votes?}
@@ -59,11 +66,6 @@ Failover is the piece that turns a copy into a recovery. The cluster notices a h
   Detect --> Vote
   Vote --> Start
   Start --> Live
-
-  classDef external fill:#102937,stroke:#E6B35A,stroke-width:2px,color:#F4EFE6;
-  classDef host fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  classDef gate fill:#102937,stroke:#E06B4A,stroke-width:2.5px,color:#F4EFE6;
-  classDef sink fill:#102937,stroke:#F4EFE6,stroke-width:2.5px,color:#F4EFE6;
 
   class Fail external
   class Detect,Start host
@@ -112,7 +114,7 @@ Pick a service, fail it deliberately, time the recovery. Do it again after any c
 
 ## Where to go next
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Data platform resilience"
   icon="database"

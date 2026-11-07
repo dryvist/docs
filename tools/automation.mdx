@@ -4,7 +4,7 @@ description: "How this site keeps itself in sync with ~40 public repos: the mint
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-> The docs build themselves. Almost.
+The docs build themselves. Almost.
 
 `mintlify-docs-update` is a Claude Code skill that scans `JacobPEvans` (and `dryvist`), diffs the
 result against this site, and proposes the missing pages. It lives in
@@ -37,7 +37,7 @@ The skill is **conservative**: it only scaffolds *missing* pages. Existing pages
 
 Every page declares a tier in frontmatter. The skill enforces caps:
 
-<CardGroup cols={2}>
+<CardGroup>
   <Card title="Tier 1 — overviews & landings" icon="display">
     First-encounter pages. Single screen. ≤450 words. No scrolling on a 1080p browser.
   </Card>
@@ -50,7 +50,7 @@ Every page declares a tier in frontmatter. The skill enforces caps:
 
 These five skills are filed as GitHub issues and tracked in the `enhancement` + `skill` labels.
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="mintlify-page-author"
   icon="pen-nib"
@@ -91,7 +91,7 @@ These five skills are filed as GitHub issues and tracked in the `enhancement` + 
 
 ## Where to go next
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Tools overview"
   icon="screwdriver-wrench"

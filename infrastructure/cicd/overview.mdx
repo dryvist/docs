@@ -4,15 +4,22 @@ description: "Remote OpenTofu operations and links to the current CI/CD policies
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-> CI validates code. Terrakube plans, locks, and applies OpenTofu inside the homelab.
+CI validates code. Terrakube plans, locks, and applies OpenTofu inside the homelab.
 
 
 {/*Shape: linear pipeline, 4 stages. 4 nodes. Aspect ~3:1 LR.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
 flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   PR([pull_request<br/>static validation])
   Plan([Remote plan<br/>Terrakube executor])
   Review([Review<br/>approval gate])
@@ -48,7 +55,7 @@ Current branch rules and the required merge gate are documented in [CI/CD policy
 
 ## Where to go next
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Dependency automation"
   icon="rotate"

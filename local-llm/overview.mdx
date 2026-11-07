@@ -4,9 +4,9 @@ description: "One strategy for local inference: a fast resident model on each la
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-> Run the model where it makes sense. Fast and resident on the laptop, big and
-> always-on for the LAN, served from a desktop-class Apple Silicon host the
-> laptops call as clients.
+Run the model where it makes sense. Fast and resident on the laptop, big and
+always-on for the LAN, served from a desktop-class Apple Silicon host the
+laptops call as clients.
 
 "Local LLM" here means two distinct stacks that answer to the same OpenAI-shaped
 API, plus the strategy that decides which one runs what. Neither is an agent.
@@ -50,16 +50,22 @@ for the general policy this follows.
 {/*Shape: linear chain. 3 nodes, one timeline. Aspect ~3:1 LR. Role via classDef.*/}
 
 ```mermaid
-%%{init:
-  {'theme':'base','look':'handDrawn','themeVariables':{'fontFamily':'Geist','fontSize':'14px','primaryColor':'#102937','primaryTextColor':'#F4EFE6','primaryBorderColor':'#4FB3A9','lineColor':'#4FB3A9','secondaryColor':'#0B1D2A','tertiaryColor':'#1A2A38','clusterBkg':'rgba(79,179,169,0.08)','clusterBorder':'#4FB3A9'}}}%%
-  flowchart LR
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
   Laptop([Laptop<br/>1× M4 Max · one resident model])
   Large([Large-memory role<br/>Mac Studio · serial capacity])
   Shard([Gated<br/>shard one model across both])
 
   Laptop --> Large --> Shard
 
-  classDef ai fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
   class Laptop,Large,Shard ai
 
   linkStyle default stroke:#4FB3A9,stroke-width:1.5px;
@@ -136,7 +142,7 @@ and it remains measurement-gated. See
 
 ## In this section
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="Apple Silicon stack"
   icon="microchip"
@@ -189,7 +195,7 @@ and it remains measurement-gated. See
 
 ## How it connects
 
-<CardGroup cols={2}>
+<CardGroup>
 <Card
   title="nix-ai"
   icon="bot"
