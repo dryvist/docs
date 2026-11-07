@@ -10,7 +10,8 @@ The macOS system layer. Everything below it is just `inputs`.
 
 <RepoMeta language="Nix" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/nix-darwin" />
 
-`nix-darwin` is the top-level entry point for the Mac. One `darwin-rebuild switch` updates packages, fonts, app preferences, shell, and dock: anything that has a system-level reflection.
+`nix-darwin` is the top-level system layer for Macs. Run
+`darwin-rebuild switch` to apply its declared configuration.
 
 ## What it does
 
@@ -65,9 +66,13 @@ flowchart LR
 | `manual` | outside this configuration, with a written reason | any path |
 
 The `dock-providers` flake check runs the contract against a fixture for each failure mode and confirms every Mac host carries the assertion.
-The macOS build job on `main` runs `nix flake check`, which builds every `checks.aarch64-darwin` output, including `dock-providers` and `system-eval` (the assertion for every host).
+The macOS build job on `main` runs `nix flake check`. It builds each
+`checks.aarch64-darwin` output, including `dock-providers` and `system-eval`.
+The latter asserts the contract for every host.
 A check declared in `flake.nix` runs there without a second list.
-The Obsidian package puts the app bundle under Home Manager Apps and links the `obsidian` command to the app's socket CLI; the GUI executable is not on `PATH`.
+The Obsidian package puts its app bundle under Home Manager Apps and links the
+`obsidian` command-line tool to the app's socket. The GUI executable is not on
+`PATH`.
 Workstation Homebrew cleanup runs in `check` mode: activation stops and lists every installed cask or formula the configuration does not declare, and removes nothing.
 To add or move an app, change the provider declaration and the Dock entry together.
 
@@ -82,7 +87,12 @@ Use the Determinate Nix installer for flakes-enabled macOS. The README links the
 `git clone https://github.com/dryvist/nix-darwin && cd nix-darwin && darwin-rebuild switch --flake .#$(hostname -s)`
 </Step>
 <Step title="Iterate">
-Edit `flake.nix` or any module under `modules/`. Re-run `darwin-rebuild switch --flake .`; only what changed gets rebuilt.
+Edit `flake.nix` or any module under `modules/`. Re-run
+`darwin-rebuild switch --flake .`; only what changed gets rebuilt. The
+post-activation check compares Home Manager's `current-home` link with its
+activation package in the new system. A mismatch fails the switch before
+`/run/current-system` advances. See the
+[assertion](https://github.com/dryvist/nix-darwin/blob/main/modules/darwin/hm-activation-assert.nix).
 </Step>
 </Steps>
 

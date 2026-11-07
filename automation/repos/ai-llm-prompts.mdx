@@ -6,14 +6,15 @@ page_type: "reference"
 {/* projected from the authoring site; do not edit here */}
 One public catalog owns Dryvist-authored prompt text. Runtime repositories own schedules, credentials, deployment IDs, and app logic.
 
-[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. Its current release is
-[`v1.14.1`](https://github.com/dryvist/ai-llm-prompts/releases/tag/v1.14.1).
+[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. See its
+[latest release](https://github.com/dryvist/ai-llm-prompts/releases/latest).
 Consumers reference the floating major tag (`?ref=vN`); their flake lock holds the exact revision. Nothing tracks a branch.
 
 ## Catalog layout
 
 | Directory | Prompt surface |
 | --- | --- |
+| `agents/` | Standard agent definitions and profile references |
 | `auto-ai-agent/` | Shared instructions, continuous local-agent behavior, curricula, and scheduled jobs |
 | `automation/` | Repository automation, cloud workflows, and routine prompts |
 | `applications/` | Application-facing system and user prompts |
@@ -23,11 +24,16 @@ The shared instruction tree (`AGENTS.md`, `CLAUDE.md`, and `agentsmd/**`) lives
 in `auto-ai-agent/instructions/` with OKF metadata. The flake package named
 `instructions` strips OKF keys and keeps tool-native keys.
 
-The `auto-ai-agent/claude-code/` subtree has one model-neutral `executor`
-agent definition. It replaces the previous model-specific agent definitions.
-The default subagent model environment setting remains Haiku by operator
-choice. It applies only to spawns the router does not reroute. [Model routing](/ai-development/model-routing)
-documents the current delegation policy.
+Agent definitions live in `agents/` and use the shared rendering template.
+Definitions name a job and tier; the router selects a model from the declared
+role and policy. Follow the catalog's
+[agent standards](https://github.com/dryvist/ai-llm-prompts/blob/main/auto-ai-agent/instructions/agentsmd/rules/on-demand/agent-standards.md).
+
+The Dify render also generates `agents/dify/manifest.json`, sorted by name with
+one entry for each DSL. Each entry records the relative path and SHA-256 hash.
+It also identifies the item as an agent or driver and records its mode and
+tier. `make check-dify` checks the manifest with the rendered workflows.
+Importers can use it at a pinned catalog commit to verify each downloaded DSL.
 
 Public rules name integration roles, such as incident tracker, task tracker,
 private docs site, secret store, credential delivery, and notification target.
@@ -37,17 +43,17 @@ pairs those roles with sample products.
 Instruction-behavior changes ship through `feat:` or `fix:` commits. A `docs:`
 commit updates documentation and does not release a package.
 
-## Autonomous-agent prompt limits
+## Prompt size limits
 
-Release `v1.14.1` measures the shared autonomous base at 669 Qwen tokens and
-the Hermes persona at 774. The repository's `.token-limits.yaml` gates both
-files, and CI runs the `token_limits` check ([PR #106](https://github.com/dryvist/ai-llm-prompts/pull/106)).
-OpenRouter budget details live in the `dryvist/openrouter-models` skill.
+The catalog's `.token-limits.yaml` sets prompt budgets, and CI enforces them
+with the `token_limits` check. Read that file at the current catalog revision
+for the active limits.
 
 
-Every prompt uses Open Knowledge Format 0.1 Markdown. YAML frontmatter carries its stable `prompt://dryvist/...` resource ID, rendering policy,
-variables, consumer list, status, and source history. Consumers follow the declared render contract and strip frontmatter when the prompt says
-`frontmatter: strip`.
+Every prompt uses Open Knowledge Format 0.1 Markdown. Its YAML frontmatter
+defines a stable `prompt://dryvist/...` resource ID and render contract. It also
+records variables and maintenance metadata. Consumers follow the declared
+render contract and strip frontmatter when the prompt says `frontmatter: strip`.
 
 ## Consumption contract
 
@@ -69,14 +75,16 @@ lock files, import caches, pin-refresh jobs, and maintenance workflows were remo
 [`gh-aw-reference-template.md`](https://github.com/dryvist/ai-llm-prompts/blob/0431be6994d51169b9f705ddeba958eb8a4d0fc4/automation/gh-aw-reference-template.md)
 outside `.github/workflows` to document the historical format. It is not a production integration.
 
+The [`.github-ai` repository](https://github.com/JacobPEvans/.github-ai) reads its prompts from this catalog.
+
 ## Where to go next
 
 <CardGroup>
 <Card
   title="Browse the catalog"
   icon="book"
-  href="https://github.com/dryvist/ai-llm-prompts/blob/v1.14.1/index.md">
-  Directory indexes for all prompt assets in `v1.14.1`.
+  href="https://github.com/dryvist/ai-llm-prompts/blob/main/index.md">
+  Directory indexes for the prompt catalog.
 </Card>
 <Card
   title="AI workflows"

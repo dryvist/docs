@@ -86,10 +86,10 @@ and cooldown settings ([serving](https://github.com/dryvist/nix-ai/blob/develop/
 
 ### Splunk MCP entry
 
-The Splunk entry is one shared catalog item rendered for Claude, Codex, Qwen,
-and the Antigravity command-line tool and IDE surfaces. Antigravity (`agy`) is the
-Gemini-family harness; it is not a second Gemini MCP identity. Hermes uses the
-same Splunk connection.
+The Splunk entry is one shared catalog item for the Claude and Codex tools.
+Qwen and Antigravity also use it through their command-line and IDE surfaces.
+Antigravity (`agy`) is the Gemini-family harness; it is not a second Gemini
+MCP identity. Hermes uses the same Splunk connection.
 
 
 ### On-demand MCP servers
@@ -99,11 +99,11 @@ local servers stay out of the always-on profile: `apple-events`, `zammad`,
 `fabric`, `grep`, `time`, and `token-meter` render to
 `~/.claude/mcp-available/<name>.json` instead of loading at session start.
 The always-on profile carries only what the gateway routes (`context7`,
-`memory`) plus `vikunja`. The Codex command-line tool can explicitly attach
-selected entries from the on-demand registry by setting
+`memory`) plus `vikunja`. The Codex command-line tool can attach entries from
+the on-demand registry by setting
 `programs.codex.onDemandMcpServers` to
-names in `programs.aiMcp.onDemandEnabledServers`. The selected servers are
-rendered into Codex's `config.toml`; remote servers can read their bearer key
+names in `programs.aiMcp.onDemandEnabledServers`. The configured servers are
+rendered into Codex's `config.toml`; remote servers can read their bearer token
 from the named consumer environment variable at runtime. See the
 [Codex option](https://github.com/dryvist/nix-ai/blob/develop/modules/codex/options.nix)
 and [renderer](https://github.com/dryvist/nix-ai/blob/develop/modules/codex/settings.nix).
@@ -111,7 +111,9 @@ and [renderer](https://github.com/dryvist/nix-ai/blob/develop/modules/codex/sett
 A repository attaches on-demand servers through its skill groups instead of listing
 them by hand. `programs.agentSkills.groupMcpServers` maps a group to server names
 (default `homelab` → `zammad`; `ai` → `fabric`, `grep`, `time`, `token-meter`). The
-direnv linker merges those with any `AGENTS.md` `mcp-servers:` frontmatter. The result
+shared `authoring` category includes the `agent-builder` and `skill-builder`
+skills for distribution to each supported harness. The direnv linker merges
+the selected server names with any `AGENTS.md` `mcp-servers:` frontmatter. The result
 goes into the managed part of an untracked `.mcp.json`. Ten rarely used Zammad tools stay denied by
 bare-name permission rules so their schemas never reach context even when the server
 attaches. The curated on-demand list is a config-level definition, so a consuming host
