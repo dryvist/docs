@@ -77,7 +77,7 @@ model is loaded:
 
 ```sh
 # macOS example: launchctl kickstart -k gui/$(id -u)/<your-service-label>
-curl -sf http://localhost:11434/v1/models | jq -r '.data[].id'
+curl -sf "${LITELLM_LOCAL_BASE_URL%/}/v1/models" | jq -r '.data[].id'
 ```
 
 <Tip>
@@ -87,7 +87,7 @@ Use the real served model id and send the review prompt straight to the
 OpenAI-compatible endpoint:
 
 ```sh
-curl -sf http://localhost:11434/v1/chat/completions \
+curl -sf "${LITELLM_LOCAL_BASE_URL%/}/v1/chat/completions" \
   -H 'Content-Type: application/json' \
   -d '{"model":"mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit",
        "max_tokens":1600,"temperature":0.3,

@@ -16,11 +16,12 @@ Read this page for the design reasoning. For current controls, see
 [How the Nix stack serves a model](/local-llm/nix-serving-stack).
 </Warning>
 
-The workstation serves its local model through two processes: `llama-swap`, a
+The historical workstation stack served its local model through two processes: `llama-swap`, a
 thin model-multiplexing proxy on `localhost:11434`, and one MLX worker
 that does the inference. The worker was `vllm-mlx` when this page's tuning was written.
-That backend was removed on 2026-10-02, and the active worker is `mlx-lm`. Every caller speaks the OpenAI API; the proxy
-routes to the resident worker and manages its lifecycle.
+That backend was removed on 2026-10-02. The current laptop uses a LiteLLM
+gateway; see [Laptop local serving](/local-llm/nix-serving-stack#laptop-local-serving).
+The diagram and procedures below describe the historical stack.
 
 The hard part on a laptop isn't raw speed. It's **coexistence**. A large model
 wires gigabytes of GPU memory that the kernel can't cheaply reclaim. A desktop
