@@ -80,7 +80,7 @@ The current-code Space wake or restart and a full-history load through the
   Viewer([HF Space viewer])
 
   NixAI --> Serve
-  Serve -->|":11434/v1"| Eval
+  Serve -->|"OpenAI-compatible endpoint"| Eval
   Eval -->|"results_*.json"| Bench
   Bench -->|"envelope v1 + publish"| Dataset
   Dataset --> Viewer
@@ -315,9 +315,8 @@ publisher against fixtures.
 
 <Steps>
 <Step title="Bring up the inference stack">
-From the [`nix-darwin`](/nix/nix-darwin) flake: `darwin-rebuild switch --flake .`. This starts
-`vllm-mlx` + `llama-swap` on `localhost:11434` via [`nix-ai`](/nix/nix-ai). Or run `vllm-mlx
-serve` directly if you're not on the Nix stack.
+Use the [local serving stack](/local-llm/nix-serving-stack) for the host's
+serving setup. On the MacBook, read the gateway from `LITELLM_LOCAL_BASE_URL`.
 </Step>
 <Step title="Install and authenticate">
 `git clone https://github.com/dryvist/mlx-benchmarks && cd mlx-benchmarks && uv sync`. The benchmarks read `HF_TOKEN`, which needs write scope on the dataset namespace.
@@ -326,7 +325,7 @@ serve` directly if you're not on the Nix stack.
 Point `lm-eval` at the local endpoint:
 
 ```bash
-BASE="http://localhost:11434/v1/chat/completions"
+BASE="${LITELLM_LOCAL_BASE_URL%/}/v1/chat/completions"
 .venv/bin/lm_eval --model local-chat-completions \
   --model_args "base_url=$BASE,model=mlx-community/Qwen3.5-9B-MLX-4bit" \
   --tasks gsm8k_cot_zeroshot --limit 10 \
