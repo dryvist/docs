@@ -15,10 +15,9 @@ page_type: "reference"
 | Commit SHA inside a flake URL | Bespoke manager tracking it as a git ref |
 | Actions, collections, and lockfiles | Built-in managers |
 
-The shared custom managers use a `# renovate:` comment to track annotated
-version pins in supported files. These include Ansible defaults, vars, tasks,
-templates, inventory, group vars, host vars, playbooks, and scripts; Nix and
-Packer files; shell files; `.env.example`; and GitHub workflow YAML.
+The shared custom managers track annotated versions in their supported file
+patterns. Check the [policy source](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json)
+for the current list.
 
 ```yaml
 # renovate: datasource=<ds> depName=<name> [versioning=<v>]
@@ -54,8 +53,8 @@ The enterprise `Workflow Policy` check enforces this rule. `pinact run` pins
 action references, so revert any first-party line it pins to keep that `@vN`
 ref floating.
 
-Nix, Ansible, and Tofu sources use a floating major tag (`?ref=vN`), and the
-lock file holds the exact revision. The org scanners enforce that shape:
+Where a source uses `?ref=vN`, its lock file holds the exact revision. The org
+scanners enforce that shape:
 
 - **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
 - **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable.
@@ -109,17 +108,22 @@ seven-day release-age hold wait until that age passes.
 The complete trust tiers live in
 [`SECURITY.md`](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
 
-Renovate does not apply `minimumReleaseAge` to lock-file maintenance, so the
-shared preset disables npm lock-file maintenance org-wide. Terraform/OpenTofu
-lock-file maintenance is also disabled org-wide because those locks must move
-with their exact provider pins.
+The shared policy sets `minimumReleaseAgeBehaviour` to `timestamp-optional` for
+lock-file maintenance and digest updates. Updates without a release timestamp
+can proceed, while dated releases retain their configured age hold. See the
+[shared Renovate policy](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json).
+
+The shared preset turns off npm lock-file maintenance so package-manager
+guardrails remain authoritative. It also turns off Terraform/OpenTofu
+lock-file maintenance because provider pins and their lock entries must move
+together in ordinary updates.
 
 ## Nix flake locks
 
 Nix repos also extend the shared [`renovate-nix` preset](https://github.com/JacobPEvans/.github/blob/main/renovate-nix.json).
 Renovate's `nix` manager and `lockFileMaintenance` relock `flake.lock` in the Saturday window.
-The shared presets set no `minimumReleaseAge` on `lockFileMaintenance`, because Renovate cannot apply
-release-age filtering to lock-file maintenance.
+The shared presets set no `minimumReleaseAge` on `lockFileMaintenance`, so Nix
+lock-file maintenance has no release-age hold.
 In Nix repositories, Go directive and toolchain bumps come in their own
 review-required PRs.
 
@@ -156,13 +160,13 @@ also writes user-level settings:
 
 ## Container image pins
 
-One shared custom manager tracks `*_image:` keys in Ansible role defaults. It accepts quoted,
-unquoted, and folded values, with an optional `sha256` digest. Use concrete tags, not `latest` or
-`stable`.
+One shared custom manager tracks `*_image:` keys in Ansible role defaults. It
+accepts plain or folded YAML values whether the tag is quoted or unquoted, with
+an optional `sha256` digest. Use concrete tags, not `latest` or `stable`.
 
 The shared Molecule image manager tracks `image:` entries in any
 `molecule/*/molecule.yml` file. Put
-`# renovate: datasource=<ds> depName=<image>` above the `image:` line. The value
+`# renovate: datasource=<ds> depName=<image>` on the line preceding `image:`. The value
 may use plain YAML or folded `>-` form and must pin `tag@sha256:digest`.
 
 
