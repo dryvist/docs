@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@db08209e804a3de6760b2fc8318fabf26d81857d # v1.47.2
+    uses: JacobPEvans/.github/.github/workflows/_disclosure-gate.yml@04547f75e3c83d5d27fe4ee9561f44c58b607adb # v1.48.0
     secrets:
       GITLEAKS_PRIVATE_CONFIG: ${{ secrets.GITLEAKS_PRIVATE_CONFIG }}
       GITLEAKS_LICENSE_KEY: ${{ secrets.GITLEAKS_LICENSE_KEY }}
