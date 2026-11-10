@@ -6,8 +6,8 @@ page_type: "reference"
 {/* projected from the authoring site; do not edit here */}
 One public catalog owns Dryvist-authored prompt text. Runtime repositories own schedules, credentials, deployment IDs, and app logic.
 
-[`dryvist/ai-llm-prompts`](https://github.com/dryvist/ai-llm-prompts) is the canonical prompt catalog. See its
-[latest release](https://github.com/dryvist/ai-llm-prompts/releases/latest).
+[`JacobPEvans-ai/ai-llm-prompts`](https://github.com/JacobPEvans-ai/ai-llm-prompts) is the canonical prompt catalog. See its
+[latest release](https://github.com/JacobPEvans-ai/ai-llm-prompts/releases/latest).
 Consumers reference the floating major tag (`?ref=vN`); their flake lock holds the exact revision. Nothing tracks a branch.
 
 ## Catalog layout
@@ -27,7 +27,7 @@ in `auto-ai-agent/instructions/` with OKF metadata. The flake package named
 Agent definitions live in `agents/` and use the shared rendering template.
 Definitions name a job and tier; the router selects a model from the declared
 role and policy. Follow the catalog's
-[agent standards](https://github.com/dryvist/ai-llm-prompts/blob/main/auto-ai-agent/instructions/agentsmd/rules/on-demand/agent-standards.md).
+[agent standards](https://github.com/JacobPEvans-ai/ai-llm-prompts/blob/main/auto-ai-agent/instructions/agentsmd/rules/on-demand/agent-standards.md).
 
 The Dify render also generates `agents/dify/manifest.json`, sorted by name with
 one entry for each DSL. Each entry records the relative path and SHA-256 hash.
@@ -37,7 +37,7 @@ Importers can use it at a pinned catalog commit to verify each downloaded DSL.
 
 Public rules name integration roles, such as incident tracker, task tracker,
 private docs site, secret store, credential delivery, and notification target.
-The catalog's [example role map](https://github.com/dryvist/ai-llm-prompts/blob/main/agentsmd/docs/tool-role-map.example.md)
+The catalog's [example role map](https://github.com/JacobPEvans-ai/ai-llm-prompts/blob/main/agentsmd/docs/tool-role-map.example.md)
 pairs those roles with sample products.
 
 Instruction-behavior changes ship through `feat:` or `fix:` commits. A `docs:`
@@ -58,10 +58,10 @@ render contract and strip frontmatter when the prompt says `frontmatter: strip`.
 ## Consumption contract
 
 The repository exposes one Nix package per catalog directory plus a combined default package. A consumer selects only the package it needs and
-takes the floating major tag in its flake input. `vN` below stands for the current major tag of `dryvist/ai-llm-prompts`:
+takes the floating major tag in its flake input. `vN` below stands for the current major tag of `JacobPEvans-ai/ai-llm-prompts`:
 
 ```nix
-inputs.ai-llm-prompts.url = "github:dryvist/ai-llm-prompts?ref=vN";
+inputs.ai-llm-prompts.url = "github:JacobPEvans-ai/ai-llm-prompts?ref=vN";
 ```
 
 The flake lock records the exact release commit. Release tags are immutable.
@@ -72,7 +72,7 @@ for the shared lock-update policy.
 
 GitHub Agentic Workflows (GH-AW) are retired from active Dryvist repositories. Their useful local prompt bodies moved into this catalog; generated
 lock files, import caches, pin-refresh jobs, and maintenance workflows were removed. The catalog retains one dormant
-[`gh-aw-reference-template.md`](https://github.com/dryvist/ai-llm-prompts/blob/0431be6994d51169b9f705ddeba958eb8a4d0fc4/automation/gh-aw-reference-template.md)
+[`gh-aw-reference-template.md`](https://github.com/JacobPEvans-ai/ai-llm-prompts/blob/0431be6994d51169b9f705ddeba958eb8a4d0fc4/automation/gh-aw-reference-template.md)
 outside `.github/workflows` to document the historical format. It is not a production integration.
 
 The [`.github-ai` repository](https://github.com/JacobPEvans/.github-ai) reads its prompts from this catalog.
@@ -83,7 +83,7 @@ The [`.github-ai` repository](https://github.com/JacobPEvans/.github-ai) reads i
 <Card
   title="Browse the catalog"
   icon="book"
-  href="https://github.com/dryvist/ai-llm-prompts/blob/main/index.md">
+  href="https://github.com/JacobPEvans-ai/ai-llm-prompts/blob/main/index.md">
   Directory indexes for the prompt catalog.
 </Card>
 <Card
