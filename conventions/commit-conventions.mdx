@@ -25,7 +25,9 @@ are not stylistic; they change what ships.
 - **`feat:`** for genuinely new capabilities, integrations, or significant behavioral changes. Produces a minor bump.
 - **Major bumps are human-initiated only.** Edit `.release-please-manifest.json` manually.
   Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release
-  workflow. See [CI/CD policy](/infrastructure/cicd/policy) for the release flow.
+  workflow. Agents never write a `!:` subject or a `BREAKING CHANGE:` footer. Repos set release-please
+  `versioning: always-bump-minor` so a breaking commit cannot cut a major (estate-wide rollout: Vikunja 7785).
+  See [CI/CD policy](/infrastructure/cicd/policy) for the release flow.
 
 ## Enforcement
 
