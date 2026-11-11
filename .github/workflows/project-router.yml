@@ -21,6 +21,6 @@ concurrency:
 
 jobs:
   route:
-    uses: JacobPEvans/.github/.github/workflows/_project-router.yml@e2a64185dab7e0814e88e89f55dea58124d46f74 # v1.48.2
+    uses: JacobPEvans/.github/.github/workflows/_project-router.yml@90c23782819570b7e43866d239b36736ec689286 # v1.49.0
     secrets:
       GH_APP_CLAUDE_BOT_PRIVATE_KEY: ${{ secrets.GH_APP_CLAUDE_BOT_PRIVATE_KEY }}
