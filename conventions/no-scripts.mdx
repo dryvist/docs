@@ -6,10 +6,10 @@ page_type: "reference"
 {/* projected from the authoring site; do not edit here */}
 {/*TIER-GUARD: reference page — the iron law, four-tier search, and worked examples belong together.*/}
 
-Search first. Script only when every search tier is empty and the 10-line gate passes. Then put the script in a real file with a real extension.
+Search first. Put any script in a real file with a real extension.
 
 Inlined logic in a YAML `run:` step, a Markdown copy-paste block, or a heredoc smuggling a Bash loop
-is the worst of every world. It is untestable, unlintable, and undiscoverable. The rules below apply
+is the worst of every world. No test or lint covers it, and nobody can find it. The rules below apply
 to every repo across the org.
 
 ## Iron law
@@ -42,21 +42,13 @@ Never inlined elsewhere.
 
 Before writing any new script, search every tier. Log one line per tier (`<tier>: <tool> — found / not-found, reason`). Empty rows reject the search.
 
-1. **Native CLIs / builtins** (`jq`, `gh`, `git`, `curl`)
+1. **Native features and builtins** (`jq`, `gh`, `git`, `curl`, and features of software already in use)
 2. **Ecosystem primitives** (Ansible modules, OpenTofu resources, marketplace Actions, pre-commit)
-3. **Third-party packaged tools** (Homebrew, apt, pip, npm, cargo)
-4. **Popular community solutions** (GitHub projects, official plugins, `awesome-*` lists)
-
-## 10-line gate
-
-After an empty search:
-
-- Fewer than 10 non-comment lines → auto-approved
-- 10+ lines → requires explicit sign-off
-
-Code, shebangs, heredocs, and continuations count. Blanks and comments do not. Semicolon-stuffing to dodge the count is a violation, not a workaround.
+3. **Maintained third-party tools** (Homebrew, apt, pip, npm, cargo)
+4. **Maintained projects to fork** (GitHub projects, official plugins, `awesome-*` lists)
 
 Hook blocks are terminal denials. Do not route around them by moving the logic to a different non-script file.
+
 
 ## Worked examples
 
