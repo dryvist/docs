@@ -19,8 +19,8 @@ eliminates that duplication so a single source of truth drives every consumer.
 | --- | --- | --- |
 | Hook definitions (Nix path) | [`dryvist/nix-devenv`](https://github.com/dryvist/nix-devenv) `lib/pre-commit-hooks.nix` + `flake-modules/profiles/<name>.nix` | `imports = [ inputs.nix-devenv.flakeModules.<profile> ]` in the consumer's `flake.nix` |
 | Hook definitions (non-Nix path) | [`JacobPEvans/.github`](https://github.com/JacobPEvans/.github) `precommit/templates/<profile>.yaml` | Copy at scaffold; Renovate keeps `rev:` pins fresh ([policy](/infrastructure/cicd/dependency-automation)) |
-| `.markdownlint-cli2.yaml` | `JacobPEvans/.github` at the root | Same root location pre-dates the precommit layer; kept for the existing markdownlint workflow's benefit |
-| `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `JacobPEvans/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold |
+| `.markdownlint-cli2.yaml` | `JacobPEvans/.github` at the root | Nix path: the base profile's markdownlint-cli2 hook passes it as `--config` when the repo has no markdownlint config of its own; CI: `_markdown-lint.yml` uses it under the same rule |
+| `.tflint.hcl` / `.ansible-lint` / `.yamllint.yml` | `JacobPEvans/.github` `precommit/configs/` | Nix path: `nix-devenv.lib.fetch-shared-configs` materialises nix-store paths; non-Nix: copy at scaffold; CI: `_ansible-ci.yml` lints with the canonical `.ansible-lint` and `.yamllint.yml` when the repo has none of its own |
 | `zizmor.yml` workflow-security policy | `JacobPEvans/.github` at the root | Passed as `--config` by the base profile's zizmor hook |
 
 ## Six profiles
@@ -29,7 +29,7 @@ Pick one per consumer repo.
 
 | Profile | Adds on top of base hygiene | Matches |
 | --- | --- | --- |
-| `base` | Generic file hygiene (whitespace, EOL, YAML/JSON/TOML, large files, private keys, merge conflicts), markdownlint-cli2, zizmor, treefmt | Most repos |
+| `base` | Generic file hygiene (whitespace, EOL, YAML/JSON/TOML, large files, private keys, merge conflicts), markdownlint-cli2, zizmor, gitleaks (staged changes), treefmt | Most repos |
 | `nix` | Alias for `base`; `deadnix` and `statix` already in base file-glob to `.nix` automatically | `nix-*` repos |
 | `markdown` | Alias for `base`; `markdownlint-cli2` already in base file-globs to `.md` automatically | Markdown-heavy repos |
 | `terraform` | `terraform-format`, `terraform-validate`, `tflint` | `terraform-*`, `tofu-*` |
