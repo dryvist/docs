@@ -51,7 +51,7 @@ only ways to land a commit that satisfies the ruleset.
 | Context | Identity | Auth | Signing path |
 | --- | --- | --- | --- |
 | Local Mac | `JacobPEvans` | local user | GPG (key `31652F22BF6AC286`); nix-home reads identity from a gitignored local file |
-| GitHub Actions: deterministic (snake, `3d-contrib`, `peter-evans/create-pull-request`, release-please) | `JacobPEvans-github-actions[bot]` | default `GITHUB_TOKEN` | web-flow via the action's Contents API call |
+| GitHub Actions: fixed-logic workflows (snake, `3d-contrib`, `peter-evans/create-pull-request`, release-please) | `JacobPEvans-github-actions[bot]` | default `GITHUB_TOKEN` | web-flow via the action's Contents API call |
 | AI workflows and native cloud routines | App identity | `github_token` | Contents API with `use_commit_signing: true` |
 | GitHub bots (Renovate, release-please releases, dependabot) | the bot's GitHub identity | managed by GitHub | web-flow |
 
@@ -76,7 +76,7 @@ The AI never constructs Contents API payloads itself. It edits files locally ins
 `claude-code-action@v1` translates those edits into Contents API calls on commit. AI workflows enjoy
 normal file-editing ergonomics without losing signed-commit attribution.
 
-## Deterministic GHA pattern
+## Fixed-logic GHA pattern
 
 Workflows where no AI generates content use whichever marketplace action fits. They sign
 automatically as long as the action makes its commits through the Contents API rather than
