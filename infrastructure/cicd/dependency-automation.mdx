@@ -31,10 +31,9 @@ Date-shaped or ragged tags need `loose` versioning.
 The image manager covers both `defaults/main.yml` and `defaults/main/` layouts.
 A self-test checks those paths against the shared preset.
 
-Some pins have a companion checksum the scanner cannot calculate. Use an
-update-branch fixer to recalculate it and a pull-request gate to reject a
-version/hash mismatch. The fixer alone cannot enforce the relationship.
-Test the gate with a deliberate mismatch and confirm that it fails.
+Some pins have a companion checksum the scanner cannot calculate. Use a
+pull-request gate to reject a version/hash mismatch. Test the gate with a
+deliberate mismatch and confirm that it fails.
 
 The shared preset disables the Dependency Dashboard. When changing a manager,
 use the [coverage self-test](https://github.com/JacobPEvans/.github/blob/main/nix/renovate-manager-coverage-selftest.nix)
@@ -46,23 +45,16 @@ rather than schema enforcement.
 
 ## Action and source pin policy
 
-First-party references in enterprise-owned organizations float on `@vN`.
-Renovate keeps shared workflow references on the floating `@v1` major tag.
-Third-party actions use a full commit SHA with a trailing `# vX.Y.Z` comment.
-The enterprise `Workflow Policy` check enforces this rule. `pinact run` pins
-action references, so revert any first-party line it pins to keep that `@vN`
-ref floating.
-
-Where a source uses `?ref=vN`, its lock file holds the exact revision. The org
+First-party dependencies use commit pins to the upstream branch `green`. Third-party actions use a full commit
+SHA with a trailing `# vX.Y.Z` comment. The enterprise `Workflow Policy` check enforces the third-party action
+pin rule.
+First-party source pins use commit references from `green`; their lock files hold the exact revision, and the org
 scanners enforce that shape:
 
-- **zizmor.** Allows first-party shared workflows to use floating major tags; third-party actions remain hash-pinned.
-- **Merge Gate.** Resolves shared workflow refs and fails if the referenced workflow is unavailable.
+- **zizmor.** Third-party actions are hash-pinned.
 - **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
-  avoid the paid Code Security charge), managed as IaC in
-  [`tofu-github`](/infrastructure/repos/tofu-github) (per-repo, pending the provider resource).
-  `tofu-github` also requires CodeQL results through an org ruleset on the same public repositories.
-  No committed query-filter config.
+  avoid the paid Code Security charge). [`tofu-github`](/infrastructure/repos/tofu-github) manages the
+  default setup and requires CodeQL results on the same public repositories. No committed query-filter config.
 - **OSV-Scanner.** Reports dependency vulnerabilities, not ref pinning.
 
 The full per-scanner posture lives in [`JacobPEvans/.github`
@@ -86,37 +78,42 @@ Consumer configs extend the shared preset, then list only repo-specific holds.
 
 ## Schedule and grouping
 
-The shared schedule is Saturday 00:00–05:59 in
-`America/Indiana/Indianapolis`. Renovate's built-in `group:allNonMajor` opens one
-PR per repository for minor, patch and digest updates; each major update opens
-its own PR.
-
+For third-party updates, the shared schedule is Saturday 00:00–05:59 in `America/Indiana/Indianapolis`.
+Renovate's built-in `group:allNonMajor` opens one pull request per repository for minor, patch, and digest
+updates; each major update opens its own pull request. First-party pins use one grouped pull request per
+consumer, refreshed every 4 hours.
 The shared preset sets `prCreation` to `not-pending`, so Renovate waits for
 branch status checks to finish before it creates a pull request.
 
-The shared preset sets `internalChecksFilter` to `strict`. Updates with the
-seven-day release-age hold wait until that age passes.
+The shared preset sets `internalChecksFilter` to `strict`. Third-party updates with the seven-day release-age hold wait until that age passes.
 
 | Update | Release-age hold | Merge policy |
 | --- | --- | --- |
 | Minor, patch, digest, and pin updates | 7 days | Auto-merge after required checks pass |
 | Other major updates | 30 days | Auto-merge after required checks pass |
 | First-party updates, including majors | 0 days | Auto-merge after required checks pass |
-| Trusted-organization majors | 7 days | Auto-merge after checks; `dep:review` adds dependency review |
+| Trusted-organization third-party majors | 7 days | Auto-merge after checks; `dep:review` adds dependency review |
 | Vulnerability alerts | 1 day | Auto-merge after required checks pass; alerts may open at any time |
 
 The complete trust tiers live in
 [`SECURITY.md`](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
 
 The shared policy sets `minimumReleaseAgeBehaviour` to `timestamp-optional` for
-lock-file maintenance and digest updates. Updates without a release timestamp
-can proceed, while dated releases retain their configured age hold. See the
+lock-file maintenance and digest updates. Updates without a release timestamp can proceed, while third-party dated releases retain their configured age hold. See the
 [shared Renovate policy](https://github.com/JacobPEvans/.github/blob/main/renovate-presets.json).
 
 The shared preset turns off npm lock-file maintenance so package-manager
 guardrails remain authoritative. It also turns off Terraform/OpenTofu
 lock-file maintenance because provider pins and their lock entries must move
 together in ordinary updates.
+
+## First-party pins
+
+First-party dependencies are pinned to commits of the upstream branch
+[green](/conventions/branch-conventions#the-branch-green). Renovate keeps one grouped pull request per
+consumer, refreshed every 4 hours, with platform auto-merge and no release-age hold. Renovate pull requests
+take the bot lane. A pull request that needs an upstream change bumps the pin itself. Release tags exist for
+outside users.
 
 ## Nix flake locks
 
@@ -129,7 +126,7 @@ review-required PRs.
 
 ## Package-manager release ages
 
-Project-level package managers use native settings for a seven-day release age:
+Project-level package managers use native settings for a seven-day release age on third-party updates:
 
 - **uv in `nix-ai` orchestrator.** Set `exclude-newer = "7 days"` and
   `required-version = ">=0.9.17"` in
@@ -172,6 +169,5 @@ may use plain YAML or folded `>-` form and must pin `tag@sha256:digest`.
 
 ## Dependabot security updates
 
-Dependabot security updates are off, so Renovate is the only source of security PRs. Dependabot alerts stay on, and
-Renovate reads them.
-
+Dependabot security updates are disabled in some repositories, so Renovate supplies security pull requests there.
+Dependabot alerts remain enabled, and Renovate reads them.

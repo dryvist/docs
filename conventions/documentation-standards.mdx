@@ -151,8 +151,8 @@ first time you use it.
 
 For large approximate quantities, use lowercase `k` for thousands and uppercase `M` and `B` for
 millions and billions. Use at most one decimal and no space: write `40k`, not `40,000`. Keep exact
-values exact, such as dates, IDs, money totals, hours, and validated counts. Vale's `CompactNumbers`
-rule flags the long form.
+values unchanged. Dates and identifiers retain their recorded form. Preserve each monetary total as
+recorded. Keep validated counts and hours exact. Vale's `CompactNumbers` rule flags the long form.
 
 ## Search
 
@@ -185,8 +185,7 @@ A page that moves leaves a redirect at its old URL. A URL this site has served n
 
 
 Hard rules run as automated checks on every change. A shrink-only baseline records the pages that
-broke a rule when it turned on, so new pages follow every rule from day one. Older pages are fixed
-section by section.
+broke a rule when it turned on, so new pages follow every rule from day one.
 
 ## Sources
 

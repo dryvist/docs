@@ -8,10 +8,8 @@ page_type: "reference"
 
 One canonical home per artifact. No per-repo duplication of hook definitions or shared lint configs.
 
-Across the workspace, dozens of repos had their own `.pre-commit-config.yaml` with the same baseline
-hooks rewritten everywhere, plus shared lint configs (`.markdownlint`, `.tflint.hcl`,
-`.ansible-lint`, `.yamllint`) copy-pasted across multiple repos. The shared pre-commit architecture
-eliminates that duplication so a single source of truth drives every consumer.
+Hook definitions and shared lint configs live in their canonical homes and are consumed through the
+Nix or non-Nix path below.
 
 ## Canonical homes
 
@@ -98,7 +96,6 @@ pre-commit install
 
 - **Renovate manages dependency updates.** See [Dependency automation](/infrastructure/cicd/dependency-automation)
   for the shared schedule and flake-lock policy.
-- **Drift dies.** Before consolidation the inventory found `pre-commit-terraform` pinned at six different revs across the workspace and `markdownlint-cli` at four. Canonical pinning eliminates that.
 - **New repo onboarding is one line.** `nix flake init -t "github:dryvist/nix-devenv?ref=vN#with-hooks"` plus picking a profile, no copy-paste of 30 lines of YAML.
 
 ## What stays per-repo
@@ -134,7 +131,7 @@ scaffolds hooks.
   runs hooks in a sandboxed environment without network. Repos with external module references
   override `terraform-validate.enable = lib.mkForce false` for the flake-check path and run `tofu
   init -backend=false` plus `tofu validate` in CI.
-- `gitleaks` is not in `cachix/git-hooks.nix`'s built-in hook set yet. Consumers wire it as a custom hook locally; a follow-up adds it to the base profile.
+- `gitleaks` is not in `cachix/git-hooks.nix`'s built-in hook set. Consumers wire it as a custom hook locally.
 
 ## References
 

@@ -84,7 +84,7 @@ runner-side `git commit`.
 
 | Producer | Action | Notes |
 | --- | --- | --- |
-| `JacobPEvans-personal/JacobPEvans-personal` snake / `3d-contrib` | `peter-evans/create-pull-request@v8` with `sign-commits: true`, then `gh pr merge --squash` | The action wraps the Contents API for arbitrary file updates |
+| `JacobPEvans-personal/JacobPEvans-personal` snake / `3d-contrib` | `peter-evans/create-pull-request@v8` with `sign-commits: true` | The action wraps the Contents API for arbitrary file updates; pull requests follow [PR conventions](/conventions/pr-conventions). |
 | Release commits (release-please) | `googleapis/release-please-action@v5` | Native web-flow signing |
 | Built-in commit modes | for example, `lowlighter/metrics` with `output_action: commit` | Action handles signing itself |
 

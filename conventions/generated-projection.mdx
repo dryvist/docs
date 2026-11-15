@@ -1,10 +1,10 @@
 ---
 title: "Generated projection"
-description: "Generated output, not a knowledge base. Authoring happens in the private source; a publisher-only pull request projects each page after checks pass."
+description: "Generated output, not a knowledge base. The publisher opens each projected pull request; a person approves first publication, and later updates use the usual lanes."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-Nothing is authored here. Every page on this site is projected from a private source by a publisher identity, and merges when the checks pass.
+Nothing is authored here. The projection produces a pull request for each page; first publication waits for a person, and updates to public pages use the usual lanes.
 
 This repository is a publication target. The documentation it renders is
 written and reviewed somewhere else, in a private source that holds both the
@@ -33,23 +33,13 @@ restricted to that identity.
 
 ## How a generated pull request merges
 
-Automatically, once every required check passes. There is no separate human
-approval step, because a generated pull request has no author to review. The
-review already happened on the source page. "Ready to merge" is defined as
-every required check green, enforced by the forge rather than by an agent's
-judgement. The required set covers content validation and a secret scan.
+A person approves the first publication of a page on the public docs site. The
+generated pull request that adds a new page waits for a person. Updates to a
+page that is already public merge without a person, through the same lanes as
+any pull request. Agents write only to the private source; the projection alone
+produces the public pull request.
 
-A human still maintains this repository's control plane: workflows, this policy,
-and repository settings. Those are hand-edited here and reviewed normally. The
-projected content is not.
-
-## Paired pages, until the projection is live
-
-While the pipeline is being built, some pages here still have a hand-maintained
-counterpart in the private source. A change to such a page names the counterpart
-in its pull request body and links the paired pull request. A page with no
-counterpart says so. The pairing list lives with the decision record in the
-private source, not here.
+The control plane contains workflows, this policy, and repository settings. The publisher projects page content, not control-plane files.
 
 ## See also
 
