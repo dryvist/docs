@@ -4,17 +4,13 @@ description: "The homelab's current orchestration substrate for LLM workflows an
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-The stack started as five self-hosted tools. Only one still carries
-production work. The other four earned a demotion the hard way: they were
-deployed and never used.
-
 The homelab runs a self-hosted layer for building LLM workflows and agents on top
 of its [private model serving](/local-llm/overview). Repository events and
 external agent intake carry production work today. The stateful graph service
 needs a host-level status check before a flow depends on it:
 
-- **Scheduled event automation** for repository events: a pull request opened or
-  updated, a review comment, a merge, or a timed sweep.
+- **Scheduled event automation** handles repository events. Pull-request
+  handling follows [PR conventions](/conventions/pr-conventions#life-cycle).
 - **An agent intake service** for scheduled and agentic work: signed webhooks and
   a job API queue the work, and a self-hosted agent runs it. See
   [the self-hosted agent](/autonomous-agents/hermes-agent).
@@ -99,8 +95,8 @@ instrumented, and traces fan out to the
 
 ## Choosing an orchestration path
 
-- Repository events (a PR opened, a review comment, a merge) → scheduled event
-  automation. That is what it exists for.
+- Repository pull-request events follow
+  [PR conventions](/conventions/pr-conventions#life-cycle).
 - Scheduled or externally triggered agent work → the agent intake service. Send
   it a signed webhook or a job, and the self-hosted agent runs it.
 - A durable, stateful, multi-step agent that needs to carry state between
