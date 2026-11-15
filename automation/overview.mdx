@@ -4,7 +4,7 @@ description: "How an issue becomes a merged PR with minimal human input: ai-work
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-File an issue. Walk away. Come back to a ready PR labeled `human:review`, with green CI and AI review.
+File an issue. The issue resolver opens a ready pull request when it can implement the issue.
 
 This is the **issue → mergeable PR** pipeline. Three repos collaborate: `ai-workflows` runs on
 GitHub Actions per consumer repo, `claude-code-routines` runs on Anthropic's cloud cron,
@@ -42,17 +42,19 @@ flowchart LR
   class M sink
 ```
 
-A human files the issue, reviews the PR, and clicks merge. The `human:review` label marks the gate; auto-merge stays off.
+The platform merges pull requests through the queue or native auto-merge after
+required checks pass. [PR conventions](/conventions/pr-conventions) owns the
+merge flow, and [CI/CD policy](/infrastructure/cicd/policy) owns check placement.
 
 ## The three layers
 
 | Layer | Where it lives | When it runs | What it owns |
 | --- | --- | --- | --- |
-| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues and PRs) | Triage, ready PRs labeled `human:review`, final review gate, project routing |
+| [Cloud pipelines](/automation/cloud-pipelines/overview) | GitHub Actions (per consumer repo) | Event-triggered (issues and PRs) | Triage, ready pull requests, project routing |
 | [Scheduled routines](/automation/scheduled-routines/overview) | Anthropic cloud cron | Scheduled (cron 2×/day to weekly) | Org-wide maintenance: daily polish, issue solver, sentinel audit, weekly scorecard |
 | [Skills](/ai-development/skills/overview) | Your laptop | Interactive (`/ship` from any Claude Code session) | The local escape hatch: finalize a PR you're iterating on |
 
-CI repair workflows and their cutover status live in CI resolver.
+CI failure classification and repair paths live in CI resolver.
 
 ## Where to go next
 
@@ -61,7 +63,7 @@ CI repair workflows and their cutover status live in CI resolver.
   title="Issue → PR pipeline"
   icon="route"
   href="/automation/issue-to-pr-pipeline">
-  The eight-step cloud flow on a target repo. Which trigger fires which file, who reviews, what gates merge.
+  The cloud flow on a target repo. Which trigger fires which file, and which checks govern merge.
 </Card>
 <Card
   title="Cloud pipelines"

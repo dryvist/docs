@@ -1,10 +1,10 @@
 ---
 title: "Issue to PR pipeline"
-description: "The eight-step cloud flow that turns a new GitHub issue into a ready PR labeled human:review, with green CI, AI review, and no auto-merge."
+description: "The cloud flow that turns a GitHub issue into a ready pull request governed by repository checks and native merge automation."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-Open issue. Don't open the dashboard. Come back in five minutes to a ready PR labeled `human:review`.
+Open an issue. The resolver opens a ready pull request when the issue is well-scoped.
 
 The pipeline on this repo, [`dryvist/docs`](https://github.com/dryvist/docs), uses six thin
 caller files in `.github/workflows/` that delegate to reusable workflows in
@@ -16,12 +16,12 @@ lines; the AI work all lives in the upstream reusable workflow.
 | Step | Trigger | Caller file | Reusable workflow | What it does |
 | --- | --- | --- | --- | --- |
 | 1 | `issues: [opened]` | `issue-triage.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-triage.yml` | Categorizes, deduplicates, labels |
-| 2 | `issues: [opened]` | `issue-resolver.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-resolver.yml` | Creates a ready PR labeled `human:review` if the issue is well-scoped and not on the excluded-labels list |
-| 3 | `pull_request: opened/synchronize/ready_for_review` | (no caller: handled by upstream reviewers) | external Gemini + Copilot reviews | Posts inline review comments |
-| 4 | Failed CI completion | — | — | See CI resolver for the repair path and cutover status. |
+| 2 | `issues: [opened]` | `issue-resolver.yml` | `JacobPEvans/.github-ai/.github/workflows/issue-resolver.yml` | Creates a ready pull request if the issue is well-scoped and not on the excluded-labels list |
+| 3 | `pull_request: opened/synchronize/ready_for_review` | AI Merge Gate | Reviewer App | Review follows the lane and stage in [CI/CD policy](/infrastructure/cicd/policy#required-checks) |
+| 4 | Failed CI completion | — | — | See CI resolver for failure classification and repair paths. |
 | 5 | `issues: [opened, labeled]`, `pull_request: [opened, ready_for_review]` | `project-router.yml` | `JacobPEvans/.github-ai/.github/workflows/project-router.yml` | Routes the item to the right GitHub Project with smart field assignment |
 | 6 | `push: [main]` → re-dispatched as `workflow_dispatch` | `post-merge-docs-review.yml` | `JacobPEvans/.github-ai/.github/workflows/post-merge-docs-review.yml` | After merge, audits docs touched by the commit and creates fix PRs if needed |
-| 7 | Human clicks **Merge** | n/a | n/a | The only manual step |
+| 7 | Required checks pass | Native merge queue or auto-merge | — | Merges under [PR conventions](/conventions/pr-conventions) |
 
 ## How the six callers connect
 
@@ -99,15 +99,13 @@ Two patterns are slightly larger:
 The reusable workflows enforce conservative defaults so a runaway loop can't burn cloud spend:
 
 - **`issue-resolver.yml`**: `max_attempts: 1` per issue, `daily_limit: 5` per repo, and it skips any issue labeled `excluded_labels: "type:security,type:feature,type:breaking,size:l,size:xl"`
-- **All workflows**: fork PRs blocked by `if:` guards, branch protection enforces the final merge gate
+- **All workflows**: fork PRs are blocked by `if:` guards; required checks follow [CI/CD policy](/infrastructure/cicd/policy#required-checks)
 
 ## The pieces this doesn't include
 
-The cloud pipeline opens a ready PR labeled `human:review` and provides AI review. It does NOT:
+It does not:
 
-- Mark the PR ready for merge: that's a human decision
-- Click the merge button: never automated
-- Override branch protection or required reviewers
+- Bypass branch protection or required checks
 - Touch repos outside the current org boundary
 
 For the local iteration loop on a PR you're editing yourself, see [`/ship` and `/finalize-pr`](/ai-development/skills/ship-and-finalize).
