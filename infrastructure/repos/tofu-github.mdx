@@ -10,29 +10,25 @@ Org rulesets defined once, in code, instead of click-ops repeated across every r
 
 <RepoMeta language="HCL" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/tofu-github" />
 
-`tofu-github` puts the `dryvist` GitHub organization's rulesets under OpenTofu, applied through the
-same Terrakube workspace pattern as the rest of the homelab. GitHub doesn't auto-inherit CI or
-branch-protection config across repos. The old pattern was a reusable workflow plus a per-repo call
-copied into every repo, which drifts. Org rulesets (available since `dryvist` moved to the GitHub
-Team plan) let dryvist define this once and apply it to every repo automatically.
+`tofu-github` puts the `dryvist` GitHub organization's rulesets under OpenTofu, applied through the same
+Terrakube workspace pattern as the rest of the homelab. GitHub doesn't auto-inherit CI or branch-protection
+config across repos. Org rulesets let dryvist define this once and apply it to every repo automatically.
 
 ## What it manages
 
 - **Push protection.** A hard ceiling on file size and a banned-extension list, enforced at the git layer (no workflow run) on every repo and ref.
-- **Branch protection.** The org branch-protection rules keep required signatures, branch-name
-  patterns, Conventional Commits rules, and no bypass. Org branch-protection and git-flow pull-request
-  rules no longer require review
-  threads to be resolved. See the [branch rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-branch-protection.tf)
-  and [git-flow rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-gitflow.tf).
-  The separate [docs-publisher ruleset](https://github.com/dryvist/tofu-github/blob/main/docs-publisher.tf)
-  for the public docs repo keeps its human-review requirement.
+- **Branch protection.** The org [branch rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-branch-protection.tf)
+  and [git-flow rules](https://github.com/dryvist/tofu-github/blob/main/rulesets-gitflow.tf) keep required
+  signatures, branch-name patterns, Conventional Commits rules, and no bypass. They do not require review
+  threads to be resolved.
+- **Docs publication.** The separate [docs-publisher ruleset](https://github.com/dryvist/tofu-github/blob/main/docs-publisher.tf)
+  guards the public docs repo; see [Generated projection](/conventions/generated-projection) for the
+  first-publication approval.
 - **Upstream forks.** Their rulesets are unchanged. A fork of a third-party project sets `upstream_fork: true` in
   `config/repos.yml`. Upstream history can't meet the signature and commit-format rules, so the
   fork is exempt from them. Its default branch still requires a PR, allows merge commits only, and
   blocks deletion and force-push.
-- **Review gate.** One approving review plus a CODEOWNER review on every default branch, with an
-  administrator-only bypass so administrators can merge their own PRs while bots and other contributors still need
-  the review.
+- **Review gate.** The ruleset accepts the AI Merge Gate check only from the reviewer App. No person reviews before merge.
 - **Markdown lint.** Requires the markdownlint workflow (defined once in the org's `.github` repo) to pass on every ref of every repo, with new repos exempted until their default branch exists.
 - **Code scanning.** An org ruleset requires CodeQL results on the default branch and `main`
   of every public, unarchived, non-fork repository in the org. The same set gets its CodeQL
@@ -44,12 +40,22 @@ Team plan) let dryvist define this once and apply it to every repo automatically
 - **Repository family.** `family` is an optional single-select repository property. Only a repository whose `repos.yml` entry sets a `family` receives a value. All others stay unset.
 - **Labels.** [`labels.yml`](https://github.com/dryvist/tofu-github/blob/main/labels.yml) is the one
   label definition, and OpenTofu applies it to every unarchived repo, forks included. A `moved`
-  block moved the label state from its first resource address to the org-wide one. A data-driven
-  import block adopts labels that already exist on a repo, matched case-insensitively by name, and
-  creates the rest. The org's `.github` repo no longer has a label-sync workflow.
+  block moves the label state to the org-wide resource address. A data-driven import block adopts labels that already exist on a repo, matched case-insensitively by name, and creates the rest.
 - **Repo settings.** Every unarchived repo is governed by default: auto-merge on, delete-branch-on-merge
-  on, and vulnerability alerts on. The apply completed on 2026-10-03 (the final plan reported no
-  changes), and all 76 unarchived repos carry these settings.
+  on, and vulnerability alerts on. All 76 unarchived repos carry these settings.
+
+## Merge tier
+
+Every repository has a custom property `merge_tier` with the value `standard` or `hot`; see
+[Branch conventions](/conventions/branch-conventions#tiers) for what each tier means. It is set per
+repository in `config/orgs/<owner>/repos.yml` in the governance repository. OpenTofu applies the property and
+the queue ruleset of a `hot` repository in one apply.
+
+Setting a repository back to `standard` removes its queue ruleset in the same apply; that is the
+rollback. One variable, `merge_tier_override`, forces every repository to `standard` in one apply.
+
+Organisation settings are code: they are declared here and applied from a reviewed plan, never
+clicked.
 
 ## How it fits
 

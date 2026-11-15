@@ -15,36 +15,37 @@ are not stylistic; they change what ships.
 - **No emoji in commit messages, PR titles, PR descriptions, or release notes.** Emoji in READMEs and docs is allowed, minimally and purposefully, but never in machine-parsed subjects.
 - **Conventional-commit prefixes** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`, `perf:`, `style:`, `revert:`) for every commit subject and every PR title. No exceptions.
 - **Scopes use only lowercase letters, digits, hyphens, and underscores.** Write `fix(github):`, not `fix(.github):`. A scope with `.`, `/`, or a capital letter fails the branch ruleset.
-- **Every merge passes an explicit conventional subject.** Squash with `--subject "<type>(<scope>): <summary> (#N)"`. Promote with `--subject "chore: promote develop to main (#N)"`.
-- **Update a branch by rebase.** A `Merge branch ...` commit never lands as a trunk `main` subject.
-- **The merge button needs no edit.** Squash and merge commits both pre-fill the PR title as the
-  subject, so a conventional PR title is the whole requirement. The commit-message rule stays
-  enforced; `Merge ...` subjects are accepted only on non-default branches such as the git-flow `main`.
-  Merge methods per branch are in [PR conventions](/conventions/pr-conventions).
+- **Squash subject.** The pull request title is the squash subject on the default branch. Promotions into
+  `main` use a merge commit; see [Branch conventions](/conventions/branch-conventions#promotion).
 - **`fix:`** for config tweaks, small improvements, incremental adjustments, dependency updates. Produces a patch bump.
 - **`feat:`** for genuinely new capabilities, integrations, or significant behavioral changes. Produces a minor bump.
 - **Major bumps are human-initiated only.** Edit `.release-please-manifest.json` manually.
   Automated major bumps (including from `BREAKING CHANGE:` footers) are blocked by the release
   workflow. Agents never write a `!:` subject or a `BREAKING CHANGE:` footer. Repos set release-please
-  `versioning: always-bump-minor` so a breaking commit cannot cut a major (estate-wide rollout: Vikunja 7785).
+  `versioning: always-bump-minor` so a breaking commit cannot cut a major.
   See [CI/CD policy](/infrastructure/cicd/policy) for the release flow.
+
+## Trailers
+
+Agent commits end with an `Assisted-by` trailer that names the tool and the model, in the form
+`Assisted-by: <tool>:<model>`. Pull request policy requires this trailer on agent pull requests.
+The review picks a reviewer from a different model family from the one named in the trailer.
 
 ## Enforcement
 
-Two gates check the subject line. The message body and trailers are free text.
+Two gates check the subject line. Message bodies and other trailers are free text.
 
 - **Local.** A `commit-msg` hook rejects a bad subject before the commit exists. A global hook covers git 2.54 or later.
   Every repository dev shell also installs a pre-commit `commit-msg` hook, which works with any git version.
 - **Server.** Rulesets check every pushed commit on every branch. Default branches accept only Conventional Commit subjects.
-  Other branches also accept `Merge ...` subjects, so a branch sync or a git-flow promotion passes. A bad subject fails the
-  push with `GH013`.
+  Other branches also accept `Merge ...` subjects for git-flow promotions. A bad subject fails the push with `GH013`.
 
 
 ## Tone in PR descriptions and review
 
 - **Tell hard truths directly.** Don't soften. Don't sandwich. Disagree when you disagree.
 - **ALL CAPS from the requester means refocus immediately** on the previous direction. Treat a capitalized correction as the highest-priority signal in the conversation.
-- Lead PR descriptions with the *why*, not the *what*. The diff already shows the what.
+- PR descriptions state what the change does now; see [PR conventions](/conventions/pr-conventions) for the body format.
 
 ## Autonomy
 
