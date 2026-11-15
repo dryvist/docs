@@ -1,17 +1,17 @@
 ---
-title: "oh-my-openagent"
-description: "omo agent harness across OpenCode (Ultimate), Codex CLI (Light), and the standalone Senpi edition: what Nix owns, what runtime state owns, and how they coexist."
+title: "OMO agent harness"
+description: "Agent harness editions for OpenCode Ultimate, Codex Light, and Senpi; Nix and runtime state own configuration."
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
-[oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) (omo) is an
+[OMO](https://github.com/code-yeongyu/oh-my-openagent) is an
 agent harness that loads into an existing command-line host. Three editions ship from
 the same project:
 
 | Edition | Host | Installed by | Lands on disk |
 | --- | --- | --- | --- |
 | **Ultimate** | OpenCode | `bunx oh-my-openagent install` | `opencode.json` plugin entry + `~/.omo/omo.jsonc` |
-| **Light** | Codex CLI | `bunx lazycodex-ai install` | `~/.codex/plugins/cache/sisyphuslabs/`, `~/.codex/agents/`, `~/.local/bin` command-line tools, `config.toml` blocks |
+| **Light** | Codex command-line interface | `bunx lazycodex-ai install` | `~/.codex/plugins/cache/sisyphuslabs/`, `~/.codex/agents/`, `~/.local/bin` command-line tools, `config.toml` blocks |
 | **Senpi** | standalone | `omo-senpi` wrapper | nothing persistent |
 
 ## Division of ownership
@@ -42,8 +42,8 @@ installer itself writes) means the only thing left for the installer to manage
 is `~/.omo` runtime state.
 
 Codex is the mirror image: nix-ai renders `config.toml` defaults through a
-deep-merge activation that preserves every key Nix does not manage (only
-`mcp_servers` is stripped). The installer's `[marketplaces.sisyphuslabs]`,
+deep-merge activation. Nix-unmanaged keys survive the activation, except
+`mcp_servers`, which it strips. The installer's `[marketplaces.sisyphuslabs]`,
 `[plugins."omo@sisyphuslabs"]`, `[features.multi_agent_v2]`, and
 `[hooks.state]` blocks therefore survive every `darwin-rebuild switch`,
 verified by switching after install and grepping the merged file.
@@ -78,7 +78,7 @@ from the generated file.
 
 </Note>
 
-The default selects **Approve for me** through Codex's native
+The default selects `Approve for me` through Codex's native
 `approval_policy = "on-request"` and `approvals_reviewer = "auto_review"`.
 The sandbox stays `workspace-write`. Operators can override either value
 through `programs.codex.approvalPolicy` and
@@ -131,8 +131,8 @@ plugin is live; a plain answer with no header means it is not loaded.
 
 The latest published release disagrees with itself about agent model config.
 Its `doctor` command flags the installer-generated `models[]` arrays as
-invalid, while calling the documented `model`/`fallback_models` shape
-deprecated. Its own `config migrate` is a no-op. Either shape loads (exit 0); the normalized shape
+invalid and warns against the documented `model`/`fallback_models` shape. Its
+own `config migrate` is a no-op. Either shape loads (exit 0); the normalized shape
 avoids the startup-blocking warnings. Model IDs in generated chains can also
 drift behind the live provider catalog (for example `gpt-5-nano`). Fallback
 chains absorb it at runtime.

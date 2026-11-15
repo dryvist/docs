@@ -4,13 +4,13 @@ description: "The local Claude Code skill that drives a PR to a fully mergeable 
 page_type: "how-to"
 ---
 {/* projected from the authoring site; do not edit here */}
-One command. Commit, push, open the PR, fix CodeQL, resolve threads, fix CI, verify everything is green. Never merges. That's a human decision.
+One command. Commit, push, open the PR, fix CodeQL, resolve threads, fix CI, and verify the
+checks. It never merges. Pull-request merge behavior follows
+[PR conventions](/conventions/pr-conventions).
 
-`/ship` is the local escape hatch for the cloud pipeline. The cloud pipeline
-([ai-workflows](/automation/repos/ai-workflows),
-[claude-code-routines](/automation/repos/claude-code-routines)) gets a PR opened and reviewed
-without you. `/ship` is what you run from a Claude Code session when **you** are the one
-iterating on a PR. It drives that PR to a ready-to-merge state in one command.
+`/ship` provides local support for the event-driven pull-request flow. See
+[PR conventions](/conventions/pr-conventions) and
+[CI/CD policy](/infrastructure/cicd/policy) for its lifecycle and checks.
 
 ## What `/ship` does
 
@@ -64,14 +64,15 @@ flowchart LR
 | --- | --- |
 | 1. Discover | Resolve which PR or PRs to act on (current branch, all, or org-wide) |
 | 2. Resolve loop | Start CI monitor in background; in parallel: invoke `/resolve-codeql fix`, `/resolve-pr-threads`, merge-conflict resolution; once CI completes, run `/simplify` once on the cumulative changes |
-| 3. Verify gate | Re-query live GitHub state: `state`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `statusCheckRollup.state`, all `reviewThreads.isResolved`, CodeQL alert count |
+| 3. Verify gate | Re-query live GitHub state: `state`, `mergeable`, `statusCheckRollup.state`, all `reviewThreads.isResolved`, CodeQL alert count. [CI/CD policy](/infrastructure/cicd/policy) assigns the checks |
 | 4. Update metadata | A subagent updates PR title, description, linked issues |
-| 5. Report ready | Emit the canonical PR status block; wait for human merge |
+| 5. Report ready | Emit the canonical PR status block |
 
 ## What it never does
 
-- **Never merges.** Merge is always a human decision.
-- **Never approves.** No auto-approval of PRs.
+- **Never merges or supplies the verdict.** The platform handles those steps; see
+  [PR conventions](/conventions/pr-conventions) and
+  [CI/CD policy](/infrastructure/cicd/policy#required-checks).
 - **Never crosses org boundaries** in org-wide mode.
 - **Never bypasses branch protection.**
 
@@ -93,8 +94,7 @@ Each subagent runs scoped to its task and reports back. The orchestrator re-veri
 | --- | --- |
 | Issue is filed, you want a PR drafted without thinking | [`ai-workflows`](/automation/repos/ai-workflows) (the cloud pipeline triggered on issue open) |
 | You're editing a PR locally and want CI/threads/CodeQL handled in one command | `/ship` from your Claude Code session |
-| You want a daily org-wide sweep | [`claude-code-routines`](/automation/repos/claude-code-routines) (cron-scheduled) |
-| You want to know if a PR is *really* ready to merge | `/finalize-pr <N>` directly: gives you the canonical gate output without re-running fixes |
+| You want to check a PR's current gate status | `/finalize-pr <N>` directly: reports the current state without re-running fixes |
 
 ## Where to go next
 
@@ -121,6 +121,6 @@ Each subagent runs scoped to its task and reports back. The orchestrator re-veri
   title="Source: finalize-pr/SKILL.md"
   icon="github"
   href="https://github.com/dryvist/claude-code-plugins/blob/main/github-workflows/skills/finalize-pr/SKILL.md">
-  Phases, gates, and the merge prohibition.
+  Phases, gates, and status reporting.
 </Card>
 </CardGroup>

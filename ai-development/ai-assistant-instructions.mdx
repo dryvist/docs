@@ -10,7 +10,7 @@ Shared instructions for every agent tool.
 
 <RepoMeta language="Shell" status="active" repoUrl="https://github.com/dryvist/ai-assistant-instructions" />
 
-`ai-assistant-instructions` is the former rules repository. It now points to
+`ai-assistant-instructions` points to
 the shared instruction tree in
 [`ai-llm-prompts/auto-ai-agent/instructions/`](https://github.com/JacobPEvans-ai/ai-llm-prompts/tree/main/auto-ai-agent/instructions/).
 The catalog is the current source for shared agent instructions.
@@ -23,7 +23,6 @@ The catalog is the current source for shared agent instructions.
   [catalog page](/automation/repos/ai-llm-prompts) for its render contract.
 - The catalog also contains a copy-paste rendering of the shared behavioral
   base for non-Claude agents.
-- The former repository remains a pointer until the operator archives it through GitHub's administrator workflow.
 
 
 Cross-repo writing standards that humans also need to read live on this docs site. They
@@ -39,9 +38,8 @@ skill-execution integrity, and repository-local routing.
 
 The [default development loop](/architecture/ai-pipeline) is intentionally lightweight.
 It gathers enough context, chooses the simplest verifiable path, implements the smallest
-correct change, and reports only the result plus verification. PRD-heavy, test-first
-gating remains available for high-risk or explicitly gated work, but it is no longer the
-default for routine tasks.
+correct change, and reports the result plus verification. PRD-heavy, test-first gating
+remains available for high-risk or explicitly gated work.
 
 ## The `CLAUDE.md` → `@AGENTS.md` convention
 
@@ -70,14 +68,13 @@ they had been written into `CLAUDE.md` directly.
 ### Where it applies
 
 **Every repo.** Public or private; monorepo or single-purpose; infra or app. If a repo has a
-`CLAUDE.md`, it must be the two-line import. Project-level instructions, command runbooks,
-conventions, and tool guidance all belong in `AGENTS.md` (or files it `@imports`).
+`CLAUDE.md`, it must be the two-line import. Project-level instructions and conventions belong in
+`AGENTS.md` (or files it `@imports`). Put command runbooks and tool guidance there as well.
 
 The same convention applies symmetrically to `GEMINI.md` and any future vendor-specific
 files: each is a thin import of `AGENTS.md`.
 
-There is no source-repository exception. The former `ai-assistant-instructions`
-repository now holds a pointer; it no longer owns the shared instruction files.
+There is no source-repository exception.
 
 ### How to migrate a repo
 

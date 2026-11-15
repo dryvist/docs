@@ -21,8 +21,7 @@ each layer evolve at its own pace.
 | [`claude-code-plugins`](/ai-development/claude-code-plugins) | Plugins | Slash commands, skills, agents, hooks, the plugin marketplace |
 | [`docs`](/introduction) | Documentation | This site: architecture, narrative, public-facing diagrams |
 
-The former `ai-assistant-instructions` repository now holds a pointer to the
-shared instruction tree and remains until an operator archives it.
+The `ai-assistant-instructions` repository points to the shared instruction tree.
 
 The instruction catalog is vendor-agnostic. Claude Code, Antigravity, GitHub Copilot, and Codex read
 the shared files. The plugins repo is Claude-Code-specific because plugins are a Claude Code concept.
@@ -84,10 +83,12 @@ Each repo releases on its own clock and notifies the others through plain GitHub
 - **`claude-code-plugins`** also uses release-please. Published versions appear in the Claude Code plugin marketplace and are installed per-project on demand.
 - **`docs`** auto-deploys on push to `main` via the Mintlify GitHub app. No release tags: the site is always the current state of `main`.
 
-A change that affects the public picture (a new plugin, a renamed rule, a
-shifted boundary) gets mirrored into the docs repo. That happens in the same
-change set. The reverse is never true: docs do not push back into the source
-repos.
+A change that affects the documented picture (a new plugin, a renamed rule, a
+shifted boundary) reaches the docs source in the same session. Docs do not push
+back into the source repos. Public pages are authored in a private source and
+projected to the public docs site. See
+[Generated projection](/conventions/generated-projection) for the
+publication flow.
 
 ## Related repos
 
