@@ -8,7 +8,7 @@ import { RepoMeta, RepoFit } from "/snippets/repo-summary.mdx";
 
 Splunk Enterprise, deployed the same way every time. Indexers, search heads, license, done.
 
-<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/dryvist/ansible-splunk" />
+<RepoMeta language="Python" status="active" lastActive="this week" repoUrl="https://github.com/jpe-ansible/ansible-splunk" />
 
 `ansible-splunk` is the configuration tier for Splunk Enterprise. It deploys and configures a Splunk
 install onto hosts that `tofu-splunk-aws` provisioned (or onto homelab hardware that
@@ -46,7 +46,7 @@ The Ansible configuration tier for Splunk. It configures the install and pins ap
 Run `tofu-splunk-aws` (cloud) or `ansible-proxmox` (homelab) first. Hosts need OS, storage, and network in place.
 </Step>
 <Step title="Clone and enter the dev shell">
-`git clone https://github.com/dryvist/ansible-splunk && cd ansible-splunk && nix develop`
+`git clone https://github.com/jpe-ansible/ansible-splunk && cd ansible-splunk && nix develop`
 </Step>
 <Step title="Required environment">
 The playbook reads the Splunk license file and any pre-shared HEC tokens as environment variables.
@@ -80,7 +80,7 @@ The playbook reads the Splunk license file and any pre-shared HEC tokens as envi
 <Card
   title="Source on GitHub"
   icon="github"
-  href="https://github.com/dryvist/ansible-splunk">
+  href="https://github.com/jpe-ansible/ansible-splunk">
   Roles, inventory examples, full README.
 </Card>
 </CardGroup>

@@ -1,6 +1,6 @@
 ---
 title: "Docs automation"
-description: "How this site keeps itself in sync with ~40 public repos: the mintlify-docs-update skill, plus the five planned improvements."
+description: "How this site keeps itself in sync with ~40 public repos through the mintlify-docs-update skill."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -46,50 +46,10 @@ Every page declares a tier in frontmatter. The skill enforces caps:
   </Card>
 </CardGroup>
 
-## Planned improvements
-
-These five skills are filed as GitHub issues and tracked in the `enhancement` + `skill` labels.
-
-<CardGroup>
-<Card
-  title="mintlify-page-author"
-  icon="pen-nib"
-  href="https://github.com/dryvist/docs/issues/2">
-  Author a single page from a repo URL or topic. Enforces Reef Green theme, house voice, the tier cap, and standard components (Card grid + Steps + Frame + Mermaid).
-</Card>
-<Card
-  title="mintlify-visual-audit"
-  icon="chart-bar"
-  href="https://github.com/dryvist/docs/issues/3">
-  Grade every page on tier-aware word count, component variety, theme compliance, dead-link risk. Output: red/amber/green report with a prioritized fix list.
-</Card>
-<Card
-  title="mintlify-mermaid-theme"
-  icon="diagram-project"
-  href="https://github.com/dryvist/docs/issues/4">
-  Generate Reef Green-themed Mermaid with pinned theme variables and house shape conventions. Wraps `obsidian-visual-skills:mermaid-visualizer` with project-specific defaults.
-</Card>
-<Card
-  title="mintlify-nav-sync"
-  icon="bars-staggered"
-  href="https://github.com/dryvist/docs/issues/5">
-  Keep `docs.json` sidebar in sync with the filesystem. Detect orphan pages, missing files, and propose ordered group structures.
-</Card>
-<Card
-  title="mintlify-build-guard"
-  icon="shield-halved"
-  href="https://github.com/dryvist/docs/issues/6">
-  Pre-commit + CI validator. `mint dev` + `mint broken-links` + frontmatter check + image refs + tiered word cap + Mermaid parse. Pass/fail report with line numbers.
-</Card>
-<Card
-  title="All open issues"
-  icon="github"
-  href="https://github.com/dryvist/docs/issues?q=is%3Aissue+is%3Aopen+label%3Askill">
-  The live tracker for skill improvements.
-</Card>
-</CardGroup>
-
 ## Where to go next
+
+For the current pull request flow, see [Pull request conventions](/conventions/pr-conventions)
+and [CI/CD policy](/infrastructure/cicd/policy).
 
 <CardGroup>
 <Card
@@ -114,6 +74,6 @@ These five skills are filed as GitHub issues and tracked in the `enhancement` + 
   title="/ship and /finalize-pr"
   icon="ship"
   href="/ai-development/skills/ship-and-finalize">
-  The Claude Code skill that takes a PR through CI, CodeQL, threads, and the final merge gate.
+  The Claude Code helper for pull request tasks.
 </Card>
 </CardGroup>

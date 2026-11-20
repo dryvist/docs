@@ -35,7 +35,7 @@ The telemetry spine: capture, route, index, visualize.
 
 | Repo | Does | More |
 | --- | --- | --- |
-| [ansible-splunk](https://github.com/dryvist/ansible-splunk) | Splunk Enterprise deploy + config | [hub](/observability/repos/ansible-splunk) |
+| [ansible-splunk](https://github.com/jpe-ansible/ansible-splunk) | Splunk Enterprise deploy + config | [hub](/observability/repos/ansible-splunk) |
 | [tofu-splunk-aws](https://github.com/dryvist/tofu-splunk-aws) | Cost-optimized Splunk on AWS for DR | [hub](/observability/repos/tofu-splunk-aws) |
 | [cc-edge-the-mac-pack-io](https://github.com/jpe-cribl/cc-edge-the-mac-pack-io) | macOS health monitoring via Cribl Edge | [hub](/observability/repos/cc-edge-the-mac-pack) |
 | [cc-edge-claude-code-io](https://github.com/jpe-cribl/cc-edge-claude-code-io) | Claude Code telemetry via Cribl Edge → Stream | — |
@@ -46,11 +46,6 @@ The telemetry spine: capture, route, index, visualize.
 | [cc-edge-pack-template](https://github.com/jpe-cribl/cc-edge-pack-template) | Scaffold for new Cribl Edge packs | — |
 | [VisiCore_App_for_AI_Observability](https://github.com/JacobPEvans-personal/VisiCore_App_for_AI_Observability) | Splunk dashboards for AI-tool observability | — |
 | [VisiCore_TA_AI_Observability](https://github.com/JacobPEvans-personal/VisiCore_TA_AI_Observability) | Splunk add-on: field aliases, CIM mappings | — |
-
-The [cc-stream-pack-template PR #22](https://github.com/jpe-cribl/cc-stream-pack-template/pull/22)
-calls reusable workflows from [cc-edge-pack-template](https://github.com/jpe-cribl/cc-edge-pack-template)
-at [`@v1`](https://github.com/jpe-cribl/cc-edge-pack-template/tree/v1), which points to
-[release v1.1.0](https://github.com/jpe-cribl/cc-edge-pack-template/releases/tag/v1.1.0).
 
 ## Nix Ecosystem
 
@@ -72,7 +67,7 @@ The shared instruction catalog, plugins, and workflows that run the AI dev pipel
 | Repo | Does | More |
 | --- | --- | --- |
 | [ai-llm-prompts](https://github.com/JacobPEvans-ai/ai-llm-prompts) | Shared agent instructions and prompt catalog | [hub](/automation/repos/ai-llm-prompts) |
-| [ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions) | Pointer to the shared instruction catalog; pending operator archive | [hub](/ai-development/ai-assistant-instructions) |
+| [ai-assistant-instructions](https://github.com/dryvist/ai-assistant-instructions) | Pointer to the shared instruction catalog | [hub](/ai-development/ai-assistant-instructions) |
 | [claude-code-plugins](https://github.com/dryvist/claude-code-plugins) | Custom Claude Code plugins | [hub](/ai-development/claude-code-plugins) |
 | [.github-ai](https://github.com/JacobPEvans/.github-ai) | Shared AI review and agent workflows | [hub](/automation/repos/ai-workflows) |
 | [claude-code-routines](https://github.com/dryvist/claude-code-routines) | Scheduled portfolio-management routines | [hub](/automation/repos/claude-code-routines) |
@@ -100,8 +95,4 @@ Templates and standalone tools.
   Private repos (the live homelab, real network config, schemas) are catalogued on the gated [dryvist site](https://docs.dryvist.com), not here.
 </Note>
 
-<Note>
-  **Direction:** the ecosystem is consolidated under the [dryvist](https://github.com/dryvist) org.
-  New repositories and projects are created under the `dryvist` organization. Interdependencies
-  live on [how it fits together](/how-it-fits-together): what feeds what, and how secrets flow.
-</Note>
+Interdependencies live on [how it fits together](/how-it-fits-together): what feeds what, and how secrets flow.
