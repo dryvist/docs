@@ -38,8 +38,8 @@ A dedicated LXC on the AI VLAN runs the `hermes gateway` daemon under systemd
 ## More than one agent
 
 The homelab runs more than one independent Hermes agent identity side by side.
-Each has its own container, Slack app, credentials, and memory
-bank, so one agent's state never leaks into another's. The primary identity is
+Each has its own container and memory bank. Its Slack app and credentials are
+also separate, so one agent's state never leaks into another's. The primary identity is
 `hermes`; a second, purpose-built identity (`donna`) runs the same way. New
 identities are declared, not layered on top of an existing one. See
 [Operating profiles](/autonomous-agents/hermes-operating-profiles) for how a single
@@ -117,14 +117,11 @@ is pinned to a commit and checked before it installs.
 
 | Plugin | Purpose | Status |
 | --- | --- | --- |
-| Langfuse | Traces each agent turn, with model, tool, and subagent steps. | Planned |
 | Hindsight | Memory provider for recall across sessions. | Live |
-| Agent-to-agent (A2A) | Inbound calls through the gateway, with per-peer tokens and an audit log. Outbound calls to peer agents are planned. | Live (inbound) |
-| Home Assistant | Read-only device state and notifications. | Planned |
+| Agent-to-agent (A2A) | Inbound calls through the gateway, with per-peer tokens and an audit log. | Live (inbound) |
 | Guardrails | Blocks tool calls outside each profile's allowed actions. | Declared |
 
-A plugin marked planned or declared is not confirmed live. Statuses describe the
-platform as of this page's last update.
+The declared Guardrails plugin is not confirmed live.
 
 ## Reliability: long-generation timeouts
 
@@ -160,12 +157,12 @@ They then wait for a normal scheduled delivery before declaring the incident
 resolved. This last check proves the complete scheduler-to-messaging path rather
 than only proving that configuration rendered successfully.
 
-
 ## LLM knowledge base (second brain)
 
 The Hermes agent runs the bundled `llm-wiki` skill to build and maintain an interlinked Markdown
-knowledge base from raw sources. It ingests URLs, PDFs, and notes into an immutable `raw/` layer,
-then synthesizes curated `entities`, `concepts`, `comparisons`, and `queries` pages. These pages use
+knowledge base from raw sources. It ingests URLs into an immutable `raw/` layer.
+The layer also stores PDFs and notes. The agent then synthesizes curated
+`entities`, `concepts`, `comparisons`, and `queries` pages. These pages use
 YAML frontmatter, `[[wikilinks]]`, and a tag taxonomy for structure.
 
 The system keeps an `index.md` catalog and an append-only `log.md`, and lints for orphans, broken
@@ -188,22 +185,25 @@ flowchart LR
   Raw --> Curate[Curate wiki pages<br>wikilinks & tags]
   Curate --> Index[index.md & log.md]
   Index --> Lint[Lint]
-  Lint --> PR[Open signed PR]
-  PR --> Review[Human review & merge]
+  Lint --> PR[Open signed, ready PR]
+  PR --> Gate[Checks and AI review by lane]
+  Gate --> Merge[Merge queue or native auto-merge]
 
   class Sources src
-  class Raw,Curate,Index,Lint,PR hop
-  class Review sink
+  class Raw,Curate,Index,Lint,PR,Gate hop
+  class Merge sink
 
-  linkStyle 0,1,2,3,4,5 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
+  linkStyle 0,1,2,3,4,5,6 stroke:#E06B4A,stroke-width:2px,stroke-dasharray:4 3;
 ```
 
 ## Autonomous documentation contributor
 
-The agent can read public repositories and open documentation pull requests on its own as a dedicated GitHub App bot identity. Key properties of this workflow include:
+The agent can read public repositories and open documentation pull requests
+on its own as a dedicated GitHub App bot identity. The workflow has these
+properties:
 
 - Commits are cryptographically **verified/signed**, authored via the GitHub API's commit-on-branch flow as the App, satisfying a "require signed commits" branch protection rule.
-- PRs open ready with the `human:review` label, and the bot has **no merge authority**. A human always reviews and merges; auto-merge stays off.
+- Pull requests follow [PR conventions](/conventions/pr-conventions) and the [CI/CD policy](/infrastructure/cicd/policy).
 - **Guardrails:** The workflow enforces one focused change per PR, source attribution, per-repo
   daily caps, duplicate detection, secret redaction, and a strict public/private routing rule so
   sensitive material never lands in a public PR.
@@ -245,7 +245,7 @@ flowchart LR
   Hermes and Nix-managed
   workstation harnesses use the same Splunk service identity.
 - **Context7 MCP**: A hosted MCP connection at `https://mcp.context7.com/mcp` for up-to-date
-  library/framework documentation. An API key raises rate limits; the auth header is only rendered when a key is present.
+  library/framework documentation. Credentials raise rate limits; the auth header is rendered only when a credential is present.
 - **GitHub issues/projects**: The agent interacts with GitHub via a custom skill (REST for issues,
   GraphQL for Projects v2, with guardrails). This is powered by a scoped, short-lived GitHub App
   installation token for issues and Projects v2. No personal access token remains anywhere in this
