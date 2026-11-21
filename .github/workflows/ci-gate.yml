@@ -30,7 +30,7 @@ jobs:
       # so `actions: write` must be granted here or the run fails at graph
       # validation (startup_failure).
       actions: write
-    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@6422c187d8f11b2d91ee2e45e84cf45f78081bb6 # v1.55.0
+    uses: JacobPEvans/.github/.github/workflows/_ci-gate.yml@2f2a5f2b84bfc58e1c309de8f4be89d0be266a87 # v1.61.0
     with:
       osv_scan: true
       markdown_lint: false
