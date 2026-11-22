@@ -89,15 +89,15 @@ The publisher enforces this boundary before it opens a public pull request.
 Every repo with non-trivial architecture ships diagrams, rendered as inline
 Mermaid. The reader-facing summary — format, placement, what to draw, and when
 to reach for a table or `<Steps>` instead — is the published page
-[`conventions/diagramming`](conventions/diagramming.mdx).
+[`conventions/diagramming`](/conventions/diagramming).
 
 The full authoring rules are split across two canonical pages. Follow both when
 you emit any Mermaid on this site:
 
-- [`conventions/mermaid-style`](conventions/mermaid-style.mdx) — the byte-for-byte
+- [`conventions/mermaid-style`](/conventions/mermaid-style) — the byte-for-byte
   theme directive, shape vocabulary, `classDef` and `linkStyle` palettes, the four
   narrative shapes, and density caps.
-- [`conventions/mermaid-links`](conventions/mermaid-links.mdx) — making diagram
+- [`conventions/mermaid-links`](/conventions/mermaid-links) — making diagram
   nodes navigable with the `click` directive, and the external-URL workaround.
 
 ## Paired pages
