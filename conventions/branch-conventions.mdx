@@ -92,7 +92,7 @@ deferred pull request needs a MERGE verdict; then `green` moves. If they fail: a
 the team chat at once, the CI-fix agent starts, and after 15 minutes a revert pull request is
 opened with `gh pr revert` (label `auto-revert`) and lands through the bot lane. A CHANGES verdict
 after merge reverts at once. `green` only moves forward, and only the automation App moves it.
-Deploys, pin bumps, and promotion read `green`, so a red default branch never deploys or spreads. See [Dependency automation](/infrastructure/cicd/dependency-automation) for first-party pin rules.
+Deploys and promotion read `green`, so a red default branch never deploys. First-party references track `main`; see [Dependency automation](/infrastructure/cicd/dependency-automation#first-party-pins).
 
 ## Promotion
 
