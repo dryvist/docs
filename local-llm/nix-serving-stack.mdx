@@ -221,17 +221,18 @@ Fast-subagent tier for the roles and chains.
 The shared [`model-catalog.json`](https://github.com/dryvist/homelab-contracts/blob/main/ansible/roles/llm_model_catalog/files/model-catalog.json)
 owns per-model limits and backend profiles. A model's router limits can differ
 from its MLX serving profile while remaining in the same catalog entry.
-[`nix-ai` reads the locked catalog](https://github.com/dryvist/nix-ai/blob/main/modules/mlx/model-catalog.nix)
+[`nix-ai` reads the locked catalog](https://github.com/jpe-nix/nix-ai/blob/main/modules/mlx/model-catalog.nix)
 for MLX values; the router and serving roles project root or backend-profile
 values from the same source. Their checks fail if rendered limits disagree.
 The Nix hosts derive their serving from these shared inputs:
 
-- the catalog is the `27B` dense model, `MiMo-9B`, and an OCR swap model on the
+- the server catalog is the `27B` dense model, `MiMo-9B`, and an OCR swap model on the
   server class;
 - the preload list, resident-worker count, and role-to-id registry come from
   the map; per-model concurrency defaults come from the shared catalog, with
   host-specific `modelConcurrency` overrides;
-- the MacBook's per-worker memory limit derives to 30 GiB;
+- the MacBook host file targets a 15 GiB per-worker memory limit; this host
+  change is still pending;
 - `vllm-mlx` is removed, and its options now fail with a removal message.
 
 

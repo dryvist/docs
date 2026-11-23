@@ -23,7 +23,7 @@ A stale roster is worse than none. Treat it as a point-in-time record, not a liv
 | --- | --- |
 | `Qwen3.8-27B-4bit` | **OLD; PROTECTED: loaded**, recorded worker, `reasoning_effort medium`; route retirement lead-owned |
 | `Qwen3.6-35B-A3B-4bit` | **OLD; PROTECTED: loaded**, recorded universal goal-judge, thinking off, 65,536-token request budget; route retirement lead-owned |
-| `Qwen3.5-9B-OptiQ-4bit` | Small-role model (LiteLLM `small`) retained by the 2026-10-24 decision; the 2026-08-15 roster recorded an on-demand swap tier that idle-unloads after 900 s |
+| `Qwen3.5-9B-OptiQ-4bit` | Former small-role configuration; the dated roster does not describe the current shared resident set |
 | everything else below | **not servable**: a request naming one returns 404 |
 
 <Danger>
@@ -37,15 +37,17 @@ card](https://huggingface.co/Qwen/Qwen3.8-Flash-Next), [MLX OptiQ
 card](https://huggingface.co/mlx-community/Qwen3.8-Flash-Next-OptiQ-2bit).
 </Danger>
 
-That last row is the easiest thing on this page to misread. The host runs a two-brain posture
-(the 27 B as worker, the 35 B as universal goal-judge) plus one swap-tier companion. Every other
-catalogued model is deliberately demoted, so the registry below records models that were
-**evaluated**, not models that are **loaded**.
+The dated roster and small-role decision below are records, not the current
+model map. The registry below records models that were **evaluated**, not
+models that are **loaded**.
+
 
 ### 2026-10-22 to 2026-10-24: small-model role decision
 
-**Status: closed on 2026-10-24.** The operator kept the incumbent 9-billion-parameter
-model for the small role. The K2-Horizon candidate was not selected.
+**Record: closed on 2026-10-24.** The operator kept the incumbent
+9-billion-parameter model for the small role. The K2-Horizon candidate was not
+selected. This was the prior role choice.
+
 
 
 <Tip>
@@ -75,7 +77,7 @@ have no catalog entry yet; their size shows inline until one is added.
 | **OLD; PROTECTED: `Qwen3.6-35B-A3B-4bit`** | catalog | Structured fallback; loaded disposition retained | **The uniform-4bit structured-output baseline.** Passes strict JSON port-allocation tests. It was once judged inferior to the 80 B agentic brain on multi-turn tool calling (uniform 4-bit degrades earlier), but it later won the 2026-07-27 standalone throughput bench outright while being the smallest candidate. Thinking off by default. Route retirement remains lead-owned. |
 | **OLD: `Qwen3.6-27B-4bit`** | 16.1 GB (not yet cataloged) | Retired (2026-07-07) | **Retired after evals; superseded by the newer Qwen3.8 model in the same architecture generation.** The local decode result was 23–27 tok/s, about 4× slower than the 35 B MoE, with low-effort code reviews and no unique capability niche. Qwen3.8-Flash-Next is now the latest runnable Qwen generation. |
 | **OLD: PROTECTED: loaded `Qwen3.8-27B-4bit`** | 16.1 GB, swap tier (not yet cataloged) | Trialled as default, reverted (2026-08-14); loaded state retained | **Historical comparison and loaded-state record.** August same-host results: 37.1 cumulative / 27.7 decode tokens/s versus 35 B MoE at 138.8 / 106.5. A 2026-10-07 one-request MLX test measured 27.3–27.4 decode tokens/s. A one-user RTX PRO 6000 run measured about 2.3× faster with vLLM/NVFP4; the Mac used MLX 4-bit. These configurations differ. Flash-Next is the newer runnable Qwen generation; route retirement remains lead-owned. |
-| `Qwen3.5-9B-OptiQ-4bit` | catalog | Current small role, retained 2026-10-24 | The small-slot question is closed. |
+| `Qwen3.5-9B-OptiQ-4bit` | catalog | Historical small-role choice, retained in the 2026-10-24 record | The dated decision remains; it does not define the current shared Mac residents. |
 
 ### 2026-10-07 single-request measurements
 

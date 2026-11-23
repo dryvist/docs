@@ -1,6 +1,6 @@
 ---
 title: "Local LLM"
-description: "One strategy for local inference: a fast resident model on each laptop, and an always-on Apple Silicon host serving the large tier to the LAN."
+description: "One strategy for local inference: a shared resident set on each laptop, and an always-on Apple Silicon host serving the large tier to the LAN."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
@@ -13,10 +13,9 @@ API, plus the strategy that decides which one runs what. Neither is an agent.
 Both are *just the model plus a serving stack*. The agent layer (Claude Code,
 Antigravity, the routines) runs outside them and calls in over HTTP.
 
-- **The client laptops**: `mlx-lm` workers behind `llama-swap` on a
-  laptop-class M4 Max, one resident model, tuned to coexist with a working
-  desktop. This is a laptop's own private model for delegated edits, drafts, and
-  "don't burn cloud tokens on this" tasks.
+- **The client laptops**: a small shared resident set on Apple Silicon serves
+  local apps for delegated edits, drafts, and routine work. Apps use the same
+  local router.
 - **The large-memory tier**: a desktop-class Apple Silicon host provides serial
   capacity for models that only fit in its 128 GB of unified memory. A separate
   GPU tier provided higher throughput in the tested one-user comparison. Each
@@ -60,7 +59,7 @@ flowchart LR
   classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
   classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
   classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
-  Laptop([Laptop<br/>1× M4 Max · one resident model])
+  Laptop([Laptop<br/>1× M4 Max · shared resident set])
   Large([Large-memory role<br/>Mac Studio · serial capacity])
   Shard([Gated<br/>shard one model across both])
 
@@ -120,10 +119,9 @@ and it remains measurement-gated. See
 
 - **A small resident set, not a rotation.** Swapping a multi-GB model evicts
   wired GPU memory and reloads another. That's the slowest thing you can do. A
-  laptop holds one resident model; the serving host holds two. Capability-role
-  aliases (`default`, `coding`, `quickest`, `tool-calling`, …) resolve onto that
-  resident set, so a role never triggers a swap. How many are resident is a
-  property of the host, read from the registry, not a fixed number.
+  each host keeps its declared resident set. Capability-role aliases resolve
+  onto those residents, so a role does not trigger an unplanned swap. The
+  registry owns each host's set and role mapping.
 - **The registry is the source of truth.** Which physical model is resident
   lives in one place: the AI-stack registry that `nix-ai` writes at activation,
   read as `~/.config/ai-stack/registry.json`. Docs describe the *strategy*; the
