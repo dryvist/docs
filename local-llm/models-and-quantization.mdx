@@ -1,11 +1,11 @@
 ---
 title: "Models and quantization"
-description: "How the resident model is chosen: one-resident posture, MoE over dense, sensitivity-aware quantization, and a fast-vs-overnight tier the registry pins."
+description: "How resident models are chosen: a shared set, MoE over dense, sensitivity-aware quantization, and a fast-vs-overnight tier the registry pins."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-Pick one model to keep resident, quantize it well, and let a registry, not a
-doc, name the exact id. Everything else is a tier you reach for on purpose.
+Keep a small set of models resident, quantize it well, and let a registry, not
+a doc, name the exact ids. Everything else is a tier you reach for on purpose.
 
 {/*Shape: decision tree over three tiers.*/}
 
@@ -31,18 +31,12 @@ constraint is memory pressure over time, and the lever is sparsity. The rule is
 that nothing changes on a claimed score, only on a
 [measured](/tools/mlx-benchmarks) one.
 
-## One resident model, many local aliases
+## A shared resident set, many local aliases
 
-The workstation keeps a **single** physical model loaded. Its local llama-swap
-service exposes that model under aliases: `default`, `coding`, `quickest`,
-`tool-calling`, `large-context`, `most-capable`, `oss`. Today they all resolve
-to the same resident model. These are local service names. Callers of the shared router use
-the five capabilities on [Model routing](/ai-development/model-routing).
-The aliases are a stable contract for local callers; the resident id
-behind them is a value in the AI-stack registry
-(`~/.config/ai-stack/registry.json`, written by [`nix-ai`](/nix/nix-ai) at
-activation), so changing the model is a one-line registry edit, never a code
-change and never an edit to this page.
+The local router serves app aliases from the declared resident set. A role
+alias names a task or speed tier; the registry maps it to a physical model.
+The host registry, not this page, owns those ids.
+
 
 This is why these docs name model **families**, not pinned versioned ids. The
 moment a doc hard-codes "`<vendor>-<size>-<version>`" it starts rotting; the

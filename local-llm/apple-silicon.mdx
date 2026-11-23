@@ -162,8 +162,9 @@ compressor and swap. The ingredients are generic: a wired model weight pool,
 other heavy apps holding most of RAM, and background processes preventing idle
 sleep. The most effective fixes are structural:
 
-- **Hold one resident model and evict it aggressively** (short idle TTL) so the
-  wired pool doesn't sit for days.
+- **Keep the shared resident set deliberate.** Leave the shared workers ready
+  for their callers, and give optional swap-tier models a short idle TTL so
+  they do not add to the wired pool for days.
 - **Right-size the cache reservation** so the worker's footprint matches its real
   batch, not a worst case.
 - **Give the machine idle-sleep windows** so the compressor can drain.
