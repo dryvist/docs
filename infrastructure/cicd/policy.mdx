@@ -111,7 +111,7 @@ it. If a correction is needed, create a new release.
   - **Major** bumps are **human-initiated only**: edit `.release-please-manifest.json` manually. The
     release workflow blocks automated major bumps, including from `BREAKING CHANGE:` footers
   - **Release PRs** target the default branch and auto-merge through the bot lane after required checks pass. The
-    [release-please workflow](https://github.com/dryvist/.github/blob/main/.github/workflows/_release-please.yml) opens them.
+    [release-please workflow](https://github.com/JacobPEvans/.github/blob/v1/.github/workflows/_release-please.yml) opens them.
   - Tags are on `main`; a person makes major releases.
 - Conventional-commit style preference:
   - `fix:` for config tweaks, small improvements, incremental adjustments, dependency updates
@@ -165,7 +165,11 @@ allows no variables there, and it does not follow repository move or rename redi
 references. So when a shared-CI repository changes ownership, every consumer must update its
 `uses:` reference at the same time.
 
-The shared `_release-please.yml` job uses the concurrency group `release-please-<repo>-<ref>` with `cancel-in-progress: false`. The shared `v1` ref points to v1.40.4.
+The shared [`_release-please.yml` workflow](https://github.com/JacobPEvans/.github/blob/v1/.github/workflows/_release-please.yml)
+uses the concurrency group `release-please-<repo>-<ref>` with
+`cancel-in-progress: false`. On a push to `develop` whose head commit message
+starts with `chore(develop): release`, the release-please job does not run. A
+different head message does not match the skip.
 
 The shared `_tofu-ci.yml` workflow passes `GITHUB_TOKEN` to TFLint plugin
 initialization.
