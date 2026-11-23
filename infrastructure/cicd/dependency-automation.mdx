@@ -45,11 +45,9 @@ rather than schema enforcement.
 
 ## Action and source pin policy
 
-First-party dependencies use commit pins to the upstream branch `green`. Third-party actions use a full commit
-SHA with a trailing `# vX.Y.Z` comment. The enterprise `Workflow Policy` check enforces the third-party action
-pin rule.
-First-party source pins use commit references from `green`; their lock files hold the exact revision, and the org
-scanners enforce that shape:
+First-party references track `main`; see [First-party pins](#first-party-pins). Third-party actions use a full
+commit SHA with a trailing `# vX.Y.Z` comment. The enterprise `Workflow Policy` check enforces both rules: a
+first-party `uses:` must end in `@main`, a major tag `@vN`, or a 40-hex SHA. The org scanners enforce the rest:
 
 - **zizmor.** Third-party actions are hash-pinned.
 - **CodeQL.** Code scanning default setup on public repos only (free; private repos excluded to
@@ -80,8 +78,8 @@ Consumer configs extend the shared preset, then list only repo-specific holds.
 
 For third-party updates, the shared schedule is Saturday 00:00–05:59 in `America/Indiana/Indianapolis`.
 Renovate's built-in `group:allNonMajor` opens one pull request per repository for minor, patch, and digest
-updates; each major update opens its own pull request. First-party pins use one grouped pull request per
-consumer, refreshed every 4 hours.
+updates; each major update opens its own pull request. First-party references track `main`, so they get no
+bump pull requests.
 The shared preset sets `prCreation` to `not-pending`, so Renovate waits for
 branch status checks to finish before it creates a pull request.
 
@@ -91,7 +89,6 @@ The shared preset sets `internalChecksFilter` to `strict`. Third-party updates w
 | --- | --- | --- |
 | Minor, patch, digest, and pin updates | 7 days | Auto-merge after required checks pass |
 | Other major updates | 30 days | Auto-merge after required checks pass |
-| First-party updates, including majors | 0 days | Auto-merge after required checks pass |
 | Trusted-organization third-party majors | 7 days | Auto-merge after checks; `dep:review` adds dependency review |
 | Vulnerability alerts | 1 day | Auto-merge after required checks pass; alerts may open at any time |
 
@@ -109,11 +106,13 @@ together in ordinary updates.
 
 ## First-party pins
 
-First-party dependencies are pinned to commits of the upstream branch
-[green](/conventions/branch-conventions#the-branch-green). Renovate keeps one grouped pull request per
-consumer, refreshed every 4 hours, with platform auto-merge and no release-age hold. Renovate pull requests
-take the bot lane. A pull request that needs an upstream change bumps the pin itself. Release tags exist for
-outside users.
+A reference to a first-party repository names `main`: an Ansible collection source, a reusable workflow
+`uses:`, a `nix run` or flake input, or a script's ref. It carries no version pin, no SHA, no Renovate
+annotation, and gets no bump pull request. A flake lock file still records the exact revision.
+
+Every change that lands on a first-party `main` must work for every consumer at once. A breaking change
+lands together with its consumer fixes. Simplify an older tag or SHA pin to `main` when you next change that file.
+Release tags exist for outside users.
 
 ## Nix flake locks
 
