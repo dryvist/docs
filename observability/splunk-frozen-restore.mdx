@@ -14,11 +14,12 @@ deliberate operation measured in minutes.
 
 ## The default that makes this necessary
 
-Splunk **deletes** a bucket when it ages out, unless a freeze mechanism
-catches it first. Configure `coldToFrozenDir` or `coldToFrozenScript` on the
-index before a retention window or volume cap can actually bind. Once one
-does, the delete path is live immediately. The archive exists so that ageing
-out means archiving, not losing the data.
+Splunk **deletes** a bucket when it ages out unless native freezing catches it.
+Configure <code>coldToFrozenDir</code> to send frozen buckets to the
+bulk-storage volume before a retention window or volume cap can bind. The
+existing replication and offsite chain protects that volume. Custom archive and
+restore scripts are being removed in favour of native
+<code>coldToFrozenDir</code>.
 
 <Warning>
 **Enforcing retention and losing data is the same action without an archive.**
@@ -32,7 +33,7 @@ permanently deleting whatever was oldest.
 
 | | |
 | --- | --- |
-| **Is** | A copy of every file in a frozen bucket, held in S3-compatible object storage. |
+| **Is** | A frozen bucket on bulk storage, protected by the existing replication and offsite chain. |
 | **Is not** | Searchable. Nothing queries it in place. |
 | **Is not** | Federated Search for Amazon S3 (see below). |
 
@@ -54,69 +55,64 @@ remote object store. It also removes the cold-bucket state entirely, and it
 still requires days of local cache to warm. Treat it as a separate
 architectural decision, not a drop-in fix for this workflow.
 
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
+  Bucket([Frozen bucket]) --> Dir[coldToFrozenDir]
+  Dir --> Volume[(Bulk-storage frozen volume)]
+  Volume --> Chain[Replication and offsite chain]
+  Chain -->|retrieve archived bucket| Thawed[thaweddb]
+  Thawed --> Rebuild[splunk rebuild]
+  Rebuild --> Search([Searchable bucket])
+```
+
 ## Restoring a bucket
 
 <Steps>
-<Step title="Find what is archived">
-List everything archived for the index. Bucket directory names encode
-their time range. Restore tooling that lists archived buckets should let
-you identify the right one by date without downloading anything.
+<Step title="Find the bucket">
+Find the full bucket directory for the index. Bucket
+names encode their time range. If the bucket is already archived offsite,
+copy it back from that archive first.
 </Step>
-<Step title="Fetch the bucket">
-Download every file that belongs to it. Have the fetch retry transient
-throttling and server errors from the object-storage backend. A restore
-that gives up partway leaves a half-written bucket that looks present but
-won't rebuild.
+<Step title="Copy the bucket">
+Copy the complete bucket directory, including all its
+files. Do not copy only raw data files.
 </Step>
-<Step title="Move it under the index's thawedPath">
-The thawed location is a literal path, never a volume reference. Splunk
-rejects a `volume:` reference for `thawedPath`. It's always
-`$SPLUNK_DB/<index>/thaweddb`.
+<Step title="Put it in thaweddb">
+Copy it into
+<code>$SPLUNK_DB/&lt;index&gt;/thaweddb</code>. Bucket IDs must not collide
+with another directory already in <code>thaweddb</code>. Choose a
+non-conflicting directory rather than overwriting one.
+</Step>
+<Step title="Rebuild the index">
+Run:
+<code>splunk rebuild &lt;bucket_path&gt; &lt;index_name&gt;</code>
 
-Bucket IDs must not collide with anything already in `thaweddb`. If one
-does, rename the incoming directory rather than overwrite it.
+Splunk documents this command in its
+[Restore archived indexed data guide](https://help.splunk.com/en/splunk-enterprise/administer/manage-indexers-and-indexer-clusters/10.6/back-up-and-archive-your-indexes/restore-archived-indexed-data).
 </Step>
-<Step title="Rebuild the index metadata">
-```bash
-splunk rebuild <bucket_dir>
-```
-
-Without this, the bucket is present but unsearchable. That's the most
-common way a restore looks finished when it isn't.
-</Step>
-<Step title="Restart splunkd, then confirm the data is actually searchable">
-Search the restored time range explicitly. Don't infer success from the
-files being on disk.
+<Step title="Restart or wait for pickup">
+Restart the indexer or let it pick up the
+bucket, then confirm the restored time range is searchable. Do not infer
+success from files being on disk.
 </Step>
 </Steps>
 
 ## After restoring
 
 <Warning>
-**Thawed data never ages out on its own.** Data in `thaweddb` is exempt from
-the retention scheme. It sits there consuming space until someone removes it
-by hand.
+**Thawed data never ages out on its own.** Data in <code>thaweddb</code> is
+exempt from retention. Delete the thawed bucket from that directory when it is
+no longer needed.
 </Warning>
-
-Remove the thawed bucket once the work that needed it is finished.
-
-## If a freeze fails
-
-A failed archive **leaves the bucket on disk**. That's intentional: a stuck
-bucket costs space, but a false success costs the data.
-
-Point your freeze and archive tooling's logging somewhere splunkd's own
-logging captures. `splunkd.log` is the standard place to look. Distinguish
-two kinds of failure. One is a refusal to freeze, the safe outcome where the
-bucket stays put and is retried. The other is a retryable upload error, also
-safe, where the bucket is attempted again.
-
-The failure mode worth watching for is silence: buckets ageing out with no
-archive activity at all. A common cause is configuring both
-`coldToFrozenDir` and `coldToFrozenScript` on the same index. Splunk treats
-them as mutually exclusive. It silently prefers the directory, disabling
-script-based uploads with no error anywhere. Configure exactly one of the two
-per index, and check for this first if archiving appears to have stopped.
 
 ## See also
 
