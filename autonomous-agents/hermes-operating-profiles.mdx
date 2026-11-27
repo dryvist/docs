@@ -23,11 +23,13 @@ get it. There is no fallback to the shared value. A job needing a tool must
 have that tool named on its assignee's profile, or the worker runs without it.
 
 **The isolation boundary is tools and credentials, not memory.** Profiles of
-one agent read and write the same memory bank. This is deliberate: it is what
+one agent read and write the same memory bank by default. This is deliberate: it is what
 lets a `default`-profile job recall a card's findings after its assignee
 moves. But it also means a narrowly scoped profile can still recall anything
 any other profile of that bank ever wrote. Profile scoping is not a data
-boundary.
+boundary. Each tracker clerk declares its own Hindsight bank in context
+mode (automatic recall and retain, no memory tools); `semaphore-converge`
+keeps no memory.
 
 The shared bank is the agent's bank in the network memory provider, not the
 per-directory files. It is keyed by the agent's id, not sub-keyed by profile.
@@ -79,7 +81,8 @@ a widened existing one.
 ## See also
 
 See Clerk agents for the narrow tracker profiles and how they are enabled.
-A clerk profile is locked and runs with memory off, so it does not use the shared memory bank described above.
+A clerk profile is locked. Each tracker clerk declares its own Hindsight bank in context mode (automatic recall and retain, no memory tools); `semaphore-converge` keeps no memory.
+None of them use the shared memory bank that this page describes.
 
 <CardGroup>
 <Card

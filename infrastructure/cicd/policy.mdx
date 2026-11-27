@@ -239,6 +239,12 @@ fail the pull request. See the [router contract workflow](https://github.com/dry
 [scope selector](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/.github/scripts/select-contract-scope.py),
 and [batch guard](https://github.com/dryvist/ansible-proxmox-ai/blob/da2f6a837b178b0a80a58f3a0618fbb4bd9b883f/tests/repo_guards/test_router_contract_batches.py).
 
+A pull request that changes [`renovate.json`](https://github.com/dryvist/ansible-proxmox-ai/blob/main/renovate.json)
+runs the router contract jobs, the `llamacpp_release` tests,
+`tests/load/test_tier2_burst.py`, and `tests/test_ci_workflow_policy.py`.
+The selector's static tables live in
+[`contract_scope_tables.py`](https://github.com/dryvist/ansible-proxmox-ai/blob/main/.github/scripts/contract_scope_tables.py).
+
 The shared workflow does not widen checks because a pull request targets
 `main`. Local Molecule workflows consume the shared scope output or derive
 role coverage from the repository tree. Queue time counts toward wall time.
