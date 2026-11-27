@@ -73,6 +73,9 @@ keeps the `local>dryvist/.github` and `github>dryvist/.github` entry points. It 
 [`renovate-presets.json`](https://github.com/dryvist/.github/blob/main/renovate-presets.json)
 re-exports the JacobPEvans master preset unchanged; dryvist/.github owns no separate policy.
 Consumer configs extend the shared preset, then list only repo-specific holds.
+The `ansible-proxmox-ai` LiteLLM package rule keeps a seven-day hold in
+[`renovate.json`](https://github.com/dryvist/ansible-proxmox-ai/blob/main/renovate.json).
+A contract test protects that value.
 
 ## Schedule and grouping
 
@@ -83,14 +86,19 @@ bump pull requests.
 The shared preset sets `prCreation` to `not-pending`, so Renovate waits for
 branch status checks to finish before it creates a pull request.
 
-The shared preset sets `internalChecksFilter` to `strict`. Third-party updates with the seven-day release-age hold wait until that age passes.
+The shared preset sets `internalChecksFilter` to `strict`. Its default is
+`minimumReleaseAge: "3 days"` before Renovate proposes a dependency update.
+Vulnerability alerts keep a one-day hold.
 
 | Update | Release-age hold | Merge policy |
 | --- | --- | --- |
-| Minor, patch, digest, and pin updates | 7 days | Auto-merge after required checks pass |
-| Other major updates | 30 days | Auto-merge after required checks pass |
-| Trusted-organization third-party majors | 7 days | Auto-merge after checks; `dep:review` adds dependency review |
+| Minor, patch, digest, and pin updates | 3 days | Auto-merge after required checks pass |
+| Major updates | 3 days | Manual; third-party majors carry `update:major` and `dep:review` |
+| Trusted-organization updates | None; 3 days for a major | Auto-merge after required checks pass |
+| First-party updates from the listed owners | None | Auto-merge after required checks pass; open at any time |
 | Vulnerability alerts | 1 day | Auto-merge after required checks pass; alerts may open at any time |
+
+Major updates stay manual in `dryvist/ansible-*` and `dryvist/nix-ai`, whatever the package.
 
 The complete trust tiers live in
 [`SECURITY.md`](https://github.com/JacobPEvans/.github/blob/main/SECURITY.md#dependency-trust).
