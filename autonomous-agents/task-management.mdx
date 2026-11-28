@@ -1,43 +1,64 @@
 ---
 title: "Task management"
-description: "A self-hosted task and project tracker that autonomous agents read and write through an MCP server, so agent and operator share one board."
+description: "Twelve rules for task briefs, epics, flow, cycles, priority, labels, and evidence."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-<Note>
-Status: **live.** The tracker and its MCP server are deployed; agents read and
-write it today.
-</Note>
+Vikunja tracks task work. Incidents go to Zammad. Every task follows the
+agent contract.
 
-The agent and the operator plan against the same board. Neither keeps a private
-to-do list the other can't see.
+## How it works
 
-Autonomous agents need somewhere durable to record what they are doing and what is
-left to do. They need a store that survives a restart, a new session, or a handoff
-to a person. A self-hosted task tracker fills that role: projects, tasks, labels,
-and status, shared by every agent and every human on the homelab.
+Vikunja has no epic or sprint object. Parent-task relations form epics. A
+one-week date range forms a cycle.
 
-## What the agent can do
+~~~mermaid
+flowchart LR
+  C[Caller] --> K[Vikunja clerk]
+  K --> I[Inbox project]
+  I --> T[Triage agent]
+  T --> D[Domain project]
+  D --> S[One session per task]
+  S --> E[Evidence comment]
+~~~
 
-Agents reach the tracker through an [MCP](/ai-development/ai-orchestration-stack)
-server that exposes project and task operations as tools: create, read, update,
-close, and organize. The agent plans work as tasks, records progress, and
-closes items it finishes, the same way a person would from the web UI.
+## Tracker conventions
 
-| Capability | Who uses it |
-| --- | --- |
-| Create and organize projects and tasks | Agent and operator |
-| Update status, labels, priority | Agent and operator |
-| List work per project | Agent and operator |
-| Shared board of record | Both, one view |
+| # | Rule | Convention |
+| --- | --- | --- |
+| 1 | One task is one AI session. | One agent, one context, one verified change (usually one pull request), and one done-check. Work that cannot finish in one session is an epic split before work starts. |
+| 2 | A task body is a brief. | State the goal, repository and paths, done-check command and expected result, and links. A delegate can use the body as written. If a task lacks these facts, add needs-info and ask one question. |
+| 3 | Epic. | Use a parent task with the epic label. Join its child tasks with subtask and parenttask relations. An epic has no work of its own. Nightly sets percent_done from the children and closes the epic when the last child closes. |
+| 4 | Order and links. | Use blocking and blocked for hard dependencies; precedes and follows for order; duplicateof for a duplicate, then close the duplicate; related for context. |
+| 5 | Flow. | Each domain project has one kanban view with Backlog, Ready, In progress, Blocked, and Done buckets. Triage moves a task to Ready only after rules 1 and 2 pass and no open blocked relation remains. Ready holds at most 10 tasks. A done change moves a task to Done automatically. |
+| 6 | Claim. | The session that takes a task assigns its role's bot and moves the task to In progress. Use one assignee. Nightly returns an unchanged claim to Ready after 24 hours and comments on it. |
+| 7 | Cycle. | A cycle is one week, Monday through Sunday UTC. A task assigned to the cycle has a due date on its last day. The digest counts tasks set for the cycle, tasks done, and tasks rolled over. On Monday, triage rolls unfinished tasks forward with one comment. |
+| 8 | Priority. | Use the native priority field: 5 do now, 4 this cycle, 3 high, 2 medium, and 1 low. Triage never leaves priority 0 in a domain project. |
+| 9 | Labels. | Use the declared labels epic, needs-split, needs-info, from-untrusted, and operator-step. The project names the area. Do not use area labels or size labels. |
+| 10 | Evidence. | A close comment carries proof: the merged pull request URL or the check's output line. Never delete a task. Reopen through one clerk request. |
+| 11 | Recurring work. | Use a native repeating task, not a new task for each run. |
+| 12 | Incidents. | Incidents never enter Vikunja. Track them in Zammad. |
 
-## Credentials, not prompts
 
-The MCP server authenticates with a **scoped service-account token**, a read-write
-tier distinct from any human account. An operator opts a host
-into the integration deliberately; it is off by default everywhere else.
+## Nightly limits
 
-## Known limits
+For each run, nightly closes at most 10 tasks, creates at most 25 relations, and marks at most 10 duplicates.
+It does not delete tasks. It acts only on domain-project tasks changed in the last 14 days. Every close cites evidence.
+The digest lists each change and the clerk request that undoes it.
 
-Listing every task across all projects in one call is unreliable, so agents list per
-project instead. This is a client-side quirk, not a data limit.
+## File a task
+
+A session or agent files work through the clerk:
+
+
+## Why it works this way
+
+Vikunja's native fields carry the task workflow. The agent contract
+sets the shared caller and tool rules. The agent platform decisions
+record the accepted tracker path.
+
+## Where to check it
+
+- **Live:** `https://vikunja.host-1.example.local/`
+- **Config:** [Vikunja role](https://github.com/dryvist/ansible-proxmox-apps/blob/main/roles/vikunja).
+- **Owner doc:** Vikunja operations.

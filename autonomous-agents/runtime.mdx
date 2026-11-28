@@ -1,29 +1,60 @@
 ---
 title: "Runtime"
-description: "A Nix-built agent image supports local and remote jobs; a static LXC pool remains a separately declared path."
+description: "Hermes locked profiles run agents through the router, with schedules and managed state declared in Git."
 page_type: "explanation"
 ---
 {/* projected from the authoring site; do not edit here */}
-<Note>
-Status: **partly live.** The Mac path (`agent-image`, `agent-cli`) is in use.
-The pool's firewall profile and its egress proxy guest are declared in
-infrastructure code. The Ansible role that converges a pool guest is
-written. The first end-to-end canary run has not happened yet.
-</Note>
+A Hermes agent is a locked profile. The prompt pack defines each agent with a
+prompt, fixed tool list, model alias, caps, and acceptance set. The renderer
+creates one profile folder from that entry. Each folder has its own router key,
+API value, and fixed tool list. One Hermes gateway serves every profile in the
+runtime.
 
-Build the sandbox once, with Nix. Declare the pool once, in infrastructure
-code. Then stop provisioning anything per task.
+The router name for an agent is `agent-<name>`. Every caller and every agent
+uses that name. The router sends requests to the selected local model and
+enforces the caller's access to agents and tools.
 
-This repo provides a local entry path and a remote job dispatcher:
+## Runtime path
 
-| Where | Boundary | What it is for |
-| --- | --- | --- |
-| **Mac** | Apple `container`, one container per run | Local, interactive-adjacent runs the operator starts by hand |
-| **Remote dispatch** | `agent-dispatch`, one Docker container per run | Unattended repository work |
-| **Proxmox pool** | A static pool of LXC guests, one systemd unit per job | The separately declared pool runtime |
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
+  G[Git declarations] --> P[Prompt pack]
+  P --> R[Locked Hermes profile]
+  R --> H[Hermes gateway]
+  H --> L[Router agent name]
+  L --> M[Local model and fixed tools]
+  M --> O[Answer]
 
-The local and remote paths use the same image and agent command-line tools.
-They differ in how a job starts and how its workspace persists.
+  classDef step fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class G,P,R,H,L,M,O step
+```
+
+Adding an agent takes one prompt-pack entry and one list entry. The renderer
+creates its profile without runtime code.
+
+## Schedules
+
+Git declares every Hermes cron row. Each row calls `agent-<name>` through the
+router and delivers the answer.
+
+`hermes cron run <name>` fires a job at once. `hermes cron doctor` exits
+non-zero when a run or delivery fails.
+
+## Source of truth
+
+Git is the only source for managed profile files, cron rows, and board rows. A
+converge checks each managed item before it writes. If a profile file, cron
+row, or board row changed outside Git, converge stops before writing and names
+the item. Pause and off switches are runtime state, not drift.
 
 ## The local image path: one container per run
 
@@ -106,9 +137,6 @@ flowchart LR
   Continue -- No --> Wait([Wait for lease expiry or job pruning])
   Wait --> Exit([Job manager exits])
   Exit --> Revoke([Revoke service token])
-
-  classDef n fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  class Request,Validate,Create,Run,Notify,Continue,Wait,Exit,Revoke n
 ```
 
 ## The Proxmox path: a static pool, pull dispatch
@@ -155,7 +183,7 @@ level, by the template unit. That means private tmpfs, a wall clock, and a
 cgroup termination: where the untrusted thing actually lives.
 
 The prior generation of this path ran agents in Docker on a shared VM. It still
-exists and still runs its legacy guests. Retiring it is gated on the LXC pool
+exists and still runs its original guests. Retiring it is gated on the LXC pool
 carrying real load through its canary. Two runtimes must never converge the
 same guest, so the swap happens after the canary, not before it.
 
@@ -180,9 +208,6 @@ flowchart LR
   Ship([Ship])
 
   Claim --> Clone --> Work --> Ship
-
-  classDef n fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-  class Claim,Clone,Work,Ship n
 ```
 
 <Steps>
@@ -296,5 +321,15 @@ because there the missing route is the control.
   icon="boxes-stacked"
   href="/infrastructure/lxc-vs-docker">
   The decision tree this runtime slots into.
+</Card>
+</CardGroup>
+
+## Related pages
+
+<CardGroup>
+<Card
+  title="Operating profiles"
+  href="/autonomous-agents/hermes-operating-profiles">
+  The shared prompt opening and profile memory rules.
 </Card>
 </CardGroup>
