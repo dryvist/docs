@@ -30,7 +30,7 @@ jobs:
       - name: Install Mintlify CLI
         run: |
           # renovate: datasource=npm depName=mint
-          MINT_VERSION="4.3.34"
+          MINT_VERSION="4.3.91"
           npm install --global "mint@${MINT_VERSION}"
 
       - name: Check for broken internal links
