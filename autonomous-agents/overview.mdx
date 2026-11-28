@@ -1,27 +1,39 @@
 ---
 title: "Autonomous agents"
-description: "The boundary inversion: safety moves from 640-entry permission lists on a trusted host to a container boundary with maximally lenient tools inside it."
+description: "Hermes agents use locked profiles, a router front door, and Git-managed schedules."
 page_type: "overview"
 ---
 {/* projected from the authoring site; do not edit here */}
-<Note>
-Status: **partly live.** The profiles, the Mac container path, and the GitHub
-token path are in use. The Proxmox agent pool and its egress proxy are
-declared in infrastructure code with the converge role written, pending a first
-canary run.
-</Note>
+Hermes runs homelab agents as locked profiles. Git holds each profile
+definition, schedule, and fleet-board row. The router is the front door for
+every caller and agent.
 
-Stop asking the agent for permission. Put it somewhere it can't hurt anything,
-then let it run.
+## Agent path
 
-Today's safety model is fine-grained permission lists. There are roughly 640
-allow/ask/deny entries rendered into Claude Code, the Codex command-line tool,
-and the Antigravity (`agy`) command-line tool. It runs on a trusted Mac with the user's
-full credentials one prompt away. That model assumes a
-human is watching. Autonomous agents invert it: **safety becomes the container
-boundary**, and tool permissions inside it become maximally lenient. The agent gets
-`--dangerously-skip-permissions` precisely because there is nothing dangerous left
-to skip into.
+```mermaid
+%%{init: {"theme":"base","look":"handDrawn","themeVariables":{"primaryColor":"#123a36","primaryTextColor":"#f4efe6","primaryBorderColor":"#4fb3a9","lineColor":"#4fb3a9","secondaryColor":"#0b1d2a","tertiaryColor":"#16293a","clusterBkg":"#08151f","clusterBorder":"#4fb3a9","fontFamily":"'Geist Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif","fontSize":"14px"}}}%%
+flowchart LR
+  classDef src fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef ai fill:#16293a,stroke:#e06b4a,stroke-width:2px,color:#f4efe6;
+  classDef gate fill:#16293a,stroke:#e06b4a,stroke-width:2.5px,color:#f4efe6;
+  classDef hop fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef host fill:#16293a,stroke:#4fb3a9,stroke-width:2px,color:#f4efe6;
+  classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
+  classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
+  classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
+  G[Git] --> P[Prompt pack]
+  P --> H[Locked Hermes profile]
+  H --> R[Router agent name]
+  R --> M[Local model and allowed tools]
+  M --> A[Answer]
+
+  classDef node fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
+  class G,P,H,R,M,A node
+```
+
+The router checks which caller may use each agent, model, and tool. It also
+holds the off switch. The profile, schedule, and board declarations stay in
+Git; the runtime checks for edits made outside Git before it writes.
 
 ## The agent loop
 
@@ -38,20 +50,7 @@ flowchart LR
   classDef sink fill:#16293a,stroke:#f4efe6,stroke-width:2px,color:#f4efe6;
   classDef auto fill:#16293a,stroke:#f4efe6,stroke-width:1.5px,color:#f4efe6;
   classDef external fill:#16293a,stroke:#e6b35a,stroke-width:2px,color:#f4efe6;
-  T([Trigger])
-  subgraph C[Container boundary]
-    A([Agent])
-    L([LLM])
-  end
-  O([Outcome])
-
-  T --> A --> L --> A --> O
-
-  classDef ext   fill:#102937,stroke:#E06B4A,stroke-width:2px,color:#F4EFE6;
-  classDef inner fill:#102937,stroke:#4FB3A9,stroke-width:2px,color:#F4EFE6;
-
-  class T,O ext
-  class A,L inner
+  T([Trigger]) --> A([Agent]) --> L([LLM]) --> A --> O([Outcome])
 ```
 
 An event fires the agent (an issue, a schedule, an alert). Inside the
@@ -65,11 +64,18 @@ All three command-line tool vendors publish the same guidance. Bypass flags belo
 only inside an isolated environment. The real controls are credentials, network
 egress, and git.
 
-| Vendor | Bypass mechanism | Isolation guidance |
-| --- | --- | --- |
-| **Anthropic** | `--dangerously-skip-permissions` | Only inside a [devcontainer](https://code.claude.com/docs/en/devcontainer) or [sandbox](https://code.claude.com/docs/en/sandbox-environments); hard-rejected when running as root. Agent SDK secure deployment: never mount host secrets. |
-| **OpenAI Codex** | `approval_policy` + `sandbox_mode` axes | [`--yolo`](https://developers.openai.com/codex/) (`danger-full-access` + `never`) only inside a container; network is off by default even in `workspace-write`. |
-| **Antigravity (`agy`)** | `--dangerously-skip-permissions` | Its own sandbox is turned off and the posture is not coupled to it: the weakest pairing of the three, and the only tool that cannot carry the posture as a settings key at all, so the coupling is enforced by the launcher and the sandbox around it. |
+- **Anthropic**
+  - **Bypass mechanism:** `--dangerously-skip-permissions`
+  - **Isolation guidance:** Only inside a [devcontainer](https://code.claude.com/docs/en/devcontainer) or
+    [sandbox](https://code.claude.com/docs/en/sandbox-environments); hard-rejected when running as root. Agent SDK secure deployment: never mount host secrets.
+- **OpenAI Codex**
+  - **Bypass mechanism:** `approval_policy` + `sandbox_mode` axes
+  - **Isolation guidance:** [`--yolo`](https://developers.openai.com/codex/) (`danger-full-access` + `never`) only inside a container; network is off by default even in `workspace-write`.
+- **Antigravity (`agy`)**
+  - **Bypass mechanism:** `--dangerously-skip-permissions`
+  - **Isolation guidance:** Its own sandbox is turned off and the posture is not coupled to it: the weakest pairing of the three,
+    and the only tool that cannot carry the posture as a settings key at all, so the coupling is enforced by the launcher
+    and the sandbox around it.
 
 The convergent model:
 
@@ -84,11 +90,21 @@ The convergent model:
 Profiles are defined once in `nix-ai` and rendered to all three tools by the
 existing formatter layer. See [nix-ai](/nix/nix-ai) for the rendering pipeline.
 
-| Profile | Where | Claude | Codex | Antigravity |
-| --- | --- | --- | --- | --- |
-| `interactive` | Mac host (unchanged) | current allow/ask/deny + auto mode | `workspace-write` + approvals | `auto_edit` |
-| `autonomous` | inside containers ONLY | `bypassPermissions` + ~10-entry residual deny; `claude -p --bare --dangerously-skip-permissions` | `approval_policy="never"`, `sandbox_mode="danger-full-access"` (the container IS the boundary; nested bwrap needs a seccomp profile that permits user namespaces) | `--dangerously-skip-permissions`, its own sandbox off |
-| `ci` | Actions runners | `autonomous` + JSON output overlay | same | same |
+- **`interactive`**
+  - **Where:** Mac host (unchanged)
+  - **Claude:** current allow/ask/deny + auto mode
+  - **Codex:** `workspace-write` + approvals
+  - **Antigravity:** `auto_edit`
+- **`autonomous`**
+  - **Where:** inside containers ONLY
+  - **Claude:** `bypassPermissions` + ~10-entry residual deny; `claude -p --bare --dangerously-skip-permissions`
+  - **Codex:** `approval_policy="never"`, `sandbox_mode="danger-full-access"` (the container IS the boundary; nested bwrap needs a seccomp profile that permits user namespaces)
+  - **Antigravity:** `--dangerously-skip-permissions`, its own sandbox off
+- **`ci`**
+  - **Where:** Actions runners
+  - **Claude:** `autonomous` + JSON output overlay
+  - **Codex:** same
+  - **Antigravity:** same
 
 One exception breaks the "configs only, no flags" shape. Antigravity has no
 settings key that can carry the posture. Its predecessor hard-errors on the
@@ -132,13 +148,35 @@ secrets, the Docker socket, or writable host paths into an agent container. The
 may see.
 </Warning>
 
-## In this section
+## Where agents run
+
+Service agents are profiles in one service guest. Identity assistants keep
+their own guests. The placement page records the measured node and replica
+targets.
+
+## Views
+
+The Hermes dashboard shows one agent's setup and runs. Langfuse shows a run's
+trace. Paperclip lists the fleet and starts a run on request; it does not fire
+schedules. See the control layer
+for access and board details.
+
+## Pages
 
 <CardGroup>
 <Card
   title="Runtime"
-  icon="box"
   href="/autonomous-agents/runtime">
-  The Mac container path, the static LXC pool, the egress proxy, and the run lifecycle.
+  Profile rendering, scheduled runs, and Git source checks.
 </Card>
+<Card
+  title="Operating profiles"
+  href="/autonomous-agents/hermes-operating-profiles">
+  Shared prompt text and memory-service rules.
+</Card>
+</CardGroup>
+
+## In this section
+
+<CardGroup>
 </CardGroup>
